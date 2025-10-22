@@ -1,63 +1,3 @@
-# Excel→JSON JavaFX App (Windows) – Multi‑Tab GUI
-
-This project builds a Windows‑friendly **JavaFX GUI** that reads your Excel workbook (multiple sheets), parses **Unit Breakdown**, **Nurse Call**, and **Patient Monitoring**, and exports a JSON matching your `2025-10-22.json` structure (with `version`, `alarmAlertDefinitions`, and `deliveryFlows`).
-
----
-
-## ✅ Features
-
-* **Multi‑tab GUI**: separate tabs to preview parsed sheets and final JSON.
-* **Flexible header detection**: finds the real header row even when there are notes/merged cells above it.
-* **Mapping rules** aligned to your plan (can be extended via aliases).
-* **Apache POI** for Excel, **Jackson** for JSON.
-* **JavaFX** for the interface.
-
----
-
-## 🧰 Requirements
-
-* JDK **17** (or newer)
-* Maven **3.9+**
-* Windows 10/11
-
----
-
-## 🗂️ Project Layout
-
-```
-excel-json-app/
-├─ pom.xml
-└─ src/
-   └─ main/
-      ├─ java/
-      │  └─ com/example/exceljson/
-      │     ├─ Main.java
-      │     ├─ AppController.java
-      │     ├─ ExcelParser.java
-      │     ├─ HeaderFinder.java
-      │     ├─ MappingAliases.java
-      │     ├─ model/
-      │     │  ├─ AlarmAlertDefinition.java
-      │     │  ├─ ValuePair.java
-      │     │  ├─ DeliveryFlow.java
-      │     │  ├─ Destination.java
-      │     │  ├─ InterfaceRef.java
-      │     │  ├─ ParameterAttribute.java
-      │     │  ├─ UnitRef.java
-      │     │  └─ Condition.java
-      │     └─ util/
-      │        └─ FXTableUtils.java
-      └─ resources/
-         └─ application.css (optional)
-```
-
-> **Tip:** You can paste these files exactly into the structure above. Build with Maven and run.
-
----
-
-## 📦 `pom.xml`
-
-```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -144,13 +84,7 @@ excel-json-app/
     </plugins>
   </build>
 </project>
-```
 
----
-
-## 🖥️ `Main.java`
-
-```java
 package com.example.exceljson;
 
 import javafx.application.Application;
@@ -176,13 +110,7 @@ public class Main extends Application {
         launch();
     }
 }
-```
 
----
-
-## 🧩 `AppController.java`
-
-````java
 package com.example.exceljson;
 
 import com.example.exceljson.util.FXTableUtils;
@@ -353,7 +281,7 @@ public class AppController {
         a.showAndWait();
     }
 }
-```java
+
 package com.example.exceljson;
 
 import com.example.exceljson.model.*;
@@ -494,13 +422,7 @@ public class AppController {
         a.showAndWait();
     }
 }
-````
 
----
-
-## 🔎 `HeaderFinder.java`
-
-```java
 package com.example.exceljson;
 
 import org.apache.poi.ss.usermodel.Row;
@@ -549,13 +471,7 @@ public class HeaderFinder {
         return s.trim().toLowerCase().replaceAll("[^a-z0-9]+", " ").replaceAll(" +", " ").trim();
     }
 }
-```
 
----
-
-## 🧭 `MappingAliases.java`
-
-````java
 package com.example.exceljson;
 
 import java.util.*;
@@ -583,7 +499,7 @@ public class MappingAliases {
 
     public static Set<String> set(String... vals) { return new HashSet<>(Arrays.asList(vals)); }
 }
-```java
+
 package com.example.exceljson;
 
 import java.util.*;
@@ -612,13 +528,7 @@ public class MappingAliases {
 
     public static Set<String> set(String... vals) { return new HashSet<>(Arrays.asList(vals)); }
 }
-````
 
----
-
-## 🧮 `ExcelParser.java`
-
-````java
 package com.example.exceljson;
 
 import org.apache.poi.ss.usermodel.*;
@@ -776,7 +686,6 @@ public class ExcelParser {
         }
     }
 
-    // ---- Build JSON in desired structure ----
     public Map<String, Object> buildJson() {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("version", config.outputVersion);
@@ -980,7 +889,7 @@ public class ExcelParser {
         for (String v : vals) if (v != null && !v.isBlank()) return v; return null;
     }
 }
-```java
+
 package com.example.exceljson;
 
 import com.example.exceljson.model.*;
@@ -1308,13 +1217,7 @@ public class ExcelParser {
         for (String v : vals) if (v != null && !v.isBlank()) return v; return null;
     }
 }
-````
 
----
-
-## 🆕 `Config.java`
-
-```java
 package com.example.exceljson;
 
 import java.util.*;
@@ -1396,28 +1299,10 @@ public class Config {
 
     private static String nvl(String v, String d) { return (v == null || v.isBlank()) ? d : v; }
 }
-```
 
----
-
-## 🧱 Model classes (POJOs) – optional
-
-> These are provided if you later prefer strong typing + Jackson annotations. They are not required for this version since we construct JSON via `Map`.
-
-### `model/AlarmAlertDefinition.java`
-
-```java
 package com.example.exceljson.model;
 public class AlarmAlertDefinition { /* optional */ }
-```
 
-*(Similarly for `ValuePair`, `DeliveryFlow`, `Destination`, `InterfaceRef`, `ParameterAttribute`, `UnitRef`, `Condition`)*
-
----
-
-## 🧰 `util/FXTableUtils.java`
-
-```java
 package com.example.exceljson.util;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -1446,49 +1331,15 @@ public class FXTableUtils {
         table.setItems(FXCollections.observableArrayList(rows));
     }
 }
-```
 
----
-
-## ▶️ Build & Run
-
-```bash
-# From the project root
 mvn clean package
 mvn javafx:run
-```
 
-Or build a fat JAR (you can then run via `java -jar` – note you’ll need JavaFX modules on path unless you use jlink):
-
-```bash
 mvn -DskipTests package
 ```
 
 The runnable class is `com.example.exceljson.Main`.
 
----
-
-## 🧪 How to Use
-
-1. **Open Excel…** and select your workbook (e.g., `Configuration_file.xlsx`).
-2. Review parsed rows in the **Unit Breakdown**, **Nurse Call**, **Patient Monitoring** tabs.
-3. Switch to **JSON Preview** to confirm the structure matches your target (like `2025-10-22.json`).
-4. Click **Export JSON…** to write the final file.
-
----
-
-## 🛠️ Tuning Header Detection / Aliases
-
-* You can now load an external **config file** (`Open Config…`) in **YAML or JSON** to override:
-
-  * **Sheet names** (e.g., rename tabs without code changes)
-  * **Header aliases** (column names)
-  * **Recipient parsing rule** (regex for functional roles)
-  * **Unit scoping behavior** (`attachAllUnitsIfNoMatch`)
-
-### Example `config.yml`
-
-```yaml
 outputVersion: "1.0"
 attachAllUnitsIfNoMatch: true
 
@@ -1517,43 +1368,3 @@ aliases:
 
 recipientParsing:
   functionalRoleRegex: "^(?i)(vassign:.*|.*\[room\].*)$"
-```
-
-> Place your group names (from **Unit Breakdown** column matched by `UNIT_GROUPS`) as comma‑ or semicolon‑separated values. Those units will attach **only** to matching `Configuration Group` flows. If no match exists and `attachAllUnitsIfNoMatch: true`, all units will be attached as a fallback.
-
----
-
-## 🔄 Mapping Recap (implemented)
-
-* **alarmAlertDefinitions** built from both **Nurse Call** and **Patient Monitoring** rows.
-* **deliveryFlows** grouped by **Configuration Group**. For each group, we:
-
-  * Add each alarm name to `alarmsAlerts`.
-  * Map **Device - A** into `interfaces[].componentName/referenceName`.
-  * Map **Response Options**, **EMDAN**, **Comments** into `parameterAttributes`.
-  * Build `destinations` from **1st/2nd Recipient** (with optional delays).
-  * Attach **units** from **Unit Breakdown** (facility & unit name pairs) to every flow (adjust if you want per‑group scoping).
-
-> If you’d like **units to be scoped to specific flows** (e.g., only certain units should attach to a given Configuration Group), provide the mapping rule (e.g., a column that ties units to group), and we’ll adjust `buildJson()` accordingly.
-
----
-
-## 📌 Notes / Assumptions
-
-* Delay parsing accepts values like `10`, `10 min`, or `10 minutes` and converts to integer minutes.
-* Recipients are stored under `destinations[].groups`. If you prefer `functionalRoles` for entries like `VAssign: [Room] Nurse`, we can detect that pattern and place them accordingly.
-* `status` defaults to `Enabled`.
-* `version` is set to `1.0` (change as needed).
-
----
-
-## 📣 Next Enhancements (on request)
-
-* Configurable **mapping file** (YAML/JSON) so you can tweak column names without code changes.
-* Add **CSV export** of parsed rows for auditing.
-* Add a **diff view** that compares the generated JSON against an existing baseline (your `2025-10-22.json`).
-* Smarter recipient parsing (split multiple recipients, detect `VAssign:` → functional role vs group, etc.).
-
----
-
-If you want me to tailor the recipients/units scoping or add a mapping file now, tell me the exact rules and I’ll update the code accordingly.
