@@ -1,0 +1,54 @@
+name: Build MSI Installer
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # allows manual trigger
+
+jobs:
+  build-msi:
+    name: Build Engage Rules Generator (MSI)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Verify Java
+        run: java -version
+
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v4
+        with:
+          maven-version: 3.9.6
+
+      - name: Build with Maven
+        run: mvn -B clean package
+
+      - name: Package as MSI using jpackage
+        run: >
+          jpackage
+          --type msi
+          --name "Engage Rules Generator"
+          --input target
+          --main-jar engage-rules-generator-1.1.0.jar
+          --main-class com.example.exceljson.Main
+          --icon src/main/resources/icon.ico
+          --app-version 1.1
+          --win-menu
+          --win-shortcut
+          --description "Engage Rules Generator – Build JSON configuration for Vocera Engage"
+          --vendor "Your Organization"
+
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: engage-rules-generator-msi
+          path: |
+            Engage Rules Generator-1.1.msi
