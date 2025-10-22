@@ -1,0 +1,34 @@
+outputVersion: "1.0"
+attachAllUnitsIfNoMatch: true
+
+sheets:
+  unitBreakdown: "Unit Breakdown"
+  nurseCall: "Nurse Call"
+  patientMonitoring: "Patient Monitoring"
+
+aliases:
+  CFG_GROUP: ["configuration group", "config group", "workflow group"]
+  ALERT_NAME_COMMON: ["common alert or alarm name", "alarm name"]
+  SENDING_NAME: ["sending system alert name", "sending system alarm name"]
+  PRIORITY: ["priority"]
+  DEVICE_A: ["device - a", "device", "device a"]
+  RINGTONE_A: ["ringtone device - a", "ringtone"]
+  T1: ["time to 1st recipient", "time to first recipient", "delay to 1st"]
+  R1: ["1st recipient", "first recipient"]
+  T2: ["time to 2nd recipient", "time to second recipient", "delay to 2nd"]
+  R2: ["2nd recipient", "second recipient"]
+  RESPONSE: ["response options"]
+  EMDAN: ["emdan compliant", "emdan compliant?"]
+  COMMENTS: ["comments"]
+  FACILITY: ["facility"]
+  UNIT_NAME: ["common unit name", "unit", "unit name"]
+  # 🔽 New aliases for group mapping (columns Q & R)
+  UNIT_GROUPS:
+    - "Workflow Configuration Groups"   # Column Q – Nurse Call
+    - "Clinical Configuration Groups"   # Column R – Patient Monitoring
+    - "Configuration Group"
+    - "Workflow Group"
+
+recipientParsing:
+  # Anything starting with VAssign: or containing [Room] = functionalRole
+  functionalRoleRegex: "^(?i)(vassign:.*|.*\\[room\\].*)$"
