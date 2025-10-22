@@ -309,8 +309,7 @@ public class ExcelParser {
 
     private static List<String> splitList(String s) {
         if (s == null) return List.of();
-        return Arrays.stream(s.split("[;,
-]"))
+        return Arrays.stream(s.split("[;,]"))
                 .map(String::trim)
                 .filter(x -> !x.isEmpty())
                 .collect(Collectors.toList());
@@ -359,7 +358,6 @@ public class ExcelParser {
         for (String v : vals) if (v != null && !v.isBlank()) return v; return null;
     }
 }
-```java
 package com.example.exceljson;
 
 import com.example.exceljson.model.*;
