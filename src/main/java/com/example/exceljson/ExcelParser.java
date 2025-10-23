@@ -308,12 +308,12 @@ public class ExcelParser {
     }
 
     private static List<String> splitList(String s) {
-        if (s == null) return List.of();
-        return Arrays.stream(s.split("[;,]"))
-                .map(String::trim)
-                .filter(x -> !x.isEmpty())
-                .collect(Collectors.toList());
-    }
+    if (s == null) return List.of();
+    return Arrays.stream(s.split("[;,\\n]"))
+            .map(String::trim)
+            .filter(x -> !x.isEmpty())
+            .collect(Collectors.toList());
+}
 
     private Map<String, List<Map<String,String>>> indexUnitsByGroup(List<Map<String,String>> units) {
         Map<String, List<Map<String,String>>> map = new LinkedHashMap<>();
