@@ -364,3 +364,13 @@ public class ExcelParser {
         return null;
     }
 }
+
+// Ensure a list exists in the map and add an item only if it's not already there
+@SuppressWarnings("unchecked")
+private static void addToSetList(Map<String, Object> map, String key, String value) {
+    if (value == null || value.isBlank()) return;
+    List<Object> list = (List<Object>) map.computeIfAbsent(key, k -> new ArrayList<>());
+    if (!list.contains(value)) {
+        list.add(value);
+    }
+}
