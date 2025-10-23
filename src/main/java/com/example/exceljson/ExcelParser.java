@@ -362,7 +362,6 @@ public class ExcelParser {
     private static String coalesce(String... vals) {
         for (String v : vals) if (v != null && !v.isBlank()) return v;
         return null;
-    }
 }
 
 // Ensure a list exists in the map and add an item only if it's not already there
@@ -373,4 +372,5 @@ private static void addToSetList(Map<String, Object> map, String key, String val
     if (!list.contains(value)) {
         list.add(value);
     }
+}
 }
