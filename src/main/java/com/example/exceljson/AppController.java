@@ -1,5 +1,4 @@
 package com.example.exceljson;
-showError("Refresh failed", ex);
 }
 }
 });
