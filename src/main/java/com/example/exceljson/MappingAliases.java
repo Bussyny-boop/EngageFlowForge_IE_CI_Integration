@@ -28,38 +28,3 @@ public Set<String> UNIT_GROUPS = set("configuration group", "config group", "app
 
 public static Set<String> set(String... vals) { return new HashSet<>(Arrays.asList(vals)); }
 }
-```java
-package com.example.exceljson;
-
-
-import java.util.*;
-
-
-public class MappingAliases {
-// Define normalized header aliases per logical field
-public static final Set<String> CFG_GROUP = set("configuration group", "config group");
-public static final Set<String> ALERT_NAME_COMMON = set("common alert or alarm name", "alarm name", "common alert name");
-public static final Set<String> SENDING_NAME = set("sending system alert name", "sending system alarm name");
-public static final Set<String> PRIORITY = set("priority");
-public static final Set<String> DEVICE_A = set("device a", "device", "device a ");
-public static final Set<String> RINGTONE_A = set("ringtone device a", "ringtone");
-
-
-public static final Set<String> T1 = set("time to 1st recipient", "time to first recipient", "delay to 1st");
-public static final Set<String> R1 = set("1st recipient", "first recipient");
-public static final Set<String> T2 = set("time to 2nd recipient", "time to second recipient", "delay to 2nd");
-public static final Set<String> R2 = set("2nd recipient", "second recipient");
-
-
-public static final Set<String> RESPONSE = set("response options", "response option");
-public static final Set<String> EMDAN = set("emdan compliant", "emdan compliant?");
-public static final Set<String> COMMENTS = set("comments", "comment");
-
-
-// Unit Breakdown
-public static final Set<String> FACILITY = set("facility");
-public static final Set<String> UNIT_NAME = set("common unit name", "unit", "unit name");
-
-
-public static Set<String> set(String... vals) { return new HashSet<>(Arrays.asList(vals)); }
-}
