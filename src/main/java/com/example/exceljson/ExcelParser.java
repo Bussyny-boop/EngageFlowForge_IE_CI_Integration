@@ -183,7 +183,7 @@ public class ExcelParser {
             if (name == null || name.isBlank()) continue;
             Map<String,Object> def = new LinkedHashMap<>();
             def.put("name", name);
-            def.put("type", "PatientMonitoring");
+            def.put("type", "Clinicals");
             List<Map<String,String>> values = new ArrayList<>();
             if (send != null && !send.isBlank()) values.add(Map.of("value", send)); // [CHANGE 3]
             def.put("values", values);
