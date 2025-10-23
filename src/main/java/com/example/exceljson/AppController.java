@@ -78,30 +78,27 @@ public class AppController {
         });
 
         // Open Config file
-        btnOpenCfg.setOnAction(e -> {
-            FileChooser fc = new FileChooser();
-            fc.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Config Files (YAML/JSON)", "*.yml", "*.yaml", "*.json")
-            );
-            File file = fc.showOpenDialog(null);
-            if (file != null) {
-                currentConfig = file;
-                try {
-                    ObjectMapper mapper;
-                    if (file.getName().toLowerCase().endsWith(".json")) {
-                        mapper = new ObjectMapper();
-                    } else {
-                        mapper = new ObjectMapper(new YAMLFactory());
-                    }
-                    String text = Files.readString(file.toPath());
-                    configPreview.setText(text);
-                    config = mapper.readValue(text, Config.class);
-                } catch (Exception ex) {
-                    configPreview.setText("Error reading config: " + ex.getMessage());
-                    ex.printStackTrace();
-                }
-            }
-        });
+btnOpenCfg.setOnAction(e -> {
+    FileChooser fc = new FileChooser();
+    fc.getExtensionFilters().add(
+        new FileChooser.ExtensionFilter("Config Files (YAML/JSON)", "*.yml", "*.yaml", "*.json")
+    );
+    File file = fc.showOpenDialog(null);
+    if (file != null) {
+        currentConfig = file;
+        try {
+            ObjectMapper mapper = file.getName().toLowerCase().endsWith(".json")
+                    ? new ObjectMapper()
+                    : new ObjectMapper(new YAMLFactory());
+            String text = Files.readString(file.toPath());
+            configPreview.setText(text);
+            config = mapper.readValue(text, Config.class);
+        } catch (Exception ex) {
+            configPreview.setText("Error reading config: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+});
 
         // Refresh preview (reload Excel)
         btnRefresh.setOnAction(e -> reload());
