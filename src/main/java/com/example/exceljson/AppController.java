@@ -1,72 +1,88 @@
 package com.example.exceljson;
-}
-}
-});
 
 
-btnExport.setOnAction(e -> {
-if (parser == null) return;
-try {
-Map<String, Object> rootJson = parser.buildJson();
-ObjectWriter ow = new ObjectMapper().writerWithDefaultPrettyPrinter();
-String jsonText = ow.writeValueAsString(rootJson);
+import com.example.exceljson.util.FXTableUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 
 
+import java.io.File;
+import java.nio.file.Files;
+import java.util.*;
+
+
+public class AppController {
+private final TextArea jsonPreview = new TextArea();
+private final TextArea configPreview = new TextArea();
+private final TableView<Map<String, String>> unitTable = new TableView<>();
+private final TableView<Map<String, String>> nurseCallTable = new TableView<>();
+private final TableView<Map<String, String>> patientMonTable = new TableView<>();
+
+
+private File currentExcel;
+private File currentConfig;
+private ExcelParser parser;
+private Config config = Config.defaultConfig();
+
+
+public BorderPane buildUI() {
+BorderPane root = new BorderPane();
+root.setPadding(new Insets(10));
+
+
+// Top bar
+HBox top = new HBox(10);
+Button btnOpen = new Button("Open Excel…");
+Button btnOpenCfg = new Button("Open Config…");
+Button btnExport = new Button("Export JSON…");
+Button btnRefresh = new Button("Refresh Preview");
+btnExport.setDisable(true);
+top.getChildren().addAll(btnOpen, btnOpenCfg, btnRefresh, btnExport);
+root.setTop(top);
+
+
+// TabPane center
+TabPane tabs = new TabPane();
+Tab tabUnits = new Tab("Unit Breakdown", unitTable);
+Tab tabNC = new Tab("Nurse Call", nurseCallTable);
+Tab tabPM = new Tab("Patient Monitoring", patientMonTable);
+Tab tabCfg = new Tab("Config", configPreview);
+Tab tabJSON = new Tab("JSON Preview", jsonPreview);
+for (Tab t : List.of(tabUnits, tabNC, tabPM, tabCfg, tabJSON)) t.setClosable(false);
+tabs.getTabs().addAll(tabUnits, tabNC, tabPM, tabCfg, tabJSON);
+root.setCenter(tabs);
+
+
+jsonPreview.setWrapText(true);
+jsonPreview.setEditable(false);
+jsonPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace;");
+configPreview.setWrapText(true);
+configPreview.setEditable(false);
+configPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace;");
+
+
+btnOpen.setOnAction(e -> {
 FileChooser fc = new FileChooser();
-fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-fc.setInitialFileName("export.json");
-File out = fc.showSaveDialog(null);
-if (out != null) {
-Files.writeString(out.toPath(), jsonText);
-showInfo("Saved", "JSON exported to:\n" + out.getAbsolutePath());
-}
-} catch (Exception ex) {
-showError("Export failed", ex);
+fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbooks", "*.xlsx", "*.xls"));
+File file = fc.showOpenDialog(null);
+if (file != null) {
+currentExcel = file;
+reload();
+btnExport.setDisable(false);
 }
 });
 
 
-return root;
-}
-
-
-private void populateTables() {
-// Unit Breakdown
-List<Map<String, String>> units = parser.getUnitBreakdownRows();
-FXTableUtils.populate(unitTable, units);
-
-
-// Nurse Call
-List<Map<String, String>> nc = parser.getNurseCallRows();
-FXTableUtils.populate(nurseCallTable, nc);
-
-
-// Patient Monitoring
-List<Map<String, String>> pm = parser.getPatientMonitoringRows();
-FXTableUtils.populate(patientMonTable, pm);
-}
-
-
-private void buildAndPreviewJSON() throws Exception {
-Map<String, Object> rootJson = parser.buildJson();
-ObjectWriter ow = new ObjectMapper().writerWithDefaultPrettyPrinter();
-jsonPreview.setText(ow.writeValueAsString(rootJson));
-}
-
-
-private void showError(String title, Exception ex) {
-ex.printStackTrace();
-Alert a = new Alert(Alert.AlertType.ERROR);
-a.setTitle(title);
-a.setHeaderText(title);
-a.setContentText(ex.getMessage());
-a.showAndWait();
-}
-private void showInfo(String title, String msg) {
-Alert a = new Alert(Alert.AlertType.INFORMATION);
-a.setTitle(title);
-a.setHeaderText(title);
-a.setContentText(msg);
-a.showAndWait();
-}
+btnOpenCfg.setOnAction(e -> {
+FileChooser fc = new FileChooser();
+fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Config Files (YAML/JSON)", "*.yml", "*.yaml", "*.json"));
+File file = fc.showOpenDialog(null);
+if (file != null) {
+currentConfig = file;
+try {
 }
