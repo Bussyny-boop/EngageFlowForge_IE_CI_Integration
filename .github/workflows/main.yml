@@ -39,8 +39,7 @@ jobs:
 
       # ✅ Package as MSI with bundled runtime
       - name: Package as MSI using jpackage
-        run: cmd /c "jpackage --type msi --name \"Engage Rules Generator\" --input target --main-jar engage-rules-generator-1.1.0.jar --main-class com.example.exceljson.Main --runtime-image runtime --app-version 1.1 --win-menu --win-shortcut --description \"Engage Rules Generator – Build JSON configuration for Vocera Engage\" --vendor \"Your Organization\""
-
+        run: cmd /c "jpackage --type msi --name \"Engage Rules Generator\" --input target --main-jar engage-rules-generator-1.1.0.jar --main-class com.example.exceljson.Main --runtime-image runtime --app-version 1.1 --win-menu --win-shortcut --description \"Engage Rules Generator – Build JSON configuration for Vocera Engage\" --vendor Your_Organization"
       # ✅ Upload MSI artifact to GitHub Actions
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
