@@ -341,7 +341,7 @@ public class ExcelParser {
         }
         return out;
     }
-
+    
     private static Integer parseIntSafe(String s) {
         try {
             if (s == null) return 0;
@@ -350,10 +350,15 @@ public class ExcelParser {
             String digits = s.replaceAll("[^0-9]", "");
             if (digits.isEmpty()) return 0;
             return Integer.parseInt(digits);
-        } catch (Exception e) { return 0; }
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
-private static String nvl(String s, String d) { return (s == null || s.isBlank()) ? d : s; }
+    private static String nvl(String s, String d) {
+        return (s == null || s.isBlank()) ? d : s;
+    }
+
     private static String coalesce(String... vals) {
         for (String v : vals) if (v != null && !v.isBlank()) return v;
         return null;
