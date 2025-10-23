@@ -1,6 +1,6 @@
 package com.example.exceljson;
 
-import jafx.application.Application;
+import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
