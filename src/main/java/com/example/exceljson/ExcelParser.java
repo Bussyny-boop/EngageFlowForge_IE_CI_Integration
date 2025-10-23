@@ -353,8 +353,9 @@ public class ExcelParser {
         } catch (Exception e) { return 0; }
     }
 
-    private static String nvl(String s, String d) { return (s == null || s.isBlank()) ? d : s; }
+private static String nvl(String s, String d) { return (s == null || s.isBlank()) ? d : s; }
     private static String coalesce(String... vals) {
-        for (String v : vals) if (v != null && !v.isBlank()) return v; return null;
+        for (String v : vals) if (v != null && !v.isBlank()) return v;
+        return null;
     }
 }
