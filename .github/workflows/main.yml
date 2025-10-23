@@ -14,11 +14,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      # ✅ Use Liberica JDK 21 with JavaFX built in
+      - name: Set up Liberica Full JDK (includes JavaFX)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'liberica'
           java-version: '21'
+          java-package: 'jdk+fx'
 
       - name: Verify Java
         run: java -version
@@ -31,27 +33,15 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean package
 
+      # ✅ Create a custom runtime image including JavaFX modules
       - name: Create custom Java runtime (with JavaFX)
-        run: cmd /c "jlink --add-modules java.base,java.desktop,java.logging,java.sql,javafx.controls,javafx.fxml,javafx.graphics --output runtime"
+        run: cmd /c "jlink --add-modules java.base,java.desktop,java.logging,java.sql,javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web --output runtime"
 
+      # ✅ Package as MSI with bundled runtime
       - name: Package as MSI using jpackage
         run: cmd /c "jpackage --type msi --name \"Engage Rules Generator\" --input target --main-jar engage-rules-generator-1.1.0.jar --main-class com.example.exceljson.Main --runtime-image runtime --app-version 1.1 --win-menu --win-shortcut --description \"Engage Rules Generator – Build JSON configuration for Vocera Engage\" --vendor \"Your Organization\""
 
-      - name: Package as MSI using jpackage
-        run: |
-          jpackage ^
-          --type msi ^
-          --name "Engage Rules Generator" ^
-          --input target ^
-          --main-jar engage-rules-generator-1.1.0.jar ^
-          --main-class com.example.exceljson.Main ^
-          --runtime-image runtime ^
-          --app-version 1.1 ^
-          --win-menu ^
-          --win-shortcut ^
-          --description "Engage Rules Generator – Build JSON configuration for Vocera Engage" ^
-          --vendor "Your Organization"
-
+      # ✅ Upload MSI artifact to GitHub Actions
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
         with:
