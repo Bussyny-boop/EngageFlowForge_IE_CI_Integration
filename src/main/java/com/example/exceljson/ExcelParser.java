@@ -10,12 +10,13 @@ import java.util.stream.Collectors;
 import static com.example.exceljson.HeaderFinder.*;
 
 public class ExcelParser {
+
     private final Config config;
     private Workbook wb;
 
-    private List<Map<String,String>> unitRows = new ArrayList<>();
-    private List<Map<String,String>> nurseCallRows = new ArrayList<>();
-    private List<Map<String,String>> patientMonRows = new ArrayList<>();
+    private final List<Map<String,String>> unitRows = new ArrayList<>();
+    private final List<Map<String,String>> nurseCallRows = new ArrayList<>();
+    private final List<Map<String,String>> patientMonRows = new ArrayList<>();
 
     public ExcelParser(Config config) { this.config = config; }
 
@@ -28,12 +29,12 @@ public class ExcelParser {
         parsePatientMonitoring();
     }
 
-    // ---- Public getters ----
+    // ---- Public getters (for GUI preview) ----
     public List<Map<String,String>> getUnitBreakdownRows(){ return unitRows; }
     public List<Map<String,String>> getNurseCallRows(){ return nurseCallRows; }
     public List<Map<String,String>> getPatientMonitoringRows(){ return patientMonRows; }
 
-    // ---------------------- PARSING ----------------------
+    // -------------------- PARSING --------------------
     private Map<String,Integer> headerIndex(Row header) {
         Map<String,Integer> map = new LinkedHashMap<>();
         for (int c = 0; c < header.getLastCellNum(); c++) {
@@ -54,12 +55,8 @@ public class ExcelParser {
     private void parseUnitBreakdown() {
         Sheet sheet = wb.getSheet(config.sheets.unitBreakdown);
         if (sheet == null) return;
-        Set<String> expected = new HashSet<>();
-        expected.addAll(config.aliases.FACILITY);
-        expected.addAll(config.aliases.UNIT_NAME);
-        expected.addAll(config.aliases.UNIT_GROUPS);
-
-        int headerRowIdx = HeaderFinder.findHeaderRow(sheet, expected, 30);
+        int headerRowIdx = HeaderFinder.findHeaderRow(sheet,
+                new HashSet<>(Arrays.asList("facility","common unit name","groups")), 30);
         if (headerRowIdx < 0) return;
         Row header = sheet.getRow(headerRowIdx);
         Map<String,Integer> hmap = headerIndex(header);
@@ -67,9 +64,9 @@ public class ExcelParser {
         for (int r = headerRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
             if (row == null) continue;
-            String facility = get(row, hmap, config.aliases.FACILITY);
-            String unit = get(row, hmap, config.aliases.UNIT_NAME);
-            String groups = get(row, hmap, config.aliases.UNIT_GROUPS);
+            String facility = getString(row, hmap.getOrDefault("facility",-1));
+            String unit = getString(row, hmap.getOrDefault("common unit name",-1));
+            String groups = getString(row, hmap.getOrDefault("groups",-1));
             if (facility.isBlank() && unit.isBlank() && groups.isBlank()) continue;
             Map<String,String> map = new LinkedHashMap<>();
             map.put("Facility", facility);
@@ -79,16 +76,14 @@ public class ExcelParser {
         }
     }
 
-    private void parseNurseCall() {
-        Sheet sheet = wb.getSheet(config.sheets.nurseCall);
+    private void parseNurseCall() { parseAlertSheet(wb.getSheet(config.sheets.nurseCall), nurseCallRows); }
+    private void parsePatientMonitoring() { parseAlertSheet(wb.getSheet(config.sheets.patientMonitoring), patientMonRows); }
+
+    /** shared parser for both alert sheets */
+    private void parseAlertSheet(Sheet sheet, List<Map<String,String>> out){
         if (sheet == null) return;
-        Set<String> expected = new HashSet<>() {{
-            addAll(config.aliases.CFG_GROUP);
-            addAll(config.aliases.ALERT_NAME_COMMON);
-            addAll(config.aliases.SENDING_NAME);
-            addAll(config.aliases.PRIORITY);
-        }};
-        int headerRowIdx = HeaderFinder.findHeaderRow(sheet, expected, 40);
+        int headerRowIdx = HeaderFinder.findHeaderRow(sheet,
+                new HashSet<>(Arrays.asList("configuration group","priority","device a","response options")), 40);
         if (headerRowIdx < 0) return;
         Row header = sheet.getRow(headerRowIdx);
         Map<String,Integer> hmap = headerIndex(header);
@@ -96,136 +91,240 @@ public class ExcelParser {
         for (int r = headerRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
             if (row == null) continue;
-            String cfg = get(row, hmap, config.aliases.CFG_GROUP);
-            String alert = get(row, hmap, config.aliases.ALERT_NAME_COMMON);
-            String send = get(row, hmap, config.aliases.SENDING_NAME);
-            if (cfg.isBlank() && alert.isBlank() && send.isBlank()) continue;
+            String cfg = getString(row, hmap.getOrDefault("configuration group",-1));
+            String alert = getString(row, hmap.getOrDefault("common alert or alarm name",-1));
+            if (cfg.isBlank() && alert.isBlank()) continue;
 
             Map<String,String> m = new LinkedHashMap<>();
             m.put("Configuration Group", cfg);
             m.put("Common Alert or Alarm Name", alert);
-            m.put("Sending System Alert Name", send);
-            m.put("Priority", mapPriority(get(row, hmap, config.aliases.PRIORITY))); // <-- mapped
-            m.put("Device - A", get(row, hmap, config.aliases.DEVICE_A));
-            m.put("Ringtone Device - A", get(row, hmap, config.aliases.RINGTONE_A));
-            m.put("Time to 1st Recipient", get(row, hmap, config.aliases.T1));
-            m.put("1st Recipient", get(row, hmap, config.aliases.R1));
-            m.put("Time to 2nd Recipient", get(row, hmap, config.aliases.T2));
-            m.put("2nd Recipient", get(row, hmap, config.aliases.R2));
-            m.put("Response Options", get(row, hmap, config.aliases.RESPONSE));
-            nurseCallRows.add(m);
+            m.put("Priority", mapPriority(getString(row, hmap.getOrDefault("priority",-1))));
+            m.put("Device - A", getString(row, hmap.getOrDefault("device a",-1)));
+            m.put("Ringtone Device - A", getString(row, hmap.getOrDefault("ringtone device a",-1)));
+            m.put("Response Options", getString(row, hmap.getOrDefault("response options",-1)));
+
+            // up to 5 recipients
+            for (int i = 1; i <= 5; i++) {
+                m.put("Time to " + i + getOrdinal(i) + " Recipient",
+                        getString(row, hmap.getOrDefault(("time to " + i + getOrdinal(i) + " recipient").toLowerCase(), -1)));
+                m.put(i + getOrdinal(i) + " Recipient",
+                        getString(row, hmap.getOrDefault((i + getOrdinal(i) + " recipient").toLowerCase(), -1)));
+            }
+            out.add(m);
         }
     }
 
-    private void parsePatientMonitoring() {
-        Sheet sheet = wb.getSheet(config.sheets.patientMonitoring);
-        if (sheet == null) return;
-        Set<String> expected = new HashSet<>() {{
-            addAll(config.aliases.CFG_GROUP);
-            addAll(config.aliases.ALERT_NAME_COMMON);
-            addAll(config.aliases.SENDING_NAME);
-            addAll(config.aliases.PRIORITY);
-        }};
-        int headerRowIdx = HeaderFinder.findHeaderRow(sheet, expected, 40);
-        if (headerRowIdx < 0) return;
-        Row header = sheet.getRow(headerRowIdx);
-        Map<String,Integer> hmap = headerIndex(header);
-
-        for (int r = headerRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
-            Row row = sheet.getRow(r);
-            if (row == null) continue;
-            String cfg = get(row, hmap, config.aliases.CFG_GROUP);
-            String alert = get(row, hmap, config.aliases.ALERT_NAME_COMMON);
-            String send = get(row, hmap, config.aliases.SENDING_NAME);
-            if (cfg.isBlank() && alert.isBlank() && send.isBlank()) continue;
-
-            Map<String,String> m = new LinkedHashMap<>();
-            m.put("Configuration Group", cfg);
-            m.put("Alarm Name", alert);
-            m.put("Sending System Alarm Name", send);
-            m.put("Priority", mapPriority(get(row, hmap, config.aliases.PRIORITY))); // <-- mapped
-            m.put("Device - A", get(row, hmap, config.aliases.DEVICE_A));
-            m.put("1st Recipient", get(row, hmap, config.aliases.R1));
-            m.put("2nd Recipient", get(row, hmap, config.aliases.R2));
-            m.put("Response Options", get(row, hmap, config.aliases.RESPONSE));
-            patientMonRows.add(m);
-        }
+    private static String getOrdinal(int n){
+        switch(n){case 1:return "st";case 2:return "nd";case 3:return "rd";default:return "th";}
     }
 
-    // ---------------------- BUILD JSON ----------------------
-    public Map<String, Object> buildJson() {
-        Map<String, Object> root = new LinkedHashMap<>();
-        root.put("version", "1.1.0");
-
-        List<Map<String,Object>> definitions = new ArrayList<>();
-        for (var r : nurseCallRows) {
-            String name = coalesce(r.get("Common Alert or Alarm Name"), r.get("Alarm Name"));
-            if (name == null || name.isBlank()) continue;
-            definitions.add(Map.of("name", name, "type", "NurseCalls"));
-        }
-        for (var r : patientMonRows) {
-            String name = coalesce(r.get("Alarm Name"), r.get("Common Alert or Alarm Name"));
-            if (name == null || name.isBlank()) continue;
-            definitions.add(Map.of("name", name, "type", "Clinicals"));
-        }
-        root.put("alarmAlertDefinitions", definitions);
-
-        // Group by identical flow config
-        List<String> groupKeys = List.of("Configuration Group","Priority","Device - A",
-                "1st Recipient","2nd Recipient","Response Options");
-        Map<String,List<Map<String,String>>> grouped = new LinkedHashMap<>();
-        grouped.putAll(groupRowsForFlows(nurseCallRows, groupKeys));
-        grouped.putAll(groupRowsForFlows(patientMonRows, groupKeys));
+    // -------------------- BUILD JSON --------------------
+    public Map<String,Object> buildJson(){
+        Map<String,Object> root = new LinkedHashMap<>();
+        root.put("version","1.1.0");
 
         List<Map<String,Object>> flows = new ArrayList<>();
-
-        for (var entry : grouped.entrySet()) {
-            Map<String,String> sample = entry.getValue().get(0);
-            boolean isNurse = nurseCallRows.contains(sample);
-            String type = isNurse ? "NURSECALL" : "CLINICALS";
-
-            Map<String,Object> flow = baseFlow("temp", nvl(sample.get("Priority"),"normal"));
-            for (var r : entry.getValue()) addToSetList(flow,"alarmsAlerts",
-                    nvl(r.get("Common Alert or Alarm Name"), r.get("Alarm Name")));
-
-            addInterfaces(flow, sample.get("Device - A"));
-            addRecipients(flow, sample.get("Time to 1st Recipient"), sample.get("1st Recipient"), 1);
-            addRecipients(flow, sample.get("Time to 2nd Recipient"), sample.get("2nd Recipient"), 2);
-
-            String alarms = String.join(" | ", (List<String>)flow.get("alarmsAlerts"));
-            String cfg = nvl(sample.get("Configuration Group"), "");
-            String unit = unitRows.isEmpty() ? "" : unitRows.get(0).getOrDefault("Common Unit Name","");
-            String fac = unitRows.isEmpty() ? "" : unitRows.get(0).getOrDefault("Facility","");
-            String name = String.format("SEND %s | %s | %s | %s | %s", type, alarms, cfg, unit, fac).trim();
-            flow.put("name", name);
-            flow.put("status", "Active");
-
-            List<Map<String,Object>> dests = (List<Map<String,Object>>)flow.get("destinations");
-            if (!dests.isEmpty()) {
-                List<Map<String,Object>> roles = (List<Map<String,Object>>)dests.get(0).get("functionalRoles");
-                addResponseParams(flow, sample.get("Response Options"), roles, sample.get("Priority"));
-            }
-
-            // Skip empty phantom flows (no alarms)
-            if (!((List<?>)flow.get("alarmsAlerts")).isEmpty())
-                flows.add(flow);
-        }
+        flows.addAll(buildFlowsForType("NURSECALL", nurseCallRows));
+        flows.addAll(buildFlowsForType("CLINICAL", patientMonRows));
 
         root.put("deliveryFlows", flows);
         return root;
     }
 
-    // ---------------------- HELPERS ----------------------
-    private String mapPriority(String p) {
-        if (p == null) return "normal";
-        String v = p.trim().toLowerCase();
-        if (v.contains("low(edge)")) return "normal";
-        if (v.contains("medium(edge)")) return "high";
-        if (v.contains("high(edge)")) return "urgent";
+    private List<Map<String,Object>> buildFlowsForType(String type, List<Map<String,String>> rows){
+        List<String> groupKeys = List.of("Configuration Group","Priority","Device - A","Response Options");
+        Map<String,List<Map<String,String>>> grouped = groupRowsForFlows(rows, groupKeys);
+        List<Map<String,Object>> out = new ArrayList<>();
+
+        for (var entry : grouped.entrySet()){
+            Map<String,String> sample = entry.getValue().get(0);
+            String cfg = nvl(sample.get("Configuration Group"),"General");
+            String priority = nvl(sample.get("Priority"),"normal");
+            String ringtone = nvl(sample.get("Ringtone Device - A"),"");
+
+            Map<String,Object> flow = baseFlow(cfg, priority);
+
+            for (var r : entry.getValue()){
+                String alert = nvl(r.get("Common Alert or Alarm Name"),"");
+                addToSetList(flow,"alarmsAlerts",alert);
+            }
+
+            addInterfaces(flow, sample.get("Device - A"));
+            addRecipients(flow, sample); // handles up to 5
+
+            String alarms = String.join(" | ", (List<String>)flow.get("alarmsAlerts"));
+            String unitsConcat = collectUnitsForCfg(cfg);
+            String facility = findFacilityForCfg(cfg);
+            String name = String.format("SEND %s | %s | %s | %s | %s | %s",
+                    type, priority.toUpperCase(), alarms, cfg, unitsConcat, facility);
+            flow.put("name", name);
+            flow.put("status","Active");
+
+            // parameters per type
+            if(type.equals("NURSECALL"))
+                addNurseCallParams(flow, sample, ringtone, priority);
+            else
+                addClinicalParams(flow, sample, ringtone, priority);
+
+            // attach all matching units
+            flow.put("units", findUnits(cfg));
+            out.add(flow);
+        }
+        return out;
+    }
+
+  // -------------------- RECIPIENTS --------------------
+    /** Handles up to 5 recipient levels (1–5) */
+    @SuppressWarnings("unchecked")
+    private void addRecipients(Map<String,Object> flow, Map<String,String> row){
+        List<Map<String,Object>> dests = (List<Map<String,Object>>) flow.get("destinations");
+
+        for (int i = 1; i <= 5; i++){
+            String delay = row.getOrDefault("Time to " + i + getOrdinal(i) + " Recipient", "");
+            String rec   = row.getOrDefault(i + getOrdinal(i) + " Recipient", "");
+            if ((rec == null || rec.isBlank()) && (delay == null || delay.isBlank())) continue;
+
+            List<Map<String,Object>> roles = new ArrayList<>();
+            List<Map<String,Object>> groups = new ArrayList<>();
+
+            for (String token : splitList(rec)){
+                String t = token.trim();
+                if (t.isEmpty()) continue;
+                if (t.toLowerCase().startsWith("vassign")){
+                    // Functional role recipient
+                    String name = t.replaceFirst("(?i)vassign:\\s*\\[room\\]\\s*", "").trim();
+                    String fac = findFacilityForCfg(row.getOrDefault("Configuration Group",""));
+                    roles.add(Map.of("facilityName", fac, "name", name));
+                } else if (t.toLowerCase().startsWith("vgroup")){
+                    // Group recipient
+                    String name = t.replaceFirst("(?i)vgroup:\\s*", "").trim();
+                    String fac = findFacilityForCfg(row.getOrDefault("Configuration Group",""));
+                    groups.add(Map.of("facilityName", fac, "name", name));
+                } else {
+                    // Plain text group
+                    String fac = findFacilityForCfg(row.getOrDefault("Configuration Group",""));
+                    groups.add(Map.of("facilityName", fac, "name", t));
+                }
+            }
+
+            Map<String,Object> dest = new LinkedHashMap<>();
+            dest.put("order", i);
+            dest.put("delayTime", parseIntSafe(delay));
+            dest.put("destinationType", "Normal");
+            dest.put("users", new ArrayList<>());
+            dest.put("groups", groups);
+            dest.put("functionalRoles", roles);
+
+            if (!roles.isEmpty()){
+                dest.put("presenceConfig","user_and_device");
+                dest.put("recipientType","functional_role");
+            } else {
+                dest.put("presenceConfig","device");
+                dest.put("recipientType","group");
+            }
+            dests.add(dest);
+        }
+    }
+
+    // -------------------- PARAMETER BLOCKS --------------------
+    /** Builds Engage-style parameters for NurseCall flows */
+    @SuppressWarnings("unchecked")
+    private void addNurseCallParams(Map<String,Object> flow, Map<String,String> row,
+                                    String ringtone, String priority){
+        List<Map<String,Object>> p = (List<Map<String,Object>>) flow.get("parameterAttributes");
+        String resp = nvl(row.get("Response Options"),"").toLowerCase();
+
+        // core Engage params
+        p.add(Map.of("name","destinationName","value","\"Group\""));
+        if(!ringtone.isBlank()) p.add(Map.of("name","alertSound","value","\"" + ringtone + "\""));
+        p.add(Map.of("name","popup","value","true"));
+        p.add(Map.of("name","breakThrough","value",
+                priority.equalsIgnoreCase("urgent") ? "\"voceraAndDevice\"" : "\"none\""));
+        p.add(Map.of("name","enunciate","value","true"));
+
+        // accept/decline logic
+        if(resp.contains("accept")) {
+            p.add(Map.of("name","accept","value","\"Accepted\""));
+            p.add(Map.of("name","acceptBadgePhrases","value","[\"Accept\"]"));
+        }
+        if(resp.contains("call back"))
+            p.add(Map.of("name","acceptAndCall","value","\"Call Back\""));
+        if(resp.contains("escalate")) {
+            p.add(Map.of("name","decline","value","\"Decline Primary\""));
+            p.add(Map.of("name","declineBadgePhrases","value","[\"Escalate\"]"));
+        }
+
+        // message metadata
+        p.add(Map.of("name","message","value",
+                "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""));
+        p.add(Map.of("name","patientMRN","value","\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""));
+        p.add(Map.of("name","placeUid","value","\"#{bed.uid}\""));
+        p.add(Map.of("name","patientName","value","\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""));
+        p.add(Map.of("name","eventIdentification","value","\"NurseCalls:#{id}\""));
+        p.add(Map.of("name","respondingLine","value","\"responses.line.number\""));
+        p.add(Map.of("name","respondingUser","value","\"responses.usr.login\""));
+        p.add(Map.of("name","responsePath","value","\"responses.action\""));
+
+        // response type rules
+        if(resp.contains("no response"))
+            p.add(Map.of("name","responseType","value","\"None\""));
+        else
+            p.add(Map.of("name","responseType","value","\"Accept/Decline\""));
+
+        // standard trailing params
+        p.add(Map.of("name","shortMessage","value","\"#{alert_type} #{bed.room.name}\""));
+        p.add(Map.of("name","subject","value","\"#{alert_type} #{bed.room.name}\""));
+        p.add(Map.of("name","ttl","value","10"));
+        p.add(Map.of("name","retractRules","value","[\"ttlHasElapsed\"]"));
+        p.add(Map.of("name","vibrate","value","\"short\""));
+    }
+
+    /** Builds Engage-style parameters for Clinical flows */
+    @SuppressWarnings("unchecked")
+    private void addClinicalParams(Map<String,Object> flow, Map<String,String> row,
+                                   String ringtone, String priority){
+        List<Map<String,Object>> p = (List<Map<String,Object>>) flow.get("parameterAttributes");
+
+        // standard parameters
+        p.add(Map.of("destinationOrder",0,"name","destinationName","value","\"Nurse Alert\""));
+        p.add(Map.of("destinationOrder",1,"name","destinationName","value","\"NoCaregivers\""));
+        p.add(Map.of("destinationOrder",1,"name","message","value",
+                "\"#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room.\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number} \\nAlarm Time: #{alarm_time.as_time}\""));
+        p.add(Map.of("destinationOrder",1,"name","shortMessage","value",
+                "\"No Caregivers Assigned for #{alert_type} in #{bed.room.name} #{bed.bed_number}\""));
+        p.add(Map.of("destinationOrder",1,"name","subject","value","\"Alert Without Caregivers\""));
+
+        if(!ringtone.isBlank()) p.add(Map.of("name","alertSound","value","\"" + ringtone + "\""));
+        p.add(Map.of("name","responseAllowed","value","false"));
+        p.add(Map.of("name","breakThrough","value",
+                priority.equalsIgnoreCase("urgent") ? "\"voceraAndDevice\"" : "\"none\""));
+        p.add(Map.of("name","enunciate","value","true"));
+        p.add(Map.of("name","message","value",
+                "\"Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}\""));
+        p.add(Map.of("name","patientMRN","value","\"#{clinical_patient.mrn}:#{clinical_patient.visit_number}\""));
+        p.add(Map.of("name","patientName","value","\"#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}\""));
+        p.add(Map.of("name","placeUid","value","\"#{bed.uid}\""));
+        p.add(Map.of("name","popup","value","true"));
+        p.add(Map.of("name","eventIdentification","value","\"#{id}\""));
+        p.add(Map.of("name","responseType","value","\"None\""));
+        p.add(Map.of("name","shortMessage","value","\"#{alert_type} #{bed.room.name}\""));
+        p.add(Map.of("name","subject","value","\"#{alert_type} #{bed.room.name}\""));
+        p.add(Map.of("name","ttl","value","10"));
+        p.add(Map.of("name","retractRules","value","[\"ttlHasElapsed\"]"));
+        p.add(Map.of("name","vibrate","value","\"short\""));
+    }
+
+    // -------------------- HELPERS --------------------
+    private String mapPriority(String p){
+        if(p==null)return"normal";
+        String v=p.trim().toLowerCase();
+        if(v.contains("low(edge)"))return"normal";
+        if(v.contains("medium(edge)"))return"high";
+        if(v.contains("high(edge)"))return"urgent";
         return v;
     }
 
-    private Map<String,List<Map<String,String>>> groupRowsForFlows(List<Map<String,String>> rows, List<String> keys){
+    private Map<String,List<Map<String,String>>> groupRowsForFlows(List<Map<String,String>> rows,List<String>keys){
         Map<String,List<Map<String,String>>> out=new LinkedHashMap<>();
         for(Map<String,String>r:rows){
             String k=keys.stream().map(x->nvl(r.get(x),"")).collect(Collectors.joining("|")).toLowerCase();
@@ -252,83 +351,25 @@ public class ExcelParser {
         else i.add(Map.of("componentName",dev,"referenceName",dev));
     }
 
-    @SuppressWarnings("unchecked")
-    private void addRecipients(Map<String,Object>flow,String delay,String rec,int order){
-        if((rec==null||rec.isBlank())&&(delay==null||delay.isBlank()))return;
-        List<Map<String,Object>>dests=(List<Map<String,Object>>)flow.get("destinations");
-        List<String>items=splitList(rec);
-        List<Map<String,Object>>roles=new ArrayList<>();
-        List<Map<String,Object>>groups=new ArrayList<>();
-
-        for(String item:items){
-            String t=item.trim();
-            if(t.isEmpty())continue;
-            if(t.toLowerCase().startsWith("vassign")){
-                String name=t.replaceFirst("(?i)vassign:\\s*\\[room\\]\\s*","").trim();
-                String fac=unitRows.isEmpty()?"":unitRows.get(0).getOrDefault("Facility","");
-                roles.add(Map.of("facilityName",fac,"name",name));
-            }else if(t.toLowerCase().startsWith("vgroup")){
-                String name=t.replaceFirst("(?i)vgroup:\\s*","").trim();
-                String fac=unitRows.isEmpty()?"Global":unitRows.get(0).getOrDefault("Facility","Global");
-                groups.add(Map.of("facilityName",fac,"name",name));
-            }else{
-                String fac=unitRows.isEmpty()?"Global":unitRows.get(0).getOrDefault("Facility","Global");
-                groups.add(Map.of("facilityName",fac,"name",t));
+    private List<Map<String,String>> findUnits(String cfg){
+        if(cfg==null||cfg.isBlank())return List.of();
+        List<Map<String,String>> out=new ArrayList<>();
+        for(var r:unitRows){
+            List<String> groups=splitList(r.getOrDefault("Groups",""));
+            if(groups.stream().anyMatch(g->g.equalsIgnoreCase(cfg))){
+                out.add(Map.of("facilityName",r.get("Facility"),"name",r.get("Common Unit Name")));
             }
         }
-
-        Map<String,Object>d=new LinkedHashMap<>();
-        d.put("order",order);d.put("delayTime",parseIntSafe(delay));
-        d.put("destinationType","Normal");d.put("users",new ArrayList<>());
-        d.put("groups",groups);d.put("functionalRoles",roles);
-        if(!roles.isEmpty()){d.put("presenceConfig","user_and_device");d.put("recipientType","functional_role");}
-        else{d.put("presenceConfig","device");d.put("recipientType","group");}
-        dests.add(d);
+        return out;
     }
 
-    @SuppressWarnings("unchecked")
-    private void addResponseParams(Map<String,Object>flow,String resp,List<Map<String,Object>>roles,String priority){
-        List<Map<String,Object>>p=(List<Map<String,Object>>)flow.get("parameterAttributes");
-        if(resp==null)resp="";
-        String r=resp.toLowerCase();
+    private String collectUnitsForCfg(String cfg){
+        return findUnits(cfg).stream().map(u->u.get("name")).distinct()
+                .collect(Collectors.joining("/"));
+    }
 
-        p.add(Map.of("name","popup","value","true"));
-        p.add(Map.of("name","alertSound","value","\"Vocera Tone 3 Double\""));
-        p.add(Map.of("name","vibrate","value","\"short\""));
-
-        // Priority-based breakthrough
-        if("urgent".equalsIgnoreCase(priority))
-            p.add(Map.of("name","breakThrough","value","\"voceraAndDevice\""));
-        else
-            p.add(Map.of("name","breakThrough","value","\"none\""));
-
-        if(r.contains("accept")){
-            p.add(Map.of("name","accept","value","\"Accepted\""));
-            p.add(Map.of("name","acceptBadgePhrases","value","[\"Accept\"]"));
-        }
-        if(r.contains("call back")){
-            p.add(Map.of("name","acceptAndCall","value","\"Call Back\""));
-        }
-        if(r.contains("escalate")){
-            p.add(Map.of("name","decline","value","\"Decline Primary\""));
-            p.add(Map.of("name","declineBadgePhrases","value","[\"Escalate\"]"));
-        }
-
-        int ord=0;
-        for(Map<String,Object>ro:roles){
-            String dest=(String)ro.getOrDefault("name","");
-            p.add(Map.of("destinationOrder",ord++,"name","destinationName","value","\""+dest+"\""));
-        }
-
-        // ResponseType: No response → None
-        if(r.contains("no response"))
-            p.add(Map.of("name","responseType","value","\"None\""));
-        else
-            p.add(Map.of("name","responseType","value","\"Accept/Decline\""));
-
-        p.add(Map.of("name","ttl","value","10"));
-        p.add(Map.of("name","retractRules","value","[\"ttlHasElapsed\"]"));
-        p.add(Map.of("name","enunciate","value","true"));
+    private String findFacilityForCfg(String cfg){
+        return findUnits(cfg).stream().map(u->u.get("facilityName")).findFirst().orElse("Global");
     }
 
     private static List<String> splitList(String s){
@@ -346,7 +387,6 @@ public class ExcelParser {
     }
 
     private static String nvl(String s,String d){return(s==null||s.isBlank())?d:s;}
-    private static String coalesce(String...v){for(String x:v)if(x!=null&&!x.isBlank())return x;return null;}
     @SuppressWarnings("unchecked")
     private static void addToSetList(Map<String,Object>m,String k,String v){
         if(v==null||v.isBlank())return;
