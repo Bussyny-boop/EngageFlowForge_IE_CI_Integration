@@ -158,25 +158,23 @@ public class ExcelParser {
     // ---- Build JSON ----
     public Map<String, Object> buildJson() {
         Map<String, Object> root = new LinkedHashMap<>();
-        root.put("version", "1.1.0"); // [CHANGE 1]
+        root.put("version", "1.1.0");
 
         List<Map<String, Object>> definitions = new ArrayList<>();
 
-        // Nurse Calls definitions
+        // Alarm Definitions
         for (var r : nurseCallRows) {
             String name = coalesce(r.get("Common Alert or Alarm Name"), r.get("Alarm Name"));
             String send = coalesce(r.get("Sending System Alert Name"), r.get("Sending System Alarm Name"));
             if (name == null || name.isBlank()) continue;
             Map<String,Object> def = new LinkedHashMap<>();
             def.put("name", name);
-            def.put("type", "NurseCalls"); // [CHANGE 2]
+            def.put("type", "NurseCalls");
             List<Map<String,String>> values = new ArrayList<>();
-            if (send != null && !send.isBlank()) values.add(Map.of("value", send)); // [CHANGE 3]
+            if (send != null && !send.isBlank()) values.add(Map.of("value", send));
             def.put("values", values);
             definitions.add(def);
         }
-
-        // Patient Monitoring definitions
         for (var r : patientMonRows) {
             String name = coalesce(r.get("Alarm Name"), r.get("Common Alert or Alarm Name"));
             String send = coalesce(r.get("Sending System Alarm Name"), r.get("Sending System Alert Name"));
@@ -185,7 +183,7 @@ public class ExcelParser {
             def.put("name", name);
             def.put("type", "Clinicals");
             List<Map<String,String>> values = new ArrayList<>();
-            if (send != null && !send.isBlank()) values.add(Map.of("value", send)); // [CHANGE 3]
+            if (send != null && !send.isBlank()) values.add(Map.of("value", send));
             def.put("values", values);
             definitions.add(def);
         }
@@ -202,47 +200,81 @@ public class ExcelParser {
 
         Map<String, Map<String,Object>> flowsByGroup = new LinkedHashMap<>();
 
-        // Nurse Calls flows
-        for (var r : nurseCallRows) {
-            String cfg = nvl(r.get("Configuration Group"), "General NC");
-            Map<String,Object> flow = flowsByGroup.computeIfAbsent(cfg, k -> baseFlow(k, nvl(r.get("Priority"), "Medium")));
-            String alert = nvl(r.get("Common Alert or Alarm Name"), null);
-            if (alert != null) addToSetList(flow, "alarmsAlerts", alert);
-            addInterfaces(flow, r.get("Device - A")); // [CHANGE 6]
-            addParam(flow, 0, "RingtoneDeviceA", r.get("Ringtone Device - A"));
-            addParam(flow, 0, "ResponseOptions", r.get("Response Options"));
-            addParam(flow, 0, "EMDAN", r.get("EMDAN Compliant?"));
-            addParam(flow, 0, "Comments", r.get("Comments"));
-            addRecipients(flow, r.get("Time to 1st Recipient"), r.get("1st Recipient"), 1); // [CHANGE 4,5]
-            addRecipients(flow, r.get("Time to 2nd Recipient"), r.get("2nd Recipient"), 2);
+        // [NEW] Group rows with identical config columns
+        List<String> groupKeys = List.of(
+                "Configuration Group", "Priority", "Device - A",
+                "1st Recipient", "2nd Recipient", "Response Options",
+                "Ringtone Device - A", "EMDAN Compliant?", "Comments"
+        );
+        Map<String, List<Map<String,String>>> groupedNC = groupRowsForFlows(nurseCallRows, groupKeys);
+        for (var entry : groupedNC.entrySet()) {
+            Map<String,String> sample = entry.getValue().get(0);
+            String cfg = nvl(sample.get("Configuration Group"), "General NC");
+            Map<String,Object> flow = baseFlow(cfg, nvl(sample.get("Priority"), "Medium"));
+
+            // merge alarmsAlerts
+            for (var r : entry.getValue()) {
+                String alert = nvl(r.get("Common Alert or Alarm Name"), null);
+                if (alert != null) addToSetList(flow, "alarmsAlerts", alert);
+            }
+
+            addInterfaces(flow, sample.get("Device - A"));
+            addParam(flow, 0, "RingtoneDeviceA", sample.get("Ringtone Device - A"));
+            addParam(flow, 0, "ResponseOptions", sample.get("Response Options"));
+            addParam(flow, 0, "EMDAN", sample.get("EMDAN Compliant?"));
+            addParam(flow, 0, "Comments", sample.get("Comments"));
+            addRecipients(flow, sample.get("Time to 1st Recipient"), sample.get("1st Recipient"), 1);
+            addRecipients(flow, sample.get("Time to 2nd Recipient"), sample.get("2nd Recipient"), 2);
+
+            flowsByGroup.put(cfg + "|" + entry.getKey(), flow);
         }
 
-        // Patient Monitoring flows
-        for (var r : patientMonRows) {
-            String cfg = nvl(r.get("Configuration Group"), "General PM");
-            Map<String,Object> flow = flowsByGroup.computeIfAbsent(cfg, k -> baseFlow(k, nvl(r.get("Priority"), "Medium")));
-            String alert = nvl(r.get("Alarm Name"), null);
-            if (alert != null) addToSetList(flow, "alarmsAlerts", alert);
-            addInterfaces(flow, r.get("Device - A")); // [CHANGE 6]
-            addParam(flow, 0, "ResponseOptions", r.get("Response Options"));
-            addRecipients(flow, null, r.get("1st Recipient"), 1);
-            addRecipients(flow, null, r.get("2nd Recipient"), 2);
+        // Grouped PatientMonitoring (optional same logic)
+        Map<String, List<Map<String,String>>> groupedPM = groupRowsForFlows(patientMonRows, groupKeys);
+        for (var entry : groupedPM.entrySet()) {
+            Map<String,String> sample = entry.getValue().get(0);
+            String cfg = nvl(sample.get("Configuration Group"), "General PM");
+            Map<String,Object> flow = baseFlow(cfg, nvl(sample.get("Priority"), "Medium"));
+
+            for (var r : entry.getValue()) {
+                String alert = nvl(r.get("Alarm Name"), null);
+                if (alert != null) addToSetList(flow, "alarmsAlerts", alert);
+            }
+
+            addInterfaces(flow, sample.get("Device - A"));
+            addParam(flow, 0, "ResponseOptions", sample.get("Response Options"));
+            addRecipients(flow, null, sample.get("1st Recipient"), 1);
+            addRecipients(flow, null, sample.get("2nd Recipient"), 2);
+
+            flowsByGroup.put(cfg + "|" + entry.getKey(), flow);
         }
 
+        // attach units
         Map<String, List<Map<String,String>>> unitsByGroup = indexUnitsByGroup(unitRows);
         for (var entry : flowsByGroup.entrySet()) {
             String group = entry.getKey();
             Map<String,Object> flow = entry.getValue();
             List<Map<String,String>> unitRefs = unitsByGroup.getOrDefault(group, Collections.emptyList());
-            if (unitRefs.isEmpty() && config.attachAllUnitsIfNoMatch) {
+            if (unitRefs.isEmpty() && config.attachAllUnitsIfNoMatch)
                 unitRefs = allUnits(unitRows);
-            }
             if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
             flow.putIfAbsent("status", "Enabled");
         }
 
         root.put("deliveryFlows", new ArrayList<>(flowsByGroup.values()));
         return root;
+    }
+
+    /** [NEW] Group identical rows for bundling */
+    private Map<String, List<Map<String,String>>> groupRowsForFlows(List<Map<String,String>> rows, List<String> groupKeys) {
+        Map<String, List<Map<String,String>>> grouped = new LinkedHashMap<>();
+        for (Map<String,String> r : rows) {
+            String key = groupKeys.stream()
+                    .map(k -> nvl(r.get(k), ""))
+                    .collect(Collectors.joining("|"));
+            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(r);
+        }
+        return grouped;
     }
 
     private static Map<String,Object> baseFlow(String name, String priority) {
@@ -259,7 +291,6 @@ public class ExcelParser {
         return flow;
     }
 
-    // [CHANGE 6] Enhanced interface logic
     @SuppressWarnings("unchecked")
     private void addInterfaces(Map<String,Object> flow, String deviceA) {
         if (deviceA == null || deviceA.isBlank()) return;
@@ -281,7 +312,6 @@ public class ExcelParser {
         params.add(p);
     }
 
-    // [CHANGE 4,5] Enhanced destination + functionalRoles logic
     @SuppressWarnings("unchecked")
     private void addRecipients(Map<String,Object> flow, String delayStr, String recipients, int order) {
         if ((recipients == null || recipients.isBlank()) && (delayStr == null || delayStr.isBlank())) return;
