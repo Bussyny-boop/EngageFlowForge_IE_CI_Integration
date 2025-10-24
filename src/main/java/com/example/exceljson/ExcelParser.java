@@ -351,5 +351,51 @@ public class ExcelParser {
         return out;
     }
 
-    private String collectUnitsForCfg(String cfg){
-        return findUnits(cfg).stream().map(u->u.get
+      private String collectUnitsForCfg(String cfg){
+        return findUnits(cfg).stream()
+                .map(u -> u.get("name"))
+                .distinct()
+                .collect(Collectors.joining("/"));
+    }
+
+    /** Always derives facility from Unit Breakdown tab */
+    private String findFacilityForCfg(String cfg){
+        if (cfg == null || cfg.isBlank()) return "";
+        for (var r : unitRows){
+            List<String> groups = splitList(r.getOrDefault("Groups", ""));
+            for (String g : groups){
+                if (g.equalsIgnoreCase(cfg)){
+                    return r.getOrDefault("Facility", "");
+                }
+            }
+        }
+        return "";
+    }
+
+    private static List<String> splitList(String s){
+        if(s==null)return List.of();
+        return Arrays.stream(s.split("[;,\\n]"))
+                .map(String::trim)
+                .filter(x -> !x.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private static Integer parseIntSafe(String s){
+        try{
+            if(s==null||s.isBlank())return 0;
+            String d=s.replaceAll("[^0-9]","");
+            return d.isEmpty()?0:Integer.parseInt(d);
+        }catch(Exception e){return 0;}
+    }
+
+    private static String nvl(String s,String d){
+        return (s==null||s.isBlank()) ? d : s;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void addToSetList(Map<String,Object> m, String key, String value){
+        if (value == null || value.isBlank()) return;
+        List<Object> list = (List<Object>) m.computeIfAbsent(key, k -> new ArrayList<>());
+        if (!list.contains(value)) list.add(value);
+    }
+}
