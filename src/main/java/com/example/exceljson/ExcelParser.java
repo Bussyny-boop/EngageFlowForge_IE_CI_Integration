@@ -28,7 +28,10 @@ public class ExcelParser {
         parsePatientMonitoring();
     }
 
+    // ---- Public getters (required by AppController) ----
     public List<Map<String,String>> getUnitBreakdownRows(){ return unitRows; }
+    public List<Map<String,String>> getNurseCallRows(){ return nurseCallRows; }
+    public List<Map<String,String>> getPatientMonitoringRows(){ return patientMonRows; }
 
     // ---------------------- PARSING ----------------------
     private Map<String,Integer> headerIndex(Row header) {
@@ -154,7 +157,6 @@ public class ExcelParser {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("version", "1.1.0");
 
-        // Alarm Definitions
         List<Map<String,Object>> definitions = new ArrayList<>();
         for (var r : nurseCallRows) {
             String name = coalesce(r.get("Common Alert or Alarm Name"), r.get("Alarm Name"));
