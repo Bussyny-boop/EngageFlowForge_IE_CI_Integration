@@ -173,39 +173,66 @@ public class ExcelParser {
         return out;
     }
 
-  // -------------------- RECIPIENTS --------------------
-    /** Handles up to 5 recipient levels (1–5) */
-    @SuppressWarnings("unchecked")
-    private void addRecipients(Map<String,Object> flow, Map<String,String> row){
-        List<Map<String,Object>> dests = (List<Map<String,Object>>) flow.get("destinations");
+@SuppressWarnings("unchecked")
+private void addRecipients(Map<String,Object> flow, Map<String,String> row){
+    List<Map<String,Object>> dests = (List<Map<String,Object>>) flow.get("destinations");
+    String cfg = row.getOrDefault("Configuration Group", "");
 
-        for (int i = 1; i <= 5; i++){
-            String delay = row.getOrDefault("Time to " + i + getOrdinal(i) + " Recipient", "");
-            String rec   = row.getOrDefault(i + getOrdinal(i) + " Recipient", "");
-            if ((rec == null || rec.isBlank()) && (delay == null || delay.isBlank())) continue;
+    for (int i = 1; i <= 5; i++){
+        String delay = row.getOrDefault("Time to " + i + getOrdinal(i) + " Recipient", "");
+        String rec   = row.getOrDefault(i + getOrdinal(i) + " Recipient", "");
+        if ((rec == null || rec.isBlank()) && (delay == null || delay.isBlank())) continue;
 
-            List<Map<String,Object>> roles = new ArrayList<>();
-            List<Map<String,Object>> groups = new ArrayList<>();
+        List<Map<String,Object>> roles = new ArrayList<>();
+        List<Map<String,Object>> groups = new ArrayList<>();
+        String facility = findFacilityForCfg(cfg);
 
-            for (String token : splitList(rec)){
-                String t = token.trim();
-                if (t.isEmpty()) continue;
-                if (t.toLowerCase().startsWith("vassign")){
-                    // Functional role recipient
-                    String name = t.replaceFirst("(?i)vassign:\\s*\\[room\\]\\s*", "").trim();
-                    String fac = findFacilityForCfg(row.getOrDefault("Configuration Group",""));
-                    roles.add(Map.of("facilityName", fac, "name", name));
-                } else if (t.toLowerCase().startsWith("vgroup")){
-                    // Group recipient
-                    String name = t.replaceFirst("(?i)vgroup:\\s*", "").trim();
-                    String fac = findFacilityForCfg(row.getOrDefault("Configuration Group",""));
-                    groups.add(Map.of("facilityName", fac, "name", name));
-                } else {
-                    // Plain text group
-                    String fac = findFacilityForCfg(row.getOrDefault("Configuration Group",""));
-                    groups.add(Map.of("facilityName", fac, "name", t));
-                }
+        for (String token : splitList(rec)){
+            String t = token.trim();
+            if (t.isEmpty()) continue;
+            if (t.toLowerCase().startsWith("vassign")){
+                String name = t.replaceFirst("(?i)vassign:\\s*\\[room\\]\\s*", "").trim();
+                roles.add(Map.of("facilityName", facility, "name", name));
+            } else if (t.toLowerCase().startsWith("vgroup")){
+                String name = t.replaceFirst("(?i)vgroup:\\s*", "").trim();
+                groups.add(Map.of("facilityName", facility, "name", name));
+            } else {
+                groups.add(Map.of("facilityName", facility, "name", t));
             }
+        }
+
+        Map<String,Object> dest = new LinkedHashMap<>();
+        dest.put("order", i);
+        dest.put("delayTime", parseIntSafe(delay));
+        dest.put("destinationType", "Normal");
+        dest.put("users", new ArrayList<>());
+        dest.put("groups", groups);
+        dest.put("functionalRoles", roles);
+
+        if (!roles.isEmpty()){
+            dest.put("presenceConfig","user_and_device");
+            dest.put("recipientType","functional_role");
+        } else {
+            dest.put("presenceConfig","device");
+            dest.put("recipientType","group");
+        }
+        dests.add(dest);
+    }
+}
+
+/** Always derives facility from Unit Breakdown tab, never defaults to "Global" */
+private String findFacilityForCfg(String cfg){
+    if (cfg == null || cfg.isBlank()) return "";
+    for (var r : unitRows){
+        List<String> groups = splitList(r.getOrDefault("Groups", ""));
+        for (String g : groups){
+            if (g.equalsIgnoreCase(cfg)){
+                return r.getOrDefault("Facility", "");
+            }
+        }
+    }
+    return ""; // empty if not found, never "Global"
+}
 
             Map<String,Object> dest = new LinkedHashMap<>();
             dest.put("order", i);
