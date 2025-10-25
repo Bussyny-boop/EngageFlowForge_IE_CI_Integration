@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -192,20 +193,13 @@ public class AppController {
             java.util.function.BiConsumer<T, Boolean> setter) {
 
         TableColumn<T, Boolean> col = new TableColumn<>(title);
-        col.setCellValueFactory(data -> new javafx.beans.property.SimpleBooleanProperty(getter.apply(data.getValue())));
-        col.setCellFactory(tc -> {
-            CheckBoxTableCell<T, Boolean> cell = new CheckBoxTableCell<>();
-            cell.setSelectedStateCallback(index -> {
-                if (index.intValue() < 0 || index.intValue() >= tblUnits.getItems().size()) {
-                    return new javafx.beans.property.SimpleBooleanProperty(false);
-                }
-                T item = tblUnits.getItems().get(index.intValue());
-                return new javafx.beans.property.SimpleBooleanProperty(getter.apply(item));
-            });
-            return cell;
+        col.setCellValueFactory(data -> {
+            var prop = new javafx.beans.property.SimpleBooleanProperty(getter.apply(data.getValue()));
+            prop.addListener((obs, oldVal, newVal) -> setter.accept(data.getValue(), newVal));
+            return prop;
         });
+        col.setCellFactory(CheckBoxTableCell.forTableColumn(col));
         col.setEditable(true);
-        col.setOnEditCommit(evt -> setter.accept(evt.getRowValue(), evt.getNewValue()));
         col.setPrefWidth(150);
         return col;
     }
