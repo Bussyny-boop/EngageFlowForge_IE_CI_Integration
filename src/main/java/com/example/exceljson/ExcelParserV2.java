@@ -158,9 +158,9 @@ public class ExcelParserV2 {
             for (int i = 0; i < units.size(); i++) {
                 UnitRow u = units.get(i);
                 Row r = su.createRow(i + 1);
-                r.createCell(0).setCellValue(nvl(u.facility, ""));
-                r.createCell(1).setCellValue(nvl(u.unitName, ""));
-                r.createCell(2).setCellValue(nvl(u.configGroup, ""));
+                r.createCell(0).setCellValue(nvl(u.getFacility(), ""));
+                r.createCell(1).setCellValue(nvl(u.getUnitName(), ""));
+                r.createCell(2).setCellValue(nvl(u.getConfigGroup(), ""));
             }
 
             // NurseCalls
@@ -179,15 +179,15 @@ public class ExcelParserV2 {
             for (int i = 0; i < nurseCalls.size(); i++) {
                 FlowRow f = nurseCalls.get(i);
                 Row r = sn.createRow(i + 1);
-                r.createCell(0).setCellValue(nvl(f.configGroup, ""));
-                r.createCell(1).setCellValue(nvl(f.alarmName, ""));
-                r.createCell(2).setCellValue(nvl(f.priority, ""));
-                r.createCell(3).setCellValue(nvl(f.ringtone, ""));
-                r.createCell(4).setCellValue(nvl(f.responseOptions, ""));
-                r.createCell(5).setCellValue(nvl(f.r1, ""));
-                r.createCell(6).setCellValue(nvl(f.r2, ""));
-                r.createCell(7).setCellValue(nvl(f.r3, ""));
-                r.createCell(8).setCellValue(nvl(f.r4, ""));
+                r.createCell(0).setCellValue(nvl(f.getConfigGroup(), ""));
+                r.createCell(1).setCellValue(nvl(f.getAlarmName(), ""));
+                r.createCell(2).setCellValue(nvl(f.getPriority(), ""));
+                r.createCell(3).setCellValue(nvl(f.getRingtone(), ""));
+                r.createCell(4).setCellValue(nvl(f.getResponseOptions(), ""));
+                r.createCell(5).setCellValue(nvl(f.getR1(), ""));
+                r.createCell(6).setCellValue(nvl(f.getR2(), ""));
+                r.createCell(7).setCellValue(nvl(f.getR3(), ""));
+                r.createCell(8).setCellValue(nvl(f.getR4(), ""));
             }
 
             // Clinicals
@@ -207,16 +207,16 @@ public class ExcelParserV2 {
             for (int i = 0; i < clinicals.size(); i++) {
                 FlowRow f = clinicals.get(i);
                 Row r = sc.createRow(i + 1);
-                r.createCell(0).setCellValue(nvl(f.configGroup, ""));
-                r.createCell(1).setCellValue(nvl(f.alarmName, ""));
-                r.createCell(2).setCellValue(nvl(f.priority, ""));
-                r.createCell(3).setCellValue(nvl(f.ringtone, ""));
-                r.createCell(4).setCellValue(nvl(f.responseOptions, ""));
-                r.createCell(5).setCellValue(nvl(f.r1, ""));
-                r.createCell(6).setCellValue(nvl(f.r2, ""));
-                r.createCell(7).setCellValue(nvl(f.r3, ""));
-                r.createCell(8).setCellValue(nvl(f.r4, ""));
-                r.createCell(9).setCellValue(nvl(f.failSafe, ""));
+                r.createCell(0).setCellValue(nvl(f.getConfigGroup(), ""));
+                r.createCell(1).setCellValue(nvl(f.getAlarmName(), ""));
+                r.createCell(2).setCellValue(nvl(f.getPriority(), ""));
+                r.createCell(3).setCellValue(nvl(f.getRingtone(), ""));
+                r.createCell(4).setCellValue(nvl(f.getResponseOptions(), ""));
+                r.createCell(5).setCellValue(nvl(f.getR1(), ""));
+                r.createCell(6).setCellValue(nvl(f.getR2(), ""));
+                r.createCell(7).setCellValue(nvl(f.getR3(), ""));
+                r.createCell(8).setCellValue(nvl(f.getR4(), ""));
+                r.createCell(9).setCellValue(nvl(f.getFailSafe(), ""));
             }
 
             try (FileOutputStream fos = new FileOutputStream(outFile)) {
@@ -234,8 +234,8 @@ public class ExcelParserV2 {
 
         // A) alarmAlertDefinitions
         List<Map<String, Object>> defs = new ArrayList<>();
-        for (FlowRow f : nurseCalls) defs.add(buildDefinition(f.alarmName, "NurseCalls"));
-        for (FlowRow f : clinicals)  defs.add(buildDefinition(f.alarmName, "Clinicals"));
+        for (FlowRow f : nurseCalls) defs.add(buildDefinition(f.getAlarmName(), "NurseCalls"));
+        for (FlowRow f : clinicals)  defs.add(buildDefinition(f.getAlarmName(), "Clinicals"));
 
         // de-dup on (name,type)
         defs = defs.stream().collect(Collectors.toMap(
@@ -271,12 +271,12 @@ public class ExcelParserV2 {
         Map<String, List<FlowRow>> grouped = new LinkedHashMap<>();
         for (FlowRow r : rows) {
             String key = String.join("|",
-                    nvl(r.configGroup, ""),
-                    nvl(r.priority, ""),
-                    nvl(r.ringtone, ""),
-                    nvl(r.responseOptions, ""),
-                    nvl(r.r1,""), nvl(r.r2,""), nvl(r.r3,""), nvl(r.r4,""),
-                    typeToken.equals("CLINICAL") ? nvl(r.failSafe,"") : ""
+                    nvl(r.getConfigGroup(), ""),
+                    nvl(r.getPriority(), ""),
+                    nvl(r.getRingtone(), ""),
+                    nvl(r.getResponseOptions(), ""),
+                    nvl(r.getR1(),""), nvl(r.getR2(),""), nvl(r.getR3(),""), nvl(r.getR4(),""),
+                    typeToken.equals("CLINICAL") ? nvl(r.getFailSafe(),"") : ""
             ).toLowerCase();
             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(r);
         }
@@ -289,14 +289,14 @@ public class ExcelParserV2 {
             Map<String,Object> flow = baseFlow();
             // alarmsAlerts
             List<String> alerts = group.stream()
-                    .map(fr -> fr.alarmName)
+                    .map(FlowRow::getAlarmName)
                     .filter(x -> !isBlank(x))
                     .distinct()
                     .collect(Collectors.toList());
             flow.put("alarmsAlerts", alerts);
 
             // priority
-            flow.put("priority", nvl(sample.priority, "normal"));
+            flow.put("priority", nvl(sample.getPriority(), "normal"));
             // status
             flow.put("status", "Active");
 
@@ -309,9 +309,9 @@ public class ExcelParserV2 {
             List<Map<String,Object>> dests = new ArrayList<>();
             addDestinationsFromRecipient(dests, sample, sample.configGroup);
             // Clinical fail-safe destination if present
-            if ("CLINICAL".equals(typeToken) && !isBlank(sample.failSafe)) {
+            if ("CLINICAL".equals(typeToken) && !isBlank(sample.getFailSafe())) {
                 Map<String,Object> nd = buildGroupDest( // NoDeliveries as per your example
-                        sample.failSafe, findFirstFacilityForGroup(sample.configGroup), 1, "NoDeliveries");
+                        sample.getFailSafe(), findFirstFacilityForGroup(sample.getConfigGroup()), 1, "NoDeliveries");
                 dests.add(nd);
             }
             flow.put("destinations", dests);
@@ -326,19 +326,19 @@ public class ExcelParserV2 {
             flow.put("parameterAttributes", params);
 
             // units (attach by config group if possible; else all units)
-            List<Map<String,String>> unitRefs = findUnitsForConfig(sample.configGroup);
+            List<Map<String,String>> unitRefs = findUnitsForConfig(sample.getConfigGroup());
             if (unitRefs.isEmpty()) unitRefs = allUnits();
             flow.put("units", unitRefs);
 
             // name:
             // SEND <TYPE> | <PRIORITY> | <alarms> | <configGroup> | <unitsJoined> | <facility>
             String unitsJoined = unitRefs.stream().map(u -> u.get("name")).distinct().collect(Collectors.joining("/"));
-            String facility = findFirstFacilityForGroup(sample.configGroup);
+            String facility = findFirstFacilityForGroup(sample.getConfigGroup());
             String name = String.format("SEND %s | %s | %s | %s | %s | %s",
                     "NURSECALL".equals(typeToken) ? "NURSECALL" : "CLINICAL",
-                    nvl(sample.priority, "normal").toUpperCase(),
+                    nvl(sample.getPriority(), "normal").toUpperCase(),
                     String.join(" | ", alerts),
-                    nvl(sample.configGroup, ""),
+                    nvl(sample.getConfigGroup(), ""),
                     unitsJoined,
                     nvl(facility, ""));
             flow.put("name", name);
@@ -354,10 +354,10 @@ public class ExcelParserV2 {
     private List<Map<String,Object>> buildNurseCallParams(FlowRow r){
         List<Map<String,Object>> p = new ArrayList<>();
             p.add(mapParam("destinationName", "\"Group\""));
-            if (!isBlank(r.ringtone)) p.add(mapParam("alertSound", quote(r.ringtone)));
-            
+            if (!isBlank(r.getRingtone())) p.add(mapParam("alertSound", quote(r.getRingtone())));
+
             // Conditionally add based on ResponseOptions
-            String ro = nvl(r.responseOptions, "").toLowerCase();
+            String ro = nvl(r.getResponseOptions(), "").toLowerCase();
             if (ro.contains("accept")) {
                 p.add(mapParam("accept", "\"Accepted\""));
                 p.add(mapParam("acceptBadgePhrases", "[\"Accept\"]"));
@@ -387,7 +387,7 @@ public class ExcelParserV2 {
         p.add(mapParam("respondingUser", "\"responses.usr.login\""));
         p.add(mapParam("responsePath", "\"responses.action\""));
         // Response type None if "No response"
-        boolean noResponse = containsIgnoreCase(r.responseOptions, "no response");
+        boolean noResponse = containsIgnoreCase(r.getResponseOptions(), "no response");
         p.add(mapParam("responseType", noResponse ? "\"None\"" : "\"Accept/Decline\""));
 
         p.add(mapParam("shortMessage", "\"#{alert_type} #{bed.room.name}\""));
@@ -409,7 +409,7 @@ public class ExcelParserV2 {
         p.add(mapParamOrder(1, "shortMessage", "\"No Caregivers Assigned for #{alert_type} in #{bed.room.name} #{bed.bed_number}\""));
         p.add(mapParamOrder(1, "subject", "\"Alert Without Caregivers\""));
 
-        if (!isBlank(r.ringtone)) p.add(mapParam("alertSound", quote(r.ringtone)));
+        if (!isBlank(r.getRingtone())) p.add(mapParam("alertSound", quote(r.getRingtone())));
         p.add(mapParam("responseAllowed", "false"));
         if ("urgent".equalsIgnoreCase(r.priority)) {
             p.add(mapParam("breakThrough", "\"voceraAndDevice\""));
@@ -652,8 +652,8 @@ public class ExcelParserV2 {
         if (isBlank(cfg)) return allUnits();
         List<Map<String,String>> out = new ArrayList<>();
         for (UnitRow u : units) {
-            if (isBlank(u.configGroup) || u.configGroup.equalsIgnoreCase(cfg)) {
-                out.add(Map.of("facilityName", nvl(u.facility,""), "name", nvl(u.unitName,"")));
+            if (isBlank(u.getConfigGroup()) || u.getConfigGroup().equalsIgnoreCase(cfg)) {
+                out.add(Map.of("facilityName", nvl(u.getFacility(),""), "name", nvl(u.getUnitName(),"")));
             }
         }
         return out;
@@ -661,7 +661,7 @@ public class ExcelParserV2 {
 
     private List<Map<String,String>> allUnits(){
         return units.stream()
-                .map(u -> Map.of("facilityName", nvl(u.facility,""), "name", nvl(u.unitName,"")))
+                .map(u -> Map.of("facilityName", nvl(u.getFacility(),""), "name", nvl(u.getUnitName(),"")))
                 .collect(Collectors.toList());
     }
 

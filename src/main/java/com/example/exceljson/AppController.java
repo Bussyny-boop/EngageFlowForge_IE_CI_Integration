@@ -1,5 +1,6 @@
 package com.example.exceljson;
 
+import javafx.beans.property.StringProperty;
 import javafx.collections.*;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -11,6 +12,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * AppController – Enhanced GUI for Engage Rules Generator
@@ -26,9 +28,9 @@ public class AppController {
 
     private ExcelParserV2 parser;
 
-    private final TableView<ExcelParserV2.UnitRow> tblUnits = new TableView<>();
-    private final TableView<ExcelParserV2.FlowRow> tblNurseCalls = new TableView<>();
-    private final TableView<ExcelParserV2.FlowRow> tblClinicals = new TableView<>();
+    private final TableView<UnitRow> tblUnits = new TableView<>();
+    private final TableView<FlowRow> tblNurseCalls = new TableView<>();
+    private final TableView<FlowRow> tblClinicals = new TableView<>();
     private final TextArea jsonPreview = new TextArea();
     private final Button btnOpen = new Button("📂 Open Excel…");
     private final Button btnSaveEdited = new Button("💾 Save Edited Excel…");
@@ -121,38 +123,38 @@ public class AppController {
         // Units
         tblUnits.setItems(FXCollections.observableArrayList(parser.getUnits()));
         tblUnits.getColumns().setAll(
-                makeEditableCol("Facility", "facility"),
-                makeEditableCol("Common Unit Name", "unitName"),
-                makeEditableCol("Configuration Group", "configGroup")
+                makeEditableCol("Facility", UnitRow::facilityProperty),
+                makeEditableCol("Common Unit Name", UnitRow::unitNameProperty),
+                makeEditableCol("Configuration Group", UnitRow::configGroupProperty)
         );
 
         // Nurse Calls
         tblNurseCalls.setItems(FXCollections.observableArrayList(parser.getNurseCalls()));
         tblNurseCalls.getColumns().setAll(
-                makeEditableCol("Config Group", "configGroup"),
-                makeEditableCol("Alarm Name", "alarmName"),
-                makeEditableCol("Priority", "priority"),
-                makeEditableCol("Ringtone", "ringtone"),
-                makeEditableCol("Response Options", "responseOptions"),
-                makeEditableCol("1st Recipient", "r1"),
-                makeEditableCol("2nd Recipient", "r2"),
-                makeEditableCol("3rd Recipient", "r3"),
-                makeEditableCol("4th Recipient", "r4")
+                makeEditableCol("Config Group", FlowRow::configGroupProperty),
+                makeEditableCol("Alarm Name", FlowRow::alarmNameProperty),
+                makeEditableCol("Priority", FlowRow::priorityProperty),
+                makeEditableCol("Ringtone", FlowRow::ringtoneProperty),
+                makeEditableCol("Response Options", FlowRow::responseOptionsProperty),
+                makeEditableCol("1st Recipient", FlowRow::r1Property),
+                makeEditableCol("2nd Recipient", FlowRow::r2Property),
+                makeEditableCol("3rd Recipient", FlowRow::r3Property),
+                makeEditableCol("4th Recipient", FlowRow::r4Property)
         );
 
         // Clinicals
         tblClinicals.setItems(FXCollections.observableArrayList(parser.getClinicals()));
         tblClinicals.getColumns().setAll(
-                makeEditableCol("Config Group", "configGroup"),
-                makeEditableCol("Alarm Name", "alarmName"),
-                makeEditableCol("Priority", "priority"),
-                makeEditableCol("Ringtone", "ringtone"),
-                makeEditableCol("Response Options", "responseOptions"),
-                makeEditableCol("1st Recipient", "r1"),
-                makeEditableCol("2nd Recipient", "r2"),
-                makeEditableCol("3rd Recipient", "r3"),
-                makeEditableCol("4th Recipient", "r4"),
-                makeEditableCol("Fail Safe Recipient", "failSafe")
+                makeEditableCol("Config Group", FlowRow::configGroupProperty),
+                makeEditableCol("Alarm Name", FlowRow::alarmNameProperty),
+                makeEditableCol("Priority", FlowRow::priorityProperty),
+                makeEditableCol("Ringtone", FlowRow::ringtoneProperty),
+                makeEditableCol("Response Options", FlowRow::responseOptionsProperty),
+                makeEditableCol("1st Recipient", FlowRow::r1Property),
+                makeEditableCol("2nd Recipient", FlowRow::r2Property),
+                makeEditableCol("3rd Recipient", FlowRow::r3Property),
+                makeEditableCol("4th Recipient", FlowRow::r4Property),
+                makeEditableCol("Fail Safe Recipient", FlowRow::failSafeProperty)
         );
 
         tblUnits.setEditable(true);
@@ -251,15 +253,12 @@ public class AppController {
 
     private <T> TableColumn<T, String> makeEditableCol(String title, String fieldName) {
         TableColumn<T, String> col = new TableColumn<>(title);
-        col.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>(fieldName));
+        col.setCellValueFactory(cellData -> accessor.apply(cellData.getValue()));
         col.setCellFactory(TextFieldTableCell.forTableColumn());
         col.setOnEditCommit(evt -> {
-            try {
-                var field = evt.getRowValue().getClass().getDeclaredField(fieldName);
-                field.setAccessible(true);
-                field.set(evt.getRowValue(), evt.getNewValue());
-            } catch (Exception e) {
-                e.printStackTrace();
+            StringProperty property = accessor.apply(evt.getRowValue());
+            if (property != null) {
+                property.set(evt.getNewValue());
             }
         });
         col.setPrefWidth(150);
