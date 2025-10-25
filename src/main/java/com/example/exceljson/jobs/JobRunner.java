@@ -1,23 +1,22 @@
 package com.example.exceljson.jobs;
 
-import com.example.exceljson.ExcelParserV2;
-
-import java.io.File;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 
 /**
- * Simple command runner that exposes background jobs for automation.
+ * Simple command runner that exposes tiny background jobs for automation.
+ *
+ * <p>The initial requirement is to expose a "fail" job that intentionally
+ * exits with a non-zero status.  This is useful when wiring smoke tests for
+ * CI/CD pipelines where a deterministic failure signal is required.</p>
  */
 public final class JobRunner {
 
+    private static final Set<String> AVAILABLE_JOBS = Set.of("fail");
+
     private final PrintStream out;
     private final PrintStream err;
-    private final Map<String, JobHandler> jobs;
 
     /**
      * Creates a runner that writes to {@link System#out} and {@link System#err}.
@@ -29,14 +28,6 @@ public final class JobRunner {
     JobRunner(PrintStream out, PrintStream err) {
         this.out = out;
         this.err = err;
-        Map<String, JobHandler> definitions = new LinkedHashMap<>();
-        definitions.put("fail", new JobHandler(
-                "Intentionally exits with status 1 (smoke test).",
-                this::runFailJob));
-        definitions.put("export-json", new JobHandler(
-                "Generate Engage JSON from an Excel workbook.",
-                this::runExportJsonJob));
-        this.jobs = Collections.unmodifiableMap(definitions);
     }
 
     public static void main(String[] args) {
@@ -70,88 +61,32 @@ public final class JobRunner {
             return 1;
         }
 
-        JobHandler handler = jobs.get(job);
-        if (handler == null) {
-            err.printf("Unknown job \"%s\".%n", args[0]);
-            printAvailableJobs();
+        if ("fail".equals(job)) {
+            err.println("Fail job triggered – intentionally exiting with status 1.");
             return 1;
         }
 
-        String[] jobArgs = Arrays.copyOfRange(args, 1, args.length);
-        return handler.executor.run(jobArgs);
+        err.printf("Unknown job \"%s\".%n", args[0]);
+        printAvailableJobs();
+        return 1;
     }
 
     private void printUsage(String errorMessage) {
         if (errorMessage != null) {
             err.println(errorMessage);
         }
-        out.println("Usage: JobRunner <job> [job-args]");
+        out.println("Usage: JobRunner <job>");
         printAvailableJobs();
     }
 
     private void printAvailableJobs() {
         out.println("Available jobs:");
-        jobs.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .forEach(entry -> out.printf("  %s%n    %s%n", entry.getKey(), entry.getValue().description));
+        AVAILABLE_JOBS.stream()
+                .sorted()
+                .forEach(job -> out.printf("  %s%n", job));
     }
 
     private static String normalize(String input) {
         return input == null ? "" : input.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private int runFailJob(String[] args) {
-        err.println("Fail job triggered – intentionally exiting with status 1.");
-        return 1;
-    }
-
-    private int runExportJsonJob(String[] args) {
-        if (args.length < 2) {
-            err.println("Usage: JobRunner export-json <input.xlsx> <output.json>");
-            return 1;
-        }
-
-        File input = new File(args[0]);
-        if (!input.isFile()) {
-            err.printf("Input Excel file \"%s\" was not found.%n", args[0]);
-            return 1;
-        }
-
-        File output = new File(args[1]);
-        File parent = output.getAbsoluteFile().getParentFile();
-        if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            err.printf("Unable to create parent directory for \"%s\".%n", output);
-            return 1;
-        }
-
-        try {
-            ExcelParserV2 parser = new ExcelParserV2(
-                    "Unit Breakdown",
-                    "Nurse call",
-                    "Patient Monitoring");
-            parser.load(input);
-            parser.writeJson(output);
-            out.printf("Wrote JSON to %s%n", output.getAbsolutePath());
-            return 0;
-        } catch (Exception e) {
-            err.printf("Failed to export JSON: %s%n", e.getMessage());
-            e.printStackTrace(err);
-            return 1;
-        }
-    }
-
-    private static final class JobHandler {
-        private final String description;
-        private final JobExecutor executor;
-
-        private JobHandler(String description, JobExecutor executor) {
-            this.description = description;
-            this.executor = executor;
-        }
-    }
-
-    @FunctionalInterface
-    private interface JobExecutor {
-        int run(String[] args);
     }
 }
