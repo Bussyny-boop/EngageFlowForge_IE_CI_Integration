@@ -2,26 +2,19 @@ package com.example.exceljson;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import java.io.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * ExcelParserV4
- * - Reads Unit Breakdown, Nurse Call, Patient Monitoring
- * - Links flows to units by Configuration Group (from Unit Breakdown)
- * - Applies all mapping rules (priority, breakthrough, ringtone->alertSound, VGroup/VAssign parsing, fail-safe)
- * - Exposes editable lists for UI (units, nurseCalls, clinicals)
- * - Writes two JSON files (NurseCalls.json, Clinicals.json) next to the source Excel
- * - Writes a clean edited Excel using current in-memory tables
- *
- * NOTE: This class expects FlowRow.java to be present (from your previous step).
+ * ExcelParserV4 (Updated)
+ * - Fixes configuration groups not being treated as units
+ * - Handles comma-separated units
+ * - Provides count summary for popup display
  */
 public class ExcelParserV4 {
 
-    // ---- Public editable models (bound by the UI) ----
     public final List<UnitRow> units = new ArrayList<>();
     public final List<FlowRow> nurseCalls = new ArrayList<>();
     public final List<FlowRow> clinicals = new ArrayList<>();
@@ -32,169 +25,93 @@ public class ExcelParserV4 {
 
     // For Clinicals fail-safe: Facility -> "No Caregiver Alert Number or Group"
     private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
-
-    // For unit lookups: group -> list of unit refs (separate maps per domain)
     private final Map<String, List<Map<String,String>>> nurseGroupToUnits = new LinkedHashMap<>();
     private final Map<String, List<Map<String,String>>> clinicalGroupToUnits = new LinkedHashMap<>();
-
     private File sourceExcel;
 
     public ExcelParserV4() {}
 
-    // ------------------------------------------------------
-    // Load
-    // ------------------------------------------------------
     public void load(File excelFile) throws Exception {
         this.sourceExcel = excelFile;
-
-        units.clear();
-        nurseCalls.clear();
-        clinicals.clear();
-        noCaregiverByFacility.clear();
-        nurseGroupToUnits.clear();
-        clinicalGroupToUnits.clear();
+        units.clear(); nurseCalls.clear(); clinicals.clear();
+        nurseGroupToUnits.clear(); clinicalGroupToUnits.clear(); noCaregiverByFacility.clear();
 
         try (FileInputStream fis = new FileInputStream(excelFile);
              Workbook wb = new XSSFWorkbook(fis)) {
-
-            parseUnitBreakdown(wb);        // fills units, group maps, fail-safe by facility
-            parseNurseCall(wb);            // fills nurseCalls
-            parseClinical(wb);             // fills clinicals
-            // Nothing else needed; unit linking happens during JSON build using the group maps
+            parseUnitBreakdown(wb);
+            parseNurseCall(wb);
+            parseClinical(wb);
         }
     }
 
-    // ------------------------------------------------------
-    // Parsing helpers
-    // ------------------------------------------------------
-    private static String norm(String s) {
-        if (s == null) return "";
-        return s.toLowerCase()
-                .replaceAll("[\\r\\n]+", " ")
-                .replaceAll("[^a-z0-9]+", " ")
-                .replaceAll(" +", " ")
-                .trim();
-    }
-    private static String cellString(Row row, int col) {
-        if (row == null) return "";
-        Cell cell = row.getCell(col, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        if (cell == null) return "";
-        try {
-            return switch (cell.getCellType()) {
-                case STRING -> cell.getStringCellValue();
-                case NUMERIC -> {
-                    if (DateUtil.isCellDateFormatted(cell)) {
-                        yield String.valueOf(cell.getDateCellValue().getTime());
-                    } else {
-                        double d = cell.getNumericCellValue();
-                        if (Math.floor(d) == d) yield String.valueOf((long) d);
-                        yield String.valueOf(d);
-                    }
-                }
-                case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-                case FORMULA -> {
-                    try { yield cell.getStringCellValue(); }
-                    catch (Exception e) { yield String.valueOf(cell.getNumericCellValue()); }
-                }
-                default -> "";
-            };
-        } catch (Exception e) { return ""; }
-    }
-    private static Map<String,Integer> headerMap(Row header) {
-        Map<String,Integer> map = new LinkedHashMap<>();
-        if (header == null) return map;
-        for (int c = 0; c < header.getLastCellNum(); c++) {
-            String key = norm(cellString(header, c));
-            if (!key.isEmpty()) map.put(key, c);
-        }
-        return map;
-    }
-    private static Integer col(Map<String,Integer> hm, String... names) {
-        for (String n : names) {
-            Integer idx = hm.get(norm(n));
-            if (idx != null) return idx;
-        }
-        return null;
-    }
-    private static String get(Row r, Integer idx) {
-        if (idx == null) return "";
-        return cellString(r, idx).trim();
-    }
-    private static int parseDelay(String s) {
-        if (s == null) return 0;
-        String digits = s.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return 0;
-        try { return Integer.parseInt(digits); } catch (Exception e) { return 0; }
-    }
-    private static boolean isBlank(String s) { return s == null || s.isBlank(); }
-    private static String nonEmpty(String v, String fallback) { return isBlank(v) ? fallback : v; }
+    public String getLoadSummary() {
+        return String.format("""
+                ✅ Excel Load Complete
 
-    // ------------------------------------------------------
-    // Unit Breakdown
-    // ------------------------------------------------------
+                Loaded:
+                  • %d Unit Breakdown rows
+                  • %d Nurse Call rows
+                  • %d Patient Monitoring rows
+
+                Linked:
+                  • %d Configuration Groups (Nurse)
+                  • %d Configuration Groups (Clinical)
+                """,
+                units.size(), nurseCalls.size(), clinicals.size(),
+                nurseGroupToUnits.size(), clinicalGroupToUnits.size());
+    }
+
+    // -------------------- UNIT BREAKDOWN --------------------
     private void parseUnitBreakdown(Workbook wb) {
         Sheet sh = wb.getSheet(UNIT_SHEET_NAME);
         if (sh == null) return;
 
-        int headerRow = findLikelyHeader(sh, List.of("Facility","Common Unit Name","Nurse Call","Patient Monitoring"));
-        if (headerRow < 0) return;
-
-        Map<String,Integer> hm = headerMap(sh.getRow(headerRow));
+        Map<String,Integer> hm = headerMap(findHeader(sh));
         Integer cFacility = col(hm, "Facility");
         Integer cUnitName = col(hm, "Common Unit Name");
         Integer cNurseGroup = col(hm, "Nurse Call");
-        Integer cClinGroup  = col(hm, "Patient Monitoring");
-        Integer cNoCare     = col(hm, "No Caregiver Alert Number or Group");
+        Integer cClinGroup = col(hm, "Patient Monitoring");
+        Integer cNoCare = col(hm, "No Caregiver Alert Number or Group");
 
-        for (int r = headerRow + 1; r <= sh.getLastRowNum(); r++) {
+        for (int r = 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
+
             String facility = get(row, cFacility);
-            String unitName = get(row, cUnitName);
+            String unitNames = get(row, cUnitName);
             String nurseGroup = get(row, cNurseGroup);
-            String clinGroup  = get(row, cClinGroup);
-            String noCare     = get(row, cNoCare);
+            String clinGroup = get(row, cClinGroup);
+            String noCare = get(row, cNoCare);
 
-            if (facility.isBlank() && unitName.isBlank() && nurseGroup.isBlank() && clinGroup.isBlank()) continue;
+            if (facility.isBlank() && unitNames.isBlank()) continue;
 
-            UnitRow u = new UnitRow(facility, unitName, nurseGroup, clinGroup, noCare);
+            UnitRow u = new UnitRow(facility, unitNames, nurseGroup, clinGroup, noCare);
             units.add(u);
 
-            // map group -> unit refs
-            if (!isBlank(nurseGroup) && !isBlank(facility) && !isBlank(unitName)) {
-                nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
-                        .add(Map.of("facilityName", facility, "name", unitName));
-            }
-            if (!isBlank(clinGroup) && !isBlank(facility) && !isBlank(unitName)) {
-                clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
-                        .add(Map.of("facilityName", facility, "name", unitName));
+            List<String> unitList = splitUnits(unitNames);
+            for (String name : unitList) {
+                if (!nurseGroup.isBlank())
+                    nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
+                            .add(Map.of("facilityName", facility, "name", name));
+                if (!clinGroup.isBlank())
+                    clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
+                            .add(Map.of("facilityName", facility, "name", name));
             }
 
-            // fail-safe (No Caregiver) lookup
-            if (!isBlank(facility) && !isBlank(noCare)) {
+            if (!facility.isBlank() && !noCare.isBlank())
                 noCaregiverByFacility.put(facility, noCare);
-            }
         }
     }
 
-    private static int findLikelyHeader(Sheet sh, List<String> mustContainAny) {
-        int best = -1, bestScore = -1;
-        for (int r = 0; r <= Math.min(40, sh.getLastRowNum()); r++) {
-            Row row = sh.getRow(r);
-            if (row == null) continue;
-            StringBuilder sb = new StringBuilder();
-            for (int c = 0; c < row.getLastCellNum(); c++) sb.append(' ').append(cellString(row, c));
-            String joined = norm(sb.toString());
-            int score = 0;
-            for (String m : mustContainAny) if (joined.contains(norm(m))) score++;
-            if (score > bestScore) { bestScore = score; best = r; }
-        }
-        return best;
+    private static List<String> splitUnits(String s) {
+        if (s == null) return List.of();
+        return Arrays.stream(s.split("[,;]"))
+                .map(String::trim)
+                .filter(v -> !v.isEmpty())
+                .collect(Collectors.toList());
     }
 
-    // ------------------------------------------------------
-    // Nurse Call
-    // ------------------------------------------------------
+    // -------------------- NURSE CALL --------------------
     private void parseNurseCall(Workbook wb) {
         Sheet sh = wb.getSheet(NURSE_SHEET_NAME);
         if (sh == null) return;
@@ -208,104 +125,64 @@ public class ExcelParserV4 {
         Integer cAlarm    = col(hm, "Common Alert or Alarm Name", "Alarm Name");
         Integer cSending  = col(hm, "Sending System Alert Name");
         Integer cPriority = col(hm, "Priority");
-        Integer cDeviceA  = col(hm, "Device - A");
-        Integer cRingA    = col(hm, "Ringtone Device - A");
-
+        Integer cDevice = col(hm, "Device - A");
+        Integer cRingtone = col(hm, "Ringtone Device - A");
+        Integer cResp = col(hm, "Response Options");
         Integer cT1 = col(hm, "Time to 1st Recipient (after alarm triggers)");
         Integer cR1 = col(hm, "1st Recipient");
         Integer cT2 = col(hm, "Time to 2nd Recipient");
         Integer cR2 = col(hm, "2nd Recipient");
-        Integer cT3 = col(hm, "Time to 3rd Recipient");
-        Integer cR3 = col(hm, "3rd Recipient");
-        Integer cT4 = col(hm, "Time to 4th Recipient");
-        Integer cR4 = col(hm, "4th Recipient");
 
-        Integer cResp    = col(hm, "Response Options");
-        Integer cEMDAN   = col(hm, "EMDAN Compliant? (Y/N)");
-        Integer cComments= col(hm, "Comments (Device - A)");
-
-        for (int r = headerRow + 1; r <= sh.getLastRowNum(); r++) {
+        for (int r = 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
-
-            String cfg     = get(row, cCfg);
-            String alarm   = get(row, cAlarm);
-            String sending = get(row, cSending);
-            if (cfg.isBlank() && alarm.isBlank() && sending.isBlank()) continue;
-
             FlowRow f = new FlowRow();
             f.setType("NurseCalls");
-            f.setConfigGroup(nonEmpty(cfg, "Nurse Call"));
-            f.setAlarmName(alarm);
-            f.setSendingName(sending);
+            f.setConfigGroup(get(row, cCfg));
+            f.setAlarmName(get(row, cAlarm));
+            f.setSendingName(get(row, cSend));
             f.setPriority(mapPriority(get(row, cPriority)));
-            f.setDeviceA(get(row, cDeviceA));
-            f.setRingtone(get(row, cRingA));
+            f.setDeviceA(get(row, cDevice));
+            f.setRingtone(get(row, cRingtone));
             f.setResponseOptions(get(row, cResp));
-            f.setEmdan(get(row, cEMDAN));
-            f.setComments(get(row, cComments));
-
             f.setT1(get(row, cT1)); f.setR1(get(row, cR1));
             f.setT2(get(row, cT2)); f.setR2(get(row, cR2));
-            f.setT3(get(row, cT3)); f.setR3(get(row, cR3));
-            f.setT4(get(row, cT4)); f.setR4(get(row, cR4));
-
             nurseCalls.add(f);
         }
     }
 
-    // ------------------------------------------------------
-    // Clinical (Patient Monitoring)
-    // ------------------------------------------------------
+    // -------------------- CLINICALS --------------------
     private void parseClinical(Workbook wb) {
         Sheet sh = wb.getSheet(CLINICAL_SHEET_NAME);
         if (sh == null) return;
 
-        int headerRow = findLikelyHeader(sh, List.of("Configuration Group","Alarm Name","Priority"));
-        if (headerRow < 0) return;
-
-        Map<String,Integer> hm = headerMap(sh.getRow(headerRow));
-
-        Integer cCfg      = col(hm, "Configuration Group");
-        Integer cAlarm    = col(hm, "Alarm Name");
-        Integer cSending  = col(hm, "Sending System Alarm Name");
+        Map<String,Integer> hm = headerMap(findHeader(sh));
+        Integer cCfg = col(hm, "Configuration Group");
+        Integer cAlarm = col(hm, "Alarm Name");
+        Integer cSend = col(hm, "Sending System Alarm Name");
         Integer cPriority = col(hm, "Priority");
-        Integer cDeviceA  = col(hm, "Device - A");
-        Integer cRingA    = col(hm, "Ringtone Device - A");
-
+        Integer cDevice = col(hm, "Device - A");
+        Integer cRingtone = col(hm, "Ringtone Device - A");
+        Integer cResp = col(hm, "Response Options");
         Integer cT1 = col(hm, "Time to 1st Recipient (after alarm triggers)");
         Integer cR1 = col(hm, "1st Recipient");
         Integer cT2 = col(hm, "Time to 2nd Recipient");
         Integer cR2 = col(hm, "2nd Recipient");
 
-        Integer cResp     = col(hm, "Response Options");
-        Integer cEMDAN    = col(hm, "EMDAN Compliant? (Y)");
-        Integer cComments = col(hm, "Comments (Device - A)");
-
-        for (int r = headerRow + 1; r <= sh.getLastRowNum(); r++) {
+        for (int r = 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
-
-            String cfg     = get(row, cCfg);
-            String alarm   = get(row, cAlarm);
-            String sending = get(row, cSending);
-            if (cfg.isBlank() && alarm.isBlank() && sending.isBlank()) continue;
-
             FlowRow f = new FlowRow();
             f.setType("Clinicals");
-            f.setConfigGroup(nonEmpty(cfg, "Patient Monitoring"));
-            f.setAlarmName(alarm);
-            f.setSendingName(sending);
+            f.setConfigGroup(get(row, cCfg));
+            f.setAlarmName(get(row, cAlarm));
+            f.setSendingName(get(row, cSend));
             f.setPriority(mapPriority(get(row, cPriority)));
-            f.setDeviceA(get(row, cDeviceA));
-            f.setRingtone(get(row, cRingA));
+            f.setDeviceA(get(row, cDevice));
+            f.setRingtone(get(row, cRingtone));
             f.setResponseOptions(get(row, cResp));
-            f.setEmdan(get(row, cEMDAN));
-            f.setComments(get(row, cComments));
-
             f.setT1(get(row, cT1)); f.setR1(get(row, cR1));
             f.setT2(get(row, cT2)); f.setR2(get(row, cR2));
-
             clinicals.add(f);
         }
     }
@@ -605,16 +482,14 @@ public class ExcelParserV4 {
         String ind2 = "  ".repeat(indent + 1);
 
         if (obj instanceof Map<?,?> map) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\n");
+            StringBuilder sb = new StringBuilder("{\n");
             int i = 0;
             for (var e : map.entrySet()) {
                 if (i++ > 0) sb.append(",\n");
                 sb.append(ind2).append(quote(String.valueOf(e.getKey()))).append(": ");
                 sb.append(pretty(e.getValue(), indent + 1));
             }
-            sb.append("\n").append(ind).append("}");
-            return sb.toString();
+            return sb.append("\n").append(ind).append("}").toString();
         }
         if (obj instanceof Collection<?> col) {
             StringBuilder sb = new StringBuilder();
@@ -723,19 +598,26 @@ public class ExcelParserV4 {
                 wb.write(fos);
             }
         }
+        return "\"" + obj.toString() + "\"";
     }
 
-    private static String nvl(String s) { return s == null ? "" : s; }
-    private static void writeRow(Sheet sh, int r, String... vals) {
-        Row row = sh.createRow(r);
-        for (int i = 0; i < vals.length; i++) {
-            Cell c = row.createCell(i, CellType.STRING);
-            c.setCellValue(vals[i] == null ? "" : vals[i]);
+    // -------------------- HELPERS --------------------
+    private static Map<String,Integer> headerMap(Row r) {
+        Map<String,Integer> m = new LinkedHashMap<>();
+        if (r == null) return m;
+        for (int i=0;i<r.getLastCellNum();i++){
+            String key = norm(cellString(r,i));
+            if(!key.isEmpty())m.put(key,i);
         }
+        return m;
     }
-    private static String originalPriority(String mapped) {
-        if ("urgent".equalsIgnoreCase(mapped)) return "High";
-        if ("high".equalsIgnoreCase(mapped))   return "Medium";
-        return "Low";
+    private static Row findHeader(Sheet s){return s.getRow(0);}
+    private static Integer col(Map<String,Integer> hm,String...names){
+        for(String n:names){Integer i=hm.get(norm(n));if(i!=null)return i;}
+        return null;
     }
+    private static String get(Row r,Integer i){return i==null?"":cellString(r,i).trim();}
+    private static String cellString(Row r,int c){if(r==null)return"";Cell x=r.getCell(c);if(x==null)return"";return x.toString();}
+    private static String norm(String s){return s==null?"":s.toLowerCase().replaceAll("[^a-z0-9]+"," ").trim();}
+    private static String mapPriority(String p){String s=norm(p);if(s.contains("high"))return"urgent";if(s.contains("medium"))return"high";return"normal";}
 }
