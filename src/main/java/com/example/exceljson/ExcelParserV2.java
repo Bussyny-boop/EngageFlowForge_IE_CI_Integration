@@ -403,61 +403,59 @@ public class ExcelParserV2 {
 
     // ----- Destinations from Recipient -----
 
-    private void addDestinationsFromRecipient(List<Map<String,Object>> dests, FlowRow r, String cfgGroup){
+    @SuppressWarnings("unchecked")
+    private void addDestinationsFromRecipients(List<Map<String, Object>> dests, FlowRow sample, String configGroup) {
+        // Handles up to 5 recipients including FailSafe for Clinicals
+        List<String> recipients = new ArrayList<>();
+        if (!isBlank(sample.getR1())) recipients.add(sample.getR1());
+        if (!isBlank(sample.getR2())) recipients.add(sample.getR2());
+        if (!isBlank(sample.getR3())) recipients.add(sample.getR3());
+        if (!isBlank(sample.getR4())) recipients.add(sample.getR4());
+        if (!isBlank(sample.getR5())) recipients.add(sample.getR5());
+
         int order = 0;
-        for (String recipient : Arrays.asList(r.getR1(), r.getR2(), r.getR3(), r.getR4())) {
-            if (isBlank(recipient)) { order++; continue; }
-            List<String> tokens = splitList(recipient);
-
-            List<Map<String,String>> groups = new ArrayList<>();
-            List<Map<String,String>> roles = new ArrayList<>();
-            String fac = findFirstFacilityForGroup(cfgGroup);
-
-            for (String t : tokens) {
-                String s = t.trim();
-                if (s.toLowerCase().startsWith("vgroup")) {
-                    String name = s.replaceFirst("(?i)vgroup:\\s*", "").trim();
-                    if (!isBlank(name)) groups.add(Map.of("facilityName", nvl(fac,""), "name", name));
-                } else if (s.toLowerCase().startsWith("vassign")) {
-                    String name = s.replaceFirst("(?i)vassign:\\s*\\[room\\]\\s*", "").trim();
-                    if (!isBlank(name)) roles.add(Map.of("facilityName", nvl(fac,""), "name", name));
-                } else {
-                    // plain group text
-                    if (!isBlank(s)) groups.add(Map.of("facilityName", nvl(fac,""), "name", s));
-                }
-            }
-
-            Map<String,Object> d = new LinkedHashMap<>();
-            d.put("order", order);
-            d.put("delayTime", 0);
-            d.put("destinationType", "Normal");
-            d.put("users", new ArrayList<>());
-            d.put("groups", groups);
-            d.put("functionalRoles", roles);
-
-            if (!roles.isEmpty()) {
-                d.put("presenceConfig", "user_and_device");
-                d.put("RecipientType", "functional_role");
+        for (String rec : recipients) {
+            Map<String,Object> dest;
+            if (rec.toLowerCase().startsWith("vassign")) {
+                // functional role
+                dest = buildFunctionalRoleDest(rec, findFirstFacilityForGroup(configGroup), order++);
+            } else if (rec.toLowerCase().startsWith("vgroup")) {
+                // group destination
+                dest = buildGroupDest(rec, findFirstFacilityForGroup(configGroup), order++, "Normal");
             } else {
-                d.put("presenceConfig", "device");
-                d.put("RecipientType", "group");
+                // fallback as functional role
+                dest = buildFunctionalRoleDest("VAssign: [Room] " + rec, findFirstFacilityForGroup(configGroup), order++);
             }
-            dests.add(d);
-            order++;
+            dests.add(dest);
         }
     }
 
-    private Map<String,Object> buildGroupDest(String groupName, String facility, int order, String destType){
-        Map<String,Object> d = new LinkedHashMap<>();
-        d.put("order", order);
-        d.put("delayTime", 0);
-        d.put("destinationType", destType);
-        d.put("users", new ArrayList<>());
-        d.put("functionalRoles", new ArrayList<>());
-        d.put("groups", List.of(Map.of("facilityName", nvl(facility,""), "name", groupName)));
-        d.put("presenceConfig", "device");
-        d.put("RecipientType", "group");
-        return d;
+    private Map<String,Object> buildFunctionalRoleDest(String rec, String facility, int order) {
+        String name = rec.replaceFirst("(?i)vassign:\\s*\\[room\\]\\s*", "").trim();
+        Map<String,Object> dest = new LinkedHashMap<>();
+        dest.put("delayTime", 0);
+        dest.put("destinationType", "Normal");
+        dest.put("order", order);
+        dest.put("users", new ArrayList<>());
+        dest.put("groups", new ArrayList<>());
+        dest.put("functionalRoles", List.of(Map.of("facilityName", facility, "name", name)));
+        dest.put("presenceConfig", "user_and_device");
+        dest.put("recipientType", "functional_role");
+        return dest;
+    }
+
+    private Map<String,Object> buildGroupDest(String rec, String facility, int order, String type) {
+        String name = rec.replaceFirst("(?i)vgroup:\\s*", "").trim();
+        Map<String,Object> dest = new LinkedHashMap<>();
+        dest.put("delayTime", 0);
+        dest.put("destinationType", type);
+        dest.put("order", order);
+        dest.put("users", new ArrayList<>());
+        dest.put("functionalRoles", new ArrayList<>());
+        dest.put("groups", List.of(Map.of("facilityName", facility, "name", name)));
+        dest.put("presenceConfig", "device");
+        dest.put("recipientType", "group");
+        return dest;
     }
 
     // ----- Readers -----
@@ -703,14 +701,6 @@ public class ExcelParserV2 {
     private static int safeCol(Row header, String keyword, int defaultIndex) {
         Integer idx = findColLike(header, keyword);
         return (idx != null) ? idx : defaultIndex;
-    }
-
-    private static List<String> splitList(String s){
-        if (s == null) return List.of();
-        return Arrays.stream(s.split("[;,\n]"))
-                .map(String::trim)
-                .filter(x -> !x.isEmpty())
-                .collect(Collectors.toList());
     }
 
     private static String normalizePriority(String raw){

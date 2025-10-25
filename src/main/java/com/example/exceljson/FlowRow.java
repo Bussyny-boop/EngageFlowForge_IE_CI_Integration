@@ -13,6 +13,7 @@ public class FlowRow {
     private final StringProperty r2 = new SimpleStringProperty("");
     private final StringProperty r3 = new SimpleStringProperty("");
     private final StringProperty r4 = new SimpleStringProperty("");
+    private final StringProperty r5 = new SimpleStringProperty("");
     private final StringProperty failSafe = new SimpleStringProperty("");
 
     public FlowRow() {}
@@ -29,7 +30,7 @@ public class FlowRow {
         this.r2.set(r2);
         this.r3.set(r3);
         this.r4.set(r4);
-        this.failSafe.set(failSafe);
+        setR5(failSafe);
     }
 
     public StringProperty configGroupProperty() { return configGroup; }
@@ -41,6 +42,7 @@ public class FlowRow {
     public StringProperty r2Property() { return r2; }
     public StringProperty r3Property() { return r3; }
     public StringProperty r4Property() { return r4; }
+    public StringProperty r5Property() { return r5; }
     public StringProperty failSafeProperty() { return failSafe; }
 
     public String getConfigGroup() { return configGroup.get(); }
@@ -70,6 +72,15 @@ public class FlowRow {
     public String getR4() { return r4.get(); }
     public void setR4(String v) { r4.set(v); }
 
+    public String getR5() { return r5.get(); }
+    public void setR5(String v) {
+        r5.set(v);
+        failSafe.set(v);
+    }
+
     public String getFailSafe() { return failSafe.get(); }
-    public void setFailSafe(String v) { failSafe.set(v); }
+    public void setFailSafe(String v) {
+        failSafe.set(v);
+        r5.set(v);
+    }
 }
