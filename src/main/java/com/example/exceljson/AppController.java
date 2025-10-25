@@ -251,7 +251,7 @@ public class AppController {
         tblClinicals.getItems().clear();
     }
 
-    private <T> TableColumn<T, String> makeEditableCol(String title, Function<T, StringProperty> accessor) {
+    private <T> TableColumn<T, String> makeEditableCol(String title, String fieldName) {
         TableColumn<T, String> col = new TableColumn<>(title);
         col.setCellValueFactory(cellData -> accessor.apply(cellData.getValue()));
         col.setCellFactory(TextFieldTableCell.forTableColumn());

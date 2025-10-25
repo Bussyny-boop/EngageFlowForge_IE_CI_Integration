@@ -24,19 +24,4 @@ java -cp target/engage-rules-generator-1.1.0.jar \
 ```
 
 The unit tests (`JobRunnerTest`) demonstrate the minimal cell layout if you need
-an example generated programmatically. The generated `sample.json` is ignored by
-Git so you can review it locally without touching version control.
-
-## Quick smoke check with the `fail` job
-
-The CLI also exposes a lightweight diagnostics job that verifies the runtime
-environment without touching any spreadsheets. Run it after building to confirm
-that dependencies and logging are wired correctly:
-
-```
-java -cp target/engage-rules-generator-1.1.0.jar \
-    com.example.exceljson.jobs.JobRunner fail
-```
-
-The command exits with status code `0` and prints a reminder that you can pass
-`--expect-failure` if you need to simulate a failing pipeline step.
+an example generated programmatically.
