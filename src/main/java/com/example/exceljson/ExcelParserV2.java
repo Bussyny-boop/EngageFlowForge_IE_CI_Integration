@@ -254,7 +254,7 @@ public class ExcelParserV2 {
             List<FlowRow> group = entry.getValue();
             FlowRow sample = group.get(0);
 
-            Map<String,Object> flow = baseFlow();
+            Map<String,Object> flow = baseFlow(sample.getConfigGroup(), nvl(sample.getPriority(), "normal"));
             // alarmsAlerts
             List<String> alerts = group.stream()
                     .map(FlowRow::getAlarmName)
@@ -576,14 +576,15 @@ public class ExcelParserV2 {
 
     // ----- Helpers -----
 
-    private static Map<String,Object> baseFlow(){
+    private static Map<String,Object> baseFlow(String configGroup, String priority){
         Map<String,Object> m = new LinkedHashMap<>();
         m.put("alarmsAlerts", new ArrayList<>());
         m.put("conditions", new ArrayList<>());
         m.put("destinations", new ArrayList<>());
         m.put("interfaces", new ArrayList<>());
         m.put("parameterAttributes", new ArrayList<>());
-        m.put("priority", "normal");
+        m.put("configGroup", nvl(configGroup, ""));
+        m.put("priority", nvl(priority, "normal"));
         m.put("status", "Active");
         m.put("units", new ArrayList<>());
         return m;
