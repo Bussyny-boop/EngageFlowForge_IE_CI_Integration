@@ -213,7 +213,7 @@ public class ExcelParserV3 {
         Map<String,Integer> hm = headerMap(sh.getRow(headerRowIndex));
 
         Integer cCfg = col(hm, "Configuration Group");
-        Integer cAlarmCommon = col(hm, "Common Alert or Alarm Name");
+        Integer cAlarmCommon = col(hm, "Common Alert or Alarm Name", "Alarm Name");
         Integer cSending = col(hm, "Sending System Alert Name");
         Integer cPriority = col(hm, "Priority");
         Integer cDeviceA = col(hm, "Device - A");
@@ -681,7 +681,15 @@ public class ExcelParserV3 {
     @SuppressWarnings("unchecked")
     public static String pretty(Object obj, int indent) {
         if (obj == null) return "null";
-        if (obj instanceof String s) return s;
+        if (obj instanceof String s) {
+            String trimmed = s.trim();
+            if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+                    || (trimmed.startsWith("{") && trimmed.endsWith("}"))
+                    || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+                return s;
+            }
+            return quote(s);
+        }
         if (obj instanceof Number || obj instanceof Boolean) return String.valueOf(obj);
 
         String ind = "  ".repeat(indent);
@@ -727,16 +735,32 @@ public class ExcelParserV3 {
         return writeJson(json, "Clinicals.json");
     }
 
+    public File writeJson(File output) throws IOException {
+        Objects.requireNonNull(output, "output");
+        Map<String, Object> combined = new LinkedHashMap<>();
+        combined.put("nurseCalls", buildNurseCallsJson());
+        combined.put("clinicals", buildClinicalsJson());
+        return writeJsonToFile(combined, output);
+    }
+
     private File writeJson(Map<String,Object> json, String name) throws IOException {
         File dir = (sourceExcel != null && sourceExcel.getParentFile() != null)
                 ? sourceExcel.getParentFile()
                 : new File(".");
         File out = new File(dir, name);
-        try (FileWriter fw = new FileWriter(out)) {
+        return writeJsonToFile(json, out);
+    }
+
+    private File writeJsonToFile(Map<String, Object> json, File output) throws IOException {
+        File parent = output.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+        try (FileWriter fw = new FileWriter(output)) {
             fw.write(pretty(json));
             fw.write("\n");
         }
-        return out;
+        return output;
     }
 
     // ------------------------------------------------------
