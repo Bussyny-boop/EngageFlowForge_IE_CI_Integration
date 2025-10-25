@@ -1,155 +1,207 @@
 package com.example.exceljson;
 
-import com.example.exceljson.util.FXTableUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import javafx.collections.*;
 import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.util.*;
+import java.util.Map;
 
+/**
+ * AppController — GUI for Engage Rules Generator (ExcelParserV2 integration)
+ *
+ * Features:
+ *  - Load Excel
+ *  - View/Edit tables (Units, NurseCalls, Clinicals)
+ *  - Save edited Excel
+ *  - Generate JSON Preview
+ */
 public class AppController {
 
+    private ExcelParserV2 parser;
+
+    private final TableView<ExcelParserV2.UnitRow> tblUnits = new TableView<>();
+    private final TableView<ExcelParserV2.FlowRow> tblNurseCalls = new TableView<>();
+    private final TableView<ExcelParserV2.FlowRow> tblClinicals = new TableView<>();
     private final TextArea jsonPreview = new TextArea();
-    private final TextArea configPreview = new TextArea();
-    private final TableView<Map<String, String>> unitTable = new TableView<>();
-    private final TableView<Map<String, String>> nurseCallTable = new TableView<>();
-    private final TableView<Map<String, String>> patientMonTable = new TableView<>();
 
-    private File currentExcel;
-    private File currentConfig;
-    private ExcelParser parser;
-    private Config config = Config.defaultConfig();
+    private File currentFile;
 
-    public BorderPane buildUI() {
+    public void start(Stage stage) {
+        stage.setTitle("Engage Rules Generator – JSON Builder");
+
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
 
-        // --- Top toolbar ---
+        // ---- Top toolbar ----
         HBox top = new HBox(10);
         Button btnOpen = new Button("Open Excel…");
-        Button btnOpenCfg = new Button("Open Config…");
-        Button btnRefresh = new Button("Refresh Preview");
-        Button btnExport = new Button("Export JSON…");
-        btnExport.setDisable(true);
-        top.getChildren().addAll(btnOpen, btnOpenCfg, btnRefresh, btnExport);
+        Button btnSaveEdited = new Button("Save Edited Excel…");
+        Button btnPreview = new Button("Generate JSON Preview");
+        top.getChildren().addAll(btnOpen, btnSaveEdited, btnPreview);
         root.setTop(top);
 
-        // --- Center Tabs ---
+        // ---- TabPane for tables ----
         TabPane tabs = new TabPane();
-        Tab tabUnits = new Tab("Unit Breakdown", unitTable);
-        Tab tabNC = new Tab("Nurse Call", nurseCallTable);
-        Tab tabPM = new Tab("Patient Monitoring", patientMonTable);
-        Tab tabCfg = new Tab("Config", configPreview);
-        Tab tabJSON = new Tab("JSON Preview", jsonPreview);
-        for (Tab t : List.of(tabUnits, tabNC, tabPM, tabCfg, tabJSON)) {
-            t.setClosable(false);
-        }
-        tabs.getTabs().addAll(tabUnits, tabNC, tabPM, tabCfg, tabJSON);
+        tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        Tab tabUnits = new Tab("Units", tblUnits);
+        Tab tabNurse = new Tab("Nurse Calls", tblNurseCalls);
+        Tab tabClin = new Tab("Patient Monitoring", tblClinicals);
+        Tab tabJson = new Tab("JSON Preview", new ScrollPane(jsonPreview));
+        tabs.getTabs().addAll(tabUnits, tabNurse, tabClin, tabJson);
         root.setCenter(tabs);
 
-        // --- Styling ---
-        jsonPreview.setWrapText(true);
         jsonPreview.setEditable(false);
+        jsonPreview.setWrapText(true);
         jsonPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace;");
-        configPreview.setWrapText(true);
-        configPreview.setEditable(false);
-        configPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace;");
 
-        // --- Button Actions ---
+        // ---- Button Actions ----
+        btnOpen.setOnAction(e -> openExcel(stage));
+        btnSaveEdited.setOnAction(e -> saveEditedExcel(stage));
+        btnPreview.setOnAction(e -> generateJsonPreview());
 
-        // Open Excel file
-        btnOpen.setOnAction(e -> {
-            FileChooser fc = new FileChooser();
-            fc.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Excel Workbooks", "*.xlsx", "*.xls")
+        // ---- Scene ----
+        Scene scene = new Scene(root, 1300, 800);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    // --------------------------------
+    // Handlers
+    // --------------------------------
+
+    private void openExcel(Stage stage) {
+        FileChooser fc = new FileChooser();
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls"));
+        currentFile = fc.showOpenDialog(stage);
+        if (currentFile == null) return;
+
+        try {
+            parser = new ExcelParserV2(
+                    "Unit Breakdown",        // Sheet 1
+                    "Nurse call",            // Sheet 2
+                    "Patient Monitoring"     // Sheet 3
             );
-            File file = fc.showOpenDialog(null);
-            if (file != null) {
-                currentExcel = file;
-                reload();
-                btnExport.setDisable(false);
+            parser.load(currentFile);
+            populateTables();
+            jsonPreview.setText("");
+            showAlert("Success", "Excel file loaded successfully!");
+        } catch (Exception ex) {
+            showAlert("Error", "Failed to load Excel file:\n" + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void populateTables() {
+        // Units
+        tblUnits.setItems(FXCollections.observableArrayList(parser.getUnits()));
+        tblUnits.getColumns().setAll(
+                makeEditableCol("Facility", "facility"),
+                makeEditableCol("Common Unit Name", "unitName"),
+                makeEditableCol("Configuration Group", "configGroup")
+        );
+
+        // Nurse Calls
+        tblNurseCalls.setItems(FXCollections.observableArrayList(parser.getNurseCalls()));
+        tblNurseCalls.getColumns().setAll(
+                makeEditableCol("Config Group", "configGroup"),
+                makeEditableCol("Alarm Name", "alarmName"),
+                makeEditableCol("Priority", "priority"),
+                makeEditableCol("Ringtone", "ringtone"),
+                makeEditableCol("Response Options", "responseOptions"),
+                makeEditableCol("1st Recipient", "r1"),
+                makeEditableCol("2nd Recipient", "r2"),
+                makeEditableCol("3rd Recipient", "r3"),
+                makeEditableCol("4th Recipient", "r4")
+        );
+
+        // Clinicals
+        tblClinicals.setItems(FXCollections.observableArrayList(parser.getClinicals()));
+        tblClinicals.getColumns().setAll(
+                makeEditableCol("Config Group", "configGroup"),
+                makeEditableCol("Alarm Name", "alarmName"),
+                makeEditableCol("Priority", "priority"),
+                makeEditableCol("Ringtone", "ringtone"),
+                makeEditableCol("Response Options", "responseOptions"),
+                makeEditableCol("1st Recipient", "r1"),
+                makeEditableCol("2nd Recipient", "r2"),
+                makeEditableCol("3rd Recipient", "r3"),
+                makeEditableCol("4th Recipient", "r4"),
+                makeEditableCol("Fail Safe Recipient", "failSafe")
+        );
+
+        tblUnits.setEditable(true);
+        tblNurseCalls.setEditable(true);
+        tblClinicals.setEditable(true);
+    }
+
+    private void saveEditedExcel(Stage stage) {
+        if (parser == null) {
+            showAlert("Error", "No Excel file loaded yet!");
+            return;
+        }
+        FileChooser fc = new FileChooser();
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        fc.setInitialFileName("Edited_Configuration.xlsx");
+        File out = fc.showSaveDialog(stage);
+        if (out == null) return;
+
+        try {
+            parser.exportEditedExcel(out);
+            showAlert("Saved", "Edited Excel file saved successfully:\n" + out.getAbsolutePath());
+        } catch (Exception ex) {
+            showAlert("Error", "Failed to save edited Excel:\n" + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void generateJsonPreview() {
+        if (parser == null) {
+            showAlert("Error", "Load a file first!");
+            return;
+        }
+        try {
+            Map<String, Object> json = parser.toJson();
+            String preview = ExcelParserV2.pretty(json, 0);
+            jsonPreview.setText(preview);
+            showAlert("Success", "JSON Preview generated successfully!");
+        } catch (Exception ex) {
+            showAlert("Error", "Failed to generate JSON preview:\n" + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    // --------------------------------
+    // Helper functions
+    // --------------------------------
+
+    private <T> TableColumn<T, String> makeEditableCol(String title, String fieldName) {
+        TableColumn<T, String> col = new TableColumn<>(title);
+        col.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>(fieldName));
+        col.setCellFactory(TextFieldTableCell.forTableColumn());
+        col.setOnEditCommit(evt -> {
+            try {
+                var field = evt.getRowValue().getClass().getDeclaredField(fieldName);
+                field.setAccessible(true);
+                field.set(evt.getRowValue(), evt.getNewValue());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
-
-        // Open Config file
-btnOpenCfg.setOnAction(e -> {
-    FileChooser fc = new FileChooser();
-    fc.getExtensionFilters().add(
-        new FileChooser.ExtensionFilter("Config Files (YAML/JSON)", "*.yml", "*.yaml", "*.json")
-    );
-    File file = fc.showOpenDialog(null);
-    if (file != null) {
-        currentConfig = file;
-        try {
-            ObjectMapper mapper = file.getName().toLowerCase().endsWith(".json")
-                    ? new ObjectMapper()
-                    : new ObjectMapper(new YAMLFactory());
-            String text = Files.readString(file.toPath());
-            configPreview.setText(text);
-            config = mapper.readValue(text, Config.class);
-        } catch (Exception ex) {
-            configPreview.setText("Error reading config: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
-});
-
-        // Refresh preview (reload Excel)
-        btnRefresh.setOnAction(e -> reload());
-
-        // Export JSON
-        btnExport.setOnAction(e -> handleExport());
-
-        return root;
+        col.setPrefWidth(150);
+        return col;
     }
 
-    // --- Reload Excel workbook and update tables ---
-    private void reload() {
-        try {
-            if (currentExcel == null) return;
-            parser = new ExcelParser(config);
-            parser.load(currentExcel);
-            FXTableUtils.populate(unitTable, parser.getUnitBreakdownRows());
-            FXTableUtils.populate(nurseCallTable, parser.getNurseCallRows());
-            FXTableUtils.populate(patientMonTable, parser.getPatientMonitoringRows());
-
-            // Build JSON preview
-            Map<String, Object> json = parser.buildJson();
-            ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
-            jsonPreview.setText(writer.writeValueAsString(json));
-        } catch (Exception ex) {
-            jsonPreview.setText("Error loading Excel: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
-
-    // --- Export JSON to file ---
-    private void handleExport() {
-        try {
-            if (parser == null) {
-                jsonPreview.setText("No data loaded to export.");
-                return;
-            }
-            Map<String, Object> json = parser.buildJson();
-            ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
-
-            FileChooser fc = new FileChooser();
-            fc.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("JSON Files", "*.json")
-            );
-            File out = fc.showSaveDialog(null);
-            if (out != null) {
-                writer.writeValue(out, json);
-            }
-        } catch (Exception e) {
-            jsonPreview.setText("Error exporting JSON: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
