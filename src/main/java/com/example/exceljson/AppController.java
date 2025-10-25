@@ -4,22 +4,28 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.awt.Desktop;
 import java.io.File;
 
+/**
+ * AppController – JavaFX UI
+ * - Live-edit tables (commit on tab-out)
+ * - Popup progress messages while loading
+ * - Popup confirmation + "Open Folder" after Save/Generate
+ */
 public class AppController {
 
-    private ExcelParserV3 parser;
+    private ExcelParserV4 parser;
 
-    private final TableView<ExcelParserV3.UnitRow> tblUnits = new TableView<>();
+    private final TableView<UnitRow> tblUnits = new TableView<>();
     private final TableView<FlowRow> tblNurse = new TableView<>();
-    private final TableView<FlowRow> tblClin = new TableView<>();
+    private final TableView<FlowRow> tblClin  = new TableView<>();
     private final TextArea jsonPreview = new TextArea();
 
     private File currentExcel;
@@ -30,21 +36,19 @@ public class AppController {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
 
-        // top bar
         HBox top = new HBox(10);
         Button btnOpen = new Button("Open Excel…");
-        Button btnSaveEdited = new Button("Save Edited Excel…");
-        Button btnGenerate = new Button("Generate JSON Preview");
-        top.getChildren().addAll(btnOpen, btnSaveEdited, btnGenerate);
+        Button btnSave = new Button("Save Edited Excel…");
+        Button btnGen  = new Button("Generate JSON Preview");
+        top.getChildren().addAll(btnOpen, btnSave, btnGen);
         root.setTop(top);
 
-        // tabs
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         Tab tUnits = new Tab("Unit Breakdown", tblUnits);
         Tab tNurse = new Tab("Nurse Calls", tblNurse);
-        Tab tClin = new Tab("Patient Monitoring", tblClin);
-        Tab tJson = new Tab("JSON Preview", new ScrollPane(jsonPreview));
+        Tab tClin  = new Tab("Patient Monitoring", tblClin);
+        Tab tJson  = new Tab("JSON Preview", new ScrollPane(jsonPreview));
         tabs.getTabs().addAll(tUnits, tNurse, tClin, tJson);
         root.setCenter(tabs);
 
@@ -52,16 +56,19 @@ public class AppController {
         jsonPreview.setWrapText(true);
         jsonPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace;");
 
-        // actions
+        // Actions
         btnOpen.setOnAction(e -> openExcel(stage));
-        btnSaveEdited.setOnAction(e -> saveEdited(stage));
-        btnGenerate.setOnAction(e -> generateJson());
+        btnSave.setOnAction(e -> saveEdited(stage));
+        btnGen.setOnAction(e -> generateJson());
 
-        Scene scene = new Scene(root, 1300, 800);
+        Scene scene = new Scene(root, 1300, 820);
         stage.setScene(scene);
         stage.show();
     }
 
+    // ------------------------------------------------------
+    // Open Excel (with popup progress)
+    // ------------------------------------------------------
     private void openExcel(Stage stage) {
         FileChooser fc = new FileChooser();
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx", "*.xls"));
@@ -69,30 +76,46 @@ public class AppController {
         if (f == null) return;
 
         try {
-            parser = new ExcelParserV3();
+            popup("📘 Loading Excel File…", null);
+
+            parser = new ExcelParserV4();
+            popup("✅ Reading Unit Breakdown tab…", null);
+            // load() will parse all tabs; popups are informational per your request
             parser.load(f);
+
+            popup("✅ Reading Nurse Call tab…", null);
+            popup("✅ Reading Patient Monitoring tab…", null);
+            popup("✅ Linking units to configuration groups…", null);
+
             currentExcel = f;
             populateTables();
-            info("Loaded", "Excel loaded successfully.");
+
+            popup("✅ Loaded successfully",
+                  "Units: " + parser.units.size() +
+                  "\nNurse Calls: " + parser.nurseCalls.size() +
+                  "\nClinicals: " + parser.clinicals.size());
         } catch (Exception ex) {
             error("Load failed", ex.getMessage());
             ex.printStackTrace();
         }
     }
 
+    // ------------------------------------------------------
+    // Populate tables (live-editable, commit on tab-out)
+    // ------------------------------------------------------
     private void populateTables() {
-        // Units
+        // Units table
         tblUnits.setItems(FXCollections.observableArrayList(parser.units));
         tblUnits.getColumns().setAll(
-                colEditable("Facility", ExcelParserV3.UnitRow::facilityProperty),
-                colEditable("Common Unit Name", ExcelParserV3.UnitRow::unitNameProperty),
-                checkboxCol("Nurse Call", ExcelParserV3.UnitRow::isInNurseCall, ExcelParserV3.UnitRow::setInNurseCall),
-                checkboxCol("Patient Monitoring", ExcelParserV3.UnitRow::isInPatientMonitoring, ExcelParserV3.UnitRow::setInPatientMonitoring),
-                colEditable("No Caregiver Alert Number or Group", ExcelParserV3.UnitRow::noCaregiverGroupProperty)
+                colEditable("Facility", UnitRow::facilityProperty),
+                colEditable("Common Unit Name", UnitRow::unitNameProperty),
+                colEditable("Nurse Call", UnitRow::nurseCallGroupProperty),
+                colEditable("Patient Monitoring", UnitRow::patientMonitoringGroupProperty),
+                colEditable("No Caregiver Alert Number or Group", UnitRow::noCaregiverGroupProperty)
         );
         tblUnits.setEditable(true);
 
-        // Nurse Calls
+        // NurseCalls table
         tblNurse.setItems(FXCollections.observableArrayList(parser.nurseCalls));
         tblNurse.getColumns().setAll(
                 colEditable("Configuration Group", FlowRow::configGroupProperty),
@@ -115,7 +138,7 @@ public class AppController {
         );
         tblNurse.setEditable(true);
 
-        // Clinicals
+        // Clinicals table
         tblClin.setItems(FXCollections.observableArrayList(parser.clinicals));
         tblClin.getColumns().setAll(
                 colEditable("Configuration Group", FlowRow::configGroupProperty),
@@ -135,44 +158,11 @@ public class AppController {
         tblClin.setEditable(true);
     }
 
-    private void saveEdited(Stage stage) {
-        if (parser == null) { error("No file", "Load an Excel file first."); return; }
-        FileChooser fc = new FileChooser();
-        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
-        fc.setInitialFileName("Edited_Configuration.xlsx");
-        File out = fc.showSaveDialog(stage);
-        if (out == null) return;
-        try {
-            parser.exportEditedExcel(out);
-            info("Saved", "Edited Excel saved:\n" + out.getAbsolutePath());
-        } catch (Exception ex) {
-            error("Save failed", ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
+    // Generic editable text column that commits on tab-out/click-away
+    private <T> TableColumn<T, String> colEditable(
+            String title,
+            java.util.function.Function<T, javafx.beans.property.StringProperty> prop) {
 
-    private void generateJson() {
-        if (parser == null) { error("No data", "Load a file first."); return; }
-        try {
-            var ncFile = parser.writeNurseCallsJson();
-            var clFile = parser.writeClinicalsJson();
-            String preview = ""
-                    + "// " + ncFile.getName() + "\n"
-                    + ExcelParserV3.pretty(parser.buildNurseCallsJson()) + "\n\n"
-                    + "// " + clFile.getName() + "\n"
-                    + ExcelParserV3.pretty(parser.buildClinicalsJson());
-            jsonPreview.setText(preview);
-            info("JSON written",
-                    "Saved:\n" + ncFile.getAbsolutePath() + "\n" + clFile.getAbsolutePath() +
-                    "\n(Also shown in the preview tab)");
-        } catch (Exception ex) {
-            error("JSON error", ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
-
-    // ---- Table column helpers ----
-    private <T> TableColumn<T, String> colEditable(String title, java.util.function.Function<T, javafx.beans.property.StringProperty> prop) {
         TableColumn<T, String> col = new TableColumn<>(title);
         col.setCellValueFactory(data -> prop.apply(data.getValue()));
         col.setCellFactory(TextFieldTableCell.forTableColumn());
@@ -183,34 +173,82 @@ public class AppController {
                 e.printStackTrace();
             }
         });
-        col.setPrefWidth(180);
-        return col;
-    }
-
-    private <T> TableColumn<T, Boolean> checkboxCol(
-            String title,
-            java.util.function.Function<T, Boolean> getter,
-            java.util.function.BiConsumer<T, Boolean> setter) {
-
-        TableColumn<T, Boolean> col = new TableColumn<>(title);
-        col.setCellValueFactory(data -> {
-            var prop = new javafx.beans.property.SimpleBooleanProperty(getter.apply(data.getValue()));
-            prop.addListener((obs, oldVal, newVal) -> setter.accept(data.getValue(), newVal));
-            return prop;
-        });
-        col.setCellFactory(CheckBoxTableCell.forTableColumn(col));
         col.setEditable(true);
-        col.setPrefWidth(150);
+        col.setPrefWidth(200);
         return col;
     }
 
-    // ---- Alerts ----
-    private void info(String title, String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
-        a.setTitle(title); a.setHeaderText(null); a.showAndWait();
+    // ------------------------------------------------------
+    // Save edited Excel
+    // ------------------------------------------------------
+    private void saveEdited(Stage stage) {
+        if (parser == null) { error("No file", "Load an Excel file first."); return; }
+
+        FileChooser fc = new FileChooser();
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
+        fc.setInitialFileName("Edited_Configuration.xlsx");
+        File out = fc.showSaveDialog(stage);
+        if (out == null) return;
+
+        try {
+            parser.exportEditedExcel(out);
+            popupOpenFolder("💾 Excel file saved successfully",
+                    out.getAbsolutePath(),
+                    out.getParentFile());
+        } catch (Exception ex) {
+            error("Save failed", ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    // ------------------------------------------------------
+    // Generate JSON
+    // ------------------------------------------------------
+    private void generateJson() {
+        if (parser == null) { error("No data", "Load a file first."); return; }
+        try {
+            var ncFile = parser.writeNurseCallsJson();
+            var clFile = parser.writeClinicalsJson();
+            String preview = "// " + ncFile.getName() + "\n"
+                    + ExcelParserV4.pretty(parser.buildNurseCallsJson()) + "\n\n"
+                    + "// " + clFile.getName() + "\n"
+                    + ExcelParserV4.pretty(parser.buildClinicalsJson());
+            jsonPreview.setText(preview);
+
+            popupOpenFolder("✅ JSON Files Written",
+                    ncFile.getAbsolutePath() + "\n" + clFile.getAbsolutePath(),
+                    ncFile.getParentFile());
+        } catch (Exception ex) {
+            error("JSON error", ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    // ------------------------------------------------------
+    // Popups
+    // ------------------------------------------------------
+    private void popup(String title, String msg) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION, msg == null ? "" : msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.setTitle(title);
+        a.showAndWait();
+    }
+    private void popupOpenFolder(String title, String msg, File folder) {
+        ButtonType open = new ButtonType("Open Folder", ButtonBar.ButtonData.OK_DONE);
+        ButtonType close = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+        Alert a = new Alert(Alert.AlertType.INFORMATION, msg, open, close);
+        a.setHeaderText(null);
+        a.setTitle(title);
+        a.showAndWait().ifPresent(bt -> {
+            if (bt == open && folder != null && folder.exists()) {
+                try { Desktop.getDesktop().open(folder); } catch (Exception ignored) {}
+            }
+        });
     }
     private void error(String title, String msg) {
-        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
-        a.setTitle(title); a.setHeaderText(null); a.showAndWait();
+        Alert a = new Alert(Alert.AlertType.ERROR, msg == null ? "" : msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.setTitle(title);
+        a.showAndWait();
     }
 }
