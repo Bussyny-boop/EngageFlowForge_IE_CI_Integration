@@ -20,14 +20,14 @@ import java.util.stream.Collectors;
  *    Priority:   col F (index 5)
  *    Ringtone:   col H (index 7)
  *    Response Options: col AG (index 32)   (A=1, AG=33 -> zero-based 32)
- *    Recipients: headers "1st recipients", "2nd recipients", "3rd recipients", "4th recipients" (case-insensitive)
+ *    Recipients: headers "1st Recipient", "2nd Recipient", "3rd Recipient", "4th Recipient" (case-insensitive)
  *
  *  Patient Monitoring tab:
  *    Alarm Name: col E (4)
  *    Priority:   col F (5)
  *    Ringtone:   col H (7)
  *    Response Options: col AG (32)
- *    Recipients: same headers as above, plus "Fail safe recipients"
+ *    Recipients: same headers as above, plus "Fail safe Recipient"
  *
  *  Unit Breakdown tab:
  *    Facility: col A (0)
@@ -42,16 +42,49 @@ import java.util.stream.Collectors;
  *
  * Recipients:
  *  - Split on comma/semicolon/newline
- *  - "VGroup: NAME" => group recipient with NAME only
- *  - "VAssign: [Room] ROLE" => functional role recipient with ROLE only
+ *  - "VGroup: NAME" => group Recipient with NAME only
+ *  - "VAssign: [Room] ROLE" => functional role Recipient with ROLE only
  *  - presenceConfig: role -> "user_and_device"; group -> "device"
- *  - recipientType: role -> "functional_role"; group -> "group"
+ *  - RecipientType: role -> "functional_role"; group -> "group"
  *
  * Defaults:
  *  - Interface: OutgoingWCTP for all flows
  *  - Parameter templates differ for NurseCalls vs Clinicals (close to your JSON)
  */
 public class ExcelParserV2 {
+
+    // ----- Public DTOs you can bind to your GUI -----
+
+    public static class UnitRow {
+        public String facility;     // from Unit Breakdown col A
+        public String unitName;     // from Unit Breakdown col C
+        public String configGroup;  // optional link column (if present), else empty
+
+        public UnitRow(String facility, String unitName, String configGroup) {
+            this.facility = nvl(facility, "");
+            this.unitName = nvl(unitName, "");
+            this.configGroup = nvl(configGroup, "");
+        }
+    }
+
+    public static class FlowRow {
+        // Shared
+        public String type;            // "NurseCalls" or "Clinicals"
+        public String configGroup;     // if available (from sheet or left blank)
+        public String alarmName;       // col E
+        public String priority;        // normalized
+        public String ringtone;        // col H
+        public String responseOptions; // col AG
+
+        // Recipient (up to 4) + Clinical fail-safe
+        public String r1;
+        public String r2;
+        public String r3;
+        public String r4;
+        public String failSafe;        // Clinicals only; empty for NurseCalls
+
+        public FlowRow(String type) { this.type = type; }
+    }
 
     // ----- Workbook + Data -----
 
@@ -138,10 +171,10 @@ public class ExcelParserV2 {
             nh.createCell(2).setCellValue("Priority");
             nh.createCell(3).setCellValue("Ringtone");
             nh.createCell(4).setCellValue("Response Options");
-            nh.createCell(5).setCellValue("1st recipients");
-            nh.createCell(6).setCellValue("2nd recipients");
-            nh.createCell(7).setCellValue("3rd recipients");
-            nh.createCell(8).setCellValue("4th recipients");
+            nh.createCell(5).setCellValue("1st Recipient");
+            nh.createCell(6).setCellValue("2nd Recipient");
+            nh.createCell(7).setCellValue("3rd Recipient");
+            nh.createCell(8).setCellValue("4th Recipient");
 
             for (int i = 0; i < nurseCalls.size(); i++) {
                 FlowRow f = nurseCalls.get(i);
@@ -165,11 +198,11 @@ public class ExcelParserV2 {
             ch.createCell(2).setCellValue("Priority");
             ch.createCell(3).setCellValue("Ringtone");
             ch.createCell(4).setCellValue("Response Options");
-            ch.createCell(5).setCellValue("1st recipients");
-            ch.createCell(6).setCellValue("2nd recipients");
-            ch.createCell(7).setCellValue("3rd recipients");
-            ch.createCell(8).setCellValue("4th recipients");
-            ch.createCell(9).setCellValue("Fail safe recipients");
+            ch.createCell(5).setCellValue("1st Recipient");
+            ch.createCell(6).setCellValue("2nd Recipient");
+            ch.createCell(7).setCellValue("3rd Recipient");
+            ch.createCell(8).setCellValue("4th Recipient");
+            ch.createCell(9).setCellValue("Fail safe Recipient");
 
             for (int i = 0; i < clinicals.size(); i++) {
                 FlowRow f = clinicals.get(i);
@@ -234,7 +267,7 @@ public class ExcelParserV2 {
     }
 
     private List<Map<String,Object>> buildFlows(String typeToken, List<FlowRow> rows){
-        // Bundle by configGroup + priority + ringtone + response options + recipients vector
+        // Bundle by configGroup + priority + ringtone + response options + Recipient vector
         Map<String, List<FlowRow>> grouped = new LinkedHashMap<>();
         for (FlowRow r : rows) {
             String key = String.join("|",
@@ -274,7 +307,7 @@ public class ExcelParserV2 {
 
             // destinations
             List<Map<String,Object>> dests = new ArrayList<>();
-            addDestinationsFromRecipients(dests, sample, sample.getConfigGroup());
+            addDestinationsFromRecipient(dests, sample, sample.configGroup);
             // Clinical fail-safe destination if present
             if ("CLINICAL".equals(typeToken) && !isBlank(sample.getFailSafe())) {
                 Map<String,Object> nd = buildGroupDest( // NoDeliveries as per your example
@@ -338,8 +371,8 @@ public class ExcelParserV2 {
             }
 
         p.add(mapParam("popup", "true"));
-        p.add(mapParam("alertSound", quoteOrEmpty(r.getRingtone()))); // keeps last
-        if ("urgent".equalsIgnoreCase(r.getPriority())) {
+        p.add(mapParam("alertSound", quoteOrEmpty(r.ringtone))); // keeps last
+        if ("urgent".equalsIgnoreCase(r.priority)) {
             p.add(mapParam("breakThrough", "\"voceraAndDevice\"")); // only urgent
         } else {
             p.add(mapParam("breakThrough", "\"none\""));          // else none
@@ -378,7 +411,7 @@ public class ExcelParserV2 {
 
         if (!isBlank(r.getRingtone())) p.add(mapParam("alertSound", quote(r.getRingtone())));
         p.add(mapParam("responseAllowed", "false"));
-        if ("urgent".equalsIgnoreCase(r.getPriority())) {
+        if ("urgent".equalsIgnoreCase(r.priority)) {
             p.add(mapParam("breakThrough", "\"voceraAndDevice\""));
         } else {
             p.add(mapParam("breakThrough", "\"none\""));
@@ -400,13 +433,13 @@ public class ExcelParserV2 {
         return p;
     }
 
-    // ----- Destinations from recipients -----
+    // ----- Destinations from Recipient -----
 
-    private void addDestinationsFromRecipients(List<Map<String,Object>> dests, FlowRow r, String cfgGroup){
+    private void addDestinationsFromRecipient(List<Map<String,Object>> dests, FlowRow r, String cfgGroup){
         int order = 0;
-        for (String recipient : Arrays.asList(r.getR1(), r.getR2(), r.getR3(), r.getR4())) {
-            if (isBlank(recipient)) { order++; continue; }
-            List<String> tokens = splitList(recipient);
+        for (String Recipient : Arrays.asList(r.r1, r.r2, r.r3, r.r4)) {
+            if (isBlank(Recipient)) { order++; continue; }
+            List<String> tokens = splitList(Recipient);
 
             List<Map<String,String>> groups = new ArrayList<>();
             List<Map<String,String>> roles = new ArrayList<>();
@@ -436,10 +469,10 @@ public class ExcelParserV2 {
 
             if (!roles.isEmpty()) {
                 d.put("presenceConfig", "user_and_device");
-                d.put("recipientType", "functional_role");
+                d.put("RecipientType", "functional_role");
             } else {
                 d.put("presenceConfig", "device");
-                d.put("recipientType", "group");
+                d.put("RecipientType", "group");
             }
             dests.add(d);
             order++;
@@ -455,7 +488,7 @@ public class ExcelParserV2 {
         d.put("functionalRoles", new ArrayList<>());
         d.put("groups", List.of(Map.of("facilityName", nvl(facility,""), "name", groupName)));
         d.put("presenceConfig", "device");
-        d.put("recipientType", "group");
+        d.put("RecipientType", "group");
         return d;
     }
 
@@ -502,32 +535,37 @@ public class ExcelParserV2 {
         if (headerIdx < 0) headerIdx = 0;
         Row header = s.getRow(headerIdx);
 
-        int cAlarm = safeCol(header, "alarm", 4);
-        int cPriority = safeCol(header, "priority", 5);
-        int cRingtone = safeCol(header, "ringtone", 7);
-        int cResp = safeCol(header, "response", 32);
-        Integer cCfg = findColLike(header, "config");
-        Integer cR1 = findColLike(header, "1st");
-        Integer cR2 = findColLike(header, "2nd");
-        Integer cR3 = findColLike(header, "3rd");
-        Integer cR4 = findColLike(header, "4th");
+        // Known fixed columns
+        int cAlarm = 4; // E
+        int cPriority = 5; // F
+        int cRingtone = 7; // H
+        int cResp = 32; // AG
+
+        // Optional config group column if present
+        Integer cCfg = findCol(header, "configuration group");
+
+        // Recipient by header name
+        Integer cR1 = findCol(header, "1st Recipient");
+        Integer cR2 = findCol(header, "2nd Recipient");
+        Integer cR3 = findCol(header, "3rd Recipient");
+        Integer cR4 = findCol(header, "4th Recipient");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
             if (row == null) continue;
 
-            FlowRow f = new FlowRow();
-            f.setConfigGroup(getStringSafe(row, cCfg));
-            f.setAlarmName(getStringSafe(row, cAlarm));
-            f.setPriority(normalizePriority(getStringSafe(row, cPriority)));
-            f.setRingtone(getStringSafe(row, cRingtone));
-            f.setResponseOptions(getStringSafe(row, cResp));
-            f.setR1(getStringSafe(row, cR1));
-            f.setR2(getStringSafe(row, cR2));
-            f.setR3(getStringSafe(row, cR3));
-            f.setR4(getStringSafe(row, cR4));
+            FlowRow f = new FlowRow("NurseCalls");
+            f.configGroup = getStringSafe(row, cCfg);
+            f.alarmName = getStringSafe(row, cAlarm);
+            f.priority = normalizePriority(getStringSafe(row, cPriority));
+            f.ringtone = getStringSafe(row, cRingtone);
+            f.responseOptions = getStringSafe(row, cResp);
+            f.r1 = getStringSafe(row, cR1);
+            f.r2 = getStringSafe(row, cR2);
+            f.r3 = getStringSafe(row, cR3);
+            f.r4 = getStringSafe(row, cR4);
 
-            if (!isBlank(f.getAlarmName())) nurseCalls.add(f);
+            if (!isBlank(f.alarmName)) nurseCalls.add(f);
         }
     }
 
@@ -542,34 +580,35 @@ public class ExcelParserV2 {
         if (headerIdx < 0) headerIdx = 0;
         Row header = s.getRow(headerIdx);
 
-        int cAlarm = safeCol(header, "alarm", 4);
-        int cPriority = safeCol(header, "priority", 5);
-        int cRingtone = safeCol(header, "ringtone", 7);
-        int cResp = safeCol(header, "response", 32);
-        Integer cCfg = findColLike(header, "config");
-        Integer cR1 = findColLike(header, "1st");
-        Integer cR2 = findColLike(header, "2nd");
-        Integer cR3 = findColLike(header, "3rd");
-        Integer cR4 = findColLike(header, "4th");
-        Integer cFail = findColLike(header, "fail");
+        int cAlarm = 4; // E
+        int cPriority = 5; // F
+        int cRingtone = 7; // H
+        int cResp = 32; // AG
+
+        Integer cCfg = findCol(header, "configuration group");
+        Integer cR1 = findCol(header, "1st Recipient");
+        Integer cR2 = findCol(header, "2nd Recipient");
+        Integer cR3 = findCol(header, "3rd Recipient");
+        Integer cR4 = findCol(header, "4th Recipient");
+        Integer cFail = findCol(header, "fail safe Recipient");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
             if (row == null) continue;
 
-            FlowRow f = new FlowRow();
-            f.setConfigGroup(getStringSafe(row, cCfg));
-            f.setAlarmName(getStringSafe(row, cAlarm));
-            f.setPriority(normalizePriority(getStringSafe(row, cPriority)));
-            f.setRingtone(getStringSafe(row, cRingtone));
-            f.setResponseOptions(getStringSafe(row, cResp));
-            f.setR1(getStringSafe(row, cR1));
-            f.setR2(getStringSafe(row, cR2));
-            f.setR3(getStringSafe(row, cR3));
-            f.setR4(getStringSafe(row, cR4));
-            f.setFailSafe(getStringSafe(row, cFail));
+            FlowRow f = new FlowRow("Clinicals");
+            f.configGroup = getStringSafe(row, cCfg);
+            f.alarmName = getStringSafe(row, cAlarm);
+            f.priority = normalizePriority(getStringSafe(row, cPriority));
+            f.ringtone = getStringSafe(row, cRingtone);
+            f.responseOptions = getStringSafe(row, cResp);
+            f.r1 = getStringSafe(row, cR1);
+            f.r2 = getStringSafe(row, cR2);
+            f.r3 = getStringSafe(row, cR3);
+            f.r4 = getStringSafe(row, cR4);
+            f.failSafe = getStringSafe(row, cFail);
 
-            if (!isBlank(f.getAlarmName())) clinicals.add(f);
+            if (!isBlank(f.alarmName)) clinicals.add(f);
         }
     }
 

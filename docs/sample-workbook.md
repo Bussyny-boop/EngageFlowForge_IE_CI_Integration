@@ -24,5 +24,4 @@ java -cp target/engage-rules-generator-1.1.0.jar \
 ```
 
 The unit tests (`JobRunnerTest`) demonstrate the minimal cell layout if you need
-an example generated programmatically. The generated `sample.json` is ignored by
-Git so you can review it locally without touching version control.
+an example generated programmatically.
