@@ -45,5 +45,6 @@ java -cp target/engage-rules-generator-1.1.0.jar \
     com.example.exceljson.jobs.JobRunner fail
 ```
 
-The command exits with status code `0` and prints a reminder that you can pass
-`--expect-failure` if you need to simulate a failing pipeline step.
+You should see the message `Fail job completed successfully. Use --expect-failure to
+force a failure exit code.` and an exit status of `0`. Pass `--expect-failure` if you
+need to simulate a failing pipeline step.
