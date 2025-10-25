@@ -32,4 +32,17 @@ public final class Main {
 
         return runner.run(args);
     }
+
+    static Integer maybeRunJob(String[] args) {
+        if (args == null || args.length == 0) {
+            return null;
+        }
+
+        JobRunner runner = new JobRunner();
+        if (!runner.isKnownJob(args[0])) {
+            return null;
+        }
+
+        return runner.run(args);
+    }
 }
