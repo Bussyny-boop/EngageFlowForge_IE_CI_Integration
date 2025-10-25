@@ -20,14 +20,14 @@ import java.util.stream.Collectors;
  *    Priority:   col F (index 5)
  *    Ringtone:   col H (index 7)
  *    Response Options: col AG (index 32)   (A=1, AG=33 -> zero-based 32)
- *    Recipients: headers "1st Recipients", "2nd Recipients", "3rd Recipients", "4th Recipients" (case-insensitive)
+ *    Recipients: headers "1st Recipient", "2nd Recipient", "3rd Recipient", "4th Recipient" (case-insensitive)
  *
  *  Patient Monitoring tab:
  *    Alarm Name: col E (4)
  *    Priority:   col F (5)
  *    Ringtone:   col H (7)
  *    Response Options: col AG (32)
- *    Recipients: same headers as above, plus "Fail safe Recipients"
+ *    Recipients: same headers as above, plus "Fail safe Recipient"
  *
  *  Unit Breakdown tab:
  *    Facility: col A (0)
@@ -76,7 +76,7 @@ public class ExcelParserV2 {
         public String ringtone;        // col H
         public String responseOptions; // col AG
 
-        // Recipients (up to 4) + Clinical fail-safe
+        // Recipient (up to 4) + Clinical fail-safe
         public String r1;
         public String r2;
         public String r3;
@@ -149,10 +149,10 @@ public class ExcelParserV2 {
             nh.createCell(2).setCellValue("Priority");
             nh.createCell(3).setCellValue("Ringtone");
             nh.createCell(4).setCellValue("Response Options");
-            nh.createCell(5).setCellValue("1st Recipients");
-            nh.createCell(6).setCellValue("2nd Recipients");
-            nh.createCell(7).setCellValue("3rd Recipients");
-            nh.createCell(8).setCellValue("4th Recipients");
+            nh.createCell(5).setCellValue("1st Recipient");
+            nh.createCell(6).setCellValue("2nd Recipient");
+            nh.createCell(7).setCellValue("3rd Recipient");
+            nh.createCell(8).setCellValue("4th Recipient");
 
             for (int i = 0; i < nurseCalls.size(); i++) {
                 FlowRow f = nurseCalls.get(i);
@@ -176,11 +176,11 @@ public class ExcelParserV2 {
             ch.createCell(2).setCellValue("Priority");
             ch.createCell(3).setCellValue("Ringtone");
             ch.createCell(4).setCellValue("Response Options");
-            ch.createCell(5).setCellValue("1st Recipients");
-            ch.createCell(6).setCellValue("2nd Recipients");
-            ch.createCell(7).setCellValue("3rd Recipients");
-            ch.createCell(8).setCellValue("4th Recipients");
-            ch.createCell(9).setCellValue("Fail safe Recipients");
+            ch.createCell(5).setCellValue("1st Recipient");
+            ch.createCell(6).setCellValue("2nd Recipient");
+            ch.createCell(7).setCellValue("3rd Recipient");
+            ch.createCell(8).setCellValue("4th Recipient");
+            ch.createCell(9).setCellValue("Fail safe Recipient");
 
             for (int i = 0; i < clinicals.size(); i++) {
                 FlowRow f = clinicals.get(i);
@@ -245,7 +245,7 @@ public class ExcelParserV2 {
     }
 
     private List<Map<String,Object>> buildFlows(String typeToken, List<FlowRow> rows){
-        // Bundle by configGroup + priority + ringtone + response options + Recipients vector
+        // Bundle by configGroup + priority + ringtone + response options + Recipient vector
         Map<String, List<FlowRow>> grouped = new LinkedHashMap<>();
         for (FlowRow r : rows) {
             String key = String.join("|",
@@ -285,7 +285,7 @@ public class ExcelParserV2 {
 
             // destinations
             List<Map<String,Object>> dests = new ArrayList<>();
-            addDestinationsFromRecipients(dests, sample, sample.configGroup);
+            addDestinationsFromRecipient(dests, sample, sample.configGroup);
             // Clinical fail-safe destination if present
             if ("CLINICAL".equals(typeToken) && !isBlank(sample.failSafe)) {
                 Map<String,Object> nd = buildGroupDest( // NoDeliveries as per your example
@@ -411,9 +411,9 @@ public class ExcelParserV2 {
         return p;
     }
 
-    // ----- Destinations from Recipients -----
+    // ----- Destinations from Recipient -----
 
-    private void addDestinationsFromRecipients(List<Map<String,Object>> dests, FlowRow r, String cfgGroup){
+    private void addDestinationsFromRecipient(List<Map<String,Object>> dests, FlowRow r, String cfgGroup){
         int order = 0;
         for (String Recipient : Arrays.asList(r.r1, r.r2, r.r3, r.r4)) {
             if (isBlank(Recipient)) { order++; continue; }
@@ -514,11 +514,11 @@ public class ExcelParserV2 {
         // Optional config group column if present
         Integer cCfg = findCol(header, "configuration group");
 
-        // Recipients by header name
-        Integer cR1 = findCol(header, "1st Recipients");
-        Integer cR2 = findCol(header, "2nd Recipients");
-        Integer cR3 = findCol(header, "3rd Recipients");
-        Integer cR4 = findCol(header, "4th Recipients");
+        // Recipient by header name
+        Integer cR1 = findCol(header, "1st Recipient");
+        Integer cR2 = findCol(header, "2nd Recipient");
+        Integer cR3 = findCol(header, "3rd Recipient");
+        Integer cR4 = findCol(header, "4th Recipient");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
@@ -553,11 +553,11 @@ public class ExcelParserV2 {
         int cResp = 32; // AG
 
         Integer cCfg = findCol(header, "configuration group");
-        Integer cR1 = findCol(header, "1st Recipients");
-        Integer cR2 = findCol(header, "2nd Recipients");
-        Integer cR3 = findCol(header, "3rd Recipients");
-        Integer cR4 = findCol(header, "4th Recipients");
-        Integer cFail = findCol(header, "fail safe Recipients");
+        Integer cR1 = findCol(header, "1st Recipient");
+        Integer cR2 = findCol(header, "2nd Recipient");
+        Integer cR3 = findCol(header, "3rd Recipient");
+        Integer cR4 = findCol(header, "4th Recipient");
+        Integer cFail = findCol(header, "fail safe Recipient");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
