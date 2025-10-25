@@ -331,14 +331,22 @@ public class ExcelParserV2 {
 
     private List<Map<String,Object>> buildNurseCallParams(FlowRow r){
         List<Map<String,Object>> p = new ArrayList<>();
-        p.add(mapParam("destinationName", "\"Group\""));
-        if (!isBlank(r.ringtone)) p.add(mapParam("alertSound", quote(r.ringtone)));
-        p.add(mapParam("accept", "\"Accepted\""), r.responseOptions, "accept");
-        p.add(mapParam("acceptAndCall", "\"Call Back\""), r.responseOptions, "call back");
-        p.add(mapParam("acceptBadgePhrases", "[\"Accept\"]"), r.responseOptions, "accept");
-        // escalate in decline set
-        p.add(mapParam("decline", "\"Decline Primary\""), r.responseOptions, "escalate");
-        p.add(mapParam("declineBadgePhrases", "[\"Escalate\"]"), r.responseOptions, "escalate");
+            p.add(mapParam("destinationName", "\"Group\""));
+            if (!isBlank(r.ringtone)) p.add(mapParam("alertSound", quote(r.ringtone)));
+            
+            // Conditionally add based on ResponseOptions
+            String ro = nvl(r.responseOptions, "").toLowerCase();
+            if (ro.contains("accept")) {
+                p.add(mapParam("accept", "\"Accepted\""));
+                p.add(mapParam("acceptBadgePhrases", "[\"Accept\"]"));
+            }
+            if (ro.contains("call back")) {
+                p.add(mapParam("acceptAndCall", "\"Call Back\""));
+            }
+            if (ro.contains("escalate")) {
+                p.add(mapParam("decline", "\"Decline Primary\""));
+                p.add(mapParam("declineBadgePhrases", "[\"Escalate\"]"));
+            }
 
         p.add(mapParam("popup", "true"));
         p.add(mapParam("alertSound", quoteOrEmpty(r.ringtone))); // keeps last
