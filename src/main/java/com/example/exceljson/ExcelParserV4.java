@@ -235,3 +235,68 @@ public class ExcelParserV4 {
         return "normal";
     }
 }
+
+    // -------------------- BUILD JSON OUTPUT --------------------
+    public Map<String, Object> buildNurseCallsJson() {
+        Map<String, Object> root = new LinkedHashMap<>();
+        root.put("version", "1.1.0");
+        List<Map<String, Object>> flows = new ArrayList<>();
+
+        for (FlowRow row : nurseCalls) {
+            if (row.getAlarmName().isEmpty()) continue;
+            Map<String, Object> flow = new LinkedHashMap<>();
+            flow.put("name", row.getAlarmName());
+            flow.put("type", "NurseCalls");
+            flow.put("priority", row.getPriority());
+            flow.put("ringtone", row.getRingtone());
+            flow.put("responseOptions", row.getResponseOptions());
+
+            // link units for this configuration group
+            List<Map<String, String>> unitsList = getUnitsForGroup(row.getConfigGroup(), nurseGroupToUnits);
+            if (!unitsList.isEmpty()) flow.put("units", unitsList);
+
+            flows.add(flow);
+        }
+
+        root.put("deliveryFlows", flows);
+        return root;
+    }
+
+    public Map<String, Object> buildClinicalsJson() {
+        Map<String, Object> root = new LinkedHashMap<>();
+        root.put("version", "1.1.0");
+        List<Map<String, Object>> flows = new ArrayList<>();
+
+        for (FlowRow row : clinicals) {
+            if (row.getAlarmName().isEmpty()) continue;
+            Map<String, Object> flow = new LinkedHashMap<>();
+            flow.put("name", row.getAlarmName());
+            flow.put("type", "Clinicals");
+            flow.put("priority", row.getPriority());
+            flow.put("ringtone", row.getRingtone());
+            flow.put("responseOptions", row.getResponseOptions());
+
+            // link units for this configuration group
+            List<Map<String, String>> unitsList = getUnitsForGroup(row.getConfigGroup(), clinicalGroupToUnits);
+            if (!unitsList.isEmpty()) flow.put("units", unitsList);
+
+            flows.add(flow);
+        }
+
+        root.put("deliveryFlows", flows);
+        return root;
+    }
+
+    private List<Map<String,String>> getUnitsForGroup(String group, Map<String, List<Map<String,String>>> map) {
+        if (group == null || group.isEmpty()) return List.of();
+        return map.getOrDefault(group, List.of());
+    }
+
+    // -------------------- WRITE JSON TO FILE --------------------
+    public void writeJson(File file) throws IOException {
+        try (FileWriter fw = new FileWriter(file)) {
+            fw.write(pretty(buildNurseCallsJson()));
+            fw.write("\n\n");
+            fw.write(pretty(buildClinicalsJson()));
+        }
+    }
