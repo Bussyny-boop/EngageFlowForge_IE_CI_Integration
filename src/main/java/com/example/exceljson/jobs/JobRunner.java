@@ -96,6 +96,19 @@ public final class JobRunner {
                 .forEach(entry -> out.printf("  %s%n    %s%n", entry.getKey(), entry.getValue().description));
     }
 
+    /**
+     * Checks whether the supplied job name corresponds to a registered job.
+     *
+     * @param jobName the job identifier provided on the command line
+     * @return {@code true} if the job exists, otherwise {@code false}
+     */
+    public boolean isKnownJob(String jobName) {
+        if (jobName == null || jobName.isEmpty()) {
+            return false;
+        }
+        return jobs.containsKey(normalize(jobName));
+    }
+
     private static String normalize(String input) {
         return input == null ? "" : input.trim().toLowerCase(Locale.ROOT);
     }
