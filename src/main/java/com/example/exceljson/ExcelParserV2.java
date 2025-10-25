@@ -350,8 +350,11 @@ public class ExcelParserV2 {
 
         p.add(mapParam("popup", "true"));
         p.add(mapParam("alertSound", quoteOrEmpty(r.ringtone))); // keeps last
-        p.add(mapParam("breakThrough", "\"voceraAndDevice\""), "urgent".equalsIgnoreCase(r.priority)); // only urgent
-        p.add(mapParam("breakThrough", "\"none\""), !"urgent".equalsIgnoreCase(r.priority));          // else none
+        if ("urgent".equalsIgnoreCase(r.priority)) {
+            p.add(mapParam("breakThrough", "\"voceraAndDevice\"")); // only urgent
+        } else {
+            p.add(mapParam("breakThrough", "\"none\""));          // else none
+        }
         p.add(mapParam("enunciate", "true"));
         p.add(mapParam("message", "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""));
         p.add(mapParam("patientMRN", "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""));
@@ -386,8 +389,11 @@ public class ExcelParserV2 {
 
         if (!isBlank(r.ringtone)) p.add(mapParam("alertSound", quote(r.ringtone)));
         p.add(mapParam("responseAllowed", "false"));
-        p.add(mapParam("breakThrough", "\"voceraAndDevice\""), "urgent".equalsIgnoreCase(r.priority));
-        p.add(mapParam("breakThrough", "\"none\""), !"urgent".equalsIgnoreCase(r.priority));
+        if ("urgent".equalsIgnoreCase(r.priority)) {
+            p.add(mapParam("breakThrough", "\"voceraAndDevice\""));
+        } else {
+            p.add(mapParam("breakThrough", "\"none\""));
+        }
         p.add(mapParam("enunciate", "true"));
         p.add(mapParam("message", "\"Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}\""));
         p.add(mapParam("patientMRN", "\"#{clinical_patient.mrn}:#{clinical_patient.visit_number}\""));
@@ -718,7 +724,7 @@ public class ExcelParserV2 {
         if (obj instanceof Map){
             StringBuilder sb = new StringBuilder();
             sb.append("{\n");
-            Iterator<Map.Entry<?,?>> it = ((Map<?,?>)obj).entrySet().iterator();
+            Iterator<? extends Map.Entry<?,?>> it = ((Map<?,?>)obj).entrySet().iterator();
             while (it.hasNext()){
                 var e = it.next();
                 sb.append(sp1).append("\"").append(e.getKey()).append("\": ").append(pretty(e.getValue(), indent+1));
