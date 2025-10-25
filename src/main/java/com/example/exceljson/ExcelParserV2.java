@@ -704,7 +704,7 @@ public class ExcelParserV2 {
 
     // very small JSON pretty printer (for this fixed structure)
     @SuppressWarnings("unchecked")
-    private static String pretty(Object obj, int indent){
+    public static String pretty(Object obj, int indent){
         String sp = "  ".repeat(indent);
         String sp1 = "  ".repeat(indent+1);
         if (obj instanceof Map){
