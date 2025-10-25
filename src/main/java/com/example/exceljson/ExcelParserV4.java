@@ -26,10 +26,9 @@ public class ExcelParserV4 {
     public final List<FlowRow> nurseCalls = new ArrayList<>();
     public final List<FlowRow> clinicals = new ArrayList<>();
 
-    // Sheet names (can be overridden via ctor if needed)
-    private final String unitSheetName;
-    private final String nurseSheetName;
-    private final String clinicalSheetName;
+    private static final String UNIT_SHEET_NAME = "Unit Breakdown";
+    private static final String NURSE_SHEET_NAME = "Nurse call";
+    private static final String CLINICAL_SHEET_NAME = "Patient Monitoring";
 
     // For Clinicals fail-safe: Facility -> "No Caregiver Alert Number or Group"
     private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
@@ -40,14 +39,7 @@ public class ExcelParserV4 {
 
     private File sourceExcel;
 
-    public ExcelParserV4() {
-        this("Unit Breakdown", "Nurse call", "Patient Monitoring");
-    }
-    public ExcelParserV4(String unitSheetName, String nurseSheetName, String clinicalSheetName) {
-        this.unitSheetName = unitSheetName;
-        this.nurseSheetName = nurseSheetName;
-        this.clinicalSheetName = clinicalSheetName;
-    }
+    public ExcelParserV4() {}
 
     // ------------------------------------------------------
     // Load
@@ -141,7 +133,7 @@ public class ExcelParserV4 {
     // Unit Breakdown
     // ------------------------------------------------------
     private void parseUnitBreakdown(Workbook wb) {
-        Sheet sh = wb.getSheet(unitSheetName);
+        Sheet sh = wb.getSheet(UNIT_SHEET_NAME);
         if (sh == null) return;
 
         int headerRow = findLikelyHeader(sh, List.of("Facility","Common Unit Name","Nurse Call","Patient Monitoring"));
@@ -204,7 +196,7 @@ public class ExcelParserV4 {
     // Nurse Call
     // ------------------------------------------------------
     private void parseNurseCall(Workbook wb) {
-        Sheet sh = wb.getSheet(nurseSheetName);
+        Sheet sh = wb.getSheet(NURSE_SHEET_NAME);
         if (sh == null) return;
 
         int headerRow = findLikelyHeader(sh, List.of("Configuration Group","Common Alert or Alarm Name","Priority"));
@@ -213,7 +205,7 @@ public class ExcelParserV4 {
         Map<String,Integer> hm = headerMap(sh.getRow(headerRow));
 
         Integer cCfg      = col(hm, "Configuration Group");
-        Integer cAlarm    = col(hm, "Common Alert or Alarm Name");
+        Integer cAlarm    = col(hm, "Common Alert or Alarm Name", "Alarm Name");
         Integer cSending  = col(hm, "Sending System Alert Name");
         Integer cPriority = col(hm, "Priority");
         Integer cDeviceA  = col(hm, "Device - A");
@@ -266,7 +258,7 @@ public class ExcelParserV4 {
     // Clinical (Patient Monitoring)
     // ------------------------------------------------------
     private void parseClinical(Workbook wb) {
-        Sheet sh = wb.getSheet(clinicalSheetName);
+        Sheet sh = wb.getSheet(CLINICAL_SHEET_NAME);
         if (sh == null) return;
 
         int headerRow = findLikelyHeader(sh, List.of("Configuration Group","Alarm Name","Priority"));
@@ -327,7 +319,32 @@ public class ExcelParserV4 {
     }
     private static boolean isUrgent(String priority) { return "urgent".equalsIgnoreCase(priority); }
     private static boolean isNoResponse(String resp) { return norm(resp).equals("no response"); }
-    private static String quote(String s) { return s == null ? "\"\"" : "\"" + s.replace("\"","\\\"") + "\""; }
+    private static String quote(String s) {
+        if (s == null) return "\"\"";
+        StringBuilder sb = new StringBuilder();
+        sb.append('"');
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            switch (ch) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\b' -> sb.append("\\b");
+                case '\f' -> sb.append("\\f");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (ch < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) ch));
+                    } else {
+                        sb.append(ch);
+                    }
+                }
+            }
+        }
+        sb.append('"');
+        return sb.toString();
+    }
     private static String safeOneLine(String s) { return s == null ? "" : s.replaceAll("[\\r\\n]+"," ").trim(); }
 
     // ------------------------------------------------------
@@ -375,9 +392,9 @@ public class ExcelParserV4 {
 
             // parameters
             List<Map<String,Object>> params = new ArrayList<>();
-            if (!isBlank(f.getRingtone())) params.add(param("alertSound", quote(f.getRingtone())));
-            if (isUrgent(f.getPriority())) params.add(param("breakThrough", "\"voceraAndDevice\""));
-            if (isNoResponse(f.getResponseOptions())) params.add(param("responseType", "\"None\""));
+            if (!isBlank(f.getRingtone())) params.add(param("alertSound", f.getRingtone()));
+            if (isUrgent(f.getPriority())) params.add(param("breakThrough", "voceraAndDevice"));
+            if (isNoResponse(f.getResponseOptions())) params.add(param("responseType", "None"));
             flow.put("parameterAttributes", params);
 
             // destinations (up to 4)
@@ -443,9 +460,9 @@ public class ExcelParserV4 {
 
             // parameters
             List<Map<String,Object>> params = new ArrayList<>();
-            if (!isBlank(f.getRingtone())) params.add(param("alertSound", quote(f.getRingtone())));
-            if (isUrgent(f.getPriority())) params.add(param("breakThrough", "\"voceraAndDevice\""));
-            if (isNoResponse(f.getResponseOptions())) params.add(param("responseType", "\"None\""));
+            if (!isBlank(f.getRingtone())) params.add(param("alertSound", f.getRingtone()));
+            if (isUrgent(f.getPriority())) params.add(param("breakThrough", "voceraAndDevice"));
+            if (isNoResponse(f.getResponseOptions())) params.add(param("responseType", "None"));
             flow.put("parameterAttributes", params);
 
             // destinations: up to 2 recipients + fail-safe (NoDeliveries)
@@ -581,7 +598,7 @@ public class ExcelParserV4 {
     @SuppressWarnings("unchecked")
     public static String pretty(Object obj, int indent) {
         if (obj == null) return "null";
-        if (obj instanceof String s) return s;
+        if (obj instanceof String s) return quote(s);
         if (obj instanceof Number || obj instanceof Boolean) return String.valueOf(obj);
 
         String ind = "  ".repeat(indent);
@@ -593,7 +610,7 @@ public class ExcelParserV4 {
             int i = 0;
             for (var e : map.entrySet()) {
                 if (i++ > 0) sb.append(",\n");
-                sb.append(ind2).append("\"").append(e.getKey()).append("\": ");
+                sb.append(ind2).append(quote(String.valueOf(e.getKey()))).append(": ");
                 sb.append(pretty(e.getValue(), indent + 1));
             }
             sb.append("\n").append(ind).append("}");
@@ -610,7 +627,7 @@ public class ExcelParserV4 {
             sb.append("]");
             return sb.toString();
         }
-        return "\""+obj.toString()+"\"";
+        return quote(String.valueOf(obj));
     }
 
     // ------------------------------------------------------
@@ -623,6 +640,16 @@ public class ExcelParserV4 {
     public File writeClinicalsJson() throws IOException {
         Map<String,Object> json = buildClinicalsJson();
         return writeJson(json, "Clinicals.json");
+    }
+    public File writeJson(File output) throws IOException {
+        Map<String,Object> combined = new LinkedHashMap<>();
+        combined.put("nurseCalls", buildNurseCallsJson());
+        combined.put("clinicals", buildClinicalsJson());
+        try (FileWriter fw = new FileWriter(output)) {
+            fw.write(pretty(combined));
+            fw.write("\n");
+        }
+        return output;
     }
     private File writeJson(Map<String,Object> json, String name) throws IOException {
         File dir = (sourceExcel != null && sourceExcel.getParentFile() != null)
@@ -641,7 +668,7 @@ public class ExcelParserV4 {
     public void exportEditedExcel(File out) throws Exception {
         try (Workbook wb = new XSSFWorkbook()) {
             // Unit Breakdown
-            Sheet su = wb.createSheet(unitSheetName);
+            Sheet su = wb.createSheet(UNIT_SHEET_NAME);
             writeRow(su, 0,
                     "Facility","Common Unit Name","Nurse Call","Patient Monitoring","No Caregiver Alert Number or Group");
             int r = 1;
@@ -653,7 +680,7 @@ public class ExcelParserV4 {
             }
 
             // Nurse Call
-            Sheet sn = wb.createSheet(nurseSheetName);
+            Sheet sn = wb.createSheet(NURSE_SHEET_NAME);
             writeRow(sn, 0,
                     "Configuration Group","Common Alert or Alarm Name","Sending System Alert Name",
                     "Priority","Device - A","Ringtone Device - A",
@@ -675,7 +702,7 @@ public class ExcelParserV4 {
             }
 
             // Patient Monitoring
-            Sheet sc = wb.createSheet(clinicalSheetName);
+            Sheet sc = wb.createSheet(CLINICAL_SHEET_NAME);
             writeRow(sc, 0,
                     "Configuration Group","Alarm Name","Sending System Alarm Name",
                     "Priority","Device - A","Ringtone Device - A",
