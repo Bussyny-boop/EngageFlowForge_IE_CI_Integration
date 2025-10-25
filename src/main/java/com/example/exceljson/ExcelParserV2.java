@@ -110,9 +110,31 @@ public class ExcelParserV2 {
         try (FileInputStream fis = new FileInputStream(excel)) {
             this.wb = new XSSFWorkbook(fis);
         }
-        readUnits();
-        readNurseCalls();
-        readClinicals();
+
+        units.clear();
+        nurseCalls.clear();
+        clinicals.clear();
+
+        // Gracefully try loading each sheet
+        try {
+            readUnits();
+        } catch (Exception e) {
+            System.err.println("⚠ Warning: Failed to parse Unit Breakdown sheet: " + e.getMessage());
+        }
+
+        try {
+            readNurseCalls();
+        } catch (Exception e) {
+            System.err.println("⚠ Warning: Failed to parse Nurse Call sheet: " + e.getMessage());
+        }
+
+        try {
+            readClinicals();
+        } catch (Exception e) {
+            System.err.println("⚠ Warning: Failed to parse Patient Monitoring sheet: " + e.getMessage());
+        }
+
+        System.out.println("Loaded " + nurseCalls.size() + " NurseCalls, " + clinicals.size() + " Clinicals, " + units.size() + " Units");
     }
 
     // ----- GUI accessors -----
@@ -350,8 +372,11 @@ public class ExcelParserV2 {
 
         p.add(mapParam("popup", "true"));
         p.add(mapParam("alertSound", quoteOrEmpty(r.ringtone))); // keeps last
-        p.add(mapParam("breakThrough", "\"voceraAndDevice\""), "urgent".equalsIgnoreCase(r.priority)); // only urgent
-        p.add(mapParam("breakThrough", "\"none\""), !"urgent".equalsIgnoreCase(r.priority));          // else none
+        if ("urgent".equalsIgnoreCase(r.priority)) {
+            p.add(mapParam("breakThrough", "\"voceraAndDevice\"")); // only urgent
+        } else {
+            p.add(mapParam("breakThrough", "\"none\""));          // else none
+        }
         p.add(mapParam("enunciate", "true"));
         p.add(mapParam("message", "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""));
         p.add(mapParam("patientMRN", "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""));
@@ -386,8 +411,11 @@ public class ExcelParserV2 {
 
         if (!isBlank(r.ringtone)) p.add(mapParam("alertSound", quote(r.ringtone)));
         p.add(mapParam("responseAllowed", "false"));
-        p.add(mapParam("breakThrough", "\"voceraAndDevice\""), "urgent".equalsIgnoreCase(r.priority));
-        p.add(mapParam("breakThrough", "\"none\""), !"urgent".equalsIgnoreCase(r.priority));
+        if ("urgent".equalsIgnoreCase(r.priority)) {
+            p.add(mapParam("breakThrough", "\"voceraAndDevice\""));
+        } else {
+            p.add(mapParam("breakThrough", "\"none\""));
+        }
         p.add(mapParam("enunciate", "true"));
         p.add(mapParam("message", "\"Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}\""));
         p.add(mapParam("patientMRN", "\"#{clinical_patient.mrn}:#{clinical_patient.visit_number}\""));
@@ -468,66 +496,69 @@ public class ExcelParserV2 {
 
     private void readUnits() {
         Sheet s = wb.getSheet(sheetUnits);
-        if (s == null) return;
+        if (s == null) {
+            System.err.println("⚠ Unit Breakdown sheet not found: " + sheetUnits);
+            return;
+        }
 
-        // Try to detect optional config-group column by header text
-        int headerIdx = findHeaderRowByContains(s, List.of("facility", "common unit name"), 10);
-        if (headerIdx < 0) headerIdx = 0; // fallback first row as header if needed
+        int headerIdx = findHeaderRowByContains(s, List.of("facility", "unit"), 10);
+        if (headerIdx < 0) headerIdx = 0;
         Row header = s.getRow(headerIdx);
 
-        // indexes
-        int colFacility = 0; // A
-        int colUnitName = 2; // C
-        Integer colCfg = findCol(header, "configuration group"); // optional
+        Integer foundFacility = findCol(header, "facility");
+        int colFacility = foundFacility != null ? foundFacility : 0;
+        Integer foundUnit = findCol(header, "common unit");
+        int colUnitName = foundUnit != null ? foundUnit : 2;
+        Integer colCfg = findCol(header, "configuration group");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
             if (row == null) continue;
-            String facility = getString(row, colFacility);
-            String unit = getString(row, colUnitName);
+
+            String facility = getStringSafe(row, colFacility);
+            String unit = getStringSafe(row, colUnitName);
+            String cfg = (colCfg != null) ? getStringSafe(row, colCfg) : "";
+
             if (isBlank(facility) && isBlank(unit)) continue;
-            String cfg = (colCfg != null) ? getString(row, colCfg) : "";
             units.add(new UnitRow(facility, unit, cfg));
         }
     }
 
     private void readNurseCalls() {
         Sheet s = wb.getSheet(sheetNurseCalls);
-        if (s == null) return;
+        if (s == null) {
+            System.err.println("⚠ Nurse Call sheet not found: " + sheetNurseCalls);
+            return;
+        }
 
         int headerIdx = findHeaderRowByContains(s, List.of("alarm", "priority"), 40);
         if (headerIdx < 0) headerIdx = 0;
         Row header = s.getRow(headerIdx);
 
-        // Known fixed columns
-        int cAlarm = 4; // E
-        int cPriority = 5; // F
-        int cRingtone = 7; // H
-        int cResp = 32; // AG
-
-        // Optional config group column if present
-        Integer cCfg = findCol(header, "configuration group");
-
-        // Recipients by header name
-        Integer cR1 = findCol(header, "1st recipients");
-        Integer cR2 = findCol(header, "2nd recipients");
-        Integer cR3 = findCol(header, "3rd recipients");
-        Integer cR4 = findCol(header, "4th recipients");
+        int cAlarm = safeCol(header, "alarm", 4);
+        int cPriority = safeCol(header, "priority", 5);
+        int cRingtone = safeCol(header, "ringtone", 7);
+        int cResp = safeCol(header, "response", 32);
+        Integer cCfg = findColLike(header, "config");
+        Integer cR1 = findColLike(header, "1st");
+        Integer cR2 = findColLike(header, "2nd");
+        Integer cR3 = findColLike(header, "3rd");
+        Integer cR4 = findColLike(header, "4th");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
             if (row == null) continue;
 
             FlowRow f = new FlowRow("NurseCalls");
-            f.configGroup = (cCfg != null) ? getString(row, cCfg) : "";
-            f.alarmName = getString(row, cAlarm);
-            f.priority = normalizePriority(getString(row, cPriority));
-            f.ringtone = getString(row, cRingtone);
-            f.responseOptions = getString(row, cResp);
-            f.r1 = getString(row, cR1);
-            f.r2 = getString(row, cR2);
-            f.r3 = getString(row, cR3);
-            f.r4 = getString(row, cR4);
+            f.configGroup = getStringSafe(row, cCfg);
+            f.alarmName = getStringSafe(row, cAlarm);
+            f.priority = normalizePriority(getStringSafe(row, cPriority));
+            f.ringtone = getStringSafe(row, cRingtone);
+            f.responseOptions = getStringSafe(row, cResp);
+            f.r1 = getStringSafe(row, cR1);
+            f.r2 = getStringSafe(row, cR2);
+            f.r3 = getStringSafe(row, cR3);
+            f.r4 = getStringSafe(row, cR4);
 
             if (!isBlank(f.alarmName)) nurseCalls.add(f);
         }
@@ -535,39 +566,41 @@ public class ExcelParserV2 {
 
     private void readClinicals() {
         Sheet s = wb.getSheet(sheetClinicals);
-        if (s == null) return;
+        if (s == null) {
+            System.err.println("⚠ Patient Monitoring sheet not found: " + sheetClinicals);
+            return;
+        }
 
         int headerIdx = findHeaderRowByContains(s, List.of("alarm", "priority"), 40);
         if (headerIdx < 0) headerIdx = 0;
         Row header = s.getRow(headerIdx);
 
-        int cAlarm = 4; // E
-        int cPriority = 5; // F
-        int cRingtone = 7; // H
-        int cResp = 32; // AG
-
-        Integer cCfg = findCol(header, "configuration group");
-        Integer cR1 = findCol(header, "1st recipients");
-        Integer cR2 = findCol(header, "2nd recipients");
-        Integer cR3 = findCol(header, "3rd recipients");
-        Integer cR4 = findCol(header, "4th recipients");
-        Integer cFail = findCol(header, "fail safe recipients");
+        int cAlarm = safeCol(header, "alarm", 4);
+        int cPriority = safeCol(header, "priority", 5);
+        int cRingtone = safeCol(header, "ringtone", 7);
+        int cResp = safeCol(header, "response", 32);
+        Integer cCfg = findColLike(header, "config");
+        Integer cR1 = findColLike(header, "1st");
+        Integer cR2 = findColLike(header, "2nd");
+        Integer cR3 = findColLike(header, "3rd");
+        Integer cR4 = findColLike(header, "4th");
+        Integer cFail = findColLike(header, "fail");
 
         for (int r = headerIdx + 1; r <= s.getLastRowNum(); r++) {
             Row row = s.getRow(r);
             if (row == null) continue;
 
             FlowRow f = new FlowRow("Clinicals");
-            f.configGroup = (cCfg != null) ? getString(row, cCfg) : "";
-            f.alarmName = getString(row, cAlarm);
-            f.priority = normalizePriority(getString(row, cPriority));
-            f.ringtone = getString(row, cRingtone);
-            f.responseOptions = getString(row, cResp);
-            f.r1 = getString(row, cR1);
-            f.r2 = getString(row, cR2);
-            f.r3 = getString(row, cR3);
-            f.r4 = getString(row, cR4);
-            f.failSafe = getString(row, cFail);
+            f.configGroup = getStringSafe(row, cCfg);
+            f.alarmName = getStringSafe(row, cAlarm);
+            f.priority = normalizePriority(getStringSafe(row, cPriority));
+            f.ringtone = getStringSafe(row, cRingtone);
+            f.responseOptions = getStringSafe(row, cResp);
+            f.r1 = getStringSafe(row, cR1);
+            f.r2 = getStringSafe(row, cR2);
+            f.r3 = getStringSafe(row, cR3);
+            f.r4 = getStringSafe(row, cR4);
+            f.failSafe = getStringSafe(row, cFail);
 
             if (!isBlank(f.alarmName)) clinicals.add(f);
         }
@@ -662,6 +695,16 @@ public class ExcelParserV2 {
         return null;
     }
 
+    private static Integer findColLike(Row header, String keyword) {
+        if (header == null || keyword == null) return null;
+        String key = keyword.toLowerCase();
+        for (int c = 0; c < header.getLastCellNum(); c++) {
+            String v = getString(header, c).toLowerCase().replaceAll("\\s+", "");
+            if (v.contains(key)) return c;
+        }
+        return null;
+    }
+
     // cell helpers
     private static String getString(Row row, int col){
         try{
@@ -677,6 +720,20 @@ public class ExcelParserV2 {
                 default -> "";
             };
         }catch(Exception e){ return ""; }
+    }
+
+    private static String getString(Row row, Integer col){
+        return col == null ? "" : getString(row, col.intValue());
+    }
+
+    private static String getStringSafe(Row row, Integer col) {
+        if (col == null || row == null) return "";
+        return getString(row, col.intValue());
+    }
+
+    private static int safeCol(Row header, String keyword, int defaultIndex) {
+        Integer idx = findColLike(header, keyword);
+        return (idx != null) ? idx : defaultIndex;
     }
 
     private static List<String> splitList(String s){
@@ -718,7 +775,7 @@ public class ExcelParserV2 {
         if (obj instanceof Map){
             StringBuilder sb = new StringBuilder();
             sb.append("{\n");
-            Iterator<Map.Entry<?,?>> it = ((Map<?,?>)obj).entrySet().iterator();
+            Iterator<? extends Map.Entry<?,?>> it = ((Map<?,?>)obj).entrySet().iterator();
             while (it.hasNext()){
                 var e = it.next();
                 sb.append(sp1).append("\"").append(e.getKey()).append("\": ").append(pretty(e.getValue(), indent+1));

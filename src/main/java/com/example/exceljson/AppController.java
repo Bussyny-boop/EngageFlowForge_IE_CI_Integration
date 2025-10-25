@@ -13,13 +13,14 @@ import java.io.File;
 import java.util.Map;
 
 /**
- * AppController — GUI for Engage Rules Generator (ExcelParserV2 integration)
- *
+ * AppController – Enhanced GUI for Engage Rules Generator
+ * --------------------------------------------------------
  * Features:
- *  - Load Excel
- *  - View/Edit tables (Units, NurseCalls, Clinicals)
- *  - Save edited Excel
- *  - Generate JSON Preview
+ *  - Load Excel workbook (NurseCalls + Clinicals + Units)
+ *  - Edit tables directly
+ *  - Save edited Excel workbook
+ *  - Generate JSON preview (full-screen)
+ *  - Save JSON to file
  */
 public class AppController {
 
@@ -29,6 +30,10 @@ public class AppController {
     private final TableView<ExcelParserV2.FlowRow> tblNurseCalls = new TableView<>();
     private final TableView<ExcelParserV2.FlowRow> tblClinicals = new TableView<>();
     private final TextArea jsonPreview = new TextArea();
+    private final Button btnOpen = new Button("📂 Open Excel…");
+    private final Button btnSaveEdited = new Button("💾 Save Edited Excel…");
+    private final Button btnPreview = new Button("🧩 Generate JSON Preview");
+    private final Button btnSaveJson = new Button("📤 Save JSON File…");
 
     private File currentFile;
 
@@ -40,34 +45,40 @@ public class AppController {
 
         // ---- Top toolbar ----
         HBox top = new HBox(10);
-        Button btnOpen = new Button("Open Excel…");
-        Button btnSaveEdited = new Button("Save Edited Excel…");
-        Button btnPreview = new Button("Generate JSON Preview");
-        top.getChildren().addAll(btnOpen, btnSaveEdited, btnPreview);
+        top.getChildren().addAll(btnOpen, btnSaveEdited, btnPreview, btnSaveJson);
         root.setTop(top);
 
         // ---- TabPane for tables ----
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        Tab tabUnits = new Tab("Units", tblUnits);
-        Tab tabNurse = new Tab("Nurse Calls", tblNurseCalls);
-        Tab tabClin = new Tab("Patient Monitoring", tblClinicals);
-        Tab tabJson = new Tab("JSON Preview", new ScrollPane(jsonPreview));
-        tabs.getTabs().addAll(tabUnits, tabNurse, tabClin, tabJson);
-        root.setCenter(tabs);
+        Tab tabUnits = new Tab("🏢 Unit Breakdown", tblUnits);
+        Tab tabNurse = new Tab("💬 Nurse Calls", tblNurseCalls);
+        Tab tabClin = new Tab("⚕️ Patient Monitoring", tblClinicals);
 
+        // Fullscreen JSON preview
+        ScrollPane jsonPane = new ScrollPane(jsonPreview);
+        jsonPane.setFitToWidth(true);
+        jsonPane.setFitToHeight(true);
         jsonPreview.setEditable(false);
         jsonPreview.setWrapText(true);
-        jsonPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace;");
+        jsonPreview.setStyle("-fx-font-family: 'Consolas', 'Courier New', monospace; -fx-font-size: 13px;");
+
+        Tab tabJson = new Tab("🧾 JSON Preview", jsonPane);
+
+        tabs.getTabs().addAll(tabUnits, tabNurse, tabClin, tabJson);
+        root.setCenter(tabs);
 
         // ---- Button Actions ----
         btnOpen.setOnAction(e -> openExcel(stage));
         btnSaveEdited.setOnAction(e -> saveEditedExcel(stage));
         btnPreview.setOnAction(e -> generateJsonPreview());
+        btnSaveJson.setOnAction(e -> saveJsonFile(stage));
+
+        setDataActionsEnabled(false);
 
         // ---- Scene ----
-        Scene scene = new Scene(root, 1300, 800);
+        Scene scene = new Scene(root, 1500, 900);
         stage.setScene(scene);
         stage.show();
     }
@@ -90,10 +101,18 @@ public class AppController {
             );
             parser.load(currentFile);
             populateTables();
-            jsonPreview.setText("");
-            showAlert("Success", "Excel file loaded successfully!");
+            resetPreview();
+            setDataActionsEnabled(true);
+            showAlert(Alert.AlertType.INFORMATION, "✅ Success", "Excel file loaded successfully!\n" +
+                    "Units: " + parser.getUnits().size() +
+                    ", NurseCalls: " + parser.getNurseCalls().size() +
+                    ", Clinicals: " + parser.getClinicals().size());
         } catch (Exception ex) {
-            showAlert("Error", "Failed to load Excel file:\n" + ex.getMessage());
+            parser = null;
+            clearTables();
+            resetPreview();
+            setDataActionsEnabled(false);
+            showAlert(Alert.AlertType.ERROR, "❌ Error", "Failed to load Excel file:\n" + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -143,7 +162,7 @@ public class AppController {
 
     private void saveEditedExcel(Stage stage) {
         if (parser == null) {
-            showAlert("Error", "No Excel file loaded yet!");
+            showAlert(Alert.AlertType.ERROR, "❗ Error", "No Excel file loaded yet!");
             return;
         }
         FileChooser fc = new FileChooser();
@@ -154,32 +173,81 @@ public class AppController {
 
         try {
             parser.exportEditedExcel(out);
-            showAlert("Saved", "Edited Excel file saved successfully:\n" + out.getAbsolutePath());
+            showAlert(Alert.AlertType.INFORMATION, "✅ Saved", "Edited Excel file saved successfully:\n" + out.getAbsolutePath());
         } catch (Exception ex) {
-            showAlert("Error", "Failed to save edited Excel:\n" + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "❌ Error", "Failed to save edited Excel:\n" + ex.getMessage());
             ex.printStackTrace();
         }
     }
 
     private void generateJsonPreview() {
         if (parser == null) {
-            showAlert("Error", "Load a file first!");
+            showAlert(Alert.AlertType.ERROR, "❗ Error", "Load a file first!");
             return;
         }
         try {
             Map<String, Object> json = parser.toJson();
             String preview = ExcelParserV2.pretty(json, 0);
             jsonPreview.setText(preview);
-            showAlert("Success", "JSON Preview generated successfully!");
+            btnSaveJson.setDisable(false);
+            showAlert(Alert.AlertType.INFORMATION, "✅ Success", "JSON Preview generated successfully!");
         } catch (Exception ex) {
-            showAlert("Error", "Failed to generate JSON preview:\n" + ex.getMessage());
+            btnSaveJson.setDisable(true);
+            showAlert(Alert.AlertType.ERROR, "❌ Error", "Failed to generate JSON preview:\n" + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void saveJsonFile(Stage stage) {
+        if (parser == null) {
+            showAlert(Alert.AlertType.ERROR, "❗ Error", "No data to save. Please load a file and generate JSON first.");
+            return;
+        }
+
+        if (jsonPreview.getText().isBlank()) {
+            showAlert(Alert.AlertType.ERROR, "❗ Error", "Generate the JSON preview before saving the file.");
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+        fc.setInitialFileName("Engage_Rules_Output.json");
+        File outFile = fc.showSaveDialog(stage);
+        if (outFile == null) return;
+
+        try {
+            parser.writeJson(outFile);
+            showAlert(Alert.AlertType.INFORMATION, "✅ Saved", "JSON file saved successfully:\n" + outFile.getAbsolutePath());
+        } catch (Exception ex) {
+            showAlert(Alert.AlertType.ERROR, "❌ Error", "Failed to save JSON file:\n" + ex.getMessage());
             ex.printStackTrace();
         }
     }
 
     // --------------------------------
-    // Helper functions
+    // Helpers
     // --------------------------------
+
+    private void setDataActionsEnabled(boolean enabled) {
+        btnSaveEdited.setDisable(!enabled);
+        btnPreview.setDisable(!enabled);
+        if (!enabled) {
+            btnSaveJson.setDisable(true);
+        } else {
+            btnSaveJson.setDisable(jsonPreview.getText().isBlank());
+        }
+    }
+
+    private void resetPreview() {
+        jsonPreview.clear();
+        btnSaveJson.setDisable(true);
+    }
+
+    private void clearTables() {
+        tblUnits.getItems().clear();
+        tblNurseCalls.getItems().clear();
+        tblClinicals.getItems().clear();
+    }
 
     private <T> TableColumn<T, String> makeEditableCol(String title, String fieldName) {
         TableColumn<T, String> col = new TableColumn<>(title);
@@ -198,8 +266,8 @@ public class AppController {
         return col;
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
