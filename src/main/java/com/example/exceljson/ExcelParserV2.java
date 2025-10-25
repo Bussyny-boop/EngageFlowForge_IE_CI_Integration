@@ -1,5 +1,7 @@
 package com.example.exceljson;
 
+import com.example.exceljson.FlowRow;
+import com.example.exceljson.UnitRow;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
