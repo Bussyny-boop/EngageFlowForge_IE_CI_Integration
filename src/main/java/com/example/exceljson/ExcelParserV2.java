@@ -8,7 +8,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-
 /**
  * ExcelParserV2
  * - Reads ONLY the columns you specified (by index and by well-known headers)
@@ -22,14 +21,14 @@ import java.util.stream.Collectors;
  *    Priority:   col F (index 5)
  *    Ringtone:   col H (index 7)
  *    Response Options: col AG (index 32)   (A=1, AG=33 -> zero-based 32)
- *    Recipients: headers "1st recipients", "2nd recipients", "3rd recipients", "4th recipients" (case-insensitive)
+ *    Recipients: headers "1st Recipient", "2nd Recipient", "3rd Recipient", "4th Recipient" (case-insensitive)
  *
  *  Patient Monitoring tab:
  *    Alarm Name: col E (4)
  *    Priority:   col F (5)
  *    Ringtone:   col H (7)
  *    Response Options: col AG (32)
- *    Recipients: same headers as above, plus "Fail safe recipients"
+ *    Recipients: same headers as above, plus "Fail safe Recipient"
  *
  *  Unit Breakdown tab:
  *    Facility: col A (0)
@@ -44,10 +43,10 @@ import java.util.stream.Collectors;
  *
  * Recipients:
  *  - Split on comma/semicolon/newline
- *  - "VGroup: NAME" => group recipient with NAME only
- *  - "VAssign: [Room] ROLE" => functional role recipient with ROLE only
+ *  - "VGroup: NAME" => group Recipient with NAME only
+ *  - "VAssign: [Room] ROLE" => functional role Recipient with ROLE only
  *  - presenceConfig: role -> "user_and_device"; group -> "device"
- *  - recipientType: role -> "functional_role"; group -> "group"
+ *  - RecipientType: role -> "functional_role"; group -> "group"
  *
  * Defaults:
  *  - Interface: OutgoingWCTP for all flows
@@ -140,10 +139,10 @@ public class ExcelParserV2 {
             nh.createCell(2).setCellValue("Priority");
             nh.createCell(3).setCellValue("Ringtone");
             nh.createCell(4).setCellValue("Response Options");
-            nh.createCell(5).setCellValue("1st recipients");
-            nh.createCell(6).setCellValue("2nd recipients");
-            nh.createCell(7).setCellValue("3rd recipients");
-            nh.createCell(8).setCellValue("4th recipients");
+            nh.createCell(5).setCellValue("1st Recipient");
+            nh.createCell(6).setCellValue("2nd Recipient");
+            nh.createCell(7).setCellValue("3rd Recipient");
+            nh.createCell(8).setCellValue("4th Recipient");
 
             for (int i = 0; i < nurseCalls.size(); i++) {
                 FlowRow f = nurseCalls.get(i);
@@ -167,11 +166,11 @@ public class ExcelParserV2 {
             ch.createCell(2).setCellValue("Priority");
             ch.createCell(3).setCellValue("Ringtone");
             ch.createCell(4).setCellValue("Response Options");
-            ch.createCell(5).setCellValue("1st recipients");
-            ch.createCell(6).setCellValue("2nd recipients");
-            ch.createCell(7).setCellValue("3rd recipients");
-            ch.createCell(8).setCellValue("4th recipients");
-            ch.createCell(9).setCellValue("Fail safe recipients");
+            ch.createCell(5).setCellValue("1st Recipient");
+            ch.createCell(6).setCellValue("2nd Recipient");
+            ch.createCell(7).setCellValue("3rd Recipient");
+            ch.createCell(8).setCellValue("4th Recipient");
+            ch.createCell(9).setCellValue("Fail safe Recipient");
 
             for (int i = 0; i < clinicals.size(); i++) {
                 FlowRow f = clinicals.get(i);
@@ -236,7 +235,7 @@ public class ExcelParserV2 {
     }
 
     private List<Map<String,Object>> buildFlows(String typeToken, List<FlowRow> rows){
-        // Bundle by configGroup + priority + ringtone + response options + recipients vector
+        // Bundle by configGroup + priority + ringtone + response options + Recipient vector
         Map<String, List<FlowRow>> grouped = new LinkedHashMap<>();
         for (FlowRow r : rows) {
             String key = String.join("|",
@@ -402,7 +401,7 @@ public class ExcelParserV2 {
         return p;
     }
 
-    // ----- Destinations from recipients -----
+    // ----- Destinations from Recipient -----
 
     @SuppressWarnings("unchecked")
     private void addDestinationsFromRecipients(List<Map<String, Object>> dests, FlowRow sample, String configGroup) {
