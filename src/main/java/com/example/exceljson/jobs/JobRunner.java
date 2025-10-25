@@ -153,10 +153,7 @@ public final class JobRunner {
         }
 
         try {
-            ExcelParserV4 parser = new ExcelParserV4(
-                    "Unit Breakdown",
-                    "Nurse call",
-                    "Patient Monitoring");
+            ExcelParserV4 parser = new ExcelParserV4();
             parser.load(input);
             parser.writeJson(output);
             out.printf("Wrote JSON to %s%n", output.getAbsolutePath());
