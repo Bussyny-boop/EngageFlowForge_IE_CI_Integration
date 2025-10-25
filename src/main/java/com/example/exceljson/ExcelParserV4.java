@@ -19,14 +19,17 @@ public class ExcelParserV4 {
     public final List<FlowRow> nurseCalls = new ArrayList<>();
     public final List<FlowRow> clinicals = new ArrayList<>();
 
+    private static final String UNIT_SHEET_NAME = "Unit Breakdown";
+    private static final String NURSE_SHEET_NAME = "Nurse call";
+    private static final String CLINICAL_SHEET_NAME = "Patient Monitoring";
+
+    // For Clinicals fail-safe: Facility -> "No Caregiver Alert Number or Group"
     private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
     private final Map<String, List<Map<String,String>>> nurseGroupToUnits = new LinkedHashMap<>();
     private final Map<String, List<Map<String,String>>> clinicalGroupToUnits = new LinkedHashMap<>();
     private File sourceExcel;
 
-    private static final String SHEET_UNIT = "Unit Breakdown";
-    private static final String SHEET_NURSE = "Nurse Call";
-    private static final String SHEET_CLINICAL = "Patient Monitoring";
+    public ExcelParserV4() {}
 
     public void load(File excelFile) throws Exception {
         this.sourceExcel = excelFile;
@@ -60,7 +63,7 @@ public class ExcelParserV4 {
 
     // -------------------- UNIT BREAKDOWN --------------------
     private void parseUnitBreakdown(Workbook wb) {
-        Sheet sh = wb.getSheet(SHEET_UNIT);
+        Sheet sh = wb.getSheet(UNIT_SHEET_NAME);
         if (sh == null) return;
 
         Map<String,Integer> hm = headerMap(findHeader(sh));
@@ -110,7 +113,7 @@ public class ExcelParserV4 {
 
     // -------------------- NURSE CALL --------------------
     private void parseNurseCall(Workbook wb) {
-        Sheet sh = wb.getSheet(SHEET_NURSE);
+        Sheet sh = wb.getSheet(NURSE_SHEET_NAME);
         if (sh == null) return;
 
         int headerRow = findLikelyHeader(sh, List.of("Configuration Group","Common Alert or Alarm Name","Priority"));
@@ -150,7 +153,7 @@ public class ExcelParserV4 {
 
     // -------------------- CLINICALS --------------------
     private void parseClinical(Workbook wb) {
-        Sheet sh = wb.getSheet(SHEET_CLINICAL);
+        Sheet sh = wb.getSheet(CLINICAL_SHEET_NAME);
         if (sh == null) return;
 
         Map<String,Integer> hm = headerMap(findHeader(sh));
@@ -540,7 +543,7 @@ public class ExcelParserV4 {
     public void exportEditedExcel(File out) throws Exception {
         try (Workbook wb = new XSSFWorkbook()) {
             // Unit Breakdown
-            Sheet su = wb.createSheet(unitSheetName);
+            Sheet su = wb.createSheet(UNIT_SHEET_NAME);
             writeRow(su, 0,
                     "Facility","Common Unit Name","Nurse Call","Patient Monitoring","No Caregiver Alert Number or Group");
             int r = 1;
@@ -552,7 +555,7 @@ public class ExcelParserV4 {
             }
 
             // Nurse Call
-            Sheet sn = wb.createSheet(nurseSheetName);
+            Sheet sn = wb.createSheet(NURSE_SHEET_NAME);
             writeRow(sn, 0,
                     "Configuration Group","Common Alert or Alarm Name","Sending System Alert Name",
                     "Priority","Device - A","Ringtone Device - A",
@@ -574,7 +577,7 @@ public class ExcelParserV4 {
             }
 
             // Patient Monitoring
-            Sheet sc = wb.createSheet(clinicalSheetName);
+            Sheet sc = wb.createSheet(CLINICAL_SHEET_NAME);
             writeRow(sc, 0,
                     "Configuration Group","Alarm Name","Sending System Alarm Name",
                     "Priority","Device - A","Ringtone Device - A",

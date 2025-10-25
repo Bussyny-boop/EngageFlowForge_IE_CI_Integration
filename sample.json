@@ -1,289 +1,48 @@
 {
-  "version": "1.1.0",
-  "alarmAlertDefinitions": [
-    {
+  "nurseCalls": {
+    "version": "1.1.0",
+    "alarmAlertDefinitions": [{
       "name": "Alarm 1",
       "type": "NurseCalls",
-      "values": [
-        {
-          "value": "Alarm 1"
-        }
-      ]
-    },
-    {
-      "name": "Clinical Alarm",
-      "type": "Clinicals",
-      "values": [
-        {
-          "value": "Clinical Alarm"
-        }
-      ]
-    }
-  ],
-  "deliveryFlows": [
-    {
-      "alarmsAlerts": [
-        "Alarm 1"
-      ],
-      "conditions": [      ],
-      "destinations": [
-        {
-          "order": 0,
-          "delayTime": 0,
-          "destinationType": "Normal",
-          "users": [          ],
-          "groups": [
-            {
-              "facilityName": "Facility A",
-              "name": "Nurse Team"
-            }
-          ],
-          "functionalRoles": [          ],
-          "presenceConfig": "device",
-          "recipientType": "group"
-        }
-      ],
-      "interfaces": [
-        {
-          "referenceName": "OutgoingWCTP",
-          "componentName": "OutgoingWCTP"
-        }
-      ],
-      "parameterAttributes": [
-        {
-          "name": "destinationName",
-          "value": "\"Group\""
-        },
-        {
-          "name": "alertSound",
-          "value": "\"Tone 1\""
-        },
-        {
-          "name": "popup",
-          "value": "true"
-        },
-        {
-          "name": "alertSound",
-          "value": "\"Tone 1\""
-        },
-        {
-          "name": "breakThrough",
-          "value": "\"voceraAndDevice\""
-        },
-        {
-          "name": "enunciate",
-          "value": "true"
-        },
-        {
-          "name": "message",
-          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
-        },
-        {
-          "name": "patientMRN",
-          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
-        },
-        {
-          "name": "placeUid",
-          "value": "\"#{bed.uid}\""
-        },
-        {
-          "name": "patientName",
-          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
-        },
-        {
-          "name": "eventIdentification",
-          "value": "\"NurseCalls:#{id}\""
-        },
-        {
-          "name": "respondingLine",
-          "value": "\"responses.line.number\""
-        },
-        {
-          "name": "respondingUser",
-          "value": "\"responses.usr.login\""
-        },
-        {
-          "name": "responsePath",
-          "value": "\"responses.action\""
-        },
-        {
-          "name": "responseType",
-          "value": "\"Accept/Decline\""
-        },
-        {
-          "name": "shortMessage",
-          "value": "\"#{alert_type} #{bed.room.name}\""
-        },
-        {
-          "name": "subject",
-          "value": "\"#{alert_type} #{bed.room.name}\""
-        },
-        {
-          "name": "ttl",
-          "value": "10"
-        },
-        {
-          "name": "retractRules",
-          "value": "[\"ttlHasElapsed\"]"
-        },
-        {
-          "name": "vibrate",
-          "value": "\"short\""
-        }
-      ],
+      "values": []
+    }],
+    "deliveryFlows": [{
+      "name": "SEND NURSECALL | URGENT | Alarm 1 | Group 1 | ",
       "priority": "urgent",
       "status": "Active",
-      "units": [
-        {
-          "facilityName": "Facility A",
-          "name": "Unit A"
-        }
-      ],
-      "name": "SEND NURSECALL | URGENT | Alarm 1 | Group 1 | Unit A | Facility A"
-    },
-    {
-      "alarmsAlerts": [
-        "Clinical Alarm"
-      ],
-      "conditions": [      ],
-      "destinations": [
-        {
-          "order": 0,
-          "delayTime": 0,
-          "destinationType": "Normal",
-          "users": [          ],
-          "groups": [
-            {
-              "facilityName": "Facility A",
-              "name": "Primary"
-            }
-          ],
-          "functionalRoles": [          ],
-          "presenceConfig": "device",
-          "recipientType": "group"
-        },
-        {
-          "order": 1,
-          "delayTime": 0,
-          "destinationType": "NoDeliveries",
-          "users": [          ],
-          "functionalRoles": [          ],
-          "groups": [
-            {
-              "facilityName": "Facility A",
-              "name": "Backup"
-            }
-          ],
-          "presenceConfig": "device",
-          "recipientType": "group"
-        }
-      ],
-      "interfaces": [
-        {
-          "referenceName": "OutgoingWCTP",
-          "componentName": "OutgoingWCTP"
-        }
-      ],
-      "parameterAttributes": [
-        {
-          "name": "destinationName",
-          "value": "\"Nurse Alert\"",
-          "destinationOrder": 0
-        },
-        {
-          "name": "destinationName",
-          "value": "\"NoCaregivers\"",
-          "destinationOrder": 1
-        },
-        {
-          "name": "message",
-          "value": "\"#{alert_type}\nIssue: A Clinical Alert has been received without any caregivers assigned to room.\nRoom/Bed: #{bed.room.name} - #{bed.bed_number} \nAlarm Time: #{alarm_time.as_time}\"",
-          "destinationOrder": 1
-        },
-        {
-          "name": "shortMessage",
-          "value": "\"No Caregivers Assigned for #{alert_type} in #{bed.room.name} #{bed.bed_number}\"",
-          "destinationOrder": 1
-        },
-        {
-          "name": "subject",
-          "value": "\"Alert Without Caregivers\"",
-          "destinationOrder": 1
-        },
-        {
-          "name": "alertSound",
-          "value": "\"Tone 2\""
-        },
-        {
-          "name": "responseAllowed",
-          "value": "false"
-        },
-        {
-          "name": "breakThrough",
-          "value": "\"none\""
-        },
-        {
-          "name": "enunciate",
-          "value": "true"
-        },
-        {
-          "name": "message",
-          "value": "\"Clinical Alert ${destinationName}\nRoom: #{bed.room.name} - #{bed.bed_number}\nAlert Type: #{alert_type}\nAlarm Time: #{alarm_time.as_time}\""
-        },
-        {
-          "name": "patientMRN",
-          "value": "\"#{clinical_patient.mrn}:#{clinical_patient.visit_number}\""
-        },
-        {
-          "name": "patientName",
-          "value": "\"#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}\""
-        },
-        {
-          "name": "placeUid",
-          "value": "\"#{bed.uid}\""
-        },
-        {
-          "name": "popup",
-          "value": "true"
-        },
-        {
-          "name": "eventIdentification",
-          "value": "\"#{id}\""
-        },
-        {
-          "name": "responseType",
-          "value": "\"None\""
-        },
-        {
-          "name": "shortMessage",
-          "value": "\"#{alert_type} #{bed.room.name}\""
-        },
-        {
-          "name": "subject",
-          "value": "\"#{alert_type} #{bed.room.name}\""
-        },
-        {
-          "name": "ttl",
-          "value": "10"
-        },
-        {
-          "name": "retractRules",
-          "value": "[\"ttlHasElapsed\"]"
-        },
-        {
-          "name": "vibrate",
-          "value": "\"short\""
-        }
-      ],
+      "alarmsAlerts": ["Alarm 1"],
+      "interfaces": [{
+        "referenceName": "OutgoingWCTP",
+        "componentName": "OutgoingWCTP"
+      }],
+      "parameterAttributes": [{
+        "name": "breakThrough",
+        "value": "voceraAndDevice"
+      }],
+      "destinations": [],
+      "units": []
+    }]
+  },
+  "clinicals": {
+    "version": "1.1.0",
+    "alarmAlertDefinitions": [{
+      "name": "Clinical Alarm",
+      "type": "Clinicals",
+      "values": []
+    }],
+    "deliveryFlows": [{
+      "name": "SEND CLINICAL | HIGH | Clinical Alarm | Group 1 | ",
       "priority": "high",
       "status": "Active",
-      "units": [
-        {
-          "facilityName": "Facility A",
-          "name": "Unit A"
-        }
-      ],
-      "name": "SEND CLINICAL | HIGH | Clinical Alarm | Group 1 | Unit A | Facility A"
-    }
-  ]
+      "alarmsAlerts": ["Clinical Alarm"],
+      "interfaces": [{
+        "referenceName": "OutgoingWCTP",
+        "componentName": "OutgoingWCTP"
+      }],
+      "parameterAttributes": [],
+      "destinations": [],
+      "units": []
+    }]
+  }
 }
+
