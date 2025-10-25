@@ -234,8 +234,8 @@ public class ExcelParserV4 {
         if (s.contains("medium")) return "high";
         return "normal";
     }
-}
 
+    
     // -------------------- BUILD JSON OUTPUT --------------------
     public Map<String, Object> buildNurseCallsJson() {
         Map<String, Object> root = new LinkedHashMap<>();
@@ -300,3 +300,5 @@ public class ExcelParserV4 {
             fw.write(pretty(buildClinicalsJson()));
         }
     }
+}
+
