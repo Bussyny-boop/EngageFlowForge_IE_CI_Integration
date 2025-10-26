@@ -297,24 +297,27 @@ public class ExcelParserV4 {
      * Creates parent folders automatically.
      */
     public void writeJson(File file) throws Exception {
-        if (file.getParentFile() != null && !file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
-        }
-
-        // Build the JSON data
-        Map<String, Object> nurseCallsJson = buildNurseCallsJson();
-        Map<String, Object> clinicalsJson = buildClinicalsJson();
-
-        // Write both to a single JSON file (merged for convenience)
-        try (java.io.FileWriter writer = new java.io.FileWriter(file, false)) {
-            writer.write("{\n");
-            writer.write("  \"NurseCalls\": " + pretty(nurseCallsJson, 1) + ",\n");
-            writer.write("  \"Clinicals\": " + pretty(clinicalsJson, 1) + "\n");
-            writer.write("}\n");
-        }
-
-        System.out.println("✅ JSON successfully written to " + file.getAbsolutePath());
+    if (file.getParentFile() != null && !file.getParentFile().exists()) {
+        file.getParentFile().mkdirs();
     }
+
+    Map<String, Object> nurseCallsJson = buildNurseCallsJson();
+    Map<String, Object> clinicalsJson = buildClinicalsJson();
+
+    try (java.io.FileWriter writer = new java.io.FileWriter(file, false)) {
+        writer.write("{\n");
+        writer.write("  \"NurseCalls\": " + pretty(nurseCallsJson, 1) + ",\n");
+        writer.write("  \"Clinicals\": " + pretty(clinicalsJson, 1) + "\n");
+        writer.write("}\n");
+        writer.flush(); // ✅ ensure all bytes written
+    }
+
+    if (!file.exists() || file.length() == 0) {
+        throw new RuntimeException("File write failed or empty: " + file.getAbsolutePath());
+    }
+
+    System.out.println("✅ JSON successfully written to " + file.getAbsolutePath());
+ }
 
     
 }
