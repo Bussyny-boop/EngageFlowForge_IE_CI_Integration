@@ -153,9 +153,14 @@ public final class JobRunner {
         }
 
         try {
-            ExcelParserV4 parser = new ExcelParserV4();
-            parser.load(input);
-            parser.writeJson(output);
+        ExcelParserV4 parser = new ExcelParserV4();
+        parser.load(input);
+        System.out.println("📂 Writing to: " + output.getAbsolutePath());
+        parser.writeJson(output);
+        
+        if (!output.exists()) {
+            throw new RuntimeException("Output file not found after write: " + output.getAbsolutePath());
+        }
             out.printf("Wrote JSON to %s%n", output.getAbsolutePath());
             return 0;
         } catch (Exception e) {
