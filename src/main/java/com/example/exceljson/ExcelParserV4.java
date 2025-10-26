@@ -55,46 +55,74 @@ public class ExcelParserV4 {
     }
 
     // -------------------- UNIT BREAKDOWN --------------------
-    private void parseUnitBreakdown(Workbook wb) {
-        Sheet sh = findSheet(wb, SHEET_UNIT);
-        if (sh == null) return;
-
-        Map<String,Integer> hm = headerMap(sh.getRow(0));
-        int cFacility = getCol(hm, "Facility");
-        int cUnitName = getCol(hm, "Common Unit Name");
-        int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call");
-        int cClinGroup = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring");
-        int cNoCare = getCol(hm, "No Caregiver Alert Number or Group");
-
-        for (int r = 1; r <= sh.getLastRowNum(); r++) {
-            Row row = sh.getRow(r);
-            if (row == null) continue;
-
-            String facility = getCell(row, cFacility);
-            String unitNames = getCell(row, cUnitName);
-            String nurseGroup = getCell(row, cNurseGroup);
-            String clinGroup = getCell(row, cClinGroup);
-            String noCare = getCell(row, cNoCare);
-
-            if (facility.isEmpty() && unitNames.isEmpty()) continue;
-
-            UnitRow u = new UnitRow(facility, unitNames, nurseGroup, clinGroup, noCare);
-            units.add(u);
-
-            List<String> list = splitUnits(unitNames);
-            for (String name : list) {
-                if (!nurseGroup.isEmpty())
-                    nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
-                            .add(Map.of("facilityName", facility, "name", name));
-                if (!clinGroup.isEmpty())
-                    clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
-                            .add(Map.of("facilityName", facility, "name", name));
-            }
-
-            if (!facility.isEmpty() && !noCare.isEmpty())
-                noCaregiverByFacility.put(facility, noCare);
-        }
+private void parseUnitBreakdown(Workbook wb) {
+    Sheet sh = findSheet(wb, SHEET_UNIT);
+    if (sh == null) {
+        System.out.println("⚠️ No Unit Breakdown sheet found.");
+        return;
     }
+
+    // 🧠 Find header row dynamically
+    int headerRowIndex = -1;
+    for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
+        Row row = sh.getRow(i);
+        if (row == null) continue;
+        for (Cell cell : row) {
+            String value = cell.toString().trim().toLowerCase();
+            if (value.contains("facility") || value.contains("common unit name")) {
+                headerRowIndex = i;
+                break;
+            }
+        }
+        if (headerRowIndex >= 0) break;
+    }
+
+    if (headerRowIndex < 0) {
+        System.out.println("⚠️ Could not locate header row in Unit Breakdown.");
+        return;
+    }
+
+    Row headerRow = sh.getRow(headerRowIndex);
+    Map<String, Integer> hm = headerMap(headerRow);
+
+    int cFacility = getCol(hm, "Facility");
+    int cUnitName = getCol(hm, "Common Unit Name");
+    int cNurseGroup = getCol(hm, "Nurse Call");
+    int cClinGroup = getCol(hm, "Patient Monitoring");
+    int cNoCare = getCol(hm, "No Caregiver Alert Number or Group");
+
+    System.out.println("🧭 Unit Breakdown headers detected: " + hm.keySet());
+    System.out.println("Header row index: " + headerRowIndex);
+
+    for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
+        Row row = sh.getRow(r);
+        if (row == null) continue;
+
+        String facility = getCell(row, cFacility);
+        String unitNames = getCell(row, cUnitName);
+        String nurseGroup = getCell(row, cNurseGroup);
+        String clinGroup = getCell(row, cClinGroup);
+        String noCare = getCell(row, cNoCare);
+
+        if (facility.isEmpty() && unitNames.isEmpty()) continue;
+
+        UnitRow u = new UnitRow(facility, unitNames, nurseGroup, clinGroup, noCare);
+        units.add(u);
+
+        List<String> list = splitUnits(unitNames);
+        for (String name : list) {
+            if (!nurseGroup.isEmpty())
+                nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
+                        .add(Map.of("facilityName", facility, "name", name));
+            if (!clinGroup.isEmpty())
+                clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
+                        .add(Map.of("facilityName", facility, "name", name));
+        }
+
+        if (!facility.isEmpty() && !noCare.isEmpty())
+            noCaregiverByFacility.put(facility, noCare);
+    }
+}
 
     private static List<String> splitUnits(String s) {
         if (s == null) return List.of();
