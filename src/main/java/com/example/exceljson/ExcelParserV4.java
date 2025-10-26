@@ -55,81 +55,58 @@ public class ExcelParserV4 {
     }
 
     // -------------------- UNIT BREAKDOWN --------------------
-private void parseUnitBreakdown(Workbook wb) {
-    Sheet sh = findSheet(wb, SHEET_UNIT);
-    if (sh == null) {
-        System.out.println("⚠️ No Unit Breakdown sheet found.");
-        return;
-    }
+    private void parseUnitBreakdown(Workbook wb) {
+        Sheet sh = findSheet(wb, SHEET_UNIT);
+        if (sh == null) {
+            System.out.println("⚠️ No Unit Breakdown sheet found.");
+            return;
+        }
 
-    // 🧠 Find header row dynamically
-    int headerRowIndex = -1;
-    for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
-        Row row = sh.getRow(i);
-        if (row == null) continue;
-        for (Cell cell : row) {
-            String value = cell.toString().trim().toLowerCase();
-            if (value.contains("facility") || value.contains("common unit name")) {
-                headerRowIndex = i;
-                break;
+        // 🔍 Find header row dynamically
+        int headerRowIndex = findHeaderRow(sh, List.of("facility", "common unit name"));
+        if (headerRowIndex < 0) {
+            System.out.println("⚠️ Could not locate header row in Unit Breakdown.");
+            return;
+        }
+
+        Row headerRow = sh.getRow(headerRowIndex);
+        Map<String,Integer> hm = headerMap(headerRow);
+        System.out.println("🧭 Unit Breakdown headers detected: " + hm.keySet());
+
+        int cFacility = getCol(hm, "Facility");
+        int cUnitName = getCol(hm, "Common Unit Name");
+        int cNurseGroup = getCol(hm, "Nurse Call");
+        int cClinGroup = getCol(hm, "Patient Monitoring");
+        int cNoCare = getCol(hm, "No Caregiver Alert Number or Group");
+
+        for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
+            Row row = sh.getRow(r);
+            if (row == null) continue;
+
+            String facility = getCell(row, cFacility);
+            String unitNames = getCell(row, cUnitName);
+            String nurseGroup = getCell(row, cNurseGroup);
+            String clinGroup = getCell(row, cClinGroup);
+            String noCare = getCell(row, cNoCare);
+
+            if (facility.isEmpty() && unitNames.isEmpty()) continue;
+
+            UnitRow u = new UnitRow(facility, unitNames, nurseGroup, clinGroup, noCare);
+            units.add(u);
+
+            List<String> list = splitUnits(unitNames);
+            for (String name : list) {
+                if (!nurseGroup.isEmpty())
+                    nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
+                            .add(Map.of("facilityName", facility, "name", name));
+                if (!clinGroup.isEmpty())
+                    clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
+                            .add(Map.of("facilityName", facility, "name", name));
             }
+
+            if (!facility.isEmpty() && !noCare.isEmpty())
+                noCaregiverByFacility.put(facility, noCare);
         }
-        if (headerRowIndex >= 0) break;
-    }
-
-    if (headerRowIndex < 0) {
-        System.out.println("⚠️ Could not locate header row in Unit Breakdown.");
-        return;
-    }
-
-    Row headerRow = sh.getRow(headerRowIndex);
-    Map<String, Integer> hm = headerMap(headerRow);
-
-    int cFacility = getCol(hm, "Facility");
-    int cUnitName = getCol(hm, "Common Unit Name");
-    int cNurseGroup = getCol(hm, "Nurse Call");
-    int cClinGroup = getCol(hm, "Patient Monitoring");
-    int cNoCare = getCol(hm, "No Caregiver Alert Number or Group");
-
-    System.out.println("🧭 Unit Breakdown headers detected: " + hm.keySet());
-    System.out.println("Header row index: " + headerRowIndex);
-
-    for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
-        Row row = sh.getRow(r);
-        if (row == null) continue;
-
-        String facility = getCell(row, cFacility);
-        String unitNames = getCell(row, cUnitName);
-        String nurseGroup = getCell(row, cNurseGroup);
-        String clinGroup = getCell(row, cClinGroup);
-        String noCare = getCell(row, cNoCare);
-
-        if (facility.isEmpty() && unitNames.isEmpty()) continue;
-
-        UnitRow u = new UnitRow(facility, unitNames, nurseGroup, clinGroup, noCare);
-        units.add(u);
-
-        List<String> list = splitUnits(unitNames);
-        for (String name : list) {
-            if (!nurseGroup.isEmpty())
-                nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
-                        .add(Map.of("facilityName", facility, "name", name));
-            if (!clinGroup.isEmpty())
-                clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
-                        .add(Map.of("facilityName", facility, "name", name));
-        }
-
-        if (!facility.isEmpty() && !noCare.isEmpty())
-            noCaregiverByFacility.put(facility, noCare);
-    }
-}
-
-    private static List<String> splitUnits(String s) {
-        if (s == null) return List.of();
-        return Arrays.stream(s.split("[,;]"))
-                .map(String::trim)
-                .filter(v -> !v.isEmpty())
-                .collect(Collectors.toList());
     }
 
     // -------------------- NURSE CALL --------------------
@@ -139,31 +116,17 @@ private void parseUnitBreakdown(Workbook wb) {
             System.out.println("⚠️ No Nurse Call sheet found.");
             return;
         }
-    
-        // 🔍 Find header row dynamically
-        int headerRowIndex = -1;
-        for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
-            Row row = sh.getRow(i);
-            if (row == null) continue;
-            for (Cell cell : row) {
-                String value = cell.toString().trim().toLowerCase();
-                if (value.contains("configuration group") || value.contains("common alert")) {
-                    headerRowIndex = i;
-                    break;
-                }
-            }
-            if (headerRowIndex >= 0) break;
-        }
-    
+
+        int headerRowIndex = findHeaderRow(sh, List.of("configuration group", "common alert"));
         if (headerRowIndex < 0) {
             System.out.println("⚠️ Could not locate header row in Nurse Call sheet.");
             return;
         }
-    
+
         Row headerRow = sh.getRow(headerRowIndex);
         Map<String,Integer> hm = headerMap(headerRow);
         System.out.println("🧭 Nurse Call headers detected: " + hm.keySet());
-    
+
         int cCfg = getCol(hm, "Configuration Group");
         int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
         int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
@@ -175,17 +138,20 @@ private void parseUnitBreakdown(Workbook wb) {
         int cR1 = getCol(hm, "1st Recipient");
         int cT2 = getCol(hm, "Time to 2nd Recipient");
         int cR2 = getCol(hm, "2nd Recipient");
-    
+
         for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
-    
+
             FlowRow f = new FlowRow();
             f.setType("NurseCalls");
             f.setConfigGroup(getCell(row, cCfg));
             f.setAlarmName(getCell(row, cAlarm));
             f.setSendingName(getCell(row, cSend));
-            f.setPriority(mapPriority(getCell(row, cPriority)));
+
+            String rawPriority = getCell(row, cPriority);
+            f.setPriority(rawPriority.isEmpty() ? "" : mapPriority(rawPriority));
+
             f.setDeviceA(getCell(row, cDevice));
             f.setRingtone(getCell(row, cRing));
             f.setResponseOptions(getCell(row, cResp));
@@ -193,77 +159,65 @@ private void parseUnitBreakdown(Workbook wb) {
             f.setR1(getCell(row, cR1));
             f.setT2(getCell(row, cT2));
             f.setR2(getCell(row, cR2));
-    
+
             nurseCalls.add(f);
         }
     }
 
-
     // -------------------- CLINICAL --------------------
-        private void parseClinical(Workbook wb) {
-            Sheet sh = findSheet(wb, SHEET_CLINICAL);
-            if (sh == null) {
-                System.out.println("⚠️ No Patient Monitoring sheet found.");
-                return;
-            }
-        
-            // 🔍 Find header row dynamically
-            int headerRowIndex = -1;
-            for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
-                Row row = sh.getRow(i);
-                if (row == null) continue;
-                for (Cell cell : row) {
-                    String value = cell.toString().trim().toLowerCase();
-                    if (value.contains("configuration group") || value.contains("alarm name")) {
-                        headerRowIndex = i;
-                        break;
-                    }
-                }
-                if (headerRowIndex >= 0) break;
-            }
-        
-            if (headerRowIndex < 0) {
-                System.out.println("⚠️ Could not locate header row in Patient Monitoring sheet.");
-                return;
-            }
-        
-            Row headerRow = sh.getRow(headerRowIndex);
-            Map<String,Integer> hm = headerMap(headerRow);
-            System.out.println("🧭 Patient Monitoring headers detected: " + hm.keySet());
-        
-            int cCfg = getCol(hm, "Configuration Group");
-            int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
-            int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
-            int cPriority = getCol(hm, "Priority");
-            int cDevice = getCol(hm, "Device - A", "Device");
-            int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
-            int cResp = getCol(hm, "Response Options");
-            int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient");
-            int cR1 = getCol(hm, "1st Recipient");
-            int cT2 = getCol(hm, "Time to 2nd Recipient");
-            int cR2 = getCol(hm, "2nd Recipient");
-        
-            for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
-                Row row = sh.getRow(r);
-                if (row == null) continue;
-        
-                FlowRow f = new FlowRow();
-                f.setType("Clinicals");
-                f.setConfigGroup(getCell(row, cCfg));
-                f.setAlarmName(getCell(row, cAlarm));
-                f.setSendingName(getCell(row, cSend));
-                f.setPriority(mapPriority(getCell(row, cPriority)));
-                f.setDeviceA(getCell(row, cDevice));
-                f.setRingtone(getCell(row, cRing));
-                f.setResponseOptions(getCell(row, cResp));
-                f.setT1(getCell(row, cT1));
-                f.setR1(getCell(row, cR1));
-                f.setT2(getCell(row, cT2));
-                f.setR2(getCell(row, cR2));
-        
-                clinicals.add(f);
-            }
+    private void parseClinical(Workbook wb) {
+        Sheet sh = findSheet(wb, SHEET_CLINICAL);
+        if (sh == null) {
+            System.out.println("⚠️ No Patient Monitoring sheet found.");
+            return;
         }
+
+        int headerRowIndex = findHeaderRow(sh, List.of("configuration group", "alarm name"));
+        if (headerRowIndex < 0) {
+            System.out.println("⚠️ Could not locate header row in Patient Monitoring sheet.");
+            return;
+        }
+
+        Row headerRow = sh.getRow(headerRowIndex);
+        Map<String,Integer> hm = headerMap(headerRow);
+        System.out.println("🧭 Patient Monitoring headers detected: " + hm.keySet());
+
+        int cCfg = getCol(hm, "Configuration Group");
+        int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
+        int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
+        int cPriority = getCol(hm, "Priority");
+        int cDevice = getCol(hm, "Device - A", "Device");
+        int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
+        int cResp = getCol(hm, "Response Options");
+        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient");
+        int cR1 = getCol(hm, "1st Recipient");
+        int cT2 = getCol(hm, "Time to 2nd Recipient");
+        int cR2 = getCol(hm, "2nd Recipient");
+
+        for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
+            Row row = sh.getRow(r);
+            if (row == null) continue;
+
+            FlowRow f = new FlowRow();
+            f.setType("Clinicals");
+            f.setConfigGroup(getCell(row, cCfg));
+            f.setAlarmName(getCell(row, cAlarm));
+            f.setSendingName(getCell(row, cSend));
+
+            String rawPriority = getCell(row, cPriority);
+            f.setPriority(rawPriority.isEmpty() ? "" : mapPriority(rawPriority));
+
+            f.setDeviceA(getCell(row, cDevice));
+            f.setRingtone(getCell(row, cRing));
+            f.setResponseOptions(getCell(row, cResp));
+            f.setT1(getCell(row, cT1));
+            f.setR1(getCell(row, cR1));
+            f.setT2(getCell(row, cT2));
+            f.setR2(getCell(row, cR2));
+
+            clinicals.add(f);
+        }
+    }
 
     // -------------------- JSON PRETTY --------------------
     public static String pretty(Object obj) { return pretty(obj, 0); }
@@ -291,39 +245,30 @@ private void parseUnitBreakdown(Workbook wb) {
     // -------------------- HELPERS --------------------
     private Sheet findSheet(Workbook wb, String... names) {
         if (wb == null) return null;
-
-        if (names != null) {
-            for (String name : names) {
-                if (name == null) continue;
-                Sheet sheet = wb.getSheet(name);
-                if (sheet != null) {
-                    return sheet;
-                }
-            }
-        }
-
-        if (names == null) {
-            return null;
-        }
-
         Set<String> normalized = Arrays.stream(names)
                 .filter(Objects::nonNull)
                 .map(ExcelParserV4::normSheetName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-
         for (int i = 0; i < wb.getNumberOfSheets(); i++) {
             Sheet sheet = wb.getSheetAt(i);
-            String sheetName = wb.getSheetName(i);
-            if (normalized.contains(normSheetName(sheetName))) {
+            if (normalized.contains(normSheetName(wb.getSheetName(i))))
                 return sheet;
-            }
         }
-
         return null;
     }
 
-    private static String normSheetName(String name) {
-        return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+    private static int findHeaderRow(Sheet sh, List<String> keywords) {
+        for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
+            Row row = sh.getRow(i);
+            if (row == null) continue;
+            for (Cell cell : row) {
+                String val = cell.toString().trim().toLowerCase();
+                for (String key : keywords) {
+                    if (val.contains(key)) return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private static Map<String,Integer> headerMap(Row r) {
@@ -347,9 +292,7 @@ private void parseUnitBreakdown(Workbook wb) {
         for (String name : names) {
             if (name == null) continue;
             int idx = map.getOrDefault(norm(name), -1);
-            if (idx >= 0) {
-                return idx;
-            }
+            if (idx >= 0) return idx;
         }
         return -1;
     }
@@ -359,13 +302,23 @@ private void parseUnitBreakdown(Workbook wb) {
     }
 
     private static String mapPriority(String p) {
+        if (p == null) return "";
         String s = norm(p);
+        if (s.isEmpty()) return "";
         if (s.contains("high")) return "urgent";
         if (s.contains("medium")) return "high";
-        return "normal";
+        if (s.contains("low")) return "normal";
+        return s; // preserve custom text like “Critical”
     }
 
-    
+    private static List<String> splitUnits(String s) {
+        if (s == null) return List.of();
+        return Arrays.stream(s.split("[,;]"))
+                .map(String::trim)
+                .filter(v -> !v.isEmpty())
+                .collect(Collectors.toList());
+    }
+
     // -------------------- BUILD JSON OUTPUT --------------------
     public Map<String, Object> buildNurseCallsJson() {
         Map<String, Object> root = new LinkedHashMap<>();
@@ -377,11 +330,10 @@ private void parseUnitBreakdown(Workbook wb) {
             Map<String, Object> flow = new LinkedHashMap<>();
             flow.put("name", row.getAlarmName());
             flow.put("type", "NurseCalls");
-            flow.put("priority", row.getPriority());
-            flow.put("ringtone", row.getRingtone());
-            flow.put("responseOptions", row.getResponseOptions());
+            if (!row.getPriority().isEmpty()) flow.put("priority", row.getPriority());
+            if (!row.getRingtone().isEmpty()) flow.put("ringtone", row.getRingtone());
+            if (!row.getResponseOptions().isEmpty()) flow.put("responseOptions", row.getResponseOptions());
 
-            // link units for this configuration group
             List<Map<String, String>> unitsList = getUnitsForGroup(row.getConfigGroup(), nurseGroupToUnits);
             if (!unitsList.isEmpty()) flow.put("units", unitsList);
 
@@ -402,11 +354,10 @@ private void parseUnitBreakdown(Workbook wb) {
             Map<String, Object> flow = new LinkedHashMap<>();
             flow.put("name", row.getAlarmName());
             flow.put("type", "Clinicals");
-            flow.put("priority", row.getPriority());
-            flow.put("ringtone", row.getRingtone());
-            flow.put("responseOptions", row.getResponseOptions());
+            if (!row.getPriority().isEmpty()) flow.put("priority", row.getPriority());
+            if (!row.getRingtone().isEmpty()) flow.put("ringtone", row.getRingtone());
+            if (!row.getResponseOptions().isEmpty()) flow.put("responseOptions", row.getResponseOptions());
 
-            // link units for this configuration group
             List<Map<String, String>> unitsList = getUnitsForGroup(row.getConfigGroup(), clinicalGroupToUnits);
             if (!unitsList.isEmpty()) flow.put("units", unitsList);
 
@@ -422,33 +373,25 @@ private void parseUnitBreakdown(Workbook wb) {
         return map.getOrDefault(group, List.of());
     }
 
- /**
-     * Writes both NurseCalls and Clinicals JSON output into a single file.
-     * Creates parent folders automatically.
-     */
     public void writeJson(File file) throws Exception {
-    if (file.getParentFile() != null && !file.getParentFile().exists()) {
-        file.getParentFile().mkdirs();
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+
+        Map<String, Object> nurseCallsJson = buildNurseCallsJson();
+        Map<String, Object> clinicalsJson = buildClinicalsJson();
+
+        try (FileWriter writer = new FileWriter(file, false)) {
+            writer.write("{\n");
+            writer.write("  \"NurseCalls\": " + pretty(nurseCallsJson, 1) + ",\n");
+            writer.write("  \"Clinicals\": " + pretty(clinicalsJson, 1) + "\n");
+            writer.write("}\n");
+            writer.flush();
+        }
+
+        if (!file.exists() || file.length() == 0)
+            throw new RuntimeException("File write failed or empty: " + file.getAbsolutePath());
+
+        System.out.println("✅ JSON successfully written to " + file.getAbsolutePath());
     }
-
-    Map<String, Object> nurseCallsJson = buildNurseCallsJson();
-    Map<String, Object> clinicalsJson = buildClinicalsJson();
-
-    try (java.io.FileWriter writer = new java.io.FileWriter(file, false)) {
-        writer.write("{\n");
-        writer.write("  \"NurseCalls\": " + pretty(nurseCallsJson, 1) + ",\n");
-        writer.write("  \"Clinicals\": " + pretty(clinicalsJson, 1) + "\n");
-        writer.write("}\n");
-        writer.flush(); // ✅ ensure all bytes written
-    }
-
-    if (!file.exists() || file.length() == 0) {
-        throw new RuntimeException("File write failed or empty: " + file.getAbsolutePath());
-    }
-
-    System.out.println("✅ JSON successfully written to " + file.getAbsolutePath());
- }
-
-    
 }
-
