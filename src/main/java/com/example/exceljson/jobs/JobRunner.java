@@ -138,33 +138,37 @@ public final class JobRunner {
             err.println("Usage: JobRunner export-json <input.xlsx> <output.json>");
             return 1;
         }
-
-        File input = new File(args[0]);
+    
+        File input = new File(args[0]).getAbsoluteFile();
         if (!input.isFile()) {
-            err.printf("Input Excel file \"%s\" was not found.%n", args[0]);
+            err.printf("❌ Input Excel file \"%s\" was not found.%n", input);
             return 1;
         }
-
-        File output = new File(args[1]).getAbsoluteFile();
-        File parent = output.getAbsoluteFile().getParentFile();
+    
+        File output = new File(args[1]).getAbsoluteFile(); // ✅ ensure absolute path
+        File parent = output.getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            err.printf("Unable to create parent directory for \"%s\".%n", output);
+            err.printf("❌ Unable to create parent directory for \"%s\".%n", output);
             return 1;
         }
-
+    
         try {
-        ExcelParserV4 parser = new ExcelParserV4();
-        parser.load(input);
-        System.out.println("📂 Writing to: " + output.getAbsolutePath());
-        parser.writeJson(output);
-        
-        if (!output.exists()) {
-            throw new RuntimeException("Output file not found after write: " + output.getAbsolutePath());
-        }
-            out.printf("Wrote JSON to %s%n", output.getAbsolutePath());
+            System.out.println("📥 Loading workbook: " + input.getAbsolutePath());
+            ExcelParserV4 parser = new ExcelParserV4();
+            parser.load(input);
+    
+            System.out.println("📤 Writing JSON to: " + output.getAbsolutePath());
+            parser.writeJson(output);
+    
+            // ✅ Verify flush + existence for test compatibility
+            if (!output.exists() || output.length() == 0) {
+                throw new RuntimeException("Output file missing or empty: " + output.getAbsolutePath());
+            }
+    
+            out.printf("✅ JSON successfully written to %s%n", output.getAbsolutePath());
             return 0;
         } catch (Exception e) {
-            err.printf("Failed to export JSON: %s%n", e.getMessage());
+            err.printf("❌ Failed to export JSON: %s%n", e.getMessage());
             e.printStackTrace(err);
             return 1;
         }
