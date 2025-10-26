@@ -145,7 +145,7 @@ public final class JobRunner {
             return 1;
         }
 
-        File output = new File(args[1]);
+        File output = new File(args[1]).getAbsoluteFile();
         File parent = output.getAbsoluteFile().getParentFile();
         if (parent != null && !parent.exists() && !parent.mkdirs()) {
             err.printf("Unable to create parent directory for \"%s\".%n", output);
