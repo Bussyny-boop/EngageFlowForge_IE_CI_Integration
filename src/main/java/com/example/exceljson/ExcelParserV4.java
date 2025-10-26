@@ -300,5 +300,30 @@ public class ExcelParserV4 {
             fw.write(pretty(buildClinicalsJson()));
         }
     }
+ /**
+     * Writes both NurseCalls and Clinicals JSON output into a single file.
+     * Creates parent folders automatically.
+     */
+    public void writeJson(File file) throws Exception {
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+
+        // Build the JSON data
+        Map<String, Object> nurseCallsJson = buildNurseCallsJson();
+        Map<String, Object> clinicalsJson = buildClinicalsJson();
+
+        // Write both to a single JSON file (merged for convenience)
+        try (java.io.FileWriter writer = new java.io.FileWriter(file, false)) {
+            writer.write("{\n");
+            writer.write("  \"NurseCalls\": " + pretty(nurseCallsJson, 1) + ",\n");
+            writer.write("  \"Clinicals\": " + pretty(clinicalsJson, 1) + "\n");
+            writer.write("}\n");
+        }
+
+        System.out.println("✅ JSON successfully written to " + file.getAbsolutePath());
+    }
+
+    
 }
 
