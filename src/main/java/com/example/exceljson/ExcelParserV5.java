@@ -100,7 +100,11 @@ public class ExcelParserV5 {
 
     // Write two separate files (for jobs/export)
     public void writeJsonPair(File nurseFile, File clinicalFile) throws Exception {
-        // NurseCalls
+        writeNurseCallsJson(nurseFile);
+        writeClinicalsJson(clinicalFile);
+    }
+
+    public void writeNurseCallsJson(File nurseFile) throws Exception {
         Map<String,Object> nc = buildNurseCallsJson();
         ensureParent(nurseFile);
         try (FileWriter out = new FileWriter(nurseFile, false)) {
@@ -109,7 +113,9 @@ public class ExcelParserV5 {
         if (!nurseFile.exists() || nurseFile.length() == 0) {
             throw new IOException("Failed writing NurseCalls JSON to: " + nurseFile.getAbsolutePath());
         }
-        // Clinicals
+    }
+
+    public void writeClinicalsJson(File clinicalFile) throws Exception {
         Map<String,Object> cl = buildClinicalsJson();
         ensureParent(clinicalFile);
         try (FileWriter out = new FileWriter(clinicalFile, false)) {

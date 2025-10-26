@@ -98,7 +98,19 @@ class JobRunnerTest {
         assertEquals(0, status);
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
-        assertTrue(json.contains("\"Alarm 1\""));
+        assertTrue(json.contains("This build now writes two separate JSON files"));
+
+        Path nurseJson = jsonPath.getParent().resolve("NurseCalls.json");
+        Path clinicalJson = jsonPath.getParent().resolve("Clinicals.json");
+
+        assertTrue(Files.exists(nurseJson));
+        assertTrue(Files.exists(clinicalJson));
+
+        String nurseContent = Files.readString(nurseJson);
+        String clinicalContent = Files.readString(clinicalJson);
+
+        assertTrue(nurseContent.contains("Alarm 1"));
+        assertTrue(clinicalContent.contains("Clinical Alarm"));
         assertTrue(outBuffer.toString().contains("Wrote JSON"));
         assertTrue(errBuffer.toString().isEmpty());
     }
