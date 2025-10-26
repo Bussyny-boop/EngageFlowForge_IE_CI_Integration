@@ -608,7 +608,7 @@ public class ExcelParserV5 {
             params.add(pa("responseType", quote("None")));
             params.add(pa("shortMessage", quote("#{alert_type} #{bed.room.name}")));
             params.add(pa("subject", quote("#{alert_type} #{bed.room.name}")));
-            params.add(pa("ttl", "10")));
+            params.add(pa("ttl", "10"));
             params.add(pa("retractRules", "[\"ttlHasElapsed\"]"));
             params.add(pa("vibrate", quote("short")));
 
