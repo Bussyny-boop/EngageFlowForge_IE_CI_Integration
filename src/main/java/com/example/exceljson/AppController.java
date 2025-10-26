@@ -16,7 +16,7 @@ import java.io.File;
 
 public class AppController {
 
-    private ExcelParserV4 parser;
+    private ExcelParserV5 parser;
     private final TableView<UnitRow> tblUnits = new TableView<>();
     private final TableView<FlowRow> tblNurse = new TableView<>();
     private final TableView<FlowRow> tblClin = new TableView<>();
@@ -64,7 +64,7 @@ public class AppController {
         if (file == null) return;
 
         try {
-            parser = new ExcelParserV4();
+            parser = new ExcelParserV5();
             parser.load(file);
             populateTables();
             popup("✅ Excel Loaded", parser.getLoadSummary());
@@ -120,8 +120,8 @@ public class AppController {
 
     private void generateJson() {
         try {
-            String preview = ExcelParserV4.pretty(parser.buildNurseCallsJson()) + "\n\n" +
-                    ExcelParserV4.pretty(parser.buildClinicalsJson());
+            String preview = ExcelParserV5.pretty(parser.buildNurseCallsJson()) + "\n\n" +
+                    ExcelParserV5.pretty(parser.buildClinicalsJson());
             jsonPreview.setText(preview);
             jsonPreview.setScrollTop(0);
             popup("✅ JSON Generated", "Preview updated. JSON files ready to export.");
