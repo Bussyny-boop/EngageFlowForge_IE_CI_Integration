@@ -243,65 +243,65 @@ public class ExcelParserV4 {
     }
 
     // -------------------- HELPERS --------------------
-    private Sheet findSheet(Workbook wb, String... names) {
-        if (wb == null) return null;
-        Set<String> normalized = Arrays.stream(names)
-                .filter(Objects::nonNull)
-                .map(ExcelParserV4::normSheetName)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        for (int i = 0; i < wb.getNumberOfSheets(); i++) {
-            Sheet sheet = wb.getSheetAt(i);
-            if (normalized.contains(normSheetName(wb.getSheetName(i))))
-                return sheet;
+       private Sheet findSheet(Workbook wb, String... names) {
+            if (wb == null) return null;
+            Set<String> normalized = Arrays.stream(names)
+                    .filter(Objects::nonNull)
+                    .map(ExcelParserV4::normSheetName)   // ✅ this calls our helper
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+                Sheet sheet = wb.getSheetAt(i);
+                if (normalized.contains(normSheetName(wb.getSheetName(i))))
+                    return sheet;
+            }
+            return null;
         }
-        return null;
-    }
-
+    
+        // ⬇️ INSERT THIS HERE (outside all other methods)
         private static String normSheetName(String name) {
-        if (name == null) return "";
-        return name.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ");
-    }
-
-    private static int findHeaderRow(Sheet sh, List<String> keywords) {
-        for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
-        for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
-            Row row = sh.getRow(i);
-            if (row == null) continue;
-            for (Cell cell : row) {
-                String val = cell.toString().trim().toLowerCase();
-                for (String key : keywords) {
-                    if (val.contains(key)) return i;
+            if (name == null) return "";
+            return name.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ");
+        }
+    
+        private static int findHeaderRow(Sheet sh, List<String> keywords) {
+            for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
+                Row row = sh.getRow(i);
+                if (row == null) continue;
+                for (Cell cell : row) {
+                    String val = cell.toString().trim().toLowerCase();
+                    for (String key : keywords) {
+                        if (val.contains(key)) return i;
+                    }
                 }
             }
+            return -1;
         }
-        return -1;
-    }
 
-    private static Map<String,Integer> headerMap(Row r) {
-        Map<String,Integer> map = new LinkedHashMap<>();
-        if (r == null) return map;
-        for (int i=0; i<r.getLastCellNum(); i++) {
-            String key = norm(getCell(r,i));
-            if (!key.isEmpty()) map.put(key, i);
+        private static Map<String,Integer> headerMap(Row r) {
+            Map<String,Integer> map = new LinkedHashMap<>();
+            if (r == null) return map;
+            for (int i=0; i<r.getLastCellNum(); i++) {
+                String key = norm(getCell(r,i));
+                if (!key.isEmpty()) map.put(key, i);
+            }
+            return map;
         }
-        return map;
-    }
-
-    private static String getCell(Row r, int i) {
-        if (i < 0 || r == null) return "";
-        Cell c = r.getCell(i);
-        return c == null ? "" : c.toString().trim();
-    }
-
-    private static int getCol(Map<String,Integer> map, String... names) {
-        if (names == null) return -1;
-        for (String name : names) {
-            if (name == null) continue;
-            int idx = map.getOrDefault(norm(name), -1);
-            if (idx >= 0) return idx;
+    
+        private static String getCell(Row r, int i) {
+            if (i < 0 || r == null) return "";
+            Cell c = r.getCell(i);
+            return c == null ? "" : c.toString().trim();
         }
-        return -1;
-    }
+    
+        private static int getCol(Map<String,Integer> map, String... names) {
+            if (names == null) return -1;
+            for (String name : names) {
+                if (name == null) continue;
+                int idx = map.getOrDefault(norm(name), -1);
+                if (idx >= 0) return idx;
+            }
+            return -1;
+        }
 
     private static String norm(String s) {
         return s == null ? "" : s.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim();
