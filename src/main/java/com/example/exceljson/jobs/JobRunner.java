@@ -146,8 +146,26 @@ public final class JobRunner {
         }
     
         File output = new File(args[1]).getAbsoluteFile(); // ✅ ensure absolute path
-        File parent = output.getParentFile();
-        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+        boolean outputExists = output.exists();
+        boolean outputLooksLikeFile = outputExists ? output.isFile() : output.getName().toLowerCase().endsWith(".json");
+
+        File baseDir;
+        if (output.isDirectory() || (!outputExists && !outputLooksLikeFile)) {
+            baseDir = output;
+        } else {
+            baseDir = output.getParentFile();
+        }
+
+        if (baseDir == null) {
+            baseDir = output.getAbsoluteFile().getParentFile();
+        }
+        if (baseDir == null) {
+            baseDir = new File(".").getAbsoluteFile();
+        }
+
+        baseDir = baseDir.getAbsoluteFile();
+
+        if (!baseDir.exists() && !baseDir.mkdirs()) {
             err.printf("❌ Unable to create parent directory for \"%s\".%n", output);
             return 1;
         }
@@ -157,15 +175,21 @@ public final class JobRunner {
             ExcelParserV5 parser = new ExcelParserV5();
             parser.load(input);
 
-            out.printf("📤 Writing JSON to: %s%n", output.getAbsolutePath());
-            parser.writeJson(output);
+            File nurseJson = new File(baseDir, "NurseCalls.json");
+            File clinicalJson = new File(baseDir, "Clinicals.json");
+
+            out.printf("📤 Writing JSON to:%n  %s%n  %s%n", nurseJson.getAbsolutePath(), clinicalJson.getAbsolutePath());
+            parser.writeJsonPair(nurseJson, clinicalJson);
 
             // ✅ Verify flush + existence for test compatibility
-            if (!output.exists() || output.length() == 0) {
-                throw new RuntimeException("Output file missing or empty: " + output.getAbsolutePath());
+            if (!nurseJson.exists() || nurseJson.length() == 0) {
+                throw new RuntimeException("Output file missing or empty: " + nurseJson.getAbsolutePath());
+            }
+            if (!clinicalJson.exists() || clinicalJson.length() == 0) {
+                throw new RuntimeException("Output file missing or empty: " + clinicalJson.getAbsolutePath());
             }
 
-            out.printf("✅ Wrote JSON to %s%n", output.getAbsolutePath());
+            out.printf("✅ Wrote JSON files to:%n  %s%n  %s%n", nurseJson.getAbsolutePath(), clinicalJson.getAbsolutePath());
             return 0;
         } catch (Exception e) {
             err.printf("❌ Failed to export JSON: %s%n", e.getMessage());
