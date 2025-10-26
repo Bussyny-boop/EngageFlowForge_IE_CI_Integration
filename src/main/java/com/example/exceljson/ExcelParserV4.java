@@ -292,14 +292,6 @@ public class ExcelParserV4 {
         return map.getOrDefault(group, List.of());
     }
 
-    // -------------------- WRITE JSON TO FILE --------------------
-    public void writeJson(File file) throws IOException {
-        try (FileWriter fw = new FileWriter(file)) {
-            fw.write(pretty(buildNurseCallsJson()));
-            fw.write("\n\n");
-            fw.write(pretty(buildClinicalsJson()));
-        }
-    }
  /**
      * Writes both NurseCalls and Clinicals JSON output into a single file.
      * Creates parent folders automatically.
