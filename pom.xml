@@ -11,27 +11,32 @@
   <description>Converts Vocera Engage Excel configuration sheets into JSON rule files.</description>
   <packaging>jar</packaging>
 
-  <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <javafx.version>21.0.3</javafx.version>
-    <jackson.version>2.17.2</jackson.version>
-    <log4j.version>2.23.1</log4j.version>
-    <poi.version>5.2.5</poi.version>
-  </properties>
+         <properties>
+           <java.version>17</java.version>
+           <javafx.version>21.0.3</javafx.version>
+           <jackson.version>2.17.2</jackson.version>
+           <poi.version>5.2.5</poi.version>
+           <log4j.version>2.22.1</log4j.version>
+         </properties>
+
 
   <dependencies>
-    <!-- JavaFX -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-graphics</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
+   <!-- JavaFX -->
+         <dependency>
+           <groupId>org.openjfx</groupId>
+           <artifactId>javafx-controls</artifactId>
+           <version>${javafx.version}</version>
+         </dependency>
+         <dependency>
+           <groupId>org.openjfx</groupId>
+           <artifactId>javafx-graphics</artifactId>
+           <version>${javafx.version}</version>
+         </dependency>
+         <dependency>
+           <groupId>org.openjfx</groupId>
+           <artifactId>javafx-fxml</artifactId>
+           <version>${javafx.version}</version>
+         </dependency>
 
     <!-- Jackson JSON + YAML -->
     <dependency>
