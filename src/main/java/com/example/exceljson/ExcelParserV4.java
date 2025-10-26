@@ -257,7 +257,13 @@ public class ExcelParserV4 {
         return null;
     }
 
+        private static String normSheetName(String name) {
+        if (name == null) return "";
+        return name.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ");
+    }
+
     private static int findHeaderRow(Sheet sh, List<String> keywords) {
+        for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
         for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
             Row row = sh.getRow(i);
             if (row == null) continue;
