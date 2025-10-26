@@ -135,9 +135,35 @@ private void parseUnitBreakdown(Workbook wb) {
     // -------------------- NURSE CALL --------------------
     private void parseNurseCall(Workbook wb) {
         Sheet sh = findSheet(wb, SHEET_NURSE);
-        if (sh == null) return;
-
-        Map<String,Integer> hm = headerMap(sh.getRow(0));
+        if (sh == null) {
+            System.out.println("⚠️ No Nurse Call sheet found.");
+            return;
+        }
+    
+        // 🔍 Find header row dynamically
+        int headerRowIndex = -1;
+        for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
+            Row row = sh.getRow(i);
+            if (row == null) continue;
+            for (Cell cell : row) {
+                String value = cell.toString().trim().toLowerCase();
+                if (value.contains("configuration group") || value.contains("common alert")) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+            if (headerRowIndex >= 0) break;
+        }
+    
+        if (headerRowIndex < 0) {
+            System.out.println("⚠️ Could not locate header row in Nurse Call sheet.");
+            return;
+        }
+    
+        Row headerRow = sh.getRow(headerRowIndex);
+        Map<String,Integer> hm = headerMap(headerRow);
+        System.out.println("🧭 Nurse Call headers detected: " + hm.keySet());
+    
         int cCfg = getCol(hm, "Configuration Group");
         int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
         int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
@@ -145,14 +171,15 @@ private void parseUnitBreakdown(Workbook wb) {
         int cDevice = getCol(hm, "Device - A", "Device");
         int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
         int cResp = getCol(hm, "Response Options");
-        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient", "Time to first recipient");
-        int cR1 = getCol(hm, "1st Recipient", "First Recipient");
-        int cT2 = getCol(hm, "Time to 2nd Recipient", "Time to second recipient");
-        int cR2 = getCol(hm, "2nd Recipient", "Second Recipient");
-
-        for (int r = 1; r <= sh.getLastRowNum(); r++) {
+        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient");
+        int cR1 = getCol(hm, "1st Recipient");
+        int cT2 = getCol(hm, "Time to 2nd Recipient");
+        int cR2 = getCol(hm, "2nd Recipient");
+    
+        for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
+    
             FlowRow f = new FlowRow();
             f.setType("NurseCalls");
             f.setConfigGroup(getCell(row, cCfg));
@@ -166,47 +193,77 @@ private void parseUnitBreakdown(Workbook wb) {
             f.setR1(getCell(row, cR1));
             f.setT2(getCell(row, cT2));
             f.setR2(getCell(row, cR2));
+    
             nurseCalls.add(f);
         }
     }
 
+
     // -------------------- CLINICAL --------------------
-    private void parseClinical(Workbook wb) {
-        Sheet sh = findSheet(wb, SHEET_CLINICAL);
-        if (sh == null) return;
-
-        Map<String,Integer> hm = headerMap(sh.getRow(0));
-        int cCfg = getCol(hm, "Configuration Group");
-        int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
-        int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
-        int cPriority = getCol(hm, "Priority");
-        int cDevice = getCol(hm, "Device - A", "Device");
-        int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
-        int cResp = getCol(hm, "Response Options");
-        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient", "Time to first recipient");
-        int cR1 = getCol(hm, "1st Recipient", "First Recipient");
-        int cT2 = getCol(hm, "Time to 2nd Recipient", "Time to second recipient");
-        int cR2 = getCol(hm, "2nd Recipient", "Second Recipient");
-
-        for (int r = 1; r <= sh.getLastRowNum(); r++) {
-            Row row = sh.getRow(r);
-            if (row == null) continue;
-            FlowRow f = new FlowRow();
-            f.setType("Clinicals");
-            f.setConfigGroup(getCell(row, cCfg));
-            f.setAlarmName(getCell(row, cAlarm));
-            f.setSendingName(getCell(row, cSend));
-            f.setPriority(mapPriority(getCell(row, cPriority)));
-            f.setDeviceA(getCell(row, cDevice));
-            f.setRingtone(getCell(row, cRing));
-            f.setResponseOptions(getCell(row, cResp));
-            f.setT1(getCell(row, cT1));
-            f.setR1(getCell(row, cR1));
-            f.setT2(getCell(row, cT2));
-            f.setR2(getCell(row, cR2));
-            clinicals.add(f);
+        private void parseClinical(Workbook wb) {
+            Sheet sh = findSheet(wb, SHEET_CLINICAL);
+            if (sh == null) {
+                System.out.println("⚠️ No Patient Monitoring sheet found.");
+                return;
+            }
+        
+            // 🔍 Find header row dynamically
+            int headerRowIndex = -1;
+            for (int i = 0; i < 10 && i <= sh.getLastRowNum(); i++) {
+                Row row = sh.getRow(i);
+                if (row == null) continue;
+                for (Cell cell : row) {
+                    String value = cell.toString().trim().toLowerCase();
+                    if (value.contains("configuration group") || value.contains("alarm name")) {
+                        headerRowIndex = i;
+                        break;
+                    }
+                }
+                if (headerRowIndex >= 0) break;
+            }
+        
+            if (headerRowIndex < 0) {
+                System.out.println("⚠️ Could not locate header row in Patient Monitoring sheet.");
+                return;
+            }
+        
+            Row headerRow = sh.getRow(headerRowIndex);
+            Map<String,Integer> hm = headerMap(headerRow);
+            System.out.println("🧭 Patient Monitoring headers detected: " + hm.keySet());
+        
+            int cCfg = getCol(hm, "Configuration Group");
+            int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
+            int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
+            int cPriority = getCol(hm, "Priority");
+            int cDevice = getCol(hm, "Device - A", "Device");
+            int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
+            int cResp = getCol(hm, "Response Options");
+            int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient");
+            int cR1 = getCol(hm, "1st Recipient");
+            int cT2 = getCol(hm, "Time to 2nd Recipient");
+            int cR2 = getCol(hm, "2nd Recipient");
+        
+            for (int r = headerRowIndex + 1; r <= sh.getLastRowNum(); r++) {
+                Row row = sh.getRow(r);
+                if (row == null) continue;
+        
+                FlowRow f = new FlowRow();
+                f.setType("Clinicals");
+                f.setConfigGroup(getCell(row, cCfg));
+                f.setAlarmName(getCell(row, cAlarm));
+                f.setSendingName(getCell(row, cSend));
+                f.setPriority(mapPriority(getCell(row, cPriority)));
+                f.setDeviceA(getCell(row, cDevice));
+                f.setRingtone(getCell(row, cRing));
+                f.setResponseOptions(getCell(row, cResp));
+                f.setT1(getCell(row, cT1));
+                f.setR1(getCell(row, cR1));
+                f.setT2(getCell(row, cT2));
+                f.setR2(getCell(row, cR2));
+        
+                clinicals.add(f);
+            }
         }
-    }
 
     // -------------------- JSON PRETTY --------------------
     public static String pretty(Object obj) { return pretty(obj, 0); }
