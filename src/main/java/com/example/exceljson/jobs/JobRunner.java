@@ -151,21 +151,21 @@ public final class JobRunner {
             err.printf("❌ Unable to create parent directory for \"%s\".%n", output);
             return 1;
         }
-    
+
         try {
-            System.out.println("📥 Loading workbook: " + input.getAbsolutePath());
+            out.printf("📥 Loading workbook: %s%n", input.getAbsolutePath());
             ExcelParserV4 parser = new ExcelParserV4();
             parser.load(input);
-    
-            System.out.println("📤 Writing JSON to: " + output.getAbsolutePath());
+
+            out.printf("📤 Writing JSON to: %s%n", output.getAbsolutePath());
             parser.writeJson(output);
-    
+
             // ✅ Verify flush + existence for test compatibility
             if (!output.exists() || output.length() == 0) {
                 throw new RuntimeException("Output file missing or empty: " + output.getAbsolutePath());
             }
-    
-            out.printf("✅ JSON successfully written to %s%n", output.getAbsolutePath());
+
+            out.printf("✅ Wrote JSON to %s%n", output.getAbsolutePath());
             return 0;
         } catch (Exception e) {
             err.printf("❌ Failed to export JSON: %s%n", e.getMessage());

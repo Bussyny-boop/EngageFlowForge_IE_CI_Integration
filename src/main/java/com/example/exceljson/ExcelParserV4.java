@@ -56,14 +56,14 @@ public class ExcelParserV4 {
 
     // -------------------- UNIT BREAKDOWN --------------------
     private void parseUnitBreakdown(Workbook wb) {
-        Sheet sh = wb.getSheet(SHEET_UNIT);
+        Sheet sh = findSheet(wb, SHEET_UNIT);
         if (sh == null) return;
 
         Map<String,Integer> hm = headerMap(sh.getRow(0));
         int cFacility = getCol(hm, "Facility");
         int cUnitName = getCol(hm, "Common Unit Name");
-        int cNurseGroup = getCol(hm, "Nurse Call");
-        int cClinGroup = getCol(hm, "Patient Monitoring");
+        int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call");
+        int cClinGroup = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring");
         int cNoCare = getCol(hm, "No Caregiver Alert Number or Group");
 
         for (int r = 1; r <= sh.getLastRowNum(); r++) {
@@ -106,21 +106,21 @@ public class ExcelParserV4 {
 
     // -------------------- NURSE CALL --------------------
     private void parseNurseCall(Workbook wb) {
-        Sheet sh = wb.getSheet(SHEET_NURSE);
+        Sheet sh = findSheet(wb, SHEET_NURSE);
         if (sh == null) return;
 
         Map<String,Integer> hm = headerMap(sh.getRow(0));
         int cCfg = getCol(hm, "Configuration Group");
-        int cAlarm = getCol(hm, "Common Alert or Alarm Name");
-        int cSend = getCol(hm, "Sending System Alert Name");
+        int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
+        int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
         int cPriority = getCol(hm, "Priority");
-        int cDevice = getCol(hm, "Device - A");
-        int cRing = getCol(hm, "Ringtone Device - A");
+        int cDevice = getCol(hm, "Device - A", "Device");
+        int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
         int cResp = getCol(hm, "Response Options");
-        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)");
-        int cR1 = getCol(hm, "1st Recipient");
-        int cT2 = getCol(hm, "Time to 2nd Recipient");
-        int cR2 = getCol(hm, "2nd Recipient");
+        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient", "Time to first recipient");
+        int cR1 = getCol(hm, "1st Recipient", "First Recipient");
+        int cT2 = getCol(hm, "Time to 2nd Recipient", "Time to second recipient");
+        int cR2 = getCol(hm, "2nd Recipient", "Second Recipient");
 
         for (int r = 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
@@ -144,21 +144,21 @@ public class ExcelParserV4 {
 
     // -------------------- CLINICAL --------------------
     private void parseClinical(Workbook wb) {
-        Sheet sh = wb.getSheet(SHEET_CLINICAL);
+        Sheet sh = findSheet(wb, SHEET_CLINICAL);
         if (sh == null) return;
 
         Map<String,Integer> hm = headerMap(sh.getRow(0));
         int cCfg = getCol(hm, "Configuration Group");
-        int cAlarm = getCol(hm, "Alarm Name");
-        int cSend = getCol(hm, "Sending System Alarm Name");
+        int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
+        int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
         int cPriority = getCol(hm, "Priority");
-        int cDevice = getCol(hm, "Device - A");
-        int cRing = getCol(hm, "Ringtone Device - A");
+        int cDevice = getCol(hm, "Device - A", "Device");
+        int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
         int cResp = getCol(hm, "Response Options");
-        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)");
-        int cR1 = getCol(hm, "1st Recipient");
-        int cT2 = getCol(hm, "Time to 2nd Recipient");
-        int cR2 = getCol(hm, "2nd Recipient");
+        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient", "Time to first recipient");
+        int cR1 = getCol(hm, "1st Recipient", "First Recipient");
+        int cT2 = getCol(hm, "Time to 2nd Recipient", "Time to second recipient");
+        int cR2 = getCol(hm, "2nd Recipient", "Second Recipient");
 
         for (int r = 1; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
@@ -204,6 +204,43 @@ public class ExcelParserV4 {
     }
 
     // -------------------- HELPERS --------------------
+    private Sheet findSheet(Workbook wb, String... names) {
+        if (wb == null) return null;
+
+        if (names != null) {
+            for (String name : names) {
+                if (name == null) continue;
+                Sheet sheet = wb.getSheet(name);
+                if (sheet != null) {
+                    return sheet;
+                }
+            }
+        }
+
+        if (names == null) {
+            return null;
+        }
+
+        Set<String> normalized = Arrays.stream(names)
+                .filter(Objects::nonNull)
+                .map(ExcelParserV4::normSheetName)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+            Sheet sheet = wb.getSheetAt(i);
+            String sheetName = wb.getSheetName(i);
+            if (normalized.contains(normSheetName(sheetName))) {
+                return sheet;
+            }
+        }
+
+        return null;
+    }
+
+    private static String normSheetName(String name) {
+        return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+    }
+
     private static Map<String,Integer> headerMap(Row r) {
         Map<String,Integer> map = new LinkedHashMap<>();
         if (r == null) return map;
@@ -220,8 +257,16 @@ public class ExcelParserV4 {
         return c == null ? "" : c.toString().trim();
     }
 
-    private static int getCol(Map<String,Integer> map, String name) {
-        return map.getOrDefault(norm(name), -1);
+    private static int getCol(Map<String,Integer> map, String... names) {
+        if (names == null) return -1;
+        for (String name : names) {
+            if (name == null) continue;
+            int idx = map.getOrDefault(norm(name), -1);
+            if (idx >= 0) {
+                return idx;
+            }
+        }
+        return -1;
     }
 
     private static String norm(String s) {
