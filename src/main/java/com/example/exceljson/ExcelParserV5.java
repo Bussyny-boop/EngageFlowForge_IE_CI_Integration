@@ -667,7 +667,7 @@ public class ExcelParserV5 {
         parts.add("SEND " + (nurseSide ? "NURSECALL" : "CLINICAL"));
         if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
         if (!alarms.isEmpty()) parts.add(String.join(" | ", alarms.stream().map(String::toUpperCase).collect(Collectors.toList())));
-        if (!unitNames.isEmpty()) parts.add(String.join(" | ", unitNames.stream().map(this::caps).collect(Collectors.toList())));
+        if (!unitNames.isEmpty()) parts.add(String.join(" | ", unitNames.stream().map(ExcelParserV5::caps).collect(Collectors.toList())));
         if (!isBlank(facility)) parts.add(facility);
         return String.join(" | ", parts);
     }
