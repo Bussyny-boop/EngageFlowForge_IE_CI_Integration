@@ -3,11 +3,7 @@ package com.example.exceljson;
 import com.example.exceljson.jobs.JobRunner;
 import javafx.application.Application;
 
-public final class Main {
-
-    private Main() {
-        // utility class
-    }
+public final class Main extends ExcelJsonApplication {
 
     public static void main(String[] args) {
         Integer jobStatus = maybeRunJob(args);
@@ -17,7 +13,18 @@ public final class Main {
             }
             return;
         }
-        Application.launch(ExcelJsonApplication.class, args);
+        try {
+            Application.launch(Main.class, args);
+        } catch (NoClassDefFoundError error) {
+            if (error.getMessage() != null && error.getMessage().startsWith("javafx/")) {
+                System.err.println("Unable to start Engage Rules Generator because JavaFX runtime classes are missing.");
+                System.err.println("If you are packaging the application, include the JavaFX modules, for example:");
+                System.err.println("  jpackage --java-options \"--add-modules=javafx.controls,javafx.fxml\" ...");
+                System.exit(1);
+                return;
+            }
+            throw error;
+        }
     }
 
     static Integer maybeRunJob(String[] args) {
