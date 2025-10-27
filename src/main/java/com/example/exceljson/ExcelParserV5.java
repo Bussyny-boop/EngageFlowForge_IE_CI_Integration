@@ -10,32 +10,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Excel parser that understands the Engage workbook layout and exposes helper
- * methods for converting the Excel content into the Engage JSON shape.  The
- * previous revision of this file was truncated which left a number of methods
- * outside of the class definition and caused compilation failures.  The class
- * has been rebuilt so that all parsing and JSON helpers are again available in
- * a single coherent implementation.
+ * ExcelParserV5
+ *
+ * - Parses the Engage Excel workbook.
+ * - Outputs JSON matching the approved structure:
+ *   * NurseCallsCondition for nurse flows' "conditions".
+ *   * Ignores blank / "N/A" cells.
+ *   * For each recipient order, aggregates multiple recipients into a single destination:
+ *       - Groups → one destination with "groups":[...]
+ *       - Functional roles → one destination with "functionalRoles":[...]
+ *   * ParameterAttributes follow the reference format (quoted string values where required).
  */
 public class ExcelParserV5 {
 
     // ---------------------------------------------------------------------
-    // Public row types exposed to the JavaFX UI
+    // Row types exposed to the JavaFX UI
     public static final class UnitRow {
         public String facility = "";
         public String unitNames = "";
@@ -64,24 +59,23 @@ public class ExcelParserV5 {
     private static final ObjectMapper PRETTY_MAPPER = new ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-       private static final List<Map<String, Object>> NURSE_CONDITIONS;
-    
+    // NurseCallsCondition (approved structure)
+    private static final List<Map<String, Object>> NURSE_CONDITIONS;
     static {
-        // Matches Engage condition structure for NurseCallsCondition
-        Map<String, Object> filter1 = new LinkedHashMap<>();
-        filter1.put("attributePath", "bed");
-        filter1.put("operator", "not_null");
-    
-        Map<String, Object> filter2 = new LinkedHashMap<>();
-        filter2.put("attributePath", "to.type");
-        filter2.put("operator", "not_equal");
-        filter2.put("value", "TargetGroups");
-    
-        Map<String, Object> condition = new LinkedHashMap<>();
-        condition.put("filters", List.of(filter1, filter2));
-        condition.put("name", "NurseCallsCondition");
-    
-        NURSE_CONDITIONS = Collections.unmodifiableList(List.of(condition));
+        Map<String, Object> f1 = new LinkedHashMap<>();
+        f1.put("attributePath", "bed");
+        f1.put("operator", "not_null");
+
+        Map<String, Object> f2 = new LinkedHashMap<>();
+        f2.put("attributePath", "to.type");
+        f2.put("operator", "not_equal");
+        f2.put("value", "TargetGroups");
+
+        Map<String, Object> cond = new LinkedHashMap<>();
+        cond.put("filters", List.of(f1, f2));
+        cond.put("name", "NurseCallsCondition");
+
+        NURSE_CONDITIONS = Collections.unmodifiableList(List.of(cond));
     }
 
     private final Config config;
@@ -102,9 +96,8 @@ public class ExcelParserV5 {
     public ExcelParserV5() {
         this(Config.defaultConfig());
     }
-
     public ExcelParserV5(Config config) {
-        this.config = config == null ? Config.defaultConfig() : config;
+        this.config = (config == null) ? Config.defaultConfig() : config;
         this.functionalRolePattern = Pattern.compile(this.config.recipientParsing.functionalRoleRegex);
     }
 
@@ -130,13 +123,13 @@ public class ExcelParserV5 {
     public String getLoadSummary() {
         return String.format(Locale.ROOT,
                 "✅ Excel Load Complete\n\n" +
-                        "Loaded:\n" +
-                        "  • %d Unit Breakdown rows\n" +
-                        "  • %d Nurse Call rows\n" +
-                        "  • %d Patient Monitoring rows\n\n" +
-                        "Linked:\n" +
-                        "  • %d Configuration Groups (Nurse)\n" +
-                        "  • %d Configuration Groups (Clinical)",
+                "Loaded:\n" +
+                "  • %d Unit Breakdown rows\n" +
+                "  • %d Nurse Call rows\n" +
+                "  • %d Patient Monitoring rows\n\n" +
+                "Linked:\n" +
+                "  • %d Configuration Groups (Nurse)\n" +
+                "  • %d Configuration Groups (Clinical)",
                 units.size(), nurseCalls.size(), clinicals.size(),
                 nurseGroupToUnits.size(), clinicalGroupToUnits.size());
     }
@@ -145,9 +138,7 @@ public class ExcelParserV5 {
     // Parsing helpers
     private void parseUnitBreakdown(Workbook wb) {
         Sheet sheet = findSheet(wb, SHEET_UNIT);
-        if (sheet == null) {
-            return;
-        }
+        if (sheet == null) return;
 
         Row header = findHeaderRow(sheet);
         Map<String, Integer> columns = headerMap(header);
@@ -162,9 +153,8 @@ public class ExcelParserV5 {
 
         for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
-            if (row == null) {
-                continue;
-            }
+            if (row == null) continue;
+
             String facility = getCell(row, cFacility);
             String unitNames = getCell(row, cUnitName);
             String nurseGroup = getCell(row, cNurseGroup);
@@ -172,9 +162,7 @@ public class ExcelParserV5 {
             String noCare = stripVGroup(getCell(row, cNoCare));
             String comments = getCell(row, cComments);
 
-            if (isBlank(facility) && isBlank(unitNames)) {
-                continue;
-            }
+            if (isBlank(facility) && isBlank(unitNames)) continue;
 
             UnitRow unit = new UnitRow();
             unit.facility = facility;
@@ -206,9 +194,7 @@ public class ExcelParserV5 {
 
     private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide) {
         Sheet sheet = findSheet(wb, sheetName);
-        if (sheet == null) {
-            return;
-        }
+        if (sheet == null) return;
 
         Row header = findHeaderRow(sheet);
         Map<String, Integer> columns = headerMap(header);
@@ -234,9 +220,8 @@ public class ExcelParserV5 {
 
         for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
-            if (row == null) {
-                continue;
-            }
+            if (row == null) continue;
+
             FlowRow flow = new FlowRow();
             flow.type = nurseSide ? "NurseCalls" : "Clinicals";
             flow.configGroup = getCell(row, cCfg);
@@ -252,15 +237,9 @@ public class ExcelParserV5 {
             flow.t4 = getCell(row, cT4); flow.r4 = getCell(row, cR4);
             flow.t5 = getCell(row, cT5); flow.r5 = getCell(row, cR5);
 
-            if (isBlank(flow.alarmName) && isBlank(flow.sendingName)) {
-                continue;
-            }
+            if (isBlank(flow.alarmName) && isBlank(flow.sendingName)) continue;
 
-            if (nurseSide) {
-                nurseCalls.add(flow);
-            } else {
-                clinicals.add(flow);
-            }
+            if (nurseSide) nurseCalls.add(flow); else clinicals.add(flow);
         }
     }
 
@@ -269,7 +248,6 @@ public class ExcelParserV5 {
     public Map<String, Object> buildNurseCallsJson() {
         return buildJson(nurseCalls, nurseGroupToUnits, true);
     }
-
     public Map<String, Object> buildClinicalsJson() {
         return buildJson(clinicals, clinicalGroupToUnits, false);
     }
@@ -283,32 +261,24 @@ public class ExcelParserV5 {
 
         List<Map<String, Object>> flows = new ArrayList<>();
         for (FlowRow row : rows) {
-            if (isBlank(row.configGroup) && isBlank(row.alarmName) && isBlank(row.sendingName)) {
-                continue;
-            }
+            if (isBlank(row.configGroup) && isBlank(row.alarmName) && isBlank(row.sendingName)) continue;
 
             List<Map<String, String>> unitRefs = groupToUnits.getOrDefault(row.configGroup, List.of());
+
             Map<String, Object> flow = new LinkedHashMap<>();
             String mappedPriority = mapPrioritySafe(row.priorityRaw);
             flow.put("name", buildFlowName(nurseSide, mappedPriority, row, unitRefs));
-            if (!isBlank(mappedPriority)) {
-                flow.put("priority", mappedPriority);
-            }
+            if (!isBlank(mappedPriority)) flow.put("priority", mappedPriority);
             flow.put("status", "Active");
             flow.put("alarmsAlerts", List.of(nvl(row.alarmName, row.sendingName)));
             flow.put("interfaces", List.of(Map.of(
                     "componentName", "OutgoingWCTP",
                     "referenceName", "OutgoingWCTP")));
             flow.put("parameterAttributes", buildParamAttributes(row, nurseSide, mappedPriority));
-            flow.put("destinations", buildDestinations(row, unitRefs, nurseSide));
-            if (!unitRefs.isEmpty()) {
-                flow.put("units", unitRefs);
-            }
-            if (nurseSide) {
-                flow.put("conditions", nurseConditions());
-            } else {
-                flow.put("conditions", List.of());
-            }
+            flow.put("destinations", buildDestinationsAggregated(row, unitRefs, nurseSide));
+            if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
+            flow.put("conditions", nurseSide ? nurseConditions() : List.of());
+
             flows.add(flow);
         }
 
@@ -320,20 +290,19 @@ public class ExcelParserV5 {
         Map<String, Map<String, Object>> defs = new LinkedHashMap<>();
         for (FlowRow row : rows) {
             String name = nvl(row.alarmName, row.sendingName);
-            if (isBlank(name)) {
-                continue;
-            }
+            if (isBlank(name)) continue;
             String key = name + "|" + (nurseSide ? "N" : "C");
-            if (defs.containsKey(key)) {
-                continue;
-            }
+            if (defs.containsKey(key)) continue;
+
             Map<String, Object> def = new LinkedHashMap<>();
             def.put("name", name);
             def.put("type", nurseSide ? "NurseCalls" : "Clinicals");
+
             Map<String, String> value = new LinkedHashMap<>();
             value.put("category", "");
             value.put("value", isBlank(row.sendingName) ? name : row.sendingName);
             def.put("values", List.of(value));
+
             defs.put(key, def);
         }
         return new ArrayList<>(defs.values());
@@ -352,215 +321,223 @@ public class ExcelParserV5 {
                 .distinct()
                 .collect(Collectors.toList());
 
-        List<String> pieces = new ArrayList<>();
-        pieces.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
-        if (!isBlank(mappedPriority)) {
-            pieces.add(mappedPriority.toUpperCase(Locale.ROOT));
-        }
-        if (!isBlank(alarm)) {
-            pieces.add(alarm);
-        }
-        if (!isBlank(group)) {
-            pieces.add(group);
-        }
-        if (!unitNames.isEmpty()) {
-            pieces.add(String.join(" / ", unitNames));
-        } else if (!isBlank(facility)) {
-            pieces.add(facility);
-        }
-        return String.join(" | ", pieces);
+        List<String> parts = new ArrayList<>();
+        parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
+        if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
+        if (!isBlank(alarm)) parts.add(alarm);
+        if (!isBlank(group)) parts.add(group);
+        if (!unitNames.isEmpty()) parts.add(String.join(" / ", unitNames));
+        else if (!isBlank(facility)) parts.add(facility);
+
+        return String.join(" | ", parts);
     }
 
     private List<Map<String, Object>> nurseConditions() {
-        // return a defensive copy to avoid accidental mutation from callers
-        return NURSE_CONDITIONS.stream()
-                .map(original -> new LinkedHashMap<>(original))
-                .collect(Collectors.toList());
+        // defensive copy
+        return NURSE_CONDITIONS.stream().map(LinkedHashMap::new).collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> buildDestinations(FlowRow row,
-                                                        List<Map<String, String>> unitRefs,
-                                                        boolean nurseSide) {
+    // ------------------------------------------------------------------
+    // Destinations (AGGREGATED per order)
+    private List<Map<String, Object>> buildDestinationsAggregated(FlowRow row,
+                                                                  List<Map<String, String>> unitRefs,
+                                                                  boolean nurseSide) {
         List<Map<String, Object>> destinations = new ArrayList<>();
         String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
 
-        addOneDestination(destinations, facility, 0, row.t1, row.r1);
-        addOneDestination(destinations, facility, 1, row.t2, row.r2);
-        addOneDestination(destinations, facility, 2, row.t3, row.r3);
-        addOneDestination(destinations, facility, 3, row.t4, row.r4);
-        addOneDestination(destinations, facility, 4, row.t5, row.r5);
+        addAggregatedDestination(destinations, facility, 0, row.t1, row.r1);
+        addAggregatedDestination(destinations, facility, 1, row.t2, row.r2);
+        addAggregatedDestination(destinations, facility, 2, row.t3, row.r3);
+        addAggregatedDestination(destinations, facility, 3, row.t4, row.r4);
+        addAggregatedDestination(destinations, facility, 4, row.t5, row.r5);
 
-        if (!nurseSide && !isBlank(facility)) {
+        // Clinicals: add NoDeliveries (NoCaregivers) destination at the end if configured
+        if (!nurseSide && !facility.isEmpty()) {
             String noCare = noCaregiverByFacility.getOrDefault(facility, "");
             if (!isBlank(noCare)) {
-                Map<String, Object> dest = new LinkedHashMap<>();
-                dest.put("order", destinations.size());
-                dest.put("delayTime", 0);
-                dest.put("destinationType", "NoDeliveries");
-                dest.put("users", List.of());
-                dest.put("functionalRoles", List.of());
-                dest.put("groups", List.of(Map.of(
-                        "facilityName", facility,
-                        "name", noCare)));
-                dest.put("presenceConfig", "device");
-                dest.put("recipientType", "group");
-                destinations.add(dest);
+                Map<String, Object> d = new LinkedHashMap<>();
+                d.put("order", destinations.size());
+                d.put("delayTime", 0);
+                d.put("destinationType", "NoDeliveries");
+                d.put("users", List.of());
+                d.put("functionalRoles", List.of());
+                d.put("groups", List.of(Map.of("facilityName", facility, "name", noCare)));
+                d.put("presenceConfig", "device");
+                d.put("recipientType", "group");
+                destinations.add(d);
             }
         }
-
         return destinations;
     }
 
-    private void addOneDestination(List<Map<String, Object>> destinations,
-                                   String defaultFacility,
-                                   int order,
-                                   String delayText,
-                                   String recipientText) {
-        // Skip if both delay and recipient are blank or N/A
-        if (isBlank(recipientText) || recipientText.equalsIgnoreCase("N/A")) {
-            return;
+    private void addAggregatedDestination(List<Map<String, Object>> out,
+                                          String defaultFacility,
+                                          int order,
+                                          String delayText,
+                                          String recipientText) {
+        // Ignore if recipient is blank / "N/A"
+        if (isBlank(recipientText)) return;
+
+        List<String> parts = Arrays.stream(recipientText.split("[,;\\n]"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && !"N/A".equalsIgnoreCase(s) && !"NA".equalsIgnoreCase(s))
+                .collect(Collectors.toList());
+        if (parts.isEmpty()) return;
+
+        // Accumulate groups and roles separately for this order
+        List<Map<String, String>> groups = new ArrayList<>();
+        List<Map<String, String>> roles  = new ArrayList<>();
+
+        for (String recipient : parts) {
+            ParsedRecipient pr = parseRecipient(recipient, defaultFacility);
+            if (isBlank(pr.value)) continue;
+            if (pr.isFunctionalRole) {
+                roles.add(Map.of("facilityName", pr.facility, "name", pr.value));
+            } else {
+                groups.add(Map.of("facilityName", pr.facility, "name", pr.value));
+            }
         }
 
-        List<String> recipients = Arrays.stream(recipientText.split("[,;\\n]"))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A"))
-                .collect(Collectors.toList());
+        int delay = parseDelay(delayText);
 
-        if (recipients.isEmpty()) return;
-
-        for (String recipient : recipients) {
-            ParsedRecipient parsed = parseRecipient(recipient, defaultFacility);
-            Map<String, Object> dest = new LinkedHashMap<>();
-            dest.put("order", order);
-            dest.put("delayTime", parseDelay(delayText));
-            dest.put("destinationType", "Normal");
-            dest.put("users", List.of());
-            if (parsed.isFunctionalRole) {
-                dest.put("functionalRoles", List.of(Map.of(
-                        "facilityName", parsed.facility,
-                        "name", parsed.value)));
-                dest.put("groups", List.of());
-                dest.put("presenceConfig", "user_and_device");
-                dest.put("recipientType", "functional_role");
-            } else {
-                dest.put("functionalRoles", List.of());
-                dest.put("groups", List.of(Map.of(
-                        "facilityName", parsed.facility,
-                        "name", parsed.value)));
-                dest.put("presenceConfig", "device");
-                dest.put("recipientType", "group");
-            }
-            destinations.add(dest);
+        if (!groups.isEmpty()) {
+            Map<String, Object> d = new LinkedHashMap<>();
+            d.put("order", order);
+            d.put("delayTime", delay);
+            d.put("destinationType", "Normal");
+            d.put("users", List.of());
+            d.put("functionalRoles", List.of());   // none here
+            d.put("groups", groups);               // aggregated groups
+            d.put("presenceConfig", "device");
+            d.put("recipientType", "group");
+            out.add(d);
+        }
+        if (!roles.isEmpty()) {
+            Map<String, Object> d = new LinkedHashMap<>();
+            d.put("order", order);
+            d.put("delayTime", delay);
+            d.put("destinationType", "Normal");
+            d.put("users", List.of());
+            d.put("functionalRoles", roles);       // aggregated roles
+            d.put("groups", List.of());            // none here
+            d.put("presenceConfig", "user_and_device");
+            d.put("recipientType", "functional_role");
+            out.add(d);
         }
     }
 
+    // ------------------------------------------------------------------
+    // Parameter Attributes (match reference formatting)
     private List<Map<String, Object>> buildParamAttributes(FlowRow row,
                                                            boolean nurseSide,
                                                            String mappedPriority) {
         List<Map<String, Object>> params = new ArrayList<>();
         boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
 
-        if (!isBlank(row.ringtone) && !row.ringtone.equalsIgnoreCase("N/A")) {
-            params.add(pa("alertSound", row.ringtone));
+        // Ringtone → quoted string value
+        if (!isBlank(row.ringtone)) {
+            params.add(pa("alertSound", quote(row.ringtone)));
         }
 
         if (nurseSide) {
-            boolean hasAccept = containsWord(row.responseOptions, "accept");
+            boolean hasAccept   = containsWord(row.responseOptions, "accept");
             boolean hasEscalate = containsWord(row.responseOptions, "escalate");
             boolean hasCallBack = containsWord(row.responseOptions, "call back") || containsWord(row.responseOptions, "callback");
-            boolean noResponse = containsWord(row.responseOptions, "no response");
+            boolean noResponse  = containsWord(row.responseOptions, "no response");
 
             if (hasAccept) {
-                params.add(pa("accept", "Accepted"));
-                params.add(pa("acceptBadgePhrases", "[Accept]"));
+                params.add(pa("accept", quote("Accepted")));
+                params.add(pa("acceptBadgePhrases", "[\"Accept\"]"));
             }
             if (hasCallBack) {
-                params.add(pa("acceptAndCall", "Call Back"));
+                params.add(pa("acceptAndCall", quote("Call Back")));
             }
             if (hasEscalate) {
-                params.add(pa("decline", "Decline Primary"));
-                params.add(pa("declineBadgePhrases", "[Escalate]"));
+                params.add(pa("decline", quote("Decline Primary")));
+                params.add(pa("declineBadgePhrases", "[\"Escalate\"]"));
             }
 
-            params.add(pa("breakThrough", urgent ? "voceraAndDevice" : "none"));
+            params.add(pa("breakThrough", quote(urgent ? "voceraAndDevice" : "none")));
             params.add(pa("enunciate", "true"));
-            params.add(pa("message", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\n" +
-                    "Room/Bed: #{bed.room.name} - #{bed.bed_number}"));
-            params.add(pa("patientMRN", "#{bed.patient.mrn}:#{bed.patient.visit_number}"));
-            params.add(pa("placeUid", "#{bed.uid}"));
-            params.add(pa("patientName", "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"));
+            params.add(pa("message", quote("Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}")));
+            params.add(pa("patientMRN", quote("#{bed.patient.mrn}:#{bed.patient.visit_number}")));
+            params.add(pa("placeUid", quote("#{bed.uid}")));
+            params.add(pa("patientName", quote("#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}")));
             params.add(pa("popup", "true"));
-            params.add(pa("eventIdentification", "NurseCalls:#{id}"));
-            params.add(pa("responseType", noResponse ? "None" : "Accept/Decline"));
-            params.add(pa("shortMessage", "#{alert_type} #{bed.room.name}"));
-            params.add(pa("subject", "#{alert_type} #{bed.room.name}"));
+            params.add(pa("eventIdentification", quote("NurseCalls:#{id}")));
+            params.add(pa("responseType", quote(noResponse ? "None" : "Accept/Decline")));
+            params.add(pa("shortMessage", quote("#{alert_type} #{bed.room.name}")));
+            params.add(pa("subject", quote("#{alert_type} #{bed.room.name}")));
             params.add(pa("ttl", "10"));
-            params.add(pa("retractRules", "[ttlHasElapsed]"));
-            params.add(pa("vibrate", "short"));
-            addDestNameParamsFromRecipients(params, row);
+            params.add(pa("retractRules", "[\"ttlHasElapsed\"]"));
+            params.add(pa("vibrate", quote("short")));
+
+            // destinationName by order:
+            addDestinationNameParams(params, 0, row.r1);
+            addDestinationNameParams(params, 1, row.r2);
+            addDestinationNameParams(params, 2, row.r3);
+            addDestinationNameParams(params, 3, row.r4);
+            addDestinationNameParams(params, 4, row.r5);
+
         } else {
-            params.add(paOrder(0, "destinationName", "Nurse Alert"));
-            params.add(pa("alertSound", nvl(row.ringtone, "Vocera Tone 0 Long")));
+            // Clinicals default parameters
+            params.add(paOrder(0, "destinationName", quote("Nurse Alert")));
+            params.add(pa("alertSound", quote(nvl(row.ringtone, "Vocera Tone 0 Long"))));
             params.add(pa("responseAllowed", "false"));
-            params.add(pa("breakThrough", urgent ? "voceraAndDevice" : "none"));
+            params.add(pa("breakThrough", quote(urgent ? "voceraAndDevice" : "none")));
             params.add(pa("enunciate", "true"));
-            params.add(pa("message", "Clinical Alert ${destinationName}\\n" +
-                    "Room: #{bed.room.name} - #{bed.bed_number}\\n" +
-                    "Alert Type: #{alert_type}\\n" +
-                    "Alarm Time: #{alarm_time.as_time}"));
-            params.add(pa("patientMRN", "#{clinical_patient.mrn}:#{clinical_patient.visit_number}"));
-            params.add(pa("patientName", "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
-            params.add(pa("placeUid", "#{bed.uid}"));
+            params.add(pa("message", quote("Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}")));
+            params.add(pa("patientMRN", quote("#{clinical_patient.mrn}:#{clinical_patient.visit_number}")));
+            params.add(pa("patientName", quote("#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}")));
+            params.add(pa("placeUid", quote("#{bed.uid}")));
             params.add(pa("popup", "true"));
-            params.add(pa("eventIdentification", "#{id}"));
-            params.add(pa("responseType", "None"));
-            params.add(pa("shortMessage", "#{alert_type} #{bed.room.name}"));
-            params.add(pa("subject", "#{alert_type} #{bed.room.name}"));
+            params.add(pa("eventIdentification", quote("#{id}")));
+            params.add(pa("responseType", quote("None")));
+            params.add(pa("shortMessage", quote("#{alert_type} #{bed.room.name}")));
+            params.add(pa("subject", quote("#{alert_type} #{bed.room.name}")));
             params.add(pa("ttl", "10"));
-            params.add(pa("retractRules", "[ttlHasElapsed]"));
-            params.add(pa("vibrate", "short"));
-            params.add(paOrder(1, "destinationName", "NoCaregivers"));
-            params.add(paOrder(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
+            params.add(pa("retractRules", "[\"ttlHasElapsed\"]"));
+            params.add(pa("vibrate", quote("short")));
+
+            // NoCaregivers destination params (order 1)
+            params.add(paOrder(1, "destinationName", quote("NoCaregivers")));
+            params.add(paOrder(1, "message", quote("#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room.\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number} \\nAlarm Time: #{alarm_time.as_time}")));
+            params.add(paOrder(1, "shortMessage", quote("No Caregivers Assigned for #{alert_type} in #{bed.room.name} #{bed.bed_number}")));
+            params.add(paOrder(1, "subject", quote("Alert Without Caregivers")));
         }
 
         return params;
     }
 
-    private void addDestNameParamsFromRecipients(List<Map<String, Object>> params, FlowRow row) {
-        Map<Integer, String> firstRecipients = new LinkedHashMap<>();
-        firstRecipients.put(0, firstRecipient(row.r1));
-        firstRecipients.put(1, firstRecipient(row.r2));
-        firstRecipients.put(2, firstRecipient(row.r3));
-        firstRecipients.put(3, firstRecipient(row.r4));
-        firstRecipients.put(4, firstRecipient(row.r5));
+    private void addDestinationNameParams(List<Map<String, Object>> params, int order, String recipientsRaw) {
+        if (isBlank(recipientsRaw)) return;
 
-        firstRecipients.entrySet().stream()
-                .filter(entry -> !isBlank(entry.getValue()))
-                .forEach(entry -> params.add(paOrder(entry.getKey(), "destinationName", entry.getValue())));
-    }
-
-    private String firstRecipient(String value) {
-        if (isBlank(value)) {
-            return "";
-        }
-        return Arrays.stream(value.split("[,;\\n]"))
+        // If any group exists at this order → use "Group"
+        // Else if at least one functional role → use that role name.
+        List<String> tokens = Arrays.stream(recipientsRaw.split("[,;\\n]"))
                 .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .findFirst()
-                .orElse(value.trim());
-    }
+                .filter(s -> !s.isEmpty() && !"N/A".equalsIgnoreCase(s) && !"NA".equalsIgnoreCase(s))
+                .collect(Collectors.toList());
+        if (tokens.isEmpty()) return;
 
-    private Map<String, Object> pa(String name, String value) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("name", name);
-        map.put("value", value == null ? "" : value);
-        return map;
-    }
+        boolean hasGroup = false;
+        String firstRole = null;
 
-    private Map<String, Object> paOrder(int order, String name, String value) {
-        Map<String, Object> map = pa(name, value);
-        map.put("destinationOrder", order);
-        return map;
+        for (String t : tokens) {
+            ParsedRecipient pr = parseRecipient(t, "");
+            if (isBlank(pr.value)) continue;
+            if (pr.isFunctionalRole) {
+                if (firstRole == null) firstRole = pr.value;
+            } else {
+                hasGroup = true;
+            }
+        }
+
+        if (hasGroup) {
+            params.add(paOrder(order, "destinationName", quote("Group")));
+        } else if (firstRole != null) {
+            params.add(paOrder(order, "destinationName", quote(firstRole)));
+        }
     }
 
     // ------------------------------------------------------------------
@@ -579,15 +556,11 @@ public class ExcelParserV5 {
         }
     }
 
-    /**
-     * Writes a small summary JSON file noting that the main payload is now
-     * emitted into two dedicated JSON files.  This preserves compatibility with
-     * earlier automation that expected a single JSON output file.
-     */
+    /** Compatibility summary writer (single file notice) */
     public void writeJson(File summaryFile) throws Exception {
         ensureParent(summaryFile);
         Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("note", "This build now writes two separate JSON files: NurseCalls.json and Clinicals.json");
+        summary.put("note", "This build writes two separate JSON files: NurseCalls.json and Clinicals.json");
         summary.put("nurseCalls", nurseCalls.size());
         summary.put("clinicals", clinicals.size());
         try (FileWriter out = new FileWriter(summaryFile, false)) {
@@ -600,12 +573,9 @@ public class ExcelParserV5 {
     public static String pretty(Map<String, Object> value) throws JsonProcessingException {
         return PRETTY_MAPPER.writeValueAsString(value);
     }
-
     public static String pretty(Map<String, Object> value, int indentLevel) throws JsonProcessingException {
         String pretty = pretty(value);
-        if (indentLevel <= 0) {
-            return pretty;
-        }
+        if (indentLevel <= 0) return pretty;
         String indent = "  ".repeat(indentLevel);
         return Arrays.stream(pretty.split("\\R"))
                 .map(line -> indent + line)
@@ -615,103 +585,68 @@ public class ExcelParserV5 {
     // ------------------------------------------------------------------
     // Utility helpers
     private Sheet findSheet(Workbook wb, String name) {
-        if (wb == null || name == null) {
-            return null;
-        }
+        if (wb == null || name == null) return null;
         for (int i = 0; i < wb.getNumberOfSheets(); i++) {
-            Sheet sheet = wb.getSheetAt(i);
-            if (sheet == null) {
-                continue;
-            }
-            if (name.equalsIgnoreCase(sheet.getSheetName())) {
-                return sheet;
-            }
+            Sheet sh = wb.getSheetAt(i);
+            if (sh != null && name.equalsIgnoreCase(sh.getSheetName())) return sh;
         }
         return null;
     }
 
     private Row findHeaderRow(Sheet sheet) {
-        if (sheet == null) {
-            return null;
-        }
+        if (sheet == null) return null;
         int start = Math.max(0, 2);
         int end = Math.min(sheet.getLastRowNum(), start + 3);
         for (int r = start; r <= end; r++) {
             Row row = sheet.getRow(r);
-            if (row == null) {
-                continue;
-            }
+            if (row == null) continue;
             int nonEmpty = 0;
             for (int c = 0; c < row.getLastCellNum(); c++) {
-                if (!getCell(row, c).isBlank()) {
-                    nonEmpty++;
-                }
+                String v = getCell(row, c);
+                if (!v.isBlank()) nonEmpty++;
             }
-            if (nonEmpty >= 3) {
-                return row;
-            }
+            if (nonEmpty >= 3) return row;
         }
         for (int r = 0; r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
-            if (row != null) {
-                return row;
-            }
+            if (row != null) return row;
         }
         return null;
     }
 
     private int firstDataRow(Sheet sheet, Row header) {
-        if (sheet == null) {
-            return 0;
-        }
+        if (sheet == null) return 0;
         int firstRow = Math.max(sheet.getFirstRowNum(), 0);
         if (header != null) {
             int afterHeader = header.getRowNum() + 1;
-            if (afterHeader > firstRow) {
-                return afterHeader;
-            }
+            if (afterHeader > firstRow) return afterHeader;
         }
         return firstRow;
     }
 
     private Map<String, Integer> headerMap(Row header) {
         Map<String, Integer> map = new LinkedHashMap<>();
-        if (header == null) {
-            return map;
-        }
+        if (header == null) return map;
         for (int c = 0; c < header.getLastCellNum(); c++) {
             String value = getCell(header, c);
-            if (value.isBlank()) {
-                continue;
-            }
-            map.put(normalize(value), c);
+            if (!value.isBlank()) map.put(normalize(value), c);
         }
         return map;
     }
 
     private int getCol(Map<String, Integer> map, String... candidates) {
-        if (map.isEmpty()) {
-            return -1;
-        }
+        if (map.isEmpty()) return -1;
         for (String candidate : candidates) {
-            if (candidate == null) {
-                continue;
-            }
+            if (candidate == null) continue;
             String norm = normalize(candidate);
-            if (map.containsKey(norm)) {
-                return map.get(norm);
-            }
+            if (map.containsKey(norm)) return map.get(norm);
         }
-        // fallback: attempt partial match
+        // fallback partial
         for (String candidate : candidates) {
-            if (candidate == null) {
-                continue;
-            }
+            if (candidate == null) continue;
             String norm = normalize(candidate);
-            for (Map.Entry<String, Integer> entry : map.entrySet()) {
-                if (entry.getKey().contains(norm)) {
-                    return entry.getValue();
-                }
+            for (Map.Entry<String, Integer> e : map.entrySet()) {
+                if (e.getKey().contains(norm)) return e.getValue();
             }
         }
         return -1;
@@ -729,10 +664,8 @@ public class ExcelParserV5 {
                 case FORMULA -> cell.getCellFormula();
                 default -> "";
             };
-            // 🔍 Convert "N/A", "NA", or blank to empty string
-            if (value.equalsIgnoreCase("N/A") || value.equalsIgnoreCase("NA") || value.isBlank()) {
-                return "";
-            }
+            // Normalize: treat "N/A"/"NA"/blank as empty
+            if (value.equalsIgnoreCase("N/A") || value.equalsIgnoreCase("NA") || value.isBlank()) return "";
             return value.trim();
         } catch (Exception e) {
             return "";
@@ -740,26 +673,18 @@ public class ExcelParserV5 {
     }
 
     private List<String> splitUnits(String unitNames) {
-        if (isBlank(unitNames)) {
-            return List.of();
-        }
+        if (isBlank(unitNames)) return List.of();
         Set<String> names = new LinkedHashSet<>();
         for (String token : unitNames.split("[,;/\\n]")) {
-            String trimmed = token.trim();
-            if (!trimmed.isEmpty()) {
-                names.add(trimmed);
-            }
+            String t = token.trim();
+            if (!t.isEmpty()) names.add(t);
         }
-        if (names.isEmpty()) {
-            names.add(unitNames.trim());
-        }
+        if (names.isEmpty()) names.add(unitNames.trim());
         return new ArrayList<>(names);
     }
 
     private String stripVGroup(String value) {
-        if (value == null) {
-            return "";
-        }
+        if (value == null) return "";
         return value.replaceFirst("(?i)^v(group|assign)[: ]*", "").trim();
     }
 
@@ -773,23 +698,17 @@ public class ExcelParserV5 {
         String facility = defaultFacility == null ? "" : defaultFacility;
         String valuePortion = text;
 
+        // Optional <Facility>:: <Value> or <Facility>: <Value>
         String lower = text.toLowerCase(Locale.ROOT);
-        int separatorIndex = -1;
-        int separatorLength = 0;
-        if (lower.contains("::")) {
-            separatorIndex = lower.indexOf("::");
-            separatorLength = 2;
-        } else {
-            int colonIndex = lower.indexOf(':');
-            if (colonIndex >= 0) {
-                separatorIndex = colonIndex;
-                separatorLength = 1;
-            }
+        int sepIdx = -1, sepLen = 0;
+        if (lower.contains("::")) { sepIdx = lower.indexOf("::"); sepLen = 2; }
+        else {
+            int colon = lower.indexOf(':');
+            if (colon >= 0) { sepIdx = colon; sepLen = 1; }
         }
-
-        if (separatorIndex > 0) {
-            String prefix = text.substring(0, separatorIndex).trim();
-            String suffix = text.substring(separatorIndex + separatorLength).trim();
+        if (sepIdx > 0) {
+            String prefix = text.substring(0, sepIdx).trim();
+            String suffix = text.substring(sepIdx + sepLen).trim();
             if (!prefix.isEmpty() && !suffix.isEmpty()
                     && !prefix.equalsIgnoreCase("vgroup")
                     && !prefix.equalsIgnoreCase("vassign")) {
@@ -798,19 +717,17 @@ public class ExcelParserV5 {
             }
         }
 
+        // Remove leading VGroup:/VAssign:[Room]
         String cleaned = valuePortion
                 .replaceAll("(?i)^\\s*vgroup\\s*:\\s*", "")
                 .replaceAll("(?i)^\\s*vassign\\s*:\\s*\\[\\s*room\\s*]\\s*", "")
                 .trim();
-        if (cleaned.isEmpty()) {
-            cleaned = stripVGroup(valuePortion);
-        } else {
-            cleaned = stripVGroup(cleaned);
-        }
+        if (cleaned.isEmpty()) cleaned = stripVGroup(valuePortion);
+        else cleaned = stripVGroup(cleaned);
         cleaned = cleaned.replaceFirst("(?i)^\\[\\s*room\\s*]\\s*", "").trim();
 
         Matcher matcher = functionalRolePattern.matcher(valuePortion);
-        boolean functionalRole = matcher.find();
+        boolean functionalRole = matcher.find(); // per your regex config
         return new ParsedRecipient(facility, cleaned, functionalRole);
     }
 
@@ -818,7 +735,6 @@ public class ExcelParserV5 {
         final String facility;
         final String value;
         final boolean isFunctionalRole;
-
         ParsedRecipient(String facility, String value, boolean isFunctionalRole) {
             this.facility = facility == null ? "" : facility;
             this.value = value == null ? "" : value;
@@ -827,19 +743,16 @@ public class ExcelParserV5 {
     }
 
     private void ensureParent(File file) throws IOException {
-        if (file == null) {
-            throw new IOException("File reference is null");
-        }
+        if (file == null) throw new IOException("File reference is null");
         File parent = file.getAbsoluteFile().getParentFile();
-        if (parent != null && !parent.exists()) {
-            if (!parent.mkdirs()) {
-                throw new IOException("Unable to create directory: " + parent.getAbsolutePath());
-            }
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            throw new IOException("Unable to create directory: " + parent.getAbsolutePath());
         }
     }
 
     private String normalize(String header) {
-        return header == null ? "" : header.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ").trim();
+        return header == null ? "" : header.trim().toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", " ").trim();
     }
 
     private String nvl(String first, String second) {
@@ -847,9 +760,7 @@ public class ExcelParserV5 {
     }
 
     private String mapPrioritySafe(String priority) {
-        if (priority == null) {
-            return "";
-        }
+        if (priority == null) return "";
         String norm = priority.trim().toLowerCase(Locale.ROOT);
         return switch (norm) {
             case "urgent", "u" -> "urgent";
@@ -862,28 +773,40 @@ public class ExcelParserV5 {
     }
 
     private boolean containsWord(String text, String probe) {
-        if (isBlank(text) || isBlank(probe)) {
-            return false;
-        }
+        if (isBlank(text) || isBlank(probe)) return false;
         return text.toLowerCase(Locale.ROOT).contains(probe.toLowerCase(Locale.ROOT));
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
+    private boolean isBlank(String v) {
+        return v == null || v.trim().isEmpty();
     }
 
     private int parseDelay(String text) {
-        if (isBlank(text)) {
-            return 0;
-        }
+        if (isBlank(text)) return 0;
         try {
             String digits = text.replaceAll("[^0-9]", "");
-            if (digits.isEmpty()) {
-                return 0;
-            }
+            if (digits.isEmpty()) return 0;
             return Integer.parseInt(digits);
         } catch (NumberFormatException ex) {
             return 0;
         }
+    }
+
+    // ----- parameterAttribute helpers -----
+    private Map<String, Object> pa(String name, String value) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name", name);
+        m.put("value", value == null ? "" : value);
+        return m;
+    }
+    private Map<String, Object> paOrder(int order, String name, String value) {
+        Map<String, Object> m = pa(name, value);
+        m.put("destinationOrder", order);
+        return m;
+    }
+    private static String quote(String s) {
+        if (s == null) return "\"\"";
+        String escaped = s.replace("\\","\\\\").replace("\"","\\\"");
+        return "\"" + escaped + "\"";
     }
 }
