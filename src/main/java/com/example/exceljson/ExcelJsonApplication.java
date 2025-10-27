@@ -9,21 +9,12 @@ import javafx.stage.Stage;
 public class ExcelJsonApplication extends Application {
 
     @Override
-    public void start(Stage stage) throws Exception {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/main.fxml"));
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Engage Rules Generator");
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("❌ Failed to load main.fxml. Ensure it’s located under src/main/resources.");
-        }
-    }
+    public void start(Stage primaryStage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
+        Parent root = loader.load();
 
-    public static void main(String[] args) {
-        launch(args);
+        primaryStage.setTitle("Engage Rules Generator");
+        primaryStage.setScene(new Scene(root, 900, 700));
+        primaryStage.show();
     }
 }
