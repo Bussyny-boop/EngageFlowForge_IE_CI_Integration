@@ -144,36 +144,22 @@ public class ExcelParserV5 {
             return;
         }
 
-    private static int firstDataRow(Sheet sh, Row header) {
-        if (sh == null) return 0;
-        int firstRow = Math.max(sh.getFirstRowNum(), 0);
-        if (header != null) {
-            int afterHeader = header.getRowNum() + 1;
-            if (afterHeader > firstRow) {
-                return afterHeader;
+        Row header = findHeaderRow(sheet);
+        Map<String, Integer> columns = headerMap(header);
+
+        int startRow = firstDataRow(sheet, header);
+        int cFacility = getCol(columns, "Facility");
+        int cUnitName = getCol(columns, "Common Unit Name");
+        int cNurseGroup = getCol(columns, "Nurse Call", "Configuration Group", "Nurse call");
+        int cClinGroup = getCol(columns, "Patient Monitoring", "Configuration Group", "Patient monitoring");
+        int cNoCare = getCol(columns, "No Caregiver Alert Number or Group", "No Caregiver Group");
+        int cComments = getCol(columns, "Comments");
+
+        for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
             }
-        }
-        return firstRow;
-    }
-
-    // -------------------- Unit Breakdown --------------------
-    private void parseUnitBreakdown(Workbook wb) {
-        Sheet sh = findSheet(wb, SHEET_UNIT);
-        if (sh == null) return;
-
-        Row header = findHeaderRow(sh);
-        Map<String,Integer> hm = headerMap(header);
-        int startRow = firstDataRow(sh, header);
-        int cFacility   = getCol(hm, "Facility");
-        int cUnitName   = getCol(hm, "Common Unit Name");
-        int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call");
-        int cClinGroup  = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring");
-        int cNoCare     = getCol(hm, "No Caregiver Alert Number or Group");
-        int cComments   = getCol(hm, "Comments");
-
-        for (int r = startRow; r <= sh.getLastRowNum(); r++) { // start reading after header
-            Row row = sh.getRow(r);
-            if (row == null) continue;
             String facility = getCell(row, cFacility);
             String unitNames = getCell(row, cUnitName);
             String nurseGroup = getCell(row, cNurseGroup);
@@ -213,144 +199,15 @@ public class ExcelParserV5 {
         }
     }
 
-    // -------------------- Nurse Call --------------------
-    private void parseNurseCall(Workbook wb) {
-        Sheet sh = findSheet(wb, SHEET_NURSE);
-        if (sh == null) return;
-
-        Row header = findHeaderRow(sh);
-        Map<String,Integer> hm = headerMap(header);
-        int startRow = firstDataRow(sh, header);
-        int cCfg = getCol(hm, "Configuration Group");
-        int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
-        int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
-        int cPriority = getCol(hm, "Priority");
-        int cDevice = getCol(hm, "Device - A", "Device");
-        int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
-        int cResp = getCol(hm, "Response Options");
-        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient");
-        int cR1 = getCol(hm, "1st Recipient");
-        int cT2 = getCol(hm, "Time to 2nd Recipient");
-        int cR2 = getCol(hm, "2nd Recipient");
-        int cT3 = getCol(hm, "Time to 3rd Recipient");
-        int cR3 = getCol(hm, "3rd Recipient");
-        int cT4 = getCol(hm, "Time to 4th Recipient");
-        int cR4 = getCol(hm, "4th Recipient");
-        int cT5 = getCol(hm, "Time to 5th Recipient");
-        int cR5 = getCol(hm, "5th Recipient");
-
-        for (int r = startRow; r <= sh.getLastRowNum(); r++) {
-            Row row = sh.getRow(r);
-            if (row == null) continue;
-            FlowRow f = new FlowRow();
-            f.type = "NurseCalls";
-            f.configGroup = getCell(row, cCfg);
-            f.alarmName = getCell(row, cAlarm);
-            f.sendingName = getCell(row, cSend);
-            f.priorityRaw = getCell(row, cPriority);
-            f.deviceA = getCell(row, cDevice);
-            f.ringtone = getCell(row, cRing);
-            f.responseOptions = getCell(row, cResp);
-            f.t1 = getCell(row, cT1); f.r1 = getCell(row, cR1);
-            f.t2 = getCell(row, cT2); f.r2 = getCell(row, cR2);
-            f.t3 = getCell(row, cT3); f.r3 = getCell(row, cR3);
-            f.t4 = getCell(row, cT4); f.r4 = getCell(row, cR4);
-            f.t5 = getCell(row, cT5); f.r5 = getCell(row, cR5);
-            if (isBlank(f.alarmName) && isBlank(f.sendingName)) continue;
-            nurseCalls.add(f);
+    private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide) {
+        Sheet sheet = findSheet(wb, sheetName);
+        if (sheet == null) {
+            return;
         }
-    }
-
-    // -------------------- Clinicals --------------------
-    private void parseClinical(Workbook wb) {
-        Sheet sh = findSheet(wb, SHEET_CLINICAL);
-        if (sh == null) return;
-
-        Row header = findHeaderRow(sh);
-        Map<String,Integer> hm = headerMap(header);
-        int startRow = firstDataRow(sh, header);
-        int cCfg = getCol(hm, "Configuration Group");
-        int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
-        int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
-        int cPriority = getCol(hm, "Priority");
-        int cDevice = getCol(hm, "Device - A", "Device");
-        int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
-        int cResp = getCol(hm, "Response Options");
-        int cT1 = getCol(hm, "Time to 1st Recipient (after alarm triggers)", "Time to 1st Recipient");
-        int cR1 = getCol(hm, "1st Recipient");
-        int cT2 = getCol(hm, "Time to 2nd Recipient");
-        int cR2 = getCol(hm, "2nd Recipient");
-        int cT3 = getCol(hm, "Time to 3rd Recipient");
-        int cR3 = getCol(hm, "3rd Recipient");
-        int cT4 = getCol(hm, "Time to 4th Recipient");
-        int cR4 = getCol(hm, "4th Recipient");
-        int cT5 = getCol(hm, "Time to 5th Recipient");
-        int cR5 = getCol(hm, "5th Recipient");
-
-        for (int r = startRow; r <= sh.getLastRowNum(); r++) {
-            Row row = sh.getRow(r);
-            if (row == null) continue;
-            FlowRow f = new FlowRow();
-            f.type = "Clinicals";
-            f.configGroup = getCell(row, cCfg);
-            f.alarmName = getCell(row, cAlarm);
-            f.sendingName = getCell(row, cSend);
-            f.priorityRaw = getCell(row, cPriority);
-            f.deviceA = getCell(row, cDevice);
-            f.ringtone = getCell(row, cRing);
-            f.responseOptions = getCell(row, cResp);
-            f.t1 = getCell(row, cT1); f.r1 = getCell(row, cR1);
-            f.t2 = getCell(row, cT2); f.r2 = getCell(row, cR2);
-            f.t3 = getCell(row, cT3); f.r3 = getCell(row, cR3);
-            f.t4 = getCell(row, cT4); f.r4 = getCell(row, cR4);
-            f.t5 = getCell(row, cT5); f.r5 = getCell(row, cR5);
-            if (isBlank(f.alarmName) && isBlank(f.sendingName)) continue;
-            clinicals.add(f);
-        }
-    }
-
-    /** Writes combined NurseCalls + Clinicals JSON into one file (for backward compatibility with JobRunnerTest). */
-public void writeJson(File file) throws Exception {
-    ensureParent(file);
-    Map<String, Object> nurse = buildNurseCallsJson();
-    Map<String, Object> clinical = buildClinicalsJson();
-    try (FileWriter out = new FileWriter(file, false)) {
-        out.write("{\n");
-        out.write("  \"NurseCalls\": " + pretty(nurse, 1) + ",\n");
-        out.write("  \"Clinicals\": " + pretty(clinical, 1) + "\n");
-        out.write("}\n");
-    }
-    if (!file.exists() || file.length() == 0) {
-        throw new IOException("Combined JSON write failed: " + file.getAbsolutePath());
-    }
-}
-
-    // -------------------- All your existing buildJson / utilities --------------------
-    // (unchanged — keep everything else from your current file)
-
-    //  ... keep the rest of the ExcelParserV5 exactly as in your provided code ...
-
-    // -------------------- Build JSON (per side) --------------------
-    private Map<String,Object> buildJson(boolean nurseSide) {
-        // Choose rows & group-to-units map
-        List<FlowRow> rows = nurseSide ? nurseCalls : clinicals;
-        Map<String, List<Map<String,String>>> groupToUnits = nurseSide ? nurseGroupToUnits : clinicalGroupToUnits;
-
-        // alarmAlertDefinitions
-        List<Map<String,Object>> defs = buildAlarmDefs(rows, nurseSide);
-
-        // Group rows by identical flow-shaping columns (config, priority, ringtone, recipients, responseOptions)
-        Map<String, List<FlowRow>> bundles = bundleRows(rows, nurseSide);
-
-        // Build flows
-        List<Map<String,Object>> flows = new ArrayList<>();
-        for (var entry : bundles.entrySet()) {
-            List<FlowRow> same = entry.getValue();
-            if (same.isEmpty()) continue;
 
         Row header = findHeaderRow(sheet);
         Map<String, Integer> columns = headerMap(header);
-        int startRow = header == null ? sheet.getFirstRowNum() + 1 : header.getRowNum() + 1;
+        int startRow = firstDataRow(sheet, header);
 
         int cCfg = getCol(columns, "Configuration Group");
         int cAlarm = getCol(columns, "Common Alert or Alarm Name", "Alarm Name");
@@ -799,6 +656,20 @@ public void writeJson(File file) throws Exception {
         return null;
     }
 
+    private int firstDataRow(Sheet sheet, Row header) {
+        if (sheet == null) {
+            return 0;
+        }
+        int firstRow = Math.max(sheet.getFirstRowNum(), 0);
+        if (header != null) {
+            int afterHeader = header.getRowNum() + 1;
+            if (afterHeader > firstRow) {
+                return afterHeader;
+            }
+        }
+        return firstRow;
+    }
+
     private Map<String, Integer> headerMap(Row header) {
         Map<String, Integer> map = new LinkedHashMap<>();
         if (header == null) {
@@ -887,30 +758,55 @@ public void writeJson(File file) throws Exception {
         return value.replaceFirst("(?i)^v(group|assign)[: ]*", "").trim();
     }
 
-      private ParsedRecipient parseRecipient(String raw, String facility) {
-        ParsedRecipient pr = new ParsedRecipient();
-        pr.facility = nvl(facility, ""); // facility always comes from unit tab
-    
-        String s = nvl(raw, "").trim();
-        if (isBlank(s)) {
-            pr.value = "";
-            return pr;
+    private ParsedRecipient parseRecipient(String raw, String defaultFacility) {
+        String text = raw == null ? "" : raw.trim();
+        if (text.isEmpty()) {
+            String facility = defaultFacility == null ? "" : defaultFacility;
+            return new ParsedRecipient(facility, "", false);
         }
-    
-        String cleaned = s.replaceAll("(?i)^\\s*vgroup\\s*:\\s*", "")
-                          .replaceAll("(?i)^\\s*vassign\\s*:\\s*\\[\\s*room\\s*]\\s*", "")
-                          .trim();
-    
-        pr.value = cleaned;
-        pr.isFunctionalRole = s.toLowerCase(Locale.ROOT).startsWith("vassign");
-        pr.isGroup = !pr.isFunctionalRole; // everything else treated as group
-        return pr;
-    }
 
+        String facility = defaultFacility == null ? "" : defaultFacility;
+        String valuePortion = text;
 
-        Matcher matcher = functionalRolePattern.matcher(value);
+        String lower = text.toLowerCase(Locale.ROOT);
+        int separatorIndex = -1;
+        int separatorLength = 0;
+        if (lower.contains("::")) {
+            separatorIndex = lower.indexOf("::");
+            separatorLength = 2;
+        } else {
+            int colonIndex = lower.indexOf(':');
+            if (colonIndex >= 0) {
+                separatorIndex = colonIndex;
+                separatorLength = 1;
+            }
+        }
+
+        if (separatorIndex > 0) {
+            String prefix = text.substring(0, separatorIndex).trim();
+            String suffix = text.substring(separatorIndex + separatorLength).trim();
+            if (!prefix.isEmpty() && !suffix.isEmpty()
+                    && !prefix.equalsIgnoreCase("vgroup")
+                    && !prefix.equalsIgnoreCase("vassign")) {
+                facility = prefix;
+                valuePortion = suffix;
+            }
+        }
+
+        String cleaned = valuePortion
+                .replaceAll("(?i)^\\s*vgroup\\s*:\\s*", "")
+                .replaceAll("(?i)^\\s*vassign\\s*:\\s*\\[\\s*room\\s*]\\s*", "")
+                .trim();
+        if (cleaned.isEmpty()) {
+            cleaned = stripVGroup(valuePortion);
+        } else {
+            cleaned = stripVGroup(cleaned);
+        }
+        cleaned = cleaned.replaceFirst("(?i)^\\[\\s*room\\s*]\\s*", "").trim();
+
+        Matcher matcher = functionalRolePattern.matcher(valuePortion);
         boolean functionalRole = matcher.find();
-        return new ParsedRecipient(facility, stripVGroup(value), functionalRole);
+        return new ParsedRecipient(facility, cleaned, functionalRole);
     }
 
     private static final class ParsedRecipient {
