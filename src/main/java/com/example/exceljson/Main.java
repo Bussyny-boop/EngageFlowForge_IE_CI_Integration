@@ -13,8 +13,10 @@ public final class Main extends ExcelJsonApplication {
             }
             return;
         }
+
+        // ✅ Launch JavaFX app using inherited Application context
         try {
-            Application.launch(Main.class, args);
+            launch(args);
         } catch (NoClassDefFoundError error) {
             if (error.getMessage() != null && error.getMessage().startsWith("javafx/")) {
                 System.err.println("Unable to start Engage Rules Generator because JavaFX runtime classes are missing.");
