@@ -14,6 +14,12 @@
                 <Button fx:id="btnGenerate" text="Generate JSON" onAction="#onGenerateJson" />
                 <Button fx:id="btnSave" text="Save Excel" onAction="#onSaveExcel" />
             </HBox>
+            <HBox spacing="10">
+                <Button fx:id="generateNurseJsonButton" text="Generate NurseCall JSON" />
+                <Button fx:id="generateClinicalJsonButton" text="Generate Clinical JSON" />
+                <Button fx:id="exportNurseJsonButton" text="Export NurseCall JSON" />
+                <Button fx:id="exportClinicalJsonButton" text="Export Clinical JSON" />
+            </HBox>
             <Separator />
         </VBox>
     </top>
