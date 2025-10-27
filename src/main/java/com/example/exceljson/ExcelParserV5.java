@@ -411,18 +411,17 @@ public class ExcelParserV5 {
                                    int order,
                                    String delayText,
                                    String recipientText) {
-        if (isBlank(recipientText) && isBlank(delayText)) {
+        // Skip if both delay and recipient are blank or N/A
+        if (isBlank(recipientText) || recipientText.equalsIgnoreCase("N/A")) {
             return;
         }
 
-        List<String> recipients = Arrays.stream(recipientText == null ? new String[0] : recipientText.split("[,;\\n]"))
+        List<String> recipients = Arrays.stream(recipientText.split("[,;\\n]"))
                 .map(String::trim)
-                .filter(s -> !s.isEmpty())
+                .filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A"))
                 .collect(Collectors.toList());
 
-        if (recipients.isEmpty()) {
-            recipients = List.of(recipientText == null ? "" : recipientText.trim());
-        }
+        if (recipients.isEmpty()) return;
 
         for (String recipient : recipients) {
             ParsedRecipient parsed = parseRecipient(recipient, defaultFacility);
@@ -456,7 +455,7 @@ public class ExcelParserV5 {
         List<Map<String, Object>> params = new ArrayList<>();
         boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
 
-        if (!isBlank(row.ringtone)) {
+        if (!isBlank(row.ringtone) && !row.ringtone.equalsIgnoreCase("N/A")) {
             params.add(pa("alertSound", row.ringtone));
         }
 
@@ -713,22 +712,23 @@ public class ExcelParserV5 {
         return -1;
     }
 
-    private String getCell(Row row, int column) {
-        if (row == null || column < 0) {
-            return "";
-        }
+    private static String getCell(Row row, int column) {
+        if (row == null || column < 0) return "";
         try {
             Cell cell = row.getCell(column);
-            if (cell == null) {
-                return "";
-            }
-            return switch (cell.getCellType()) {
-                case STRING -> cell.getStringCellValue();
+            if (cell == null) return "";
+            String value = switch (cell.getCellType()) {
+                case STRING -> cell.getStringCellValue().trim();
                 case NUMERIC -> String.valueOf(cell.getNumericCellValue());
                 case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
                 case FORMULA -> cell.getCellFormula();
                 default -> "";
             };
+            // 🔍 Convert "N/A", "NA", or blank to empty string
+            if (value.equalsIgnoreCase("N/A") || value.equalsIgnoreCase("NA") || value.isBlank()) {
+                return "";
+            }
+            return value.trim();
         } catch (Exception e) {
             return "";
         }
