@@ -744,27 +744,26 @@ public class ExcelParserV5 {
         return value.replaceFirst("(?i)^v(group|assign)[: ]*", "").trim();
     }
 
-    private ParsedRecipient parseRecipient(String raw, String defaultFacility) {
-        String text = raw == null ? "" : raw.trim();
-        if (text.isEmpty()) {
-            return new ParsedRecipient(defaultFacility, "", false);
+      private ParsedRecipient parseRecipient(String raw, String facility) {
+        ParsedRecipient pr = new ParsedRecipient();
+        pr.facility = nvl(facility, ""); // facility always comes from unit tab
+    
+        String s = nvl(raw, "").trim();
+        if (isBlank(s)) {
+            pr.value = "";
+            return pr;
         }
+    
+        String cleaned = s.replaceAll("(?i)^\\s*vgroup\\s*:\\s*", "")
+                          .replaceAll("(?i)^\\s*vassign\\s*:\\s*\\[\\s*room\\s*]\\s*", "")
+                          .trim();
+    
+        pr.value = cleaned;
+        pr.isFunctionalRole = s.toLowerCase(Locale.ROOT).startsWith("vassign");
+        pr.isGroup = !pr.isFunctionalRole; // everything else treated as group
+        return pr;
+    }
 
-        String facility = defaultFacility == null ? "" : defaultFacility;
-        String value = text;
-
-        // allow Facility::Group or Facility:Group syntax
-        if (text.contains("::")) {
-            String[] parts = text.split("::", 2);
-            facility = parts[0].trim();
-            value = parts[1].trim();
-        } else if (text.contains(":")) {
-            String[] parts = text.split(":", 2);
-            if (parts.length == 2 && parts[0].trim().length() > 0 && parts[1].trim().length() > 0) {
-                facility = parts[0].trim();
-                value = parts[1].trim();
-            }
-        }
 
         Matcher matcher = functionalRolePattern.matcher(value);
         boolean functionalRole = matcher.find();
