@@ -64,19 +64,24 @@ public class ExcelParserV5 {
     private static final ObjectMapper PRETTY_MAPPER = new ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-    private static final List<Map<String, Object>> NURSE_CONDITIONS;
-
+       private static final List<Map<String, Object>> NURSE_CONDITIONS;
+    
     static {
-        List<Map<String, Object>> conditions = new ArrayList<>();
-        Map<String, Object> event = new LinkedHashMap<>();
-        event.put("type", "eventType");
-        event.put("value", "Alarm");
-        conditions.add(event);
-        Map<String, Object> platform = new LinkedHashMap<>();
-        platform.put("type", "platform");
-        platform.put("value", "Vocera Platform");
-        conditions.add(platform);
-        NURSE_CONDITIONS = Collections.unmodifiableList(conditions);
+        // Matches Engage condition structure for NurseCallsCondition
+        Map<String, Object> filter1 = new LinkedHashMap<>();
+        filter1.put("attributePath", "bed");
+        filter1.put("operator", "not_null");
+    
+        Map<String, Object> filter2 = new LinkedHashMap<>();
+        filter2.put("attributePath", "to.type");
+        filter2.put("operator", "not_equal");
+        filter2.put("value", "TargetGroups");
+    
+        Map<String, Object> condition = new LinkedHashMap<>();
+        condition.put("filters", List.of(filter1, filter2));
+        condition.put("name", "NurseCallsCondition");
+    
+        NURSE_CONDITIONS = Collections.unmodifiableList(List.of(condition));
     }
 
     private final Config config;
