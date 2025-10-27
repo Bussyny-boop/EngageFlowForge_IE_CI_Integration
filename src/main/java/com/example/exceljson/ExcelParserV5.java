@@ -103,12 +103,26 @@ public class ExcelParserV5 {
         return null;
     }
 
+    private static int firstDataRow(Sheet sh, Row header) {
+        if (sh == null) return 0;
+        int firstRow = Math.max(sh.getFirstRowNum(), 0);
+        if (header != null) {
+            int afterHeader = header.getRowNum() + 1;
+            if (afterHeader > firstRow) {
+                return afterHeader;
+            }
+        }
+        return firstRow;
+    }
+
     // -------------------- Unit Breakdown --------------------
     private void parseUnitBreakdown(Workbook wb) {
         Sheet sh = findSheet(wb, SHEET_UNIT);
         if (sh == null) return;
 
-        Map<String,Integer> hm = headerMap(findHeaderRow(sh));
+        Row header = findHeaderRow(sh);
+        Map<String,Integer> hm = headerMap(header);
+        int startRow = firstDataRow(sh, header);
         int cFacility   = getCol(hm, "Facility");
         int cUnitName   = getCol(hm, "Common Unit Name");
         int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call");
@@ -116,7 +130,7 @@ public class ExcelParserV5 {
         int cNoCare     = getCol(hm, "No Caregiver Alert Number or Group");
         int cComments   = getCol(hm, "Comments");
 
-        for (int r = 3; r <= sh.getLastRowNum(); r++) { // start reading after header
+        for (int r = startRow; r <= sh.getLastRowNum(); r++) { // start reading after header
             Row row = sh.getRow(r);
             if (row == null) continue;
             String facility = getCell(row, cFacility);
@@ -152,7 +166,9 @@ public class ExcelParserV5 {
         Sheet sh = findSheet(wb, SHEET_NURSE);
         if (sh == null) return;
 
-        Map<String,Integer> hm = headerMap(findHeaderRow(sh));
+        Row header = findHeaderRow(sh);
+        Map<String,Integer> hm = headerMap(header);
+        int startRow = firstDataRow(sh, header);
         int cCfg = getCol(hm, "Configuration Group");
         int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
         int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
@@ -171,7 +187,7 @@ public class ExcelParserV5 {
         int cT5 = getCol(hm, "Time to 5th Recipient");
         int cR5 = getCol(hm, "5th Recipient");
 
-        for (int r = 3; r <= sh.getLastRowNum(); r++) {
+        for (int r = startRow; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
             FlowRow f = new FlowRow();
@@ -198,7 +214,9 @@ public class ExcelParserV5 {
         Sheet sh = findSheet(wb, SHEET_CLINICAL);
         if (sh == null) return;
 
-        Map<String,Integer> hm = headerMap(findHeaderRow(sh));
+        Row header = findHeaderRow(sh);
+        Map<String,Integer> hm = headerMap(header);
+        int startRow = firstDataRow(sh, header);
         int cCfg = getCol(hm, "Configuration Group");
         int cAlarm = getCol(hm, "Alarm Name", "Common Alert or Alarm Name");
         int cSend = getCol(hm, "Sending System Alarm Name", "Sending System Alert Name");
@@ -217,7 +235,7 @@ public class ExcelParserV5 {
         int cT5 = getCol(hm, "Time to 5th Recipient");
         int cR5 = getCol(hm, "5th Recipient");
 
-        for (int r = 3; r <= sh.getLastRowNum(); r++) {
+        for (int r = startRow; r <= sh.getLastRowNum(); r++) {
             Row row = sh.getRow(r);
             if (row == null) continue;
             FlowRow f = new FlowRow();
