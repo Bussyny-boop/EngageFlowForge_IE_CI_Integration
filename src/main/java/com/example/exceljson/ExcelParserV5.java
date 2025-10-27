@@ -809,4 +809,42 @@ public class ExcelParserV5 {
         }
         return String.valueOf(obj);
     }
+
+        
+            // -------------------- Public JSON builders for AppController & JobRunner --------------------
+        
+        /** Builds NurseCalls JSON object (used by AppController preview). */
+        public Map<String,Object> buildNurseCallsJson() {
+            return buildJson(true);
+        }
+        
+        /** Builds Clinicals JSON object (used by AppController preview). */
+        public Map<String,Object> buildClinicalsJson() {
+            return buildJson(false);
+        }
+        
+        /** Writes NurseCalls JSON file. */
+        public void writeNurseCallsJson(File nurseFile) throws Exception {
+            Map<String,Object> nc = buildNurseCallsJson();
+            ensureParent(nurseFile);
+            try (FileWriter out = new FileWriter(nurseFile, false)) {
+                out.write(pretty(nc));
+            }
+            if (!nurseFile.exists() || nurseFile.length() == 0) {
+                throw new IOException("Failed writing NurseCalls JSON to: " + nurseFile.getAbsolutePath());
+            }
+        }
+        
+        /** Writes Clinicals JSON file. */
+        public void writeClinicalsJson(File clinicalFile) throws Exception {
+            Map<String,Object> cl = buildClinicalsJson();
+            ensureParent(clinicalFile);
+            try (FileWriter out = new FileWriter(clinicalFile, false)) {
+                out.write(pretty(cl));
+            }
+            if (!clinicalFile.exists() || clinicalFile.length() == 0) {
+                throw new IOException("Failed writing Clinicals JSON to: " + clinicalFile.getAbsolutePath());
+            }
+        }
+
 }
