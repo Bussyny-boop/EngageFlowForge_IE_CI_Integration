@@ -239,6 +239,22 @@ public class ExcelParserV5 {
         }
     }
 
+    /** Writes combined NurseCalls + Clinicals JSON into one file (for backward compatibility with JobRunnerTest). */
+public void writeJson(File file) throws Exception {
+    ensureParent(file);
+    Map<String, Object> nurse = buildNurseCallsJson();
+    Map<String, Object> clinical = buildClinicalsJson();
+    try (FileWriter out = new FileWriter(file, false)) {
+        out.write("{\n");
+        out.write("  \"NurseCalls\": " + pretty(nurse, 1) + ",\n");
+        out.write("  \"Clinicals\": " + pretty(clinical, 1) + "\n");
+        out.write("}\n");
+    }
+    if (!file.exists() || file.length() == 0) {
+        throw new IOException("Combined JSON write failed: " + file.getAbsolutePath());
+    }
+}
+
     // -------------------- All your existing buildJson / utilities --------------------
     // (unchanged — keep everything else from your current file)
 
