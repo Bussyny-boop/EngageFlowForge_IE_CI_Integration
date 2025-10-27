@@ -10,10 +10,11 @@
         <VBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
             <Label text="Engage Rules Generator" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
             <HBox spacing="10" alignment="CENTER_LEFT">
-                <Button fx:id="btnLoad" text="Load Excel" onAction="#onLoadExcel" />
-                <Button fx:id="btnGenerate" text="Generate JSON" onAction="#onGenerateJson" />
-                <Button fx:id="btnSave" text="Save Excel" onAction="#onSaveExcel" />
+                <Button fx:id="loadButton" text="Load Excel" />
+                <Button text="Generate JSON" disable="true" />
+                <Button text="Save Excel" disable="true" />
             </HBox>
+            <Label fx:id="statusLabel" text="Ready" />
             <HBox spacing="10">
                 <Button fx:id="generateNurseJsonButton" text="Generate NurseCall JSON" />
                 <Button fx:id="generateClinicalJsonButton" text="Generate Clinical JSON" />
