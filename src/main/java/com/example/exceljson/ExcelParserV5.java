@@ -970,4 +970,14 @@ public class ExcelParserV5 {
       throw new IOException("Unable to create directory: " + p.getAbsolutePath());
     }
   }
+    public static String pretty(Map<String, Object> value) {
+    try {
+      java.io.StringWriter sw = new java.io.StringWriter();
+      new JsonWriter(sw, 2).writeRoot(value);
+      return sw.toString();
+    } catch (Exception e) {
+      return "{ \"error\": \"" + e.getMessage() + "\" }";
+    }
+  }
+
 }
