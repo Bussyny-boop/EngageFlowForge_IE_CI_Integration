@@ -1,5 +1,7 @@
 package com.example.exceljson;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
@@ -17,6 +19,30 @@ public class AppController {
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
+    @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitFacilityCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNamesCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNurseGroupCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitClinicalGroupCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNoCareGroupCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitCommentsCol;
+
+    @FXML private TableView<ExcelParserV5.FlowRow> tableNurseCalls;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseConfigGroupCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseAlarmNameCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseSendingNameCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nursePriorityCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseDeviceACol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseRingtoneCol;
+
+    @FXML private TableView<ExcelParserV5.FlowRow> tableClinicals;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalConfigGroupCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalAlarmNameCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalSendingNameCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalPriorityCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalDeviceACol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalRingtoneCol;
+
     private ExcelParserV5 parser;
     private File currentExcelFile;
     private String lastGeneratedJson = "";
@@ -24,6 +50,10 @@ public class AppController {
     @FXML
     public void initialize() {
         parser = new ExcelParserV5();
+
+        initializeUnitColumns();
+        initializeNurseColumns();
+        initializeClinicalColumns();
 
         // disable buttons until Excel is loaded
         setJsonButtonsEnabled(false);
@@ -52,6 +82,7 @@ public class AppController {
             String summary = parser.getLoadSummary();
             jsonPreview.setText(summary);
             statusLabel.setText("Excel loaded: " + file.getName());
+            refreshTables();
             setJsonButtonsEnabled(true);
             showInfo("✅ Excel loaded successfully");
 
@@ -141,5 +172,84 @@ public class AppController {
 
     private Stage getStage() {
         return (Stage) jsonPreview.getScene().getWindow();
+    }
+
+    private void initializeUnitColumns() {
+        if (unitFacilityCol != null) {
+            unitFacilityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().facility)));
+        }
+        if (unitNamesCol != null) {
+            unitNamesCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().unitNames)));
+        }
+        if (unitNurseGroupCol != null) {
+            unitNurseGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().nurseGroup)));
+        }
+        if (unitClinicalGroupCol != null) {
+            unitClinicalGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().clinGroup)));
+        }
+        if (unitNoCareGroupCol != null) {
+            unitNoCareGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().noCareGroup)));
+        }
+        if (unitCommentsCol != null) {
+            unitCommentsCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().comments)));
+        }
+    }
+
+    private void initializeNurseColumns() {
+        if (nurseConfigGroupCol != null) {
+            nurseConfigGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().configGroup)));
+        }
+        if (nurseAlarmNameCol != null) {
+            nurseAlarmNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().alarmName)));
+        }
+        if (nurseSendingNameCol != null) {
+            nurseSendingNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().sendingName)));
+        }
+        if (nursePriorityCol != null) {
+            nursePriorityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().priorityRaw)));
+        }
+        if (nurseDeviceACol != null) {
+            nurseDeviceACol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().deviceA)));
+        }
+        if (nurseRingtoneCol != null) {
+            nurseRingtoneCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().ringtone)));
+        }
+    }
+
+    private void initializeClinicalColumns() {
+        if (clinicalConfigGroupCol != null) {
+            clinicalConfigGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().configGroup)));
+        }
+        if (clinicalAlarmNameCol != null) {
+            clinicalAlarmNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().alarmName)));
+        }
+        if (clinicalSendingNameCol != null) {
+            clinicalSendingNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().sendingName)));
+        }
+        if (clinicalPriorityCol != null) {
+            clinicalPriorityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().priorityRaw)));
+        }
+        if (clinicalDeviceACol != null) {
+            clinicalDeviceACol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().deviceA)));
+        }
+        if (clinicalRingtoneCol != null) {
+            clinicalRingtoneCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().ringtone)));
+        }
+    }
+
+    private void refreshTables() {
+        if (tableUnits != null) {
+            tableUnits.setItems(FXCollections.observableArrayList(parser.units));
+        }
+        if (tableNurseCalls != null) {
+            tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
+        }
+        if (tableClinicals != null) {
+            tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
+        }
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
     }
 }

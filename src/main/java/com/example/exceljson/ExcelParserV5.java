@@ -258,7 +258,7 @@ public class ExcelParserV5 {
       flow.put("interfaces", List.of(Map.of("componentName","OutgoingWCTP","referenceName","OutgoingWCTP")));
       flow.put("name", buildFlowName(nurseSide, mappedPriority, r, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(r, nurseSide, mappedPriority));
-      if (!isBlank(mappedPriority)) flow.put("priority", mappedPriority);
+      flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
       flow.put("status", "Active");
       if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
 
@@ -746,15 +746,22 @@ public class ExcelParserV5 {
   private static boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
   private static String nvl(String a, String b) { return isBlank(a) ? (b == null ? "" : b) : a; }
 
-  private static String mapPrioritySafe(String raw) {
-    if (raw == null) return "";
-    String n = raw.trim().toLowerCase(Locale.ROOT);
-    return switch (n) {
+  private static String mapPrioritySafe(String priority) {
+    if (priority == null) return "";
+    String norm = priority.trim().toLowerCase(Locale.ROOT)
+      .replace("(edge)", " edge")
+      .replaceAll("\\s+", " ")
+      .trim();
+
+    return switch (norm) {
       case "urgent", "u" -> "urgent";
       case "high", "h" -> "high";
       case "medium", "med", "m" -> "medium";
       case "low", "l" -> "low";
       case "normal", "n" -> "normal";
+      case "low edge" -> "normal";
+      case "medium edge" -> "high";
+      case "high edge" -> "urgent";
       default -> "";
     };
   }
