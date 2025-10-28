@@ -33,7 +33,16 @@
                             <content>
                                 <BorderPane prefHeight="200.0" prefWidth="200.0">
                                     <center>
-                                        <TableView fx:id="tableUnits" />
+                                        <TableView fx:id="tableUnits">
+                                            <columns>
+                                                <TableColumn fx:id="unitFacilityCol" prefWidth="120.0" text="Facility" />
+                                                <TableColumn fx:id="unitNamesCol" prefWidth="160.0" text="Unit Names" />
+                                                <TableColumn fx:id="unitNurseGroupCol" prefWidth="140.0" text="Nurse Group" />
+                                                <TableColumn fx:id="unitClinicalGroupCol" prefWidth="140.0" text="Clinical Group" />
+                                                <TableColumn fx:id="unitNoCareGroupCol" prefWidth="160.0" text="No Care Group" />
+                                                <TableColumn fx:id="unitCommentsCol" prefWidth="200.0" text="Comments" />
+                                            </columns>
+                                        </TableView>
                                     </center>
                                 </BorderPane>
                             </content>
@@ -42,7 +51,16 @@
                             <content>
                                 <BorderPane prefHeight="200.0" prefWidth="200.0">
                                     <center>
-                                        <TableView fx:id="tableNurseCalls" />
+                                        <TableView fx:id="tableNurseCalls">
+                                            <columns>
+                                                <TableColumn fx:id="nurseConfigGroupCol" prefWidth="160.0" text="Config Group" />
+                                                <TableColumn fx:id="nurseAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
+                                                <TableColumn fx:id="nurseSendingNameCol" prefWidth="200.0" text="Sending Name" />
+                                                <TableColumn fx:id="nursePriorityCol" prefWidth="120.0" text="Priority" />
+                                                <TableColumn fx:id="nurseDeviceACol" prefWidth="140.0" text="Device A" />
+                                                <TableColumn fx:id="nurseRingtoneCol" prefWidth="140.0" text="Ringtone" />
+                                            </columns>
+                                        </TableView>
                                     </center>
                                 </BorderPane>
                             </content>
@@ -51,7 +69,16 @@
                             <content>
                                 <BorderPane prefHeight="200.0" prefWidth="200.0">
                                     <center>
-                                        <TableView fx:id="tableClinicals" />
+                                        <TableView fx:id="tableClinicals">
+                                            <columns>
+                                                <TableColumn fx:id="clinicalConfigGroupCol" prefWidth="160.0" text="Config Group" />
+                                                <TableColumn fx:id="clinicalAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
+                                                <TableColumn fx:id="clinicalSendingNameCol" prefWidth="200.0" text="Sending Name" />
+                                                <TableColumn fx:id="clinicalPriorityCol" prefWidth="120.0" text="Priority" />
+                                                <TableColumn fx:id="clinicalDeviceACol" prefWidth="140.0" text="Device A" />
+                                                <TableColumn fx:id="clinicalRingtoneCol" prefWidth="140.0" text="Ringtone" />
+                                            </columns>
+                                        </TableView>
                                     </center>
                                 </BorderPane>
                             </content>
