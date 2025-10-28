@@ -4,6 +4,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -196,17 +197,38 @@ public class AppController {
     }
 
     private void initializeNurseColumns() {
+        if (tableNurseCalls != null) {
+            tableNurseCalls.setEditable(true);
+        }
         if (nurseConfigGroupCol != null) {
             nurseConfigGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().configGroup)));
+            nurseConfigGroupCol.setCellFactory(TextFieldTableCell.forTableColumn());
+            nurseConfigGroupCol.setOnEditCommit(event -> {
+                ExcelParserV5.FlowRow row = event.getRowValue();
+                row.configGroup = event.getNewValue();
+                refreshFlowTable(tableNurseCalls);
+            });
         }
         if (nurseAlarmNameCol != null) {
             nurseAlarmNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().alarmName)));
+            nurseAlarmNameCol.setCellFactory(TextFieldTableCell.forTableColumn());
+            nurseAlarmNameCol.setOnEditCommit(event -> {
+                ExcelParserV5.FlowRow row = event.getRowValue();
+                row.alarmName = event.getNewValue();
+                refreshFlowTable(tableNurseCalls);
+            });
         }
         if (nurseSendingNameCol != null) {
             nurseSendingNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().sendingName)));
         }
         if (nursePriorityCol != null) {
             nursePriorityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().priorityRaw)));
+            nursePriorityCol.setCellFactory(TextFieldTableCell.forTableColumn());
+            nursePriorityCol.setOnEditCommit(event -> {
+                ExcelParserV5.FlowRow row = event.getRowValue();
+                row.priorityRaw = event.getNewValue();
+                refreshFlowTable(tableNurseCalls);
+            });
         }
         if (nurseDeviceACol != null) {
             nurseDeviceACol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().deviceA)));
@@ -217,17 +239,38 @@ public class AppController {
     }
 
     private void initializeClinicalColumns() {
+        if (tableClinicals != null) {
+            tableClinicals.setEditable(true);
+        }
         if (clinicalConfigGroupCol != null) {
             clinicalConfigGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().configGroup)));
+            clinicalConfigGroupCol.setCellFactory(TextFieldTableCell.forTableColumn());
+            clinicalConfigGroupCol.setOnEditCommit(event -> {
+                ExcelParserV5.FlowRow row = event.getRowValue();
+                row.configGroup = event.getNewValue();
+                refreshFlowTable(tableClinicals);
+            });
         }
         if (clinicalAlarmNameCol != null) {
             clinicalAlarmNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().alarmName)));
+            clinicalAlarmNameCol.setCellFactory(TextFieldTableCell.forTableColumn());
+            clinicalAlarmNameCol.setOnEditCommit(event -> {
+                ExcelParserV5.FlowRow row = event.getRowValue();
+                row.alarmName = event.getNewValue();
+                refreshFlowTable(tableClinicals);
+            });
         }
         if (clinicalSendingNameCol != null) {
             clinicalSendingNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().sendingName)));
         }
         if (clinicalPriorityCol != null) {
             clinicalPriorityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().priorityRaw)));
+            clinicalPriorityCol.setCellFactory(TextFieldTableCell.forTableColumn());
+            clinicalPriorityCol.setOnEditCommit(event -> {
+                ExcelParserV5.FlowRow row = event.getRowValue();
+                row.priorityRaw = event.getNewValue();
+                refreshFlowTable(tableClinicals);
+            });
         }
         if (clinicalDeviceACol != null) {
             clinicalDeviceACol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().deviceA)));
@@ -251,5 +294,11 @@ public class AppController {
 
     private static String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    private void refreshFlowTable(TableView<ExcelParserV5.FlowRow> table) {
+        if (table != null) {
+            table.refresh();
+        }
     }
 }

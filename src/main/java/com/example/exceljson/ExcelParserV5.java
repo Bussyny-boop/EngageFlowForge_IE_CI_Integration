@@ -5,8 +5,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -46,8 +44,6 @@ public class ExcelParserV5 {
   }
 
   // ---------- Config / parsing helpers ----------
-  private final Pattern functionalRolePattern;
-
   public final List<UnitRow> units = new ArrayList<>();
   public final List<FlowRow> nurseCalls = new ArrayList<>();
   public final List<FlowRow> clinicals = new ArrayList<>();
@@ -75,12 +71,6 @@ public class ExcelParserV5 {
     cond.put("name", "NurseCallsCondition");
     NURSE_CONDITIONS = List.of(cond);
   }
-
-  public ExcelParserV5() {
-    // default heuristic: functional role if it looks like VAssign:[Room] Something
-    this.functionalRolePattern = Pattern.compile("(?i)^\\s*vassign\\s*:");
-  }
-
   // ---------- Load ----------
   public void load(File excelFile) throws Exception {
     Objects.requireNonNull(excelFile, "excelFile");
@@ -602,39 +592,35 @@ public class ExcelParserV5 {
 
   private ParsedRecipient parseRecipient(String raw, String defaultFacility) {
     String text = raw == null ? "" : raw.trim();
-    if (text.isEmpty()) return new ParsedRecipient(nvl(defaultFacility,""), "", false);
+    if (text.isEmpty()) {
+      return new ParsedRecipient(defaultFacility == null ? "" : defaultFacility, "", false);
+    }
 
-    String facility = nvl(defaultFacility,"");
+    String facility = defaultFacility == null ? "" : defaultFacility;
     String valuePortion = text;
 
+    // Capture prefix like VGROUP: or VAssign Room:
     String lower = text.toLowerCase(Locale.ROOT);
-    int sepIdx = -1, sepLen = 0;
-    if (lower.contains("::")) { sepIdx = lower.indexOf("::"); sepLen = 2; }
-    else {
-      int colon = lower.indexOf(':');
-      if (colon >= 0) { sepIdx = colon; sepLen = 1; }
-    }
-    if (sepIdx > 0) {
-      String prefix = text.substring(0, sepIdx).trim();
-      String suffix = text.substring(sepIdx + sepLen).trim();
-      if (!prefix.isEmpty() && !suffix.isEmpty()
-        && !prefix.equalsIgnoreCase("vgroup")
-        && !prefix.equalsIgnoreCase("vassign")) {
-        facility = prefix;
-        valuePortion = suffix;
+    boolean isFunctionalRole = false;
+
+    if (lower.startsWith("vassign room:") || lower.startsWith("vassign:")) {
+      isFunctionalRole = true;
+      valuePortion = text.substring(text.indexOf(':') + 1).trim();
+    } else if (lower.startsWith("vgroup:")) {
+      isFunctionalRole = false;
+      valuePortion = text.substring(text.indexOf(':') + 1).trim();
+    } else {
+      // fallback to previous behavior (colon logic)
+      int sepIdx = text.indexOf(':');
+      if (sepIdx > 0) {
+        valuePortion = text.substring(sepIdx + 1).trim();
       }
     }
 
-    String cleaned = valuePortion
-      .replaceAll("(?i)^\\s*vgroup\\s*:\\s*", "")
-      .replaceAll("(?i)^\\s*vassign\\s*:\\s*\\[\\s*room\\s*]\\s*", "")
-      .replaceFirst("(?i)^\\[\\s*room\\s*]\\s*", "")
-      .trim();
+    // Strip extra [Room] or spaces
+    valuePortion = valuePortion.replaceAll("(?i)^\\[\\s*room\\s*]\\s*", "").trim();
 
-    Matcher matcher = functionalRolePattern.matcher(valuePortion);
-    boolean functionalRole = matcher.find();
-
-    return new ParsedRecipient(facility, cleaned, functionalRole);
+    return new ParsedRecipient(facility, valuePortion, isFunctionalRole);
   }
 
   // ---------- Sheet helpers ----------
