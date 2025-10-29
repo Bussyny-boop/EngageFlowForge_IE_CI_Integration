@@ -396,6 +396,12 @@ public class ExcelParserV5 {
       params.add(paQ("popup", "true"));
       params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
       params.add(paQ("responseType", noResponse ? "None" : "Accept/Decline"));
+      // Add Engage response tracking parameters (required for Accept/Decline flows)
+      if (!noResponse) {
+        params.add(paQ("respondingLine", "responses.line.number"));
+        params.add(paQ("respondingUser", "responses.usr.login"));
+        params.add(paQ("responsePath", "responses.action"));
+      }
       params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("ttl", "10"));
