@@ -347,10 +347,15 @@ public class ExcelParserV5 {
     dest.put("users", List.of());
     dest.put("functionalRoles", roles);
     dest.put("groups", groups);
-    // If any roles exist, recipientType typically could be functional_role, but
-    // reference JSONs generally use "group" + presence "device". We'll follow group.
-    dest.put("presenceConfig", "device");
-    dest.put("recipientType", "group");
+
+    // Determine correct recipient type based on contents
+    if (!roles.isEmpty()) {
+      dest.put("presenceConfig", "user_and_device");
+      dest.put("recipientType", "functional_role");
+    } else {
+      dest.put("presenceConfig", "device");
+      dest.put("recipientType", "group");
+    }
 
     out.add(dest);
   }
