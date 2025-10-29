@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  * - Skips blank/NA cells
  * - NurseCallsCondition block for conditions
  * - One destination per order, with merged groups
- * - All parameterAttributes values are wrapped in literal quotes
+ * - Parameter attributes default to literal quotes unless Engage expects plain strings
  * - Deterministic JSON order + 2-space indentation
  */
 public class ExcelParserV5 {
@@ -360,14 +360,17 @@ public class ExcelParserV5 {
     out.add(dest);
   }
 
-  // ---------- Parameter Attributes (all values quoted) ----------
+  // ---------- Parameter Attributes (corrected Engage syntax, dynamic ringtone) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
                                                               String mappedPriority) {
     List<Map<String,Object>> params = new ArrayList<>();
     boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
 
-    if (!isBlank(r.ringtone)) params.add(paQ("alertSound", r.ringtone));
+    // 🔹 Keep ringtone dynamic from Excel
+    if (!isBlank(r.ringtone)) {
+      params.add(paQ("alertSound", r.ringtone));
+    }
 
     if (nurseSide) {
       boolean hasAccept   = containsWord(r.responseOptions, "accept");
@@ -375,62 +378,69 @@ public class ExcelParserV5 {
       boolean hasCallBack = containsWord(r.responseOptions, "call back") || containsWord(r.responseOptions, "callback");
       boolean noResponse  = containsWord(r.responseOptions, "no response");
 
+      // ---- Accept / Decline / Escalate ----
       if (hasAccept) {
         params.add(paQ("accept", "Accepted"));
-        params.add(paQ("acceptBadgePhrases", "[Accept]"));
+        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
       }
       if (hasCallBack) {
         params.add(paQ("acceptAndCall", "Call Back"));
       }
       if (hasEscalate) {
         params.add(paQ("decline", "Decline Primary"));
-        params.add(paQ("declineBadgePhrases", "[Escalate]"));
+        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
       }
 
+      // ---- Core behavior ----
       params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
-      params.add(paQ("enunciate", "true"));
+      params.add(paLiteralBool("enunciate", true));
       params.add(paQ("message", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}"));
       params.add(paQ("patientMRN", "#{bed.patient.mrn}:#{bed.patient.visit_number}"));
       params.add(paQ("placeUid", "#{bed.uid}"));
       params.add(paQ("patientName", "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"));
-      params.add(paQ("popup", "true"));
+      params.add(paLiteralBool("popup", true));
       params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
       params.add(paQ("responseType", noResponse ? "None" : "Accept/Decline"));
-      // Add Engage response tracking parameters (required for Accept/Decline flows)
+
+      // 🔹 Add required Engage tracking parameters for Accept/Decline
       if (!noResponse) {
         params.add(paQ("respondingLine", "responses.line.number"));
         params.add(paQ("respondingUser", "responses.usr.login"));
         params.add(paQ("responsePath", "responses.action"));
       }
+
+      // ---- Remaining base attributes ----
       params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
-      params.add(paQ("ttl", "10"));
-      params.add(paQ("retractRules", "[ttlHasElapsed]"));
+      params.add(paLiteral("ttl", "10"));
+      params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
       params.add(paQ("vibrate", "short"));
 
-      // Destination names by order using FIRST recipient token of each column
+      // ---- Destination names by order ----
       addDestNameParam(params, 0, firstToken(r.r1));
       addDestNameParam(params, 1, firstToken(r.r2));
       addDestNameParam(params, 2, firstToken(r.r3));
       addDestNameParam(params, 3, firstToken(r.r4));
       addDestNameParam(params, 4, firstToken(r.r5));
+
     } else {
+      // ---- Clinical flow (unchanged except consistent Engage syntax) ----
       params.add(paOrderQ(0, "destinationName", "Nurse Alert"));
       params.add(paQ("alertSound", nvl(r.ringtone, "Vocera Tone 0 Long")));
       params.add(paQ("responseAllowed", "false"));
       params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
-      params.add(paQ("enunciate", "true"));
+      params.add(paLiteralBool("enunciate", true));
       params.add(paQ("message", "Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}"));
       params.add(paQ("patientMRN", "#{clinical_patient.mrn}:#{clinical_patient.visit_number}"));
       params.add(paQ("patientName", "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
       params.add(paQ("placeUid", "#{bed.uid}"));
-      params.add(paQ("popup", "true"));
+      params.add(paLiteralBool("popup", true));
       params.add(paQ("eventIdentification", "#{id}"));
       params.add(paQ("responseType", "None"));
       params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
-      params.add(paQ("ttl", "10"));
-      params.add(paQ("retractRules", "[ttlHasElapsed]"));
+      params.add(paLiteral("ttl", "10"));
+      params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
       params.add(paQ("vibrate", "short"));
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
@@ -577,6 +587,15 @@ public class ExcelParserV5 {
     m.put("name", name);
     m.put("value", addOuterQuotes(nvl(raw,"")));
     return m;
+  }
+  private static Map<String,Object> paLiteral(String name, String raw) {
+    Map<String,Object> m = new LinkedHashMap<>();
+    m.put("name", name);
+    m.put("value", nvl(raw, ""));
+    return m;
+  }
+  private static Map<String,Object> paLiteralBool(String name, boolean value) {
+    return paLiteral(name, value ? "true" : "false");
   }
   private static Map<String,Object> paOrderQ(int order, String name, String raw) {
     Map<String,Object> m = paQ(name, raw);
