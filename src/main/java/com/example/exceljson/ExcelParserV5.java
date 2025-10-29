@@ -388,7 +388,7 @@ public class ExcelParserV5 {
       }
       if (hasEscalate) {
         params.add(paQ("decline", "Decline Primary"));
-        params.add(paQ("declineBadgePhrases", "[Escalate]"));
+        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
       }
 
       // ---- Core behavior ----
