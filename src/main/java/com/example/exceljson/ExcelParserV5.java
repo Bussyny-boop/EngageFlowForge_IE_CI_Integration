@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
  * - Skips blank/NA cells
  * - NurseCallsCondition block for conditions
  * - One destination per order, with merged groups
- * - All parameterAttributes values are wrapped in literal quotes
  * - Deterministic JSON order + 2-space indentation
  */
 public class ExcelParserV5 {
@@ -303,7 +302,7 @@ public class ExcelParserV5 {
         d.put("users", List.of());
         d.put("functionalRoles", List.of());
         d.put("groups", List.of(Map.of("facilityName", facility, "name", noCare)));
-        d.put("presenceConfig", "device");
+        d.put("presenceConfig", "user_and_device");
         d.put("recipientType", "group");
         out.add(d);
       }
@@ -347,20 +346,19 @@ public class ExcelParserV5 {
     dest.put("users", List.of());
     dest.put("functionalRoles", roles);
     dest.put("groups", groups);
+    dest.put("presenceConfig", "user_and_device");
 
     // Determine correct recipient type based on contents
     if (!roles.isEmpty()) {
-      dest.put("presenceConfig", "user_and_device");
       dest.put("recipientType", "functional_role");
     } else {
-      dest.put("presenceConfig", "device");
       dest.put("recipientType", "group");
     }
 
     out.add(dest);
   }
 
-  // ---------- Parameter Attributes (all values quoted) ----------
+  // ---------- Parameter Attributes ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
                                                               String mappedPriority) {
@@ -565,22 +563,17 @@ public class ExcelParserV5 {
     return s.replace("\\","\\\\").replace("\"","\\\"").replace("\r","\\r").replace("\n","\\n");
   }
 
-  // ---------- ParameterAttribute helpers (quoted values) ----------
+  // ---------- ParameterAttribute helpers ----------
   private static Map<String,Object> paQ(String name, String raw) {
     Map<String,Object> m = new LinkedHashMap<>();
     m.put("name", name);
-    m.put("value", addOuterQuotes(nvl(raw,"")));
+    m.put("value", nvl(raw, ""));
     return m;
   }
   private static Map<String,Object> paOrderQ(int order, String name, String raw) {
     Map<String,Object> m = paQ(name, raw);
     m.put("destinationOrder", order);
     return m;
-  }
-  // Turn raw into a literal-quoted JSON string (e.g., -> "\"Group\"")
-  private static String addOuterQuotes(String s) {
-    String inner = s.replace("\\","\\\\").replace("\"","\\\"");
-    return "\"" + inner + "\"";
   }
 
   // ---------- Recipients ----------
