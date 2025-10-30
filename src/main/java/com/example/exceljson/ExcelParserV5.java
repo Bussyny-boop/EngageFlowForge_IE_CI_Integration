@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
  * - One destination per order, with merged groups
  * - Parameter attributes default to literal quotes unless Engage expects plain strings
  * - Deterministic JSON order + 2-space indentation
+ * - NEW: writeExcel(File) to "Save As" the currently edited data
  */
 public class ExcelParserV5 {
 
@@ -71,6 +72,7 @@ public class ExcelParserV5 {
     cond.put("name", "NurseCallsCondition");
     NURSE_CONDITIONS = List.of(cond);
   }
+
   // ---------- Load ----------
   public void load(File excelFile) throws Exception {
     Objects.requireNonNull(excelFile, "excelFile");
@@ -227,7 +229,6 @@ public class ExcelParserV5 {
   private Map<String,Object> buildJson(List<FlowRow> rows,
                                        Map<String,List<Map<String,String>>> groupToUnits,
                                        boolean nurseSide) {
-    // top-level order: version, alarmAlertDefinitions, deliveryFlows
     Map<String,Object> root = new LinkedHashMap<>();
     root.put("version", "1.1.0");
     root.put("alarmAlertDefinitions", buildAlarmDefs(rows, nurseSide));
@@ -239,8 +240,6 @@ public class ExcelParserV5 {
       List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(r.configGroup, List.of());
       String mappedPriority = mapPrioritySafe(r.priorityRaw);
 
-      // flow key order MUST match reference:
-      // alarmsAlerts, conditions, destinations, interfaces, name, parameterAttributes, priority, status, units
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
@@ -251,7 +250,6 @@ public class ExcelParserV5 {
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
       flow.put("status", "Active");
       if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
-
       flows.add(flow);
     }
     root.put("deliveryFlows", flows);
@@ -267,14 +265,13 @@ public class ExcelParserV5 {
       if (byKey.containsKey(key)) continue;
 
       Map<String,Object> def = new LinkedHashMap<>();
-      def.put("name", name);                 // keep as-is from Excel (per your instruction)
+      def.put("name", name);
       def.put("type", nurseSide ? "NurseCalls" : "Clinicals");
 
       Map<String,String> val = new LinkedHashMap<>();
       val.put("category", "");
       val.put("value", isBlank(r.sendingName) ? name : r.sendingName);
       def.put("values", List.of(val));
-
       byKey.put(key, def);
     }
     return new ArrayList<>(byKey.values());
@@ -285,7 +282,6 @@ public class ExcelParserV5 {
                                                            List<Map<String,String>> unitRefs,
                                                            boolean nurseSide) {
     String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
-
     List<Map<String,Object>> out = new ArrayList<>();
     addOrder(out, facility, 0, r.t1, r.r1);
     addOrder(out, facility, 1, r.t2, r.r2);
@@ -297,7 +293,7 @@ public class ExcelParserV5 {
       String noCare = noCaregiverByFacility.getOrDefault(facility, "");
       if (!isBlank(noCare)) {
         Map<String,Object> d = new LinkedHashMap<>();
-        d.put("order", out.size()); // last
+        d.put("order", out.size());
         d.put("delayTime", 0);
         d.put("destinationType", "NoDeliveries");
         d.put("users", List.of());
@@ -316,7 +312,7 @@ public class ExcelParserV5 {
                         int order,
                         String delayText,
                         String recipientText) {
-    if (isBlank(recipientText)) return; // skip blank/NA
+    if (isBlank(recipientText)) return;
     List<String> recipients = Arrays.stream(recipientText.split("[,;\\n]"))
       .map(String::trim)
       .filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A"))
@@ -325,7 +321,6 @@ public class ExcelParserV5 {
 
     int delay = parseDelay(delayText);
 
-    // Merge all groups (and roles) into a single destination per order
     List<Map<String,String>> groups = new ArrayList<>();
     List<Map<String,String>> roles  = new ArrayList<>();
 
@@ -348,7 +343,6 @@ public class ExcelParserV5 {
     dest.put("functionalRoles", roles);
     dest.put("groups", groups);
 
-    // Determine correct recipient type based on contents
     if (!roles.isEmpty()) {
       dest.put("presenceConfig", "user_and_device");
       dest.put("recipientType", "functional_role");
@@ -356,18 +350,16 @@ public class ExcelParserV5 {
       dest.put("presenceConfig", "device");
       dest.put("recipientType", "group");
     }
-
     out.add(dest);
   }
 
-  // ---------- Parameter Attributes (corrected Engage syntax, dynamic ringtone) ----------
+  // ---------- Parameter Attributes (correct Engage syntax) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
                                                               String mappedPriority) {
     List<Map<String,Object>> params = new ArrayList<>();
     boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
 
-    // 🔹 Keep ringtone dynamic from Excel
     if (!isBlank(r.ringtone)) {
       params.add(paQ("alertSound", r.ringtone));
     }
@@ -378,7 +370,6 @@ public class ExcelParserV5 {
       boolean hasCallBack = containsWord(r.responseOptions, "call back") || containsWord(r.responseOptions, "callback");
       boolean noResponse  = containsWord(r.responseOptions, "no response");
 
-      // ---- Accept / Decline / Escalate ----
       if (hasAccept) {
         params.add(paQ("accept", "Accepted"));
         params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
@@ -391,7 +382,6 @@ public class ExcelParserV5 {
         params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
       }
 
-      // ---- Core behavior ----
       params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
       params.add(paLiteralBool("enunciate", true));
       params.add(paQ("message", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}"));
@@ -402,21 +392,18 @@ public class ExcelParserV5 {
       params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
       params.add(paQ("responseType", noResponse ? "None" : "Accept/Decline"));
 
-      // 🔹 Add required Engage tracking parameters for Accept/Decline
       if (!noResponse) {
         params.add(paQ("respondingLine", "responses.line.number"));
         params.add(paQ("respondingUser", "responses.usr.login"));
         params.add(paQ("responsePath", "responses.action"));
       }
 
-      // ---- Remaining base attributes ----
       params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
       params.add(paLiteral("ttl", "10"));
       params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
       params.add(paQ("vibrate", "short"));
 
-      // ---- Destination names by order ----
       addDestNameParam(params, 0, firstToken(r.r1));
       addDestNameParam(params, 1, firstToken(r.r2));
       addDestNameParam(params, 2, firstToken(r.r3));
@@ -424,7 +411,6 @@ public class ExcelParserV5 {
       addDestNameParam(params, 4, firstToken(r.r5));
 
     } else {
-      // ---- Clinical flow (unchanged except consistent Engage syntax) ----
       params.add(paOrderQ(0, "destinationName", "Nurse Alert"));
       params.add(paQ("alertSound", nvl(r.ringtone, "Vocera Tone 0 Long")));
       params.add(paQ("responseAllowed", "false"));
@@ -446,7 +432,6 @@ public class ExcelParserV5 {
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
       params.add(paOrderQ(1, "subject", "NoCaregive assigned for #{alert_type} #{bed.room.name}"));
     }
-
     return params;
   }
 
@@ -472,7 +457,6 @@ public class ExcelParserV5 {
 
   // ---------- Conditions ----------
   private List<Map<String,Object>> nurseConditions() {
-    // defensive copy
     List<Map<String,Object>> out = new ArrayList<>();
     for (Map<String,Object> m : NURSE_CONDITIONS) out.add(new LinkedHashMap<>(m));
     return out;
@@ -483,7 +467,7 @@ public class ExcelParserV5 {
                                String mappedPriority,
                                FlowRow row,
                                List<Map<String,String>> unitRefs) {
-    String alarm = nvl(row.alarmName, row.sendingName); // keep as-is from Excel
+    String alarm = nvl(row.alarmName, row.sendingName);
     String group = row.configGroup == null ? "" : row.configGroup.trim();
     String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
     List<String> unitNames = unitRefs.stream()
@@ -501,21 +485,19 @@ public class ExcelParserV5 {
     return String.join(" | ", parts);
   }
 
-  // ---------- File writers ----------
+  // ---------- File writers (JSON) ----------
   public void writeNurseCallsJson(File nurseFile) throws Exception {
     ensureParent(nurseFile);
     try (FileWriter out = new FileWriter(nurseFile, false)) {
       out.write(pretty(buildNurseCallsJson()));
     }
   }
-
   public void writeClinicalsJson(File clinicalFile) throws Exception {
     ensureParent(clinicalFile);
     try (FileWriter out = new FileWriter(clinicalFile, false)) {
       out.write(pretty(buildClinicalsJson()));
     }
   }
-
   public void writeJson(File summaryFile) throws Exception {
     ensureParent(summaryFile);
     Map<String,Object> summary = new LinkedHashMap<>();
@@ -527,7 +509,109 @@ public class ExcelParserV5 {
     }
   }
 
-  // ---------- Minimal JSON writer (2 spaces, preserves LinkedHashMap order) ----------
+  // ---------- NEW: Save As Excel ----------
+  public void writeExcel(File dest) throws IOException {
+    Objects.requireNonNull(dest, "dest");
+    ensureParent(dest);
+
+    try (Workbook wb = new XSSFWorkbook()) {
+      // Unit Breakdown
+      Sheet su = wb.createSheet(SHEET_UNIT);
+      String[] uh = new String[]{
+        "Facility",
+        "Common Unit Name",
+        "Nurse Call Configuration Group",
+        "Patient Monitoring Configuration Group",
+        "No Caregiver Group",
+        "Comments"
+      };
+      writeHeader(su, uh);
+      int r = 1;
+      for (UnitRow u : units) {
+        Row row = su.createRow(r++);
+        set(row,0,u.facility);
+        set(row,1,u.unitNames);
+        set(row,2,u.nurseGroup);
+        set(row,3,u.clinGroup);
+        set(row,4,u.noCareGroup);
+        set(row,5,u.comments);
+      }
+      autosize(su, uh.length);
+
+      // Nurse Call
+      Sheet sn = wb.createSheet(SHEET_NURSE);
+      String[] fh = flowHeaders();
+      writeHeader(sn, fh);
+      r = 1;
+      for (FlowRow f : nurseCalls) {
+        Row row = sn.createRow(r++);
+        writeFlowRow(row, f);
+      }
+      autosize(sn, fh.length);
+
+      // Patient Monitoring
+      Sheet sc = wb.createSheet(SHEET_CLINICAL);
+      writeHeader(sc, fh);
+      r = 1;
+      for (FlowRow f : clinicals) {
+        Row row = sc.createRow(r++);
+        writeFlowRow(row, f);
+      }
+      autosize(sc, fh.length);
+
+      try (FileOutputStream fos = new FileOutputStream(dest)) {
+        wb.write(fos);
+      }
+    }
+  }
+
+  private static String[] flowHeaders() {
+    return new String[]{
+      "Configuration Group",
+      "Common Alert or Alarm Name",
+      "Sending System Alert Name",
+      "Priority",
+      "Device - A",
+      "Ringtone Device - A",
+      "Response Options",
+      "Time to 1st Recipient","1st Recipient",
+      "Time to 2nd Recipient","2nd Recipient",
+      "Time to 3rd Recipient","3rd Recipient",
+      "Time to 4th Recipient","4th Recipient",
+      "Time to 5th Recipient","5th Recipient"
+    };
+  }
+
+  private static void writeFlowRow(Row row, FlowRow f) {
+    set(row,0,f.configGroup);
+    set(row,1,f.alarmName);
+    set(row,2,f.sendingName);
+    set(row,3,f.priorityRaw);
+    set(row,4,f.deviceA);
+    set(row,5,f.ringtone);
+    set(row,6,f.responseOptions);
+    set(row,7,f.t1); set(row,8,f.r1);
+    set(row,9,f.t2); set(row,10,f.r2);
+    set(row,11,f.t3); set(row,12,f.r3);
+    set(row,13,f.t4); set(row,14,f.r4);
+    set(row,15,f.t5); set(row,16,f.r5);
+  }
+
+  private static void writeHeader(Sheet s, String[] headers) {
+    Row h = s.createRow(0);
+    for (int i=0;i<headers.length;i++) set(h,i,headers[i]);
+  }
+
+  private static void autosize(Sheet s, int cols) {
+    for (int i=0;i<cols;i++) s.autoSizeColumn(i);
+  }
+
+  private static void set(Row row, int col, String value) {
+    Cell c = row.createCell(col, CellType.STRING);
+    c.setCellValue(value == null ? "" : value);
+  }
+
+  // ---------- Minimal JSON writer (2 spaces, preserves order) ----------
   public static String pretty(Map<String,Object> map) {
     StringBuilder sb = new StringBuilder();
     writeJson(map, sb, 0);
@@ -538,7 +622,6 @@ public class ExcelParserV5 {
     writeJson(any, sb, 0);
     return sb.toString();
   }
-
   @SuppressWarnings("unchecked")
   private static void writeJson(Object o, StringBuilder sb, int indent) {
     if (o == null) { sb.append("null"); return; }
@@ -549,7 +632,7 @@ public class ExcelParserV5 {
       int i=0, size=m.size();
       for (Map.Entry<?,?> e : ((Map<Object,Object>)m).entrySet()) {
         indent(sb, indent+1);
-        sb.append('"').append(escape(String.valueOf(e.getKey()))).append("\": ");
+        sb.append('"').append(escape(String.valueOf(e.getKey()))).append('"').append(':').append(' ');
         writeJson(e.getValue(), sb, indent+1);
         if (++i < size) sb.append(',');
         sb.append('\n');
@@ -571,18 +654,16 @@ public class ExcelParserV5 {
       sb.append(']');
       return;
     }
-    // fallback as string
     sb.append('"').append(escape(String.valueOf(o))).append('"');
   }
-
   private static void indent(StringBuilder sb, int indent) {
-    for (int i=0;i<indent;i++) sb.append("  "); // 2 spaces
+    for (int i=0;i<indent;i++) sb.append("  ");
   }
   private static String escape(String s) {
     return s.replace("\\","\\\\").replace("\"","\\\"").replace("\r","\\r").replace("\n","\\n");
   }
 
-  // ---------- ParameterAttribute helpers (quoted values) ----------
+  // ---------- ParameterAttribute helpers ----------
   private static Map<String,Object> paQ(String name, String raw) {
     Map<String,Object> m = new LinkedHashMap<>();
     m.put("name", name);
@@ -603,7 +684,6 @@ public class ExcelParserV5 {
     m.put("destinationOrder", order);
     return m;
   }
-  // Turn raw into a literal-quoted JSON string (e.g., -> "\"Group\"")
   private static String addOuterQuotes(String s) {
     String inner = s.replace("\\","\\\\").replace("\"","\\\"");
     return "\"" + inner + "\"";
@@ -620,17 +700,14 @@ public class ExcelParserV5 {
       this.isFunctionalRole = isFunctionalRole;
     }
   }
-
   private ParsedRecipient parseRecipient(String raw, String defaultFacility) {
     String text = raw == null ? "" : raw.trim();
     if (text.isEmpty()) {
       return new ParsedRecipient(defaultFacility == null ? "" : defaultFacility, "", false);
     }
-
     String facility = defaultFacility == null ? "" : defaultFacility;
     String valuePortion = text;
 
-    // Capture prefix like VGROUP: or VAssign Room:
     String lower = text.toLowerCase(Locale.ROOT);
     boolean isFunctionalRole = false;
 
@@ -641,16 +718,12 @@ public class ExcelParserV5 {
       isFunctionalRole = false;
       valuePortion = text.substring(text.indexOf(':') + 1).trim();
     } else {
-      // fallback to previous behavior (colon logic)
       int sepIdx = text.indexOf(':');
       if (sepIdx > 0) {
         valuePortion = text.substring(sepIdx + 1).trim();
       }
     }
-
-    // Strip extra [Room] or spaces
     valuePortion = valuePortion.replaceAll("(?i)^\\[\\s*room\\s*]\\s*", "").trim();
-
     return new ParsedRecipient(facility, valuePortion, isFunctionalRole);
   }
 
@@ -663,7 +736,6 @@ public class ExcelParserV5 {
     }
     return null;
   }
-
   private static Row findHeaderRow(Sheet sh) {
     if (sh == null) return null;
     int start = Math.max(0, 2), end = Math.min(sh.getLastRowNum(), start + 3);
@@ -677,7 +749,6 @@ public class ExcelParserV5 {
     for (int r=0;r<=sh.getLastRowNum();r++) { Row row = sh.getRow(r); if (row != null) return row; }
     return null;
   }
-
   private static int firstDataRow(Sheet sh, Row header) {
     if (sh == null) return 0;
     int first = Math.max(sh.getFirstRowNum(), 0);
@@ -687,7 +758,6 @@ public class ExcelParserV5 {
     }
     return first;
   }
-
   private static Map<String,Integer> headerMap(Row header) {
     Map<String,Integer> map = new LinkedHashMap<>();
     if (header == null) return map;
@@ -697,7 +767,6 @@ public class ExcelParserV5 {
     }
     return map;
   }
-
   private static int getCol(Map<String,Integer> map, String... names) {
     if (map.isEmpty()) return -1;
     for (String n : names) {
@@ -705,7 +774,6 @@ public class ExcelParserV5 {
       String key = normalize(n);
       if (map.containsKey(key)) return map.get(key);
     }
-    // partial fallback
     for (String n : names) {
       if (n == null) continue;
       String key = normalize(n);
@@ -714,7 +782,6 @@ public class ExcelParserV5 {
     }
     return -1;
   }
-
   private static String getCell(Row row, int col) {
     if (row == null || col < 0) return "";
     try {
@@ -735,7 +802,6 @@ public class ExcelParserV5 {
       return "";
     }
   }
-
   private static List<String> splitUnits(String s) {
     if (s == null) return List.of();
     return Arrays.stream(s.split("[,;/\\n]"))
@@ -743,12 +809,10 @@ public class ExcelParserV5 {
       .collect(Collectors.toCollection(LinkedHashSet::new))
       .stream().toList();
   }
-
   private static String stripVGroup(String v) {
     if (isBlank(v)) return "";
     return v.replaceFirst("(?i)^v(group|assign)[: ]*", "").trim();
   }
-
   private static void ensureParent(File f) throws IOException {
     if (f == null) throw new IOException("File is null");
     File p = f.getAbsoluteFile().getParentFile();
@@ -769,7 +833,6 @@ public class ExcelParserV5 {
       .replace("(edge)", " edge")
       .replaceAll("\\s+", " ")
       .trim();
-
     return switch (norm) {
       case "urgent", "u" -> "urgent";
       case "high", "h" -> "high";

@@ -9,10 +9,14 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 public class AppController {
 
     @FXML private Button loadButton;
+    @FXML private Button saveExcelButton;
+    @FXML private Button saveExcelAsButton;
     @FXML private Button generateNurseJsonButton;
     @FXML private Button generateClinicalJsonButton;
     @FXML private Button exportNurseJsonButton;
@@ -20,6 +24,7 @@ public class AppController {
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
+    // Units
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitFacilityCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNamesCol;
@@ -28,6 +33,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNoCareGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitCommentsCol;
 
+    // NurseCalls
     @FXML private TableView<ExcelParserV5.FlowRow> tableNurseCalls;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseAlarmNameCol;
@@ -35,7 +41,18 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nursePriorityCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseDeviceACol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseRingtoneCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT1Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR1Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT2Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR2Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT3Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR3Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT4Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR4Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT5Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR5Col;
 
+    // Clinicals
     @FXML private TableView<ExcelParserV5.FlowRow> tableClinicals;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalAlarmNameCol;
@@ -43,6 +60,16 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalPriorityCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalDeviceACol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalRingtoneCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT1Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR1Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT2Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR2Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT3Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR3Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT4Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR4Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT5Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR5Col;
 
     private ExcelParserV5 parser;
     private File currentExcelFile;
@@ -56,10 +83,12 @@ public class AppController {
         initializeNurseColumns();
         initializeClinicalColumns();
 
-        // disable buttons until Excel is loaded
         setJsonButtonsEnabled(false);
+        setExcelButtonsEnabled(false);
 
         loadButton.setOnAction(e -> loadExcel());
+        if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
+        if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
         generateNurseJsonButton.setOnAction(e -> generateJson(true));
         generateClinicalJsonButton.setOnAction(e -> generateJson(false));
         exportNurseJsonButton.setOnAction(e -> exportJson(true));
@@ -71,9 +100,7 @@ public class AppController {
         try {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Excel Workbook");
-            chooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
-            );
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
             File file = chooser.showOpenDialog(getStage());
             if (file == null) return;
 
@@ -85,10 +112,52 @@ public class AppController {
             statusLabel.setText("Excel loaded: " + file.getName());
             refreshTables();
             setJsonButtonsEnabled(true);
+            setExcelButtonsEnabled(true);
             showInfo("✅ Excel loaded successfully");
 
         } catch (Exception ex) {
             showError("Failed to load Excel: " + ex.getMessage());
+        }
+    }
+
+    // -------------------- SAVE (Excel) --------------------
+    private void saveExcel() {
+        try {
+            if (parser == null) {
+                showError("Please load and edit an Excel file first.");
+                return;
+            }
+            if (currentExcelFile == null) {
+                saveExcelAs();
+                return;
+            }
+
+            parser.writeExcel(currentExcelFile);
+            showInfo("💾 Excel saved to:\n" + currentExcelFile.getAbsolutePath());
+        } catch (Exception ex) {
+            showError("Error saving Excel: " + ex.getMessage());
+        }
+    }
+
+    private void saveExcelAs() {
+        try {
+            if (parser == null) {
+                showError("Please load and edit an Excel file first.");
+                return;
+            }
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Save As (Excel)");
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+            chooser.setInitialFileName("Edited_EngageRules.xlsx");
+            File out = chooser.showSaveDialog(getStage());
+            if (out == null) return;
+
+            parser.writeExcel(out);
+            currentExcelFile = out;
+            setExcelButtonsEnabled(true);
+            showInfo("💾 Excel saved to:\n" + out.getAbsolutePath());
+        } catch (Exception ex) {
+            showError("Error saving Excel: " + ex.getMessage());
         }
     }
 
@@ -127,19 +196,13 @@ public class AppController {
 
             FileChooser chooser = new FileChooser();
             chooser.setTitle(nurseSide ? "Export NurseCall JSON" : "Export Clinical JSON");
-            chooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("JSON Files", "*.json")
-            );
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
             chooser.setInitialFileName(nurseSide ? "NurseCalls.json" : "Clinicals.json");
 
             File file = chooser.showSaveDialog(getStage());
             if (file == null) return;
 
-            if (nurseSide) {
-                parser.writeNurseCallsJson(file);
-            } else {
-                parser.writeClinicalsJson(file);
-            }
+            if (nurseSide) parser.writeNurseCallsJson(file); else parser.writeClinicalsJson(file);
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
@@ -153,6 +216,11 @@ public class AppController {
         generateClinicalJsonButton.setDisable(!enabled);
         exportNurseJsonButton.setDisable(!enabled);
         exportClinicalJsonButton.setDisable(!enabled);
+    }
+
+    private void setExcelButtonsEnabled(boolean enabled) {
+        if (saveExcelButton != null) saveExcelButton.setDisable(!enabled);
+        if (saveExcelAsButton != null) saveExcelAsButton.setDisable(!enabled);
     }
 
     private void showInfo(String msg) {
@@ -175,109 +243,75 @@ public class AppController {
         return (Stage) jsonPreview.getScene().getWindow();
     }
 
+    // ====== Column initializers ======
+
     private void initializeUnitColumns() {
-        if (unitFacilityCol != null) {
-            unitFacilityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().facility)));
-        }
-        if (unitNamesCol != null) {
-            unitNamesCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().unitNames)));
-        }
-        if (unitNurseGroupCol != null) {
-            unitNurseGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().nurseGroup)));
-        }
-        if (unitClinicalGroupCol != null) {
-            unitClinicalGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().clinGroup)));
-        }
-        if (unitNoCareGroupCol != null) {
-            unitNoCareGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().noCareGroup)));
-        }
-        if (unitCommentsCol != null) {
-            unitCommentsCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().comments)));
-        }
+        if (tableUnits != null) tableUnits.setEditable(true);
+
+        setupEditable(unitFacilityCol, r -> safe(r.facility), (r, v) -> r.facility = safe(v));
+        setupEditable(unitNamesCol, r -> safe(r.unitNames), (r, v) -> r.unitNames = safe(v));
+        setupEditable(unitNurseGroupCol, r -> safe(r.nurseGroup), (r, v) -> r.nurseGroup = safe(v));
+        setupEditable(unitClinicalGroupCol, r -> safe(r.clinGroup), (r, v) -> r.clinGroup = safe(v));
+        setupEditable(unitNoCareGroupCol, r -> safe(r.noCareGroup), (r, v) -> r.noCareGroup = safe(v));
+        setupEditable(unitCommentsCol, r -> safe(r.comments), (r, v) -> r.comments = safe(v));
     }
 
     private void initializeNurseColumns() {
-        if (tableNurseCalls != null) {
-            tableNurseCalls.setEditable(true);
-        }
-        if (nurseConfigGroupCol != null) {
-            nurseConfigGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().configGroup)));
-            nurseConfigGroupCol.setCellFactory(TextFieldTableCell.forTableColumn());
-            nurseConfigGroupCol.setOnEditCommit(event -> {
-                ExcelParserV5.FlowRow row = event.getRowValue();
-                row.configGroup = event.getNewValue();
-                refreshFlowTable(tableNurseCalls);
-            });
-        }
-        if (nurseAlarmNameCol != null) {
-            nurseAlarmNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().alarmName)));
-            nurseAlarmNameCol.setCellFactory(TextFieldTableCell.forTableColumn());
-            nurseAlarmNameCol.setOnEditCommit(event -> {
-                ExcelParserV5.FlowRow row = event.getRowValue();
-                row.alarmName = event.getNewValue();
-                refreshFlowTable(tableNurseCalls);
-            });
-        }
-        if (nurseSendingNameCol != null) {
-            nurseSendingNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().sendingName)));
-        }
-        if (nursePriorityCol != null) {
-            nursePriorityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().priorityRaw)));
-            nursePriorityCol.setCellFactory(TextFieldTableCell.forTableColumn());
-            nursePriorityCol.setOnEditCommit(event -> {
-                ExcelParserV5.FlowRow row = event.getRowValue();
-                row.priorityRaw = event.getNewValue();
-                refreshFlowTable(tableNurseCalls);
-            });
-        }
-        if (nurseDeviceACol != null) {
-            nurseDeviceACol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().deviceA)));
-        }
-        if (nurseRingtoneCol != null) {
-            nurseRingtoneCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().ringtone)));
-        }
+        if (tableNurseCalls != null) tableNurseCalls.setEditable(true);
+
+        setupEditable(nurseConfigGroupCol, f -> safe(f.configGroup), (f, v) -> f.configGroup = safe(v));
+        setupEditable(nurseAlarmNameCol, f -> safe(f.alarmName), (f, v) -> f.alarmName = safe(v));
+        setupEditable(nurseSendingNameCol, f -> safe(f.sendingName), (f, v) -> f.sendingName = safe(v));
+        setupEditable(nursePriorityCol, f -> safe(f.priorityRaw), (f, v) -> f.priorityRaw = safe(v));
+        setupEditable(nurseDeviceACol, f -> safe(f.deviceA), (f, v) -> f.deviceA = safe(v));
+        setupEditable(nurseRingtoneCol, f -> safe(f.ringtone), (f, v) -> f.ringtone = safe(v));
+
+        setupEditable(nurseT1Col, f -> safe(f.t1), (f, v) -> f.t1 = safe(v));
+        setupEditable(nurseR1Col, f -> safe(f.r1), (f, v) -> f.r1 = safe(v));
+        setupEditable(nurseT2Col, f -> safe(f.t2), (f, v) -> f.t2 = safe(v));
+        setupEditable(nurseR2Col, f -> safe(f.r2), (f, v) -> f.r2 = safe(v));
+        setupEditable(nurseT3Col, f -> safe(f.t3), (f, v) -> f.t3 = safe(v));
+        setupEditable(nurseR3Col, f -> safe(f.r3), (f, v) -> f.r3 = safe(v));
+        setupEditable(nurseT4Col, f -> safe(f.t4), (f, v) -> f.t4 = safe(v));
+        setupEditable(nurseR4Col, f -> safe(f.r4), (f, v) -> f.r4 = safe(v));
+        setupEditable(nurseT5Col, f -> safe(f.t5), (f, v) -> f.t5 = safe(v));
+        setupEditable(nurseR5Col, f -> safe(f.r5), (f, v) -> f.r5 = safe(v));
     }
 
     private void initializeClinicalColumns() {
-        if (tableClinicals != null) {
-            tableClinicals.setEditable(true);
-        }
-        if (clinicalConfigGroupCol != null) {
-            clinicalConfigGroupCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().configGroup)));
-            clinicalConfigGroupCol.setCellFactory(TextFieldTableCell.forTableColumn());
-            clinicalConfigGroupCol.setOnEditCommit(event -> {
-                ExcelParserV5.FlowRow row = event.getRowValue();
-                row.configGroup = event.getNewValue();
-                refreshFlowTable(tableClinicals);
-            });
-        }
-        if (clinicalAlarmNameCol != null) {
-            clinicalAlarmNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().alarmName)));
-            clinicalAlarmNameCol.setCellFactory(TextFieldTableCell.forTableColumn());
-            clinicalAlarmNameCol.setOnEditCommit(event -> {
-                ExcelParserV5.FlowRow row = event.getRowValue();
-                row.alarmName = event.getNewValue();
-                refreshFlowTable(tableClinicals);
-            });
-        }
-        if (clinicalSendingNameCol != null) {
-            clinicalSendingNameCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().sendingName)));
-        }
-        if (clinicalPriorityCol != null) {
-            clinicalPriorityCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().priorityRaw)));
-            clinicalPriorityCol.setCellFactory(TextFieldTableCell.forTableColumn());
-            clinicalPriorityCol.setOnEditCommit(event -> {
-                ExcelParserV5.FlowRow row = event.getRowValue();
-                row.priorityRaw = event.getNewValue();
-                refreshFlowTable(tableClinicals);
-            });
-        }
-        if (clinicalDeviceACol != null) {
-            clinicalDeviceACol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().deviceA)));
-        }
-        if (clinicalRingtoneCol != null) {
-            clinicalRingtoneCol.setCellValueFactory(data -> new SimpleStringProperty(safe(data.getValue().ringtone)));
-        }
+        if (tableClinicals != null) tableClinicals.setEditable(true);
+
+        setupEditable(clinicalConfigGroupCol, f -> safe(f.configGroup), (f, v) -> f.configGroup = safe(v));
+        setupEditable(clinicalAlarmNameCol, f -> safe(f.alarmName), (f, v) -> f.alarmName = safe(v));
+        setupEditable(clinicalSendingNameCol, f -> safe(f.sendingName), (f, v) -> f.sendingName = safe(v));
+        setupEditable(clinicalPriorityCol, f -> safe(f.priorityRaw), (f, v) -> f.priorityRaw = safe(v));
+        setupEditable(clinicalDeviceACol, f -> safe(f.deviceA), (f, v) -> f.deviceA = safe(v));
+        setupEditable(clinicalRingtoneCol, f -> safe(f.ringtone), (f, v) -> f.ringtone = safe(v));
+
+        setupEditable(clinicalT1Col, f -> safe(f.t1), (f, v) -> f.t1 = safe(v));
+        setupEditable(clinicalR1Col, f -> safe(f.r1), (f, v) -> f.r1 = safe(v));
+        setupEditable(clinicalT2Col, f -> safe(f.t2), (f, v) -> f.t2 = safe(v));
+        setupEditable(clinicalR2Col, f -> safe(f.r2), (f, v) -> f.r2 = safe(v));
+        setupEditable(clinicalT3Col, f -> safe(f.t3), (f, v) -> f.t3 = safe(v));
+        setupEditable(clinicalR3Col, f -> safe(f.r3), (f, v) -> f.r3 = safe(v));
+        setupEditable(clinicalT4Col, f -> safe(f.t4), (f, v) -> f.t4 = safe(v));
+        setupEditable(clinicalR4Col, f -> safe(f.r4), (f, v) -> f.r4 = safe(v));
+        setupEditable(clinicalT5Col, f -> safe(f.t5), (f, v) -> f.t5 = safe(v));
+        setupEditable(clinicalR5Col, f -> safe(f.r5), (f, v) -> f.r5 = safe(v));
+    }
+
+    // Generic helper to wire editable TextField columns that commit on Enter/defocus
+    private <R> void setupEditable(TableColumn<R, String> col,
+                                   Function<R, String> getter,
+                                   BiConsumer<R, String> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(data -> new SimpleStringProperty(safe(getter.apply(data.getValue()))));
+        col.setCellFactory(TextFieldTableCell.forTableColumn());
+        col.setOnEditCommit(ev -> {
+            R row = ev.getRowValue();
+            setter.accept(row, ev.getNewValue());
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
     }
 
     private void refreshTables() {
@@ -294,11 +328,5 @@ public class AppController {
 
     private static String safe(String value) {
         return value == null ? "" : value;
-    }
-
-    private void refreshFlowTable(TableView<ExcelParserV5.FlowRow> table) {
-        if (table != null) {
-            table.refresh();
-        }
     }
 }
