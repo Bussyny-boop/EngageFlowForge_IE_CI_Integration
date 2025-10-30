@@ -855,4 +855,76 @@ public class ExcelParserV5 {
     if (digits.isEmpty()) return 0;
     try { return Integer.parseInt(digits); } catch (Exception ignore) { return 0; }
   }
+
+       // ---------- Save current data to Excel file ----------
+  public void writeExcel(File outFile) throws Exception {
+      try (Workbook wb = new XSSFWorkbook()) {
+          // Create Unit Breakdown sheet
+          Sheet unitSheet = wb.createSheet("Unit Breakdown");
+          Row uh = unitSheet.createRow(0);
+          String[] uHeaders = {"Facility", "Common Unit Name", "Nurse Call", "Patient Monitoring", "No Caregiver Group", "Comments"};
+          for (int i = 0; i < uHeaders.length; i++) uh.createCell(i).setCellValue(uHeaders[i]);
+  
+          int r = 1;
+          for (UnitRow u : units) {
+              Row row = unitSheet.createRow(r++);
+              row.createCell(0).setCellValue(u.facility);
+              row.createCell(1).setCellValue(u.unitNames);
+              row.createCell(2).setCellValue(u.nurseGroup);
+              row.createCell(3).setCellValue(u.clinGroup);
+              row.createCell(4).setCellValue(u.noCareGroup);
+              row.createCell(5).setCellValue(u.comments);
+          }
+  
+          // Create Nurse Call sheet
+          Sheet nurseSheet = wb.createSheet("Nurse Call");
+          createFlowSheet(nurseSheet, nurseCalls);
+  
+          // Create Clinical sheet
+          Sheet clinSheet = wb.createSheet("Patient Monitoring");
+          createFlowSheet(clinSheet, clinicals);
+  
+          // Write to disk
+          try (FileOutputStream fos = new FileOutputStream(outFile)) {
+              wb.write(fos);
+          }
+      }
+  }
+  
+  private void createFlowSheet(Sheet sheet, List<FlowRow> flows) {
+      String[] headers = {
+          "Configuration Group", "Common Alert or Alarm Name", "Sending System Alert Name", "Priority",
+          "Device - A", "Ringtone Device - A", "Response Options",
+          "Time to 1st Recipient", "1st Recipient",
+          "Time to 2nd Recipient", "2nd Recipient",
+          "Time to 3rd Recipient", "3rd Recipient",
+          "Time to 4th Recipient", "4th Recipient",
+          "Time to 5th Recipient", "5th Recipient"
+      };
+  
+      Row header = sheet.createRow(0);
+      for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
+  
+      int r = 1;
+      for (FlowRow f : flows) {
+          Row row = sheet.createRow(r++);
+          row.createCell(0).setCellValue(f.configGroup);
+          row.createCell(1).setCellValue(f.alarmName);
+          row.createCell(2).setCellValue(f.sendingName);
+          row.createCell(3).setCellValue(f.priorityRaw);
+          row.createCell(4).setCellValue(f.deviceA);
+          row.createCell(5).setCellValue(f.ringtone);
+          row.createCell(6).setCellValue(f.responseOptions);
+          row.createCell(7).setCellValue(f.t1);
+          row.createCell(8).setCellValue(f.r1);
+          row.createCell(9).setCellValue(f.t2);
+          row.createCell(10).setCellValue(f.r2);
+          row.createCell(11).setCellValue(f.t3);
+          row.createCell(12).setCellValue(f.r3);
+          row.createCell(13).setCellValue(f.t4);
+          row.createCell(14).setCellValue(f.r4);
+          row.createCell(15).setCellValue(f.t5);
+          row.createCell(16).setCellValue(f.r5);
+      }
+  }
 }
