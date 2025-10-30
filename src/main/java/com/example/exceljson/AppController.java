@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 public class AppController {
 
+    // ---------- UI Elements ----------
     @FXML private Button loadButton;
     @FXML private Button saveExcelButton;
     @FXML private Button saveExcelAsButton;
@@ -24,7 +25,7 @@ public class AppController {
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
-    // Units
+    // ---------- Units ----------
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitFacilityCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNamesCol;
@@ -33,7 +34,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNoCareGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitCommentsCol;
 
-    // NurseCalls
+    // ---------- Nurse Calls ----------
     @FXML private TableView<ExcelParserV5.FlowRow> tableNurseCalls;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseAlarmNameCol;
@@ -52,7 +53,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT5Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR5Col;
 
-    // Clinicals
+    // ---------- Clinicals ----------
     @FXML private TableView<ExcelParserV5.FlowRow> tableClinicals;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalAlarmNameCol;
@@ -71,10 +72,12 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT5Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR5Col;
 
+    // ---------- Core ----------
     private ExcelParserV5 parser;
     private File currentExcelFile;
     private String lastGeneratedJson = "";
 
+    // ---------- Initialization ----------
     @FXML
     public void initialize() {
         parser = new ExcelParserV5();
@@ -95,7 +98,7 @@ public class AppController {
         exportClinicalJsonButton.setOnAction(e -> exportJson(false));
     }
 
-    // -------------------- LOAD EXCEL --------------------
+    // ---------- Load Excel ----------
     private void loadExcel() {
         try {
             FileChooser chooser = new FileChooser();
@@ -107,20 +110,23 @@ public class AppController {
             parser.load(file);
             currentExcelFile = file;
 
-            String summary = parser.getLoadSummary();
-            jsonPreview.setText(summary);
+            jsonPreview.setText(parser.getLoadSummary());
             statusLabel.setText("Excel loaded: " + file.getName());
+
             refreshTables();
+            tableUnits.refresh();
+            tableNurseCalls.refresh();
+            tableClinicals.refresh();
+
             setJsonButtonsEnabled(true);
             setExcelButtonsEnabled(true);
             showInfo("✅ Excel loaded successfully");
-
         } catch (Exception ex) {
             showError("Failed to load Excel: " + ex.getMessage());
         }
     }
 
-    // -------------------- SAVE (Excel) --------------------
+    // ---------- Save Excel ----------
     private void saveExcel() {
         try {
             if (parser == null) {
@@ -132,6 +138,7 @@ public class AppController {
                 return;
             }
 
+            syncEditsToParser();
             parser.writeExcel(currentExcelFile);
             showInfo("💾 Excel saved to:\n" + currentExcelFile.getAbsolutePath());
         } catch (Exception ex) {
@@ -139,46 +146,37 @@ public class AppController {
         }
     }
 
+    // ---------- Save As (Generated) ----------
     private void saveExcelAs() {
         try {
             if (parser == null) {
                 showError("Please load and edit an Excel file first.");
                 return;
             }
+            syncEditsToParser();
 
-            syncEditsToParser();  // keep this
-
-            // Suggest a default filename based on current file or fallback
+            // Default name suggestion
             String baseName = "Edited_EngageRules";
             if (currentExcelFile != null) {
                 String name = currentExcelFile.getName();
-                if (name.toLowerCase().endsWith(".xlsx")) {
-                    name = name.substring(0, name.length() - 5);
-                }
+                if (name.toLowerCase().endsWith(".xlsx")) name = name.substring(0, name.length() - 5);
                 baseName = name;
             }
-
-            // Create new filename by adding "_Generated"
             String newName = baseName + "_Generated.xlsx";
 
-            // Choose folder but do not overwrite automatically
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Save Generated Excel");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
             chooser.setInitialFileName(newName);
-
             File out = chooser.showSaveDialog(getStage());
             if (out == null) return;
 
-            // Ensure we do NOT overwrite unless confirmed
             if (out.exists()) {
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                 confirm.setTitle("Overwrite File?");
                 confirm.setHeaderText("File already exists");
-                confirm.setContentText("The file \" + out.getName() + \" already exists. Overwrite?");
-                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
-                    return;
-                }
+                confirm.setContentText("The file \"" + out.getName() + "\" already exists. Overwrite?");
+                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
             }
 
             parser.writeExcel(out);
@@ -188,7 +186,7 @@ public class AppController {
         }
     }
 
-    // -------------------- GENERATE JSON --------------------
+    // ---------- Generate JSON ----------
     private void generateJson(boolean nurseSide) {
         try {
             if (parser == null) {
@@ -196,26 +194,21 @@ public class AppController {
                 return;
             }
 
-            syncEditsToParser();
+            syncEditsToParser(); // always sync before generating
 
-            if (nurseSide) {
-                var json = ExcelParserV5.pretty(parser.buildNurseCallsJson());
-                jsonPreview.setText(json);
-                statusLabel.setText("Generated NurseCall JSON");
-                lastGeneratedJson = json;
-            } else {
-                var json = ExcelParserV5.pretty(parser.buildClinicalsJson());
-                jsonPreview.setText(json);
-                statusLabel.setText("Generated Clinical JSON");
-                lastGeneratedJson = json;
-            }
+            String json = nurseSide
+                    ? ExcelParserV5.pretty(parser.buildNurseCallsJson())
+                    : ExcelParserV5.pretty(parser.buildClinicalsJson());
 
+            jsonPreview.setText(json);
+            statusLabel.setText(nurseSide ? "Generated NurseCall JSON" : "Generated Clinical JSON");
+            lastGeneratedJson = json;
         } catch (Exception ex) {
             showError("Error generating JSON: " + ex.getMessage());
         }
     }
 
-    // -------------------- EXPORT JSON --------------------
+    // ---------- Export JSON ----------
     private void exportJson(boolean nurseSide) {
         try {
             if (parser == null) {
@@ -233,7 +226,8 @@ public class AppController {
             File file = chooser.showSaveDialog(getStage());
             if (file == null) return;
 
-            if (nurseSide) parser.writeNurseCallsJson(file); else parser.writeClinicalsJson(file);
+            if (nurseSide) parser.writeNurseCallsJson(file);
+            else parser.writeClinicalsJson(file);
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
@@ -241,7 +235,7 @@ public class AppController {
         }
     }
 
-    // -------------------- HELPERS --------------------
+    // ---------- Helpers ----------
     private void setJsonButtonsEnabled(boolean enabled) {
         generateNurseJsonButton.setDisable(!enabled);
         generateClinicalJsonButton.setDisable(!enabled);
@@ -254,10 +248,9 @@ public class AppController {
         if (saveExcelAsButton != null) saveExcelAsButton.setDisable(!enabled);
     }
 
-    // -------------------- SYNC CURRENT TABLE DATA BACK TO PARSER --------------------
+    // ---------- Sync table edits back to parser ----------
     private void syncEditsToParser() {
         if (parser == null) return;
-
         if (tableUnits != null && tableUnits.getItems() != null) {
             parser.units.clear();
             parser.units.addAll(tableUnits.getItems());
@@ -292,69 +285,60 @@ public class AppController {
         return (Stage) jsonPreview.getScene().getWindow();
     }
 
-    // ====== Column initializers ======
-
+    // ---------- Table column setup ----------
     private void initializeUnitColumns() {
         if (tableUnits != null) tableUnits.setEditable(true);
-
-        setupEditable(unitFacilityCol, r -> safe(r.facility), (r, v) -> r.facility = safe(v));
-        setupEditable(unitNamesCol, r -> safe(r.unitNames), (r, v) -> r.unitNames = safe(v));
-        setupEditable(unitNurseGroupCol, r -> safe(r.nurseGroup), (r, v) -> r.nurseGroup = safe(v));
-        setupEditable(unitClinicalGroupCol, r -> safe(r.clinGroup), (r, v) -> r.clinGroup = safe(v));
-        setupEditable(unitNoCareGroupCol, r -> safe(r.noCareGroup), (r, v) -> r.noCareGroup = safe(v));
-        setupEditable(unitCommentsCol, r -> safe(r.comments), (r, v) -> r.comments = safe(v));
+        setupEditable(unitFacilityCol, r -> r.facility, (r, v) -> r.facility = v);
+        setupEditable(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
+        setupEditable(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
+        setupEditable(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
+        setupEditable(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
+        setupEditable(unitCommentsCol, r -> r.comments, (r, v) -> r.comments = v);
     }
 
     private void initializeNurseColumns() {
         if (tableNurseCalls != null) tableNurseCalls.setEditable(true);
-
-        setupEditable(nurseConfigGroupCol, f -> safe(f.configGroup), (f, v) -> f.configGroup = safe(v));
-        setupEditable(nurseAlarmNameCol, f -> safe(f.alarmName), (f, v) -> f.alarmName = safe(v));
-        setupEditable(nurseSendingNameCol, f -> safe(f.sendingName), (f, v) -> f.sendingName = safe(v));
-        setupEditable(nursePriorityCol, f -> safe(f.priorityRaw), (f, v) -> f.priorityRaw = safe(v));
-        setupEditable(nurseDeviceACol, f -> safe(f.deviceA), (f, v) -> f.deviceA = safe(v));
-        setupEditable(nurseRingtoneCol, f -> safe(f.ringtone), (f, v) -> f.ringtone = safe(v));
-
-        setupEditable(nurseT1Col, f -> safe(f.t1), (f, v) -> f.t1 = safe(v));
-        setupEditable(nurseR1Col, f -> safe(f.r1), (f, v) -> f.r1 = safe(v));
-        setupEditable(nurseT2Col, f -> safe(f.t2), (f, v) -> f.t2 = safe(v));
-        setupEditable(nurseR2Col, f -> safe(f.r2), (f, v) -> f.r2 = safe(v));
-        setupEditable(nurseT3Col, f -> safe(f.t3), (f, v) -> f.t3 = safe(v));
-        setupEditable(nurseR3Col, f -> safe(f.r3), (f, v) -> f.r3 = safe(v));
-        setupEditable(nurseT4Col, f -> safe(f.t4), (f, v) -> f.t4 = safe(v));
-        setupEditable(nurseR4Col, f -> safe(f.r4), (f, v) -> f.r4 = safe(v));
-        setupEditable(nurseT5Col, f -> safe(f.t5), (f, v) -> f.t5 = safe(v));
-        setupEditable(nurseR5Col, f -> safe(f.r5), (f, v) -> f.r5 = safe(v));
+        setupEditable(nurseConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
+        setupEditable(nurseAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
+        setupEditable(nurseSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
+        setupEditable(nursePriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
+        setupEditable(nurseDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupEditable(nurseRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
+        setupEditable(nurseT1Col, f -> f.t1, (f, v) -> f.t1 = v);
+        setupEditable(nurseR1Col, f -> f.r1, (f, v) -> f.r1 = v);
+        setupEditable(nurseT2Col, f -> f.t2, (f, v) -> f.t2 = v);
+        setupEditable(nurseR2Col, f -> f.r2, (f, v) -> f.r2 = v);
+        setupEditable(nurseT3Col, f -> f.t3, (f, v) -> f.t3 = v);
+        setupEditable(nurseR3Col, f -> f.r3, (f, v) -> f.r3 = v);
+        setupEditable(nurseT4Col, f -> f.t4, (f, v) -> f.t4 = v);
+        setupEditable(nurseR4Col, f -> f.r4, (f, v) -> f.r4 = v);
+        setupEditable(nurseT5Col, f -> f.t5, (f, v) -> f.t5 = v);
+        setupEditable(nurseR5Col, f -> f.r5, (f, v) -> f.r5 = v);
     }
 
     private void initializeClinicalColumns() {
         if (tableClinicals != null) tableClinicals.setEditable(true);
-
-        setupEditable(clinicalConfigGroupCol, f -> safe(f.configGroup), (f, v) -> f.configGroup = safe(v));
-        setupEditable(clinicalAlarmNameCol, f -> safe(f.alarmName), (f, v) -> f.alarmName = safe(v));
-        setupEditable(clinicalSendingNameCol, f -> safe(f.sendingName), (f, v) -> f.sendingName = safe(v));
-        setupEditable(clinicalPriorityCol, f -> safe(f.priorityRaw), (f, v) -> f.priorityRaw = safe(v));
-        setupEditable(clinicalDeviceACol, f -> safe(f.deviceA), (f, v) -> f.deviceA = safe(v));
-        setupEditable(clinicalRingtoneCol, f -> safe(f.ringtone), (f, v) -> f.ringtone = safe(v));
-
-        setupEditable(clinicalT1Col, f -> safe(f.t1), (f, v) -> f.t1 = safe(v));
-        setupEditable(clinicalR1Col, f -> safe(f.r1), (f, v) -> f.r1 = safe(v));
-        setupEditable(clinicalT2Col, f -> safe(f.t2), (f, v) -> f.t2 = safe(v));
-        setupEditable(clinicalR2Col, f -> safe(f.r2), (f, v) -> f.r2 = safe(v));
-        setupEditable(clinicalT3Col, f -> safe(f.t3), (f, v) -> f.t3 = safe(v));
-        setupEditable(clinicalR3Col, f -> safe(f.r3), (f, v) -> f.r3 = safe(v));
-        setupEditable(clinicalT4Col, f -> safe(f.t4), (f, v) -> f.t4 = safe(v));
-        setupEditable(clinicalR4Col, f -> safe(f.r4), (f, v) -> f.r4 = safe(v));
-        setupEditable(clinicalT5Col, f -> safe(f.t5), (f, v) -> f.t5 = safe(v));
-        setupEditable(clinicalR5Col, f -> safe(f.r5), (f, v) -> f.r5 = safe(v));
+        setupEditable(clinicalConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
+        setupEditable(clinicalAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
+        setupEditable(clinicalSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
+        setupEditable(clinicalPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
+        setupEditable(clinicalDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupEditable(clinicalRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
+        setupEditable(clinicalT1Col, f -> f.t1, (f, v) -> f.t1 = v);
+        setupEditable(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
+        setupEditable(clinicalT2Col, f -> f.t2, (f, v) -> f.t2 = v);
+        setupEditable(clinicalR2Col, f -> f.r2, (f, v) -> f.r2 = v);
+        setupEditable(clinicalT3Col, f -> f.t3, (f, v) -> f.t3 = v);
+        setupEditable(clinicalR3Col, f -> f.r3, (f, v) -> f.r3 = v);
+        setupEditable(clinicalT4Col, f -> f.t4, (f, v) -> f.t4 = v);
+        setupEditable(clinicalR4Col, f -> f.r4, (f, v) -> f.r4 = v);
+        setupEditable(clinicalT5Col, f -> f.t5, (f, v) -> f.t5 = v);
+        setupEditable(clinicalR5Col, f -> f.r5, (f, v) -> f.r5 = v);
     }
 
-    // Generic helper to wire editable TextField columns that commit on Enter/defocus
-    private <R> void setupEditable(TableColumn<R, String> col,
-                                   Function<R, String> getter,
-                                   BiConsumer<R, String> setter) {
+    private <R> void setupEditable(TableColumn<R, String> col, Function<R, String> getter, BiConsumer<R, String> setter) {
         if (col == null) return;
-        col.setCellValueFactory(data -> new SimpleStringProperty(safe(getter.apply(data.getValue()))));
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
         col.setCellFactory(TextFieldTableCell.forTableColumn());
         col.setOnEditCommit(ev -> {
             R row = ev.getRowValue();
@@ -364,18 +348,10 @@ public class AppController {
     }
 
     private void refreshTables() {
-        if (tableUnits != null) {
-            tableUnits.setItems(FXCollections.observableArrayList(parser.units));
-        }
-        if (tableNurseCalls != null) {
-            tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
-        }
-        if (tableClinicals != null) {
-            tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
-        }
+        if (tableUnits != null) tableUnits.setItems(FXCollections.observableArrayList(parser.units));
+        if (tableNurseCalls != null) tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
+        if (tableClinicals != null) tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
     }
 
-    private static String safe(String value) {
-        return value == null ? "" : value;
-    }
+    private static String safe(String v) { return v == null ? "" : v; }
 }
