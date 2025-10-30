@@ -60,7 +60,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const maxArtifactsToKeep = 5;
+            const maxArtifactsToKeep = 1;
             const artifacts = await github.paginate(
               github.rest.actions.listArtifactsForRepo,
               {
@@ -91,6 +91,7 @@ jobs:
           name: engage-rules-generator-msi
           path: |
             Engage Rules Generator-1.1.msi
+          retention-days: 14
 
 
 
