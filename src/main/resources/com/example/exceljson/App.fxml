@@ -11,8 +11,7 @@
             <Label text="Engage Rules Generator" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Button fx:id="loadButton" text="Load Excel" />
-                <Button text="Generate JSON" disable="true" />
-                <Button text="Save Excel" disable="true" />
+                <Button fx:id="saveExcelButton" text="Save Excel (Save As)" disable="true" />
             </HBox>
             <Label fx:id="statusLabel" text="Ready" />
             <HBox spacing="10">
@@ -24,59 +23,85 @@
             <Separator />
         </VBox>
     </top>
+
     <center>
         <SplitPane orientation="VERTICAL" dividerPositions="0.65">
             <items>
                 <TabPane tabClosingPolicy="UNAVAILABLE">
                     <tabs>
+                        <!-- Units -->
                         <Tab text="Units">
                             <content>
-                                <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                <BorderPane>
                                     <center>
-                                        <TableView fx:id="tableUnits">
+                                        <TableView fx:id="tableUnits" editable="true">
                                             <columns>
                                                 <TableColumn fx:id="unitFacilityCol" prefWidth="120.0" text="Facility" />
                                                 <TableColumn fx:id="unitNamesCol" prefWidth="160.0" text="Unit Names" />
-                                                <TableColumn fx:id="unitNurseGroupCol" prefWidth="140.0" text="Nurse Group" />
-                                                <TableColumn fx:id="unitClinicalGroupCol" prefWidth="140.0" text="Clinical Group" />
-                                                <TableColumn fx:id="unitNoCareGroupCol" prefWidth="160.0" text="No Care Group" />
-                                                <TableColumn fx:id="unitCommentsCol" prefWidth="200.0" text="Comments" />
+                                                <TableColumn fx:id="unitNurseGroupCol" prefWidth="160.0" text="Nurse Group" />
+                                                <TableColumn fx:id="unitClinicalGroupCol" prefWidth="160.0" text="Clinical Group" />
+                                                <TableColumn fx:id="unitNoCareGroupCol" prefWidth="180.0" text="No Caregiver Group" />
+                                                <TableColumn fx:id="unitCommentsCol" prefWidth="220.0" text="Comments" />
                                             </columns>
                                         </TableView>
                                     </center>
                                 </BorderPane>
                             </content>
                         </Tab>
+
+                        <!-- Nurse Calls -->
                         <Tab text="Nurse Calls">
                             <content>
-                                <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                <BorderPane>
                                     <center>
-                                        <TableView fx:id="tableNurseCalls">
+                                        <TableView fx:id="tableNurseCalls" editable="true">
                                             <columns>
                                                 <TableColumn fx:id="nurseConfigGroupCol" prefWidth="160.0" text="Config Group" />
                                                 <TableColumn fx:id="nurseAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
                                                 <TableColumn fx:id="nurseSendingNameCol" prefWidth="200.0" text="Sending Name" />
                                                 <TableColumn fx:id="nursePriorityCol" prefWidth="120.0" text="Priority" />
                                                 <TableColumn fx:id="nurseDeviceACol" prefWidth="140.0" text="Device A" />
-                                                <TableColumn fx:id="nurseRingtoneCol" prefWidth="140.0" text="Ringtone" />
+                                                <TableColumn fx:id="nurseRingtoneCol" prefWidth="160.0" text="Ringtone" />
+                                                <TableColumn fx:id="nurseT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                <TableColumn fx:id="nurseR1Col" prefWidth="220.0" text="1st Recipient" />
+                                                <TableColumn fx:id="nurseT2Col" prefWidth="140.0" text="Time to 2nd" />
+                                                <TableColumn fx:id="nurseR2Col" prefWidth="220.0" text="2nd Recipient" />
+                                                <TableColumn fx:id="nurseT3Col" prefWidth="140.0" text="Time to 3rd" />
+                                                <TableColumn fx:id="nurseR3Col" prefWidth="220.0" text="3rd Recipient" />
+                                                <TableColumn fx:id="nurseT4Col" prefWidth="140.0" text="Time to 4th" />
+                                                <TableColumn fx:id="nurseR4Col" prefWidth="220.0" text="4th Recipient" />
+                                                <TableColumn fx:id="nurseT5Col" prefWidth="140.0" text="Time to 5th" />
+                                                <TableColumn fx:id="nurseR5Col" prefWidth="220.0" text="5th Recipient" />
                                             </columns>
                                         </TableView>
                                     </center>
                                 </BorderPane>
                             </content>
                         </Tab>
+
+                        <!-- Clinicals -->
                         <Tab text="Clinicals">
                             <content>
-                                <BorderPane prefHeight="200.0" prefWidth="200.0">
+                                <BorderPane>
                                     <center>
-                                        <TableView fx:id="tableClinicals">
+                                        <TableView fx:id="tableClinicals" editable="true">
                                             <columns>
                                                 <TableColumn fx:id="clinicalConfigGroupCol" prefWidth="160.0" text="Config Group" />
                                                 <TableColumn fx:id="clinicalAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
                                                 <TableColumn fx:id="clinicalSendingNameCol" prefWidth="200.0" text="Sending Name" />
                                                 <TableColumn fx:id="clinicalPriorityCol" prefWidth="120.0" text="Priority" />
                                                 <TableColumn fx:id="clinicalDeviceACol" prefWidth="140.0" text="Device A" />
-                                                <TableColumn fx:id="clinicalRingtoneCol" prefWidth="140.0" text="Ringtone" />
+                                                <TableColumn fx:id="clinicalRingtoneCol" prefWidth="160.0" text="Ringtone" />
+                                                <TableColumn fx:id="clinicalT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                <TableColumn fx:id="clinicalR1Col" prefWidth="220.0" text="1st Recipient" />
+                                                <TableColumn fx:id="clinicalT2Col" prefWidth="140.0" text="Time to 2nd" />
+                                                <TableColumn fx:id="clinicalR2Col" prefWidth="220.0" text="2nd Recipient" />
+                                                <TableColumn fx:id="clinicalT3Col" prefWidth="140.0" text="Time to 3rd" />
+                                                <TableColumn fx:id="clinicalR3Col" prefWidth="220.0" text="3rd Recipient" />
+                                                <TableColumn fx:id="clinicalT4Col" prefWidth="140.0" text="Time to 4th" />
+                                                <TableColumn fx:id="clinicalR4Col" prefWidth="220.0" text="4th Recipient" />
+                                                <TableColumn fx:id="clinicalT5Col" prefWidth="140.0" text="Time to 5th" />
+                                                <TableColumn fx:id="clinicalR5Col" prefWidth="220.0" text="5th Recipient" />
                                             </columns>
                                         </TableView>
                                     </center>
@@ -85,6 +110,7 @@
                         </Tab>
                     </tabs>
                 </TabPane>
+
                 <VBox spacing="5">
                     <Label text="JSON Preview" />
                     <TextArea fx:id="jsonPreview" wrapText="true" prefRowCount="10" />
@@ -92,6 +118,7 @@
             </items>
         </SplitPane>
     </center>
+
     <padding>
         <Insets top="15" right="15" bottom="15" left="15" />
     </padding>
