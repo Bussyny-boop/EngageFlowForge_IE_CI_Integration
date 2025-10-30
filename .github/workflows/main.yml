@@ -9,6 +9,9 @@ jobs:
   build-msi:
     name: Build Engage Rules Generator (MSI)
     runs-on: windows-latest
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -52,6 +55,35 @@ jobs:
             --win-shortcut `
             --description "Engage Rules Generator – Build JSON configuration for Vocera Engage" `
             --vendor "Your Organization"
+
+      - name: Remove older MSI artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const maxArtifactsToKeep = 5;
+            const artifacts = await github.paginate(
+              github.rest.actions.listArtifactsForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              }
+            );
+
+            const msiArtifacts = artifacts
+              .filter((artifact) => artifact.name === 'engage-rules-generator-msi')
+              .sort(
+                (a, b) => new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf(),
+              );
+
+            for (const artifact of msiArtifacts.slice(maxArtifactsToKeep)) {
+              core.info(`Deleting old artifact ${artifact.name} (#${artifact.id}) created at ${artifact.created_at}`);
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+            }
 
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
