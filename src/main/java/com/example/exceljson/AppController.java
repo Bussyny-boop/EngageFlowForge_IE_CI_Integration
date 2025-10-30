@@ -145,6 +145,9 @@ public class AppController {
                 showError("Please load and edit an Excel file first.");
                 return;
             }
+
+            syncEditsToParser();
+
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Save As (Excel)");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
@@ -168,6 +171,8 @@ public class AppController {
                 showError("Please load an Excel file first.");
                 return;
             }
+
+            syncEditsToParser();
 
             if (nurseSide) {
                 var json = ExcelParserV5.pretty(parser.buildNurseCallsJson());
@@ -193,6 +198,8 @@ public class AppController {
                 showError("Please load an Excel file first.");
                 return;
             }
+
+            syncEditsToParser();
 
             FileChooser chooser = new FileChooser();
             chooser.setTitle(nurseSide ? "Export NurseCall JSON" : "Export Clinical JSON");
@@ -221,6 +228,24 @@ public class AppController {
     private void setExcelButtonsEnabled(boolean enabled) {
         if (saveExcelButton != null) saveExcelButton.setDisable(!enabled);
         if (saveExcelAsButton != null) saveExcelAsButton.setDisable(!enabled);
+    }
+
+    // -------------------- SYNC CURRENT TABLE DATA BACK TO PARSER --------------------
+    private void syncEditsToParser() {
+        if (parser == null) return;
+
+        if (tableUnits != null && tableUnits.getItems() != null) {
+            parser.units.clear();
+            parser.units.addAll(tableUnits.getItems());
+        }
+        if (tableNurseCalls != null && tableNurseCalls.getItems() != null) {
+            parser.nurseCalls.clear();
+            parser.nurseCalls.addAll(tableNurseCalls.getItems());
+        }
+        if (tableClinicals != null && tableClinicals.getItems() != null) {
+            parser.clinicals.clear();
+            parser.clinicals.addAll(tableClinicals.getItems());
+        }
     }
 
     private void showInfo(String msg) {
