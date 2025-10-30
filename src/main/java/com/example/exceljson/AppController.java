@@ -146,19 +146,43 @@ public class AppController {
                 return;
             }
 
-            syncEditsToParser();
+            syncEditsToParser();  // keep this
 
+            // Suggest a default filename based on current file or fallback
+            String baseName = "Edited_EngageRules";
+            if (currentExcelFile != null) {
+                String name = currentExcelFile.getName();
+                if (name.toLowerCase().endsWith(".xlsx")) {
+                    name = name.substring(0, name.length() - 5);
+                }
+                baseName = name;
+            }
+
+            // Create new filename by adding "_Generated"
+            String newName = baseName + "_Generated.xlsx";
+
+            // Choose folder but do not overwrite automatically
             FileChooser chooser = new FileChooser();
-            chooser.setTitle("Save As (Excel)");
+            chooser.setTitle("Save Generated Excel");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
-            chooser.setInitialFileName("Edited_EngageRules.xlsx");
+            chooser.setInitialFileName(newName);
+
             File out = chooser.showSaveDialog(getStage());
             if (out == null) return;
 
+            // Ensure we do NOT overwrite unless confirmed
+            if (out.exists()) {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Overwrite File?");
+                confirm.setHeaderText("File already exists");
+                confirm.setContentText("The file \" + out.getName() + \" already exists. Overwrite?");
+                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+                    return;
+                }
+            }
+
             parser.writeExcel(out);
-            currentExcelFile = out;
-            setExcelButtonsEnabled(true);
-            showInfo("💾 Excel saved to:\n" + out.getAbsolutePath());
+            showInfo("💾 Excel generated successfully:\n" + out.getAbsolutePath());
         } catch (Exception ex) {
             showError("Error saving Excel: " + ex.getMessage());
         }
