@@ -168,4 +168,70 @@ class JobRunnerTest {
             }
         }
     }
+
+    @Test
+    void alertTypeUsesCommonAlarmNameNotSendingName() throws Exception {
+        Path tempDir = Files.createTempDirectory("alert-type-test");
+        Path excelPath = tempDir.resolve("test.xlsx");
+        Path jsonPath = tempDir.resolve("output.json");
+
+        // Create workbook with both Common Alert Name AND Sending System Name
+        createWorkbookWithBothNameColumns(excelPath);
+
+        ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
+        ByteArrayOutputStream errBuffer = new ByteArrayOutputStream();
+        JobRunner runner = new JobRunner(new PrintStream(outBuffer), new PrintStream(errBuffer));
+
+        int status = runner.run("export-json", excelPath.toString(), jsonPath.toString());
+
+        assertEquals(0, status);
+        
+        Path nurseJson = jsonPath.getParent().resolve("NurseCalls.json");
+        assertTrue(Files.exists(nurseJson));
+        
+        String nurseContent = Files.readString(nurseJson);
+        
+        // The alert definition value should use the Common Alert Name, not the Sending System Name
+        assertTrue(nurseContent.contains("\"value\": \"Common Alarm Name\""), 
+            "Alert type should use Common Alarm Name from the 'Common Alert or Alarm Name' column");
+        assertTrue(!nurseContent.contains("\"value\": \"Sending System Alarm Name\""), 
+            "Alert type should NOT use Sending System Alarm Name");
+    }
+
+    private static void createWorkbookWithBothNameColumns(Path target) throws Exception {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet units = workbook.createSheet("Unit Breakdown");
+            Row unitsHeader = units.createRow(0);
+            unitsHeader.createCell(0).setCellValue("Facility");
+            unitsHeader.createCell(2).setCellValue("Common Unit Name");
+            unitsHeader.createCell(3).setCellValue("Configuration Group");
+            Row unitsRow = units.createRow(1);
+            unitsRow.createCell(0).setCellValue("Test Facility");
+            unitsRow.createCell(2).setCellValue("Test Unit");
+            unitsRow.createCell(3).setCellValue("TestGroup");
+
+            Sheet nurseCalls = workbook.createSheet("Nurse call");
+            Row nurseHeader = nurseCalls.createRow(0);
+            nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(4).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(5).setCellValue("Sending System Alert Name");
+            nurseHeader.createCell(6).setCellValue("Priority");
+            nurseHeader.createCell(7).setCellValue("Ringtone");
+            nurseHeader.createCell(32).setCellValue("Response Options");
+            nurseHeader.createCell(33).setCellValue("1st recipients");
+            
+            Row nurseRow = nurseCalls.createRow(1);
+            nurseRow.createCell(0).setCellValue("TestGroup");
+            nurseRow.createCell(4).setCellValue("Common Alarm Name");
+            nurseRow.createCell(5).setCellValue("Sending System Alarm Name");
+            nurseRow.createCell(6).setCellValue("High");
+            nurseRow.createCell(7).setCellValue("Tone 1");
+            nurseRow.createCell(32).setCellValue("Accept");
+            nurseRow.createCell(33).setCellValue("Nurse Team");
+
+            try (OutputStream os = Files.newOutputStream(target)) {
+                workbook.write(os);
+            }
+        }
+    }
 }
