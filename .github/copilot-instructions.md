@@ -44,7 +44,7 @@ All tests must pass before code changes are considered complete. The project use
 ## Key Dependencies
 
 - **Java 17** - Required runtime version
-- **JavaFX 21** - GUI framework
+- **JavaFX 21.0.3** - GUI framework
 - **Apache POI 5.2.5** - Excel file processing
 - **Jackson 2.17.2** - JSON/YAML serialization
 - **Log4j 2.22.1** - Logging framework
