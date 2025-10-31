@@ -128,22 +128,8 @@ public class AppController {
 
     // ---------- Save Excel ----------
     private void saveExcel() {
-        try {
-            if (parser == null) {
-                showError("Please load and edit an Excel file first.");
-                return;
-            }
-            if (currentExcelFile == null) {
-                saveExcelAs();
-                return;
-            }
-
-            syncEditsToParser();
-            parser.writeExcel(currentExcelFile);
-            showInfo("💾 Excel saved to:\n" + currentExcelFile.getAbsolutePath());
-        } catch (Exception ex) {
-            showError("Error saving Excel: " + ex.getMessage());
-        }
+        // Always prompt for a new file location
+        saveExcelAs();
     }
 
     // ---------- Save As (Generated) ----------
