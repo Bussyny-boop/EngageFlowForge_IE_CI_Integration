@@ -738,15 +738,34 @@ public class ExcelParserV5 {
   }
   private static Row findHeaderRow(Sheet sh) {
     if (sh == null) return null;
-    int start = Math.max(0, 2), end = Math.min(sh.getLastRowNum(), start + 3);
+
+    // First try expected positions (row 2..5)
+    int start = 2;
+    int end = Math.min(sh.getLastRowNum(), start + 3);
     for (int r = start; r <= end; r++) {
       Row row = sh.getRow(r);
       if (row == null) continue;
       int nonEmpty = 0;
-      for (int c = 0; c < row.getLastCellNum(); c++) if (!getCell(row,c).isBlank()) nonEmpty++;
+      for (int c = 0; c < row.getLastCellNum(); c++)
+        if (!getCell(row, c).isBlank()) nonEmpty++;
       if (nonEmpty >= 3) return row;
     }
-    for (int r=0;r<=sh.getLastRowNum();r++) { Row row = sh.getRow(r); if (row != null) return row; }
+
+    // Fallback: detect header near top (row 0..3) for re-saved Excel files
+    for (int r = 0; r <= Math.min(sh.getLastRowNum(), 3); r++) {
+      Row row = sh.getRow(r);
+      if (row == null) continue;
+      int nonEmpty = 0;
+      for (int c = 0; c < row.getLastCellNum(); c++)
+        if (!getCell(row, c).isBlank()) nonEmpty++;
+      if (nonEmpty >= 3) return row;
+    }
+
+    // Final fallback
+    for (int r = 0; r <= sh.getLastRowNum(); r++) {
+      Row row = sh.getRow(r);
+      if (row != null) return row;
+    }
     return null;
   }
   private static int firstDataRow(Sheet sh, Row header) {
