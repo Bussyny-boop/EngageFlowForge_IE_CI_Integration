@@ -302,7 +302,7 @@ public class ExcelParserV5 {
 
       Map<String,String> val = new LinkedHashMap<>();
       val.put("category", "");
-      val.put("value", isBlank(r.alarmName) ? name : r.alarmName);
+      val.put("value", name);
       def.put("values", List.of(val));
       byKey.put(key, def);
     }
