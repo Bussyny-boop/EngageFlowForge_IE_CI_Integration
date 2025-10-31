@@ -13,30 +13,24 @@ src/main/resources/ICON.ico
 
 ## Current Status
 
-**Note**: A default `ICON.ico` file has been copied from the existing `icon.ico` in the resources directory. If you need to use a different icon, follow the instructions below.
+**Important**: The `ICON.ico` file is **NOT included** in this repository (it is excluded via `.gitignore`). You must add your own icon file before running the application for the icon to appear.
 
-## How to Add or Replace the Icon
+## How to Add the Icon
 
-### Option 1: Use the Default Icon (Already Done)
-
-The repository currently includes a copy of the existing icon.ico as ICON.ico. If this is acceptable, no further action is needed.
-
-### Option 2: Provide a Custom Icon
-
-If you need to use a custom icon:
+You must add your own `ICON.ico` file to the resources directory:
 
 1. **Prepare Your Icon File**
    - Format: `.ico` file (Windows icon format)
    - Recommended sizes: 16x16, 32x32, 48x48, and 256x256 pixels
-   - Name: Must be exactly `ICON.ico` (uppercase)
+   - Name: Must be exactly `ICON.ico` (all uppercase)
 
 2. **Add the Icon to Resources**
    ```bash
    # Navigate to the resources directory
    cd src/main/resources/
    
-   # Replace the existing ICON.ico with your custom icon
-   cp /path/to/your/custom-icon.ico ICON.ico
+   # Copy your icon file
+   cp /path/to/your/icon.ico ICON.ico
    ```
 
 3. **Rebuild the Application**
