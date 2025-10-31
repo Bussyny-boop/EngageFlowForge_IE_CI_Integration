@@ -886,9 +886,9 @@ public class ExcelParserV5 {
       .trim();
     return switch (norm) {
       case "urgent", "u" -> "urgent";
-      case "high", "h" -> "high";
-      case "medium", "med", "m" -> "medium";
-      case "low", "l" -> "low";
+      case "high", "h" -> "urgent";
+      case "medium", "med", "m" -> "high";
+      case "low", "l" -> "normal";
       case "normal", "n" -> "normal";
       case "low edge" -> "normal";
       case "medium edge" -> "high";
