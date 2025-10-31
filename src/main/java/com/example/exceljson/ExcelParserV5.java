@@ -165,6 +165,38 @@ public class ExcelParserV5 {
     }
   }
 
+  // ---------- Rebuild unit maps from edited units list ----------
+  public void rebuildUnitMaps() {
+    nurseGroupToUnits.clear();
+    clinicalGroupToUnits.clear();
+    noCaregiverByFacility.clear();
+
+    for (UnitRow u : units) {
+      String facility = u.facility;
+      String unitNames = u.unitNames;
+      String nurseGroup = u.nurseGroup;
+      String clinGroup = u.clinGroup;
+      String noCare = u.noCareGroup;
+
+      List<String> list = splitUnits(unitNames);
+      if (!isBlank(nurseGroup)) {
+        for (String name : list) {
+          nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
+            .add(Map.of("facilityName", facility, "name", name));
+        }
+      }
+      if (!isBlank(clinGroup)) {
+        for (String name : list) {
+          clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
+            .add(Map.of("facilityName", facility, "name", name));
+        }
+      }
+      if (!isBlank(facility) && !isBlank(noCare)) {
+        noCaregiverByFacility.put(facility, noCare);
+      }
+    }
+  }
+
   // ---------- Parse: Flow Sheets ----------
   private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide) {
     Sheet sh = findSheet(wb, sheetName);

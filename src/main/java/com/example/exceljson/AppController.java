@@ -254,6 +254,7 @@ public class AppController {
         if (tableUnits != null && tableUnits.getItems() != null) {
             parser.units.clear();
             parser.units.addAll(tableUnits.getItems());
+            parser.rebuildUnitMaps();
         }
         if (tableNurseCalls != null && tableNurseCalls.getItems() != null) {
             parser.nurseCalls.clear();
