@@ -513,56 +513,6 @@ public class ExcelParserV5 {
     out.add(dest);
   }
 
-  // ---------- Response Options Parser ----------
-  private static final class ResponseOptions {
-    final boolean noResponse;
-    final boolean hasAccept;
-    final boolean hasEscalate;
-    final boolean hasCallBack;
-    final String responseType;
-
-    ResponseOptions(boolean noResponse, boolean hasAccept, boolean hasEscalate, boolean hasCallBack) {
-      this.noResponse = noResponse;
-      this.hasAccept = hasAccept;
-      this.hasEscalate = hasEscalate;
-      this.hasCallBack = hasCallBack;
-      
-      // Determine responseType based on combination
-      if (noResponse) {
-        this.responseType = "None";
-      } else if (hasAccept && hasEscalate) {
-        this.responseType = "Accept/Decline";
-      } else if (hasAccept) {
-        this.responseType = "Accept";
-      } else {
-        this.responseType = "None";
-      }
-    }
-  }
-
-  private ResponseOptions parseResponseOptions(String responseOptionsText) {
-    if (isBlank(responseOptionsText)) {
-      return new ResponseOptions(true, false, false, false);
-    }
-
-    // Normalize: lowercase, trim whitespace around commas
-    String normalized = responseOptionsText.toLowerCase(Locale.ROOT).trim();
-    
-    // Split by comma and trim each part
-    List<String> parts = Arrays.stream(normalized.split(","))
-      .map(String::trim)
-      .filter(s -> !s.isEmpty())
-      .collect(Collectors.toList());
-
-    // Check for specific keywords
-    boolean noResponse = parts.stream().anyMatch(p -> p.contains("no response"));
-    boolean hasAccept = parts.stream().anyMatch(p -> p.contains("accept") && !p.contains("no response"));
-    boolean hasEscalate = parts.stream().anyMatch(p -> p.contains("escalate"));
-    boolean hasCallBack = parts.stream().anyMatch(p -> p.contains("call back") || p.equals("callback"));
-
-    return new ResponseOptions(noResponse, hasAccept, hasEscalate, hasCallBack);
-  }
-
   // ---------- Parameter Attributes (correct Engage syntax) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
@@ -570,122 +520,100 @@ public class ExcelParserV5 {
     List<Map<String,Object>> params = new ArrayList<>();
     boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
 
+    // ---------- Unified logic for both NurseCalls and Clinicals ----------
+    
+    // Parse response options (case-insensitive, ignore whitespace)
+    // Note: replaceAll("\\s+", "") intentionally converts "call back" to "callback"
+    String resp = nvl(r.responseOptions, "").toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+    boolean hasAccept = resp.contains("accept") && !resp.contains("noresponse");
+    boolean hasEscalate = resp.contains("escalate");
+    boolean hasCallBack = resp.contains("callback");
+    boolean noResponse = resp.isEmpty() || resp.contains("noresponse");
+
+    // 1. Add ringtone FIRST if available
+    if (!isBlank(r.ringtone)) {
+      params.add(paQ("alertSound", r.ringtone));
+    }
+
+    // 2. Add response logic parameters
+    if (noResponse) {
+      params.add(paQ("responseType", "None"));
+    } 
+    else if (hasAccept && hasEscalate && hasCallBack) {
+      // Accept, Escalate, Call Back: add callbackNumber before accept
+      params.add(paQ("responseType", "Accept/Decline"));
+      params.add(paQ("callbackNumber", "responses.usr.phone_number"));
+      params.add(paQ("accept", "Accepted"));
+      params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      params.add(paQ("acceptAndCall", "Call Back"));
+      params.add(paQ("decline", nurseSide ? "Decline Primary" : "Decline"));
+      params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+      params.add(paQ("respondingLine", "responses.line.number"));
+      params.add(paQ("responsePath", "responses.action"));
+      params.add(paQ("respondingUser", "responses.usr.login"));
+    } 
+    else if (hasAccept && hasEscalate) {
+      // Accept and Escalate
+      params.add(paQ("responseType", "Accept/Decline"));
+      params.add(paQ("accept", "Accepted"));
+      params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      params.add(paQ("decline", nurseSide ? "Decline Primary" : "Decline"));
+      params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+      params.add(paQ("respondingLine", "responses.line.number"));
+      params.add(paQ("responsePath", "responses.action"));
+      params.add(paQ("respondingUser", "responses.usr.login"));
+    } 
+    else if (hasAccept) {
+      // Accept only: use "Accept/Decline" and include responding fields
+      params.add(paQ("responseType", "Accept/Decline"));
+      params.add(paQ("accept", "Accepted"));
+      params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      params.add(paQ("respondingLine", "responses.line.number"));
+      params.add(paQ("responsePath", "responses.action"));
+      params.add(paQ("respondingUser", "responses.usr.login"));
+    } 
+    else {
+      params.add(paQ("responseType", "None"));
+    }
+
+    // 3. Add shared attributes (with conditional values based on nurseSide)
+    params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
+    params.add(paLiteralBool("enunciate", true));
+    
+    // Message differs between NurseCall and Clinical
     if (nurseSide) {
-      // Parse response options dynamically
-      ResponseOptions respOpts = parseResponseOptions(r.responseOptions);
-      
-      // Add response parameters based on parsed options
-      if (respOpts.hasAccept) {
-        params.add(paQ("accept", "Accepted"));
-        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
-      }
-      if (respOpts.hasCallBack) {
-        params.add(paQ("acceptAndCall", "Call Back"));
-      }
-      if (respOpts.hasEscalate) {
-        params.add(paQ("decline", "Decline Primary"));
-        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
-      }
-
-      // Add ringtone parameter after response parameters
-      if (!isBlank(r.ringtone)) {
-        params.add(paQ("alertSound", r.ringtone));
-      }
-
-      // Add standard NurseCall attributes
-      params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
-      params.add(paLiteralBool("enunciate", true));
       params.add(paQ("message", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}"));
       params.add(paQ("patientMRN", "#{bed.patient.mrn}:#{bed.patient.visit_number}"));
-      params.add(paQ("placeUid", "#{bed.uid}"));
-      params.add(paQ("patientName", "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"));
-      params.add(paLiteralBool("popup", true));
-      params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
-      params.add(paQ("responseType", respOpts.responseType));
+    } else {
+      params.add(paQ("message", "Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}"));
+      params.add(paQ("patientMRN", "#{clinical_patient.mrn}:#{clinical_patient.visit_number}"));
+    }
+    
+    params.add(paQ("patientName", nurseSide 
+      ? "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"
+      : "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
+    params.add(paQ("placeUid", "#{bed.uid}"));
+    params.add(paLiteralBool("popup", true));
+    params.add(paQ("eventIdentification", nurseSide ? "NurseCalls:#{id}" : "#{id}"));
+    params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
+    params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
+    params.add(paLiteral("ttl", "10"));
+    params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
+    params.add(paQ("vibrate", "short"));
 
-      if (!respOpts.noResponse) {
-        params.add(paQ("respondingLine", "responses.line.number"));
-        params.add(paQ("respondingUser", "responses.usr.login"));
-        params.add(paQ("responsePath", "responses.action"));
-      }
-
-      params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
-      params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
-      params.add(paLiteral("ttl", "10"));
-      params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
-      params.add(paQ("vibrate", "short"));
-
+    // 4. Add destination names
+    if (nurseSide) {
       addDestNameParam(params, 0, firstToken(r.r1));
       addDestNameParam(params, 1, firstToken(r.r2));
       addDestNameParam(params, 2, firstToken(r.r3));
       addDestNameParam(params, 3, firstToken(r.r4));
       addDestNameParam(params, 4, firstToken(r.r5));
-
     } else {
-      // ---------- Dynamic logic for Clinicals ----------
-      String resp = nvl(r.responseOptions, "").toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
-      boolean hasAccept   = resp.contains("accept");
-      boolean hasEscalate = resp.contains("escalate");
-      boolean hasCallBack = resp.contains("callback");
-      boolean noResponse  = resp.isEmpty() || resp.equals("noresponse");
-
-      // Always include ringtone if provided
-      if (!isBlank(r.ringtone)) {
-        params.add(paQ("alertSound", r.ringtone));
-      }
-
-      // Handle Response Options
-      if (noResponse) {
-        params.add(paQ("responseType", "None"));
-      } 
-      else if (hasAccept && hasEscalate && hasCallBack) {
-        params.add(paQ("responseType", "Accept/Decline"));
-        params.add(paQ("accept", "Accepted"));
-        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
-        params.add(paQ("acceptAndCall", "Call Back"));
-        params.add(paQ("decline", "Decline Primary"));
-        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
-        params.add(paQ("respondingLine", "responses.line.number"));
-        params.add(paQ("respondingUser", "responses.usr.login"));
-        params.add(paQ("responsePath", "responses.action"));
-      } 
-      else if (hasAccept && hasEscalate) {
-        params.add(paQ("responseType", "Accept/Decline"));
-        params.add(paQ("accept", "Accepted"));
-        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
-        params.add(paQ("decline", "Decline"));
-        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
-        params.add(paQ("respondingLine", "responses.line.number"));
-        params.add(paQ("respondingUser", "responses.usr.login"));
-        params.add(paQ("responsePath", "responses.action"));
-      } 
-      else if (hasAccept) {
-        params.add(paQ("responseType", "Accept"));
-        params.add(paQ("accept", "Accepted"));
-        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
-      } 
-      else {
-        params.add(paQ("responseType", "None"));
-      }
-
-      // ---------- Standard Clinical attributes ----------
-      params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
-      params.add(paLiteralBool("enunciate", true));
-      params.add(paQ("message", "Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}"));
-      params.add(paQ("patientMRN", "#{clinical_patient.mrn}:#{clinical_patient.visit_number}"));
-      params.add(paQ("patientName", "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
-      params.add(paQ("placeUid", "#{bed.uid}"));
-      params.add(paLiteralBool("popup", true));
-      params.add(paQ("eventIdentification", "#{id}"));
-      params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
-      params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
-      params.add(paLiteral("ttl", "10"));
-      params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
-      params.add(paQ("vibrate", "short"));
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
       params.add(paOrderQ(1, "subject", "NoCaregiver assigned for #{alert_type} #{bed.room.name}"));
     }
+    
     return params;
   }
 
