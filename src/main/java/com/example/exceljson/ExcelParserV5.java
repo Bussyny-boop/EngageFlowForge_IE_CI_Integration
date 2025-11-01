@@ -542,7 +542,7 @@ public class ExcelParserV5 {
     else if (hasAccept && hasEscalate && hasCallBack) {
       // Accept, Escalate, Call Back: add callbackNumber before accept
       params.add(paQ("responseType", "Accept/Decline"));
-      params.add(paQ("callbackNumber", "responses.usr.phone_number"));
+      params.add(paQ("callbackNumber", "#{bed.pillow_number}"));
       params.add(paQ("accept", "Accepted"));
       params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
       params.add(paQ("acceptAndCall", "Call Back"));

@@ -84,6 +84,8 @@ class ResponseOptionsTest {
             "Accept,Escalate,Call Back should set responseType value to \\\"Accept/Decline\\\"");
         assertTrue(json.contains("\"name\": \"callbackNumber\""), 
             "Should include callbackNumber parameter");
+        assertTrue(json.contains("\"value\": \"\\\"#{bed.pillow_number}\\\"\""), 
+            "callbackNumber should have value #{bed.pillow_number}");
         assertTrue(json.contains("\"name\": \"accept\""), 
             "Should include accept parameter");
         assertTrue(json.contains("\"name\": \"decline\""), 
