@@ -622,9 +622,53 @@ public class ExcelParserV5 {
       addDestNameParam(params, 4, firstToken(r.r5));
 
     } else {
-      params.add(paOrderQ(0, "destinationName", "Nurse Alert"));
-      params.add(paQ("alertSound", nvl(r.ringtone, "Vocera Tone 0 Long")));
-      params.add(paQ("responseAllowed", "false"));
+      // ---------- Dynamic logic for Clinicals ----------
+      String resp = nvl(r.responseOptions, "").toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+      boolean hasAccept   = resp.contains("accept");
+      boolean hasEscalate = resp.contains("escalate");
+      boolean hasCallBack = resp.contains("callback");
+      boolean noResponse  = resp.isEmpty() || resp.equals("noresponse");
+
+      // Always include ringtone if provided
+      if (!isBlank(r.ringtone)) {
+        params.add(paQ("alertSound", r.ringtone));
+      }
+
+      // Handle Response Options
+      if (noResponse) {
+        params.add(paQ("responseType", "None"));
+      } 
+      else if (hasAccept && hasEscalate && hasCallBack) {
+        params.add(paQ("responseType", "Accept/Decline"));
+        params.add(paQ("accept", "Accepted"));
+        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+        params.add(paQ("acceptAndCall", "Call Back"));
+        params.add(paQ("decline", "Decline Primary"));
+        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+        params.add(paQ("respondingLine", "responses.line.number"));
+        params.add(paQ("respondingUser", "responses.usr.login"));
+        params.add(paQ("responsePath", "responses.action"));
+      } 
+      else if (hasAccept && hasEscalate) {
+        params.add(paQ("responseType", "Accept/Decline"));
+        params.add(paQ("accept", "Accepted"));
+        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+        params.add(paQ("decline", "Decline"));
+        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+        params.add(paQ("respondingLine", "responses.line.number"));
+        params.add(paQ("respondingUser", "responses.usr.login"));
+        params.add(paQ("responsePath", "responses.action"));
+      } 
+      else if (hasAccept) {
+        params.add(paQ("responseType", "Accept"));
+        params.add(paQ("accept", "Accepted"));
+        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      } 
+      else {
+        params.add(paQ("responseType", "None"));
+      }
+
+      // ---------- Standard Clinical attributes ----------
       params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
       params.add(paLiteralBool("enunciate", true));
       params.add(paQ("message", "Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}"));
@@ -633,7 +677,6 @@ public class ExcelParserV5 {
       params.add(paQ("placeUid", "#{bed.uid}"));
       params.add(paLiteralBool("popup", true));
       params.add(paQ("eventIdentification", "#{id}"));
-      params.add(paQ("responseType", "None"));
       params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
       params.add(paLiteral("ttl", "10"));
@@ -642,7 +685,6 @@ public class ExcelParserV5 {
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
       params.add(paOrderQ(1, "subject", "NoCaregiver assigned for #{alert_type} #{bed.room.name}"));
-      params.add(paOrderQ(1, "shortMessage", "NoCaregiver Assigned for #{alert_type} in #{bed.room.name} #{bed.bed_number}"));
     }
     return params;
   }

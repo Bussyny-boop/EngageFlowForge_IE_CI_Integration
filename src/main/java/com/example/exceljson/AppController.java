@@ -43,6 +43,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nursePriorityCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseDeviceACol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseRingtoneCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseResponseOptionsCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT2Col;
@@ -62,6 +63,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalPriorityCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalDeviceACol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalRingtoneCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalResponseOptionsCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT2Col;
@@ -302,6 +304,7 @@ public class AppController {
         setupEditable(nursePriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupEditable(nurseDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
         setupEditable(nurseRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
+        setupEditable(nurseResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(nurseT1Col, f -> f.t1, (f, v) -> f.t1 = v);
         setupEditable(nurseR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(nurseT2Col, f -> f.t2, (f, v) -> f.t2 = v);
@@ -322,6 +325,7 @@ public class AppController {
         setupEditable(clinicalPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupEditable(clinicalDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
         setupEditable(clinicalRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
+        setupEditable(clinicalResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(clinicalT1Col, f -> f.t1, (f, v) -> f.t1 = v);
         setupEditable(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(clinicalT2Col, f -> f.t2, (f, v) -> f.t2 = v);
