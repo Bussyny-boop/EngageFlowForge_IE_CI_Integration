@@ -22,6 +22,7 @@ public class AppController {
     @FXML private Button generateClinicalJsonButton;
     @FXML private Button exportNurseJsonButton;
     @FXML private Button exportClinicalJsonButton;
+    @FXML private CheckBox mergeFlowsCheckbox;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
@@ -182,9 +183,11 @@ public class AppController {
 
             syncEditsToParser(); // always sync before generating
 
+            boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+
             String json = nurseSide
-                    ? ExcelParserV5.pretty(parser.buildNurseCallsJson())
-                    : ExcelParserV5.pretty(parser.buildClinicalsJson());
+                    ? ExcelParserV5.pretty(parser.buildNurseCallsJson(useAdvanced))
+                    : ExcelParserV5.pretty(parser.buildClinicalsJson(useAdvanced));
 
             jsonPreview.setText(json);
             statusLabel.setText(nurseSide ? "Generated NurseCall JSON" : "Generated Clinical JSON");
