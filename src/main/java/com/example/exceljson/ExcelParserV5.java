@@ -523,6 +523,7 @@ public class ExcelParserV5 {
     // ---------- Unified logic for both NurseCalls and Clinicals ----------
     
     // Parse response options (case-insensitive, ignore whitespace)
+    // Note: replaceAll("\\s+", "") intentionally converts "call back" to "callback"
     String resp = nvl(r.responseOptions, "").toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
     boolean hasAccept = resp.contains("accept") && !resp.contains("noresponse");
     boolean hasEscalate = resp.contains("escalate");
