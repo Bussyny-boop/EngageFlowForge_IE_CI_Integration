@@ -462,7 +462,8 @@ public class ExcelParserV5 {
       params.add(paQ("vibrate", "short"));
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
-      params.add(paOrderQ(1, "subject", "NoCaregive assigned for #{alert_type} #{bed.room.name}"));
+      params.add(paOrderQ(1, "subject", "NoCaregiver assigned for #{alert_type} #{bed.room.name}"));
+      params.add(paOrderQ(1, "shortMessage", "NoCaregiver Assigned for #{alert_type} in #{bed.room.name} #{bed.bed_number}"));
     }
     return params;
   }
