@@ -137,6 +137,21 @@ class BreakThroughDNDTest {
     }
 
     @Test
+    void breakThroughDNDDirectAPIValuesPassThrough() throws Exception {
+        // Test that direct API values are normalized and passed through
+        String json1 = generateJsonForBreakThroughDND("Normal", "VoceraAndDevice");
+        String json2 = generateJsonForBreakThroughDND("Normal", "DEVICE");
+        String json3 = generateJsonForBreakThroughDND("Urgent", "NONE");
+        
+        assertTrue(json1.contains("\"value\": \"\\\"voceraAndDevice\\\"\""), 
+            "Direct API value 'VoceraAndDevice' should be normalized to 'voceraAndDevice'");
+        assertTrue(json2.contains("\"value\": \"\\\"device\\\"\""), 
+            "Direct API value 'DEVICE' should be normalized to 'device'");
+        assertTrue(json3.contains("\"value\": \"\\\"none\\\"\""), 
+            "Direct API value 'NONE' should be normalized to 'none'");
+    }
+
+    @Test
     void excelSaveAndLoadPreservesBreakThroughDND() throws Exception {
         Path tempDir = Files.createTempDirectory("breakthrough-test");
         Path excelPath1 = tempDir.resolve("test1.xlsx");

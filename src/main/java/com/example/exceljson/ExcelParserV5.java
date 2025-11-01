@@ -1049,30 +1049,42 @@ public class ExcelParserV5 {
 
   /**
    * Map Break Through DND values from Excel to Engage API values.
-   * - "Yes" or "Y" -> "voceraAndDevice"
-   * - "No" or "N" -> "none"
-   * - Other values (like "voceraAndDevice", "device", "none") are passed through as-is
-   * - Empty/blank falls back to priority-based logic
+   * 
+   * Mapping rules:
+   * - "Yes" or "Y" (case insensitive) -> "voceraAndDevice"
+   * - "No" or "N" (case insensitive) -> "none"
+   * - Known API values ("voceraAndDevice", "device", "none") are passed through as-is
+   * - Empty/blank -> falls back to priority-based logic
+   * 
+   * @param excelValue The value from the Excel "Break Through DND" column
+   * @param fallbackToUrgent When excelValue is blank, determines fallback: true -> "voceraAndDevice", false -> "none"
+   * @return The mapped Engage API value
    */
-  private static String mapBreakThroughDND(String excelValue, boolean urgent) {
+  private static String mapBreakThroughDND(String excelValue, boolean fallbackToUrgent) {
     if (isBlank(excelValue)) {
-      // Empty value: use priority-based logic
-      return urgent ? "voceraAndDevice" : "none";
+      // Empty value: use priority-based logic based on fallbackToUrgent
+      return fallbackToUrgent ? "voceraAndDevice" : "none";
     }
     
     String normalized = excelValue.trim().toLowerCase(Locale.ROOT);
     
-    // Map Yes/Y to voceraAndDevice
+    // Map user-friendly Yes/Y to voceraAndDevice
     if (normalized.equals("yes") || normalized.equals("y")) {
       return "voceraAndDevice";
     }
     
-    // Map No/N to none
+    // Map user-friendly No/N to none
     if (normalized.equals("no") || normalized.equals("n")) {
       return "none";
     }
     
-    // Pass through other values as-is (e.g., "voceraAndDevice", "device", "none")
+    // Validate and pass through known API values
+    if (normalized.equals("voceraanddevice") || normalized.equals("device") || normalized.equals("none")) {
+      return normalized.equals("voceraanddevice") ? "voceraAndDevice" : normalized;
+    }
+    
+    // Unknown value: pass through with original casing but log warning in future
+    // This allows for new API values without code changes
     return excelValue.trim();
   }
 
