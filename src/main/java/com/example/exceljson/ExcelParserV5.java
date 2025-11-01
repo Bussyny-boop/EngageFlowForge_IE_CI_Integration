@@ -513,6 +513,45 @@ public class ExcelParserV5 {
     out.add(dest);
   }
 
+  // ---------- Response Options Normalization ----------
+  /**
+   * Normalizes response options by:
+   * - Converting to lowercase
+   * - Trimming whitespace
+   * - Removing spaces before and after commas
+   * - Converting "call back" to "callback"
+   */
+  private static String normalizeResponseOptions(String responseOptions) {
+    if (isBlank(responseOptions)) {
+      return "";
+    }
+    String normalized = responseOptions.toLowerCase(Locale.ROOT).trim();
+    // Remove spaces before and after commas
+    normalized = normalized.replaceAll("\\s*,\\s*", ",");
+    // Convert "call back" to "callback"
+    normalized = normalized.replace("call back", "callback");
+    return normalized;
+  }
+  
+  /**
+   * Determines the responseType based on normalized response options.
+   * Returns:
+   * - "None" for empty or "noresponse"
+   * - "Accept/Decline" for "accept,escalate"
+   * - "Accept/Decline/Call" for "accept,escalate,callback"
+   */
+  private static String determineResponseType(String normalizedResponse) {
+    if (normalizedResponse.isEmpty() || normalizedResponse.equals("noresponse")) {
+      return "None";
+    } else if (normalizedResponse.equals("accept,escalate,callback")) {
+      return "Accept/Decline/Call";
+    } else if (normalizedResponse.equals("accept,escalate")) {
+      return "Accept/Decline";
+    }
+    // Default to None for unrecognized patterns
+    return "None";
+  }
+
   // ---------- Parameter Attributes (correct Engage syntax) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
@@ -525,21 +564,32 @@ public class ExcelParserV5 {
     }
 
     if (nurseSide) {
-      boolean hasAccept   = containsWord(r.responseOptions, "accept");
-      boolean hasEscalate = containsWord(r.responseOptions, "escalate");
-      boolean hasCallBack = containsWord(r.responseOptions, "call back") || containsWord(r.responseOptions, "callback");
-      boolean noResponse  = containsWord(r.responseOptions, "no response");
-
-      if (hasAccept) {
+      // Normalize and determine response type
+      String normalizedResponse = normalizeResponseOptions(r.responseOptions);
+      String responseType = determineResponseType(normalizedResponse);
+      
+      // Add response-specific parameters based on normalized response options
+      if (normalizedResponse.equals("accept,escalate")) {
         params.add(paQ("accept", "Accepted"));
         params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
-      }
-      if (hasCallBack) {
-        params.add(paQ("acceptAndCall", "Call Back"));
-      }
-      if (hasEscalate) {
         params.add(paQ("decline", "Decline Primary"));
         params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+      } else if (normalizedResponse.equals("accept,escalate,callback")) {
+        params.add(paQ("accept", "Accepted"));
+        params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+        params.add(paQ("acceptAndCall", "Call Back"));
+        params.add(paQ("decline", "Decline Primary"));
+        params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+      }
+      
+      // Add responseType parameter
+      params.add(paQ("responseType", responseType));
+      
+      // Add response path parameters if not "None"
+      if (!responseType.equals("None")) {
+        params.add(paQ("respondingLine", "responses.line.number"));
+        params.add(paQ("respondingUser", "responses.usr.login"));
+        params.add(paQ("responsePath", "responses.action"));
       }
 
       params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
@@ -550,14 +600,6 @@ public class ExcelParserV5 {
       params.add(paQ("patientName", "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"));
       params.add(paLiteralBool("popup", true));
       params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
-      params.add(paQ("responseType", noResponse ? "None" : "Accept/Decline"));
-
-      if (!noResponse) {
-        params.add(paQ("respondingLine", "responses.line.number"));
-        params.add(paQ("respondingUser", "responses.usr.login"));
-        params.add(paQ("responsePath", "responses.action"));
-      }
-
       params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
       params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
       params.add(paLiteral("ttl", "10"));
