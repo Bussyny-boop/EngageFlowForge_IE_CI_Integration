@@ -329,7 +329,7 @@ public class ExcelParserV5 {
       
       // Use the first row as the template
       FlowRow template = group.get(0);
-      List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(template.configGroup, List.of());
+      List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(nvl(template.configGroup, ""), List.of());
       String mappedPriority = mapPrioritySafe(template.priorityRaw);
 
       // Collect all alarm names from the group
@@ -355,7 +355,7 @@ public class ExcelParserV5 {
 
   // ---------- Build merge key for grouping flows with identical delivery parameters ----------
   private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits) {
-    List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(r.configGroup, List.of());
+    List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(nvl(r.configGroup, ""), List.of());
     String mappedPriority = mapPrioritySafe(r.priorityRaw);
     
     // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units
