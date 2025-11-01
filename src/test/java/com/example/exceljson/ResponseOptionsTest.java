@@ -38,14 +38,18 @@ class ResponseOptionsTest {
         
         assertTrue(json.contains("\"name\": \"responseType\""), 
             "Should have responseType parameter");
-        assertTrue(json.contains("\"value\": \"\\\"Accept\\\"\""), 
-            "Accept only should set responseType value to \\\"Accept\\\"");
+        assertTrue(json.contains("\"value\": \"\\\"Accept/Decline\\\"\""), 
+            "Accept only should set responseType value to \\\"Accept/Decline\\\"");
         assertTrue(json.contains("\"name\": \"accept\""), 
             "Accept should include accept parameter");
         assertTrue(json.contains("\"acceptBadgePhrases\""), 
             "Accept should include acceptBadgePhrases");
         assertTrue(json.contains("\"name\": \"respondingLine\""), 
             "Accept should include respondingLine");
+        assertTrue(json.contains("\"name\": \"respondingUser\""), 
+            "Accept should include respondingUser");
+        assertTrue(json.contains("\"name\": \"responsePath\""), 
+            "Accept should include responsePath");
         assertTrue(!json.contains("\"name\": \"decline\""), 
             "Accept only should not include decline parameter");
     }
@@ -78,6 +82,8 @@ class ResponseOptionsTest {
             "Should have responseType parameter");
         assertTrue(json.contains("\"value\": \"\\\"Accept/Decline\\\"\""), 
             "Accept,Escalate,Call Back should set responseType value to \\\"Accept/Decline\\\"");
+        assertTrue(json.contains("\"name\": \"callbackNumber\""), 
+            "Should include callbackNumber parameter");
         assertTrue(json.contains("\"name\": \"accept\""), 
             "Should include accept parameter");
         assertTrue(json.contains("\"name\": \"decline\""), 
@@ -86,6 +92,12 @@ class ResponseOptionsTest {
             "Should include acceptAndCall parameter");
         assertTrue(json.contains("\"name\": \"respondingLine\""), 
             "Should include respondingLine");
+        
+        // Verify callbackNumber comes before accept
+        int callbackPos = json.indexOf("\"name\": \"callbackNumber\"");
+        int acceptPos = json.indexOf("\"name\": \"accept\"");
+        assertTrue(callbackPos > 0 && acceptPos > callbackPos, 
+            "callbackNumber should appear before accept");
     }
 
     @Test
@@ -109,15 +121,17 @@ class ResponseOptionsTest {
         String json = generateJsonForResponseOption("Accept,Escalate");
         
         // Find positions in the JSON
+        int alertSoundPos = json.indexOf("\"name\": \"alertSound\"");
+        int responseTypePos = json.indexOf("\"name\": \"responseType\"");
         int acceptPos = json.indexOf("\"name\": \"accept\"");
         int declinePos = json.indexOf("\"name\": \"decline\"");
-        int alertSoundPos = json.indexOf("\"name\": \"alertSound\"");
         int breakThroughPos = json.indexOf("\"name\": \"breakThrough\"");
         
-        assertTrue(acceptPos > 0, "Should have accept parameter");
+        assertTrue(alertSoundPos > 0, "Should have alertSound parameter");
+        assertTrue(responseTypePos > alertSoundPos, "responseType should be after alertSound");
+        assertTrue(acceptPos > responseTypePos, "Accept should be after responseType");
         assertTrue(declinePos > acceptPos, "Decline should be after accept");
-        assertTrue(alertSoundPos > declinePos, "alertSound should be after response parameters");
-        assertTrue(breakThroughPos > alertSoundPos, "breakThrough should be after alertSound");
+        assertTrue(breakThroughPos > declinePos, "breakThrough should be after response parameters");
     }
 
     @Test

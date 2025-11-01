@@ -36,14 +36,18 @@ class ClinicalResponseOptionsTest {
         
         assertTrue(json.contains("\"name\": \"responseType\""), 
             "Should have responseType parameter");
-        assertTrue(json.contains("\"value\": \"\\\"Accept\\\"\""), 
-            "Accept only should set responseType value to \\\"Accept\\\"");
+        assertTrue(json.contains("\"value\": \"\\\"Accept/Decline\\\"\""), 
+            "Accept only should set responseType value to \\\"Accept/Decline\\\"");
         assertTrue(json.contains("\"name\": \"accept\""), 
             "Accept should include accept parameter");
         assertTrue(json.contains("\"acceptBadgePhrases\""), 
             "Accept should include acceptBadgePhrases");
-        assertTrue(!json.contains("\"name\": \"respondingLine\""), 
-            "Accept only should not include respondingLine");
+        assertTrue(json.contains("\"name\": \"respondingLine\""), 
+            "Accept only should include respondingLine");
+        assertTrue(json.contains("\"name\": \"respondingUser\""), 
+            "Accept only should include respondingUser");
+        assertTrue(json.contains("\"name\": \"responsePath\""), 
+            "Accept only should include responsePath");
         assertTrue(!json.contains("\"name\": \"decline\""), 
             "Accept only should not include decline parameter");
     }
@@ -76,6 +80,8 @@ class ClinicalResponseOptionsTest {
             "Should have responseType parameter");
         assertTrue(json.contains("\"value\": \"\\\"Accept/Decline\\\"\""), 
             "Accept,Escalate,Call Back should set responseType value to \\\"Accept/Decline\\\"");
+        assertTrue(json.contains("\"name\": \"callbackNumber\""), 
+            "Should include callbackNumber parameter");
         assertTrue(json.contains("\"name\": \"accept\""), 
             "Should include accept parameter");
         assertTrue(json.contains("\"name\": \"decline\""), 
@@ -86,6 +92,12 @@ class ClinicalResponseOptionsTest {
             "Should include acceptAndCall parameter");
         assertTrue(json.contains("\"name\": \"respondingLine\""), 
             "Should include respondingLine");
+        
+        // Verify callbackNumber comes before accept
+        int callbackPos = json.indexOf("\"name\": \"callbackNumber\"");
+        int acceptPos = json.indexOf("\"name\": \"accept\"");
+        assertTrue(callbackPos > 0 && acceptPos > callbackPos, 
+            "callbackNumber should appear before accept");
     }
 
     @Test
