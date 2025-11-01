@@ -583,7 +583,7 @@ public class ExcelParserV5 {
     // Use breakThroughDND from Excel if available, otherwise fallback to priority-based logic
     String breakThroughValue;
     if (!isBlank(r.breakThroughDND)) {
-      breakThroughValue = r.breakThroughDND;
+      breakThroughValue = mapBreakThroughDND(r.breakThroughDND, urgent);
     } else {
       // Backward compatibility: use priority-based logic if column not provided
       breakThroughValue = urgent ? "voceraAndDevice" : "none";
@@ -1046,6 +1046,35 @@ public class ExcelParserV5 {
   }
   private static boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
   private static String nvl(String a, String b) { return isBlank(a) ? (b == null ? "" : b) : a; }
+
+  /**
+   * Map Break Through DND values from Excel to Engage API values.
+   * - "Yes" or "Y" -> "voceraAndDevice"
+   * - "No" or "N" -> "none"
+   * - Other values (like "voceraAndDevice", "device", "none") are passed through as-is
+   * - Empty/blank falls back to priority-based logic
+   */
+  private static String mapBreakThroughDND(String excelValue, boolean urgent) {
+    if (isBlank(excelValue)) {
+      // Empty value: use priority-based logic
+      return urgent ? "voceraAndDevice" : "none";
+    }
+    
+    String normalized = excelValue.trim().toLowerCase(Locale.ROOT);
+    
+    // Map Yes/Y to voceraAndDevice
+    if (normalized.equals("yes") || normalized.equals("y")) {
+      return "voceraAndDevice";
+    }
+    
+    // Map No/N to none
+    if (normalized.equals("no") || normalized.equals("n")) {
+      return "none";
+    }
+    
+    // Pass through other values as-is (e.g., "voceraAndDevice", "device", "none")
+    return excelValue.trim();
+  }
 
   private static String mapPrioritySafe(String priority) {
     if (priority == null) return "";
