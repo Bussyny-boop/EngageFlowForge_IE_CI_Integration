@@ -207,6 +207,8 @@ public class AppController {
 
             syncEditsToParser();
 
+            boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+
             FileChooser chooser = new FileChooser();
             chooser.setTitle(nurseSide ? "Export NurseCall JSON" : "Export Clinical JSON");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
@@ -215,8 +217,14 @@ public class AppController {
             File file = chooser.showSaveDialog(getStage());
             if (file == null) return;
 
-            if (nurseSide) parser.writeNurseCallsJson(file);
-            else parser.writeClinicalsJson(file);
+            if (nurseSide) parser.writeNurseCallsJson(file, useAdvanced);
+            else parser.writeClinicalsJson(file, useAdvanced);
+
+            if (useAdvanced) {
+                statusLabel.setText("Exported Merged JSON (Advanced Mode)");
+            } else {
+                statusLabel.setText("Exported Standard JSON");
+            }
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
