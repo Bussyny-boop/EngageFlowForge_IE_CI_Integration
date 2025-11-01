@@ -14,6 +14,7 @@ public class FlowRow {
     private final StringProperty deviceA = new SimpleStringProperty("");
     private final StringProperty ringtone = new SimpleStringProperty("");
     private final StringProperty responseOptions = new SimpleStringProperty("");
+    private final StringProperty breakThroughDND = new SimpleStringProperty("");
     private final StringProperty emdan = new SimpleStringProperty("");
     private final StringProperty comments = new SimpleStringProperty("");
 
@@ -59,6 +60,10 @@ public class FlowRow {
     public String getResponseOptions() { return responseOptions.get(); }
     public void setResponseOptions(String v) { responseOptions.set(v); }
     public StringProperty responseOptionsProperty() { return responseOptions; }
+
+    public String getBreakThroughDND() { return breakThroughDND.get(); }
+    public void setBreakThroughDND(String v) { breakThroughDND.set(v); }
+    public StringProperty breakThroughDNDProperty() { return breakThroughDND; }
 
     public String getEmdan() { return emdan.get(); }
     public void setEmdan(String v) { emdan.set(v); }
