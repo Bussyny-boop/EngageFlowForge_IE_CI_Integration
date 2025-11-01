@@ -513,6 +513,56 @@ public class ExcelParserV5 {
     out.add(dest);
   }
 
+  // ---------- Response Options Parser ----------
+  private static final class ResponseOptions {
+    final boolean noResponse;
+    final boolean hasAccept;
+    final boolean hasEscalate;
+    final boolean hasCallBack;
+    final String responseType;
+
+    ResponseOptions(boolean noResponse, boolean hasAccept, boolean hasEscalate, boolean hasCallBack) {
+      this.noResponse = noResponse;
+      this.hasAccept = hasAccept;
+      this.hasEscalate = hasEscalate;
+      this.hasCallBack = hasCallBack;
+      
+      // Determine responseType based on combination
+      if (noResponse) {
+        this.responseType = "None";
+      } else if (hasAccept && hasEscalate) {
+        this.responseType = "Accept/Decline";
+      } else if (hasAccept) {
+        this.responseType = "Accept";
+      } else {
+        this.responseType = "None";
+      }
+    }
+  }
+
+  private ResponseOptions parseResponseOptions(String responseOptionsText) {
+    if (isBlank(responseOptionsText)) {
+      return new ResponseOptions(true, false, false, false);
+    }
+
+    // Normalize: lowercase, trim whitespace around commas
+    String normalized = responseOptionsText.toLowerCase(Locale.ROOT).trim();
+    
+    // Split by comma and trim each part
+    List<String> parts = Arrays.stream(normalized.split(","))
+      .map(String::trim)
+      .filter(s -> !s.isEmpty())
+      .collect(Collectors.toList());
+
+    // Check for specific keywords
+    boolean noResponse = parts.stream().anyMatch(p -> p.contains("no response"));
+    boolean hasAccept = parts.stream().anyMatch(p -> p.contains("accept") && !p.contains("no response"));
+    boolean hasEscalate = parts.stream().anyMatch(p -> p.contains("escalate"));
+    boolean hasCallBack = parts.stream().anyMatch(p -> p.contains("call back") || p.equals("callback"));
+
+    return new ResponseOptions(noResponse, hasAccept, hasEscalate, hasCallBack);
+  }
+
   // ---------- Parameter Attributes (correct Engage syntax) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
@@ -520,28 +570,29 @@ public class ExcelParserV5 {
     List<Map<String,Object>> params = new ArrayList<>();
     boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
 
-    if (!isBlank(r.ringtone)) {
-      params.add(paQ("alertSound", r.ringtone));
-    }
-
     if (nurseSide) {
-      boolean hasAccept   = containsWord(r.responseOptions, "accept");
-      boolean hasEscalate = containsWord(r.responseOptions, "escalate");
-      boolean hasCallBack = containsWord(r.responseOptions, "call back") || containsWord(r.responseOptions, "callback");
-      boolean noResponse  = containsWord(r.responseOptions, "no response");
-
-      if (hasAccept) {
+      // Parse response options dynamically
+      ResponseOptions respOpts = parseResponseOptions(r.responseOptions);
+      
+      // Add response parameters based on parsed options
+      if (respOpts.hasAccept) {
         params.add(paQ("accept", "Accepted"));
         params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
       }
-      if (hasCallBack) {
+      if (respOpts.hasCallBack) {
         params.add(paQ("acceptAndCall", "Call Back"));
       }
-      if (hasEscalate) {
+      if (respOpts.hasEscalate) {
         params.add(paQ("decline", "Decline Primary"));
         params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
       }
 
+      // Add ringtone parameter after response parameters
+      if (!isBlank(r.ringtone)) {
+        params.add(paQ("alertSound", r.ringtone));
+      }
+
+      // Add standard NurseCall attributes
       params.add(paQ("breakThrough", urgent ? "voceraAndDevice" : "none"));
       params.add(paLiteralBool("enunciate", true));
       params.add(paQ("message", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}"));
@@ -550,9 +601,9 @@ public class ExcelParserV5 {
       params.add(paQ("patientName", "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"));
       params.add(paLiteralBool("popup", true));
       params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
-      params.add(paQ("responseType", noResponse ? "None" : "Accept/Decline"));
+      params.add(paQ("responseType", respOpts.responseType));
 
-      if (!noResponse) {
+      if (!respOpts.noResponse) {
         params.add(paQ("respondingLine", "responses.line.number"));
         params.add(paQ("respondingUser", "responses.usr.login"));
         params.add(paQ("responsePath", "responses.action"));
