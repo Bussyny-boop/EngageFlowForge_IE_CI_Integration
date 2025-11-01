@@ -513,56 +513,6 @@ public class ExcelParserV5 {
     out.add(dest);
   }
 
-  // ---------- Response Options Parser ----------
-  private static final class ResponseOptions {
-    final boolean noResponse;
-    final boolean hasAccept;
-    final boolean hasEscalate;
-    final boolean hasCallBack;
-    final String responseType;
-
-    ResponseOptions(boolean noResponse, boolean hasAccept, boolean hasEscalate, boolean hasCallBack) {
-      this.noResponse = noResponse;
-      this.hasAccept = hasAccept;
-      this.hasEscalate = hasEscalate;
-      this.hasCallBack = hasCallBack;
-      
-      // Determine responseType based on combination
-      if (noResponse) {
-        this.responseType = "None";
-      } else if (hasAccept && hasEscalate) {
-        this.responseType = "Accept/Decline";
-      } else if (hasAccept) {
-        this.responseType = "Accept";
-      } else {
-        this.responseType = "None";
-      }
-    }
-  }
-
-  private ResponseOptions parseResponseOptions(String responseOptionsText) {
-    if (isBlank(responseOptionsText)) {
-      return new ResponseOptions(true, false, false, false);
-    }
-
-    // Normalize: lowercase, trim whitespace around commas
-    String normalized = responseOptionsText.toLowerCase(Locale.ROOT).trim();
-    
-    // Split by comma and trim each part
-    List<String> parts = Arrays.stream(normalized.split(","))
-      .map(String::trim)
-      .filter(s -> !s.isEmpty())
-      .collect(Collectors.toList());
-
-    // Check for specific keywords
-    boolean noResponse = parts.stream().anyMatch(p -> p.contains("no response"));
-    boolean hasAccept = parts.stream().anyMatch(p -> p.contains("accept") && !p.contains("no response"));
-    boolean hasEscalate = parts.stream().anyMatch(p -> p.contains("escalate"));
-    boolean hasCallBack = parts.stream().anyMatch(p -> p.contains("call back") || p.equals("callback"));
-
-    return new ResponseOptions(noResponse, hasAccept, hasEscalate, hasCallBack);
-  }
-
   // ---------- Parameter Attributes (correct Engage syntax) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
                                                               boolean nurseSide,
