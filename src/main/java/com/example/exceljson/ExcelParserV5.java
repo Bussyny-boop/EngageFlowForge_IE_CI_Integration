@@ -518,7 +518,7 @@ public class ExcelParserV5 {
    * Normalizes response options by:
    * - Converting to lowercase
    * - Trimming whitespace
-   * - Removing spaces after commas
+   * - Removing spaces before and after commas
    * - Converting "call back" to "callback"
    */
   private static String normalizeResponseOptions(String responseOptions) {
@@ -526,8 +526,8 @@ public class ExcelParserV5 {
       return "";
     }
     String normalized = responseOptions.toLowerCase(Locale.ROOT).trim();
-    // Remove spaces after commas
-    normalized = normalized.replaceAll(",\\s+", ",");
+    // Remove spaces before and after commas
+    normalized = normalized.replaceAll("\\s*,\\s*", ",");
     // Convert "call back" to "callback"
     normalized = normalized.replace("call back", "callback");
     return normalized;
