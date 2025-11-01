@@ -536,12 +536,12 @@ public class ExcelParserV5 {
   /**
    * Determines the responseType based on normalized response options.
    * Returns:
-   * - "None" for empty or "no response"
+   * - "None" for empty or "noresponse"
    * - "Accept/Decline" for "accept,escalate"
    * - "Accept/Decline/Call" for "accept,escalate,callback"
    */
   private static String determineResponseType(String normalizedResponse) {
-    if (normalizedResponse.isEmpty() || normalizedResponse.equals("noresponse") || normalizedResponse.equals("no response")) {
+    if (normalizedResponse.isEmpty() || normalizedResponse.equals("noresponse")) {
       return "None";
     } else if (normalizedResponse.equals("accept,escalate,callback")) {
       return "Accept/Decline/Call";
