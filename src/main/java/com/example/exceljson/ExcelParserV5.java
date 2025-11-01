@@ -647,15 +647,21 @@ public class ExcelParserV5 {
 
   // ---------- File writers (JSON) ----------
   public void writeNurseCallsJson(File nurseFile) throws Exception {
+    writeNurseCallsJson(nurseFile, false);
+  }
+  public void writeNurseCallsJson(File nurseFile, boolean useAdvancedMerge) throws Exception {
     ensureParent(nurseFile);
     try (FileWriter out = new FileWriter(nurseFile, false)) {
-      out.write(pretty(buildNurseCallsJson()));
+      out.write(pretty(buildNurseCallsJson(useAdvancedMerge)));
     }
   }
   public void writeClinicalsJson(File clinicalFile) throws Exception {
+    writeClinicalsJson(clinicalFile, false);
+  }
+  public void writeClinicalsJson(File clinicalFile, boolean useAdvancedMerge) throws Exception {
     ensureParent(clinicalFile);
     try (FileWriter out = new FileWriter(clinicalFile, false)) {
-      out.write(pretty(buildClinicalsJson()));
+      out.write(pretty(buildClinicalsJson(useAdvancedMerge)));
     }
   }
   public void writeJson(File summaryFile) throws Exception {
