@@ -595,7 +595,7 @@ public class ExcelParserV5 {
       params.add(paQ("accept", "Accepted"));
       params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
       params.add(paQ("acceptAndCall", "Call Back"));
-      params.add(paQ("decline", "Decline Primary"));
+      params.add(paQ("decline", nurseSide ? "Decline Primary" : "Decline"));
       params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
       params.add(paQ("respondingLine", "responses.line.number"));
       params.add(paQ("responsePath", "responses.action"));

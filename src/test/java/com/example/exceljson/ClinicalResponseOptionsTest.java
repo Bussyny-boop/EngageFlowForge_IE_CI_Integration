@@ -85,9 +85,9 @@ class ClinicalResponseOptionsTest {
         assertTrue(json.contains("\"name\": \"accept\""), 
             "Should include accept parameter");
         assertTrue(json.contains("\"name\": \"decline\""), 
-            "Should include decline parameter with text 'Decline Primary'");
-        assertTrue(json.contains("\"value\": \"\\\"Decline Primary\\\"\""), 
-            "Should have decline value 'Decline Primary' for all three options");
+            "Should include decline parameter");
+        assertTrue(json.contains("\"value\": \"\\\"Decline\\\"\""), 
+            "Should have decline value 'Decline' for clinicals (not 'Decline Primary')");
         assertTrue(json.contains("\"name\": \"acceptAndCall\""), 
             "Should include acceptAndCall parameter");
         assertTrue(json.contains("\"name\": \"respondingLine\""), 
