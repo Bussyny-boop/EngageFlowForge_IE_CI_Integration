@@ -251,20 +251,41 @@ public class ExcelParserV5 {
 
   // ---------- Public JSON builders ----------
   public Map<String,Object> buildNurseCallsJson() {
-    return buildJson(nurseCalls, nurseGroupToUnits, true);
+    return buildNurseCallsJson(false);
+  }
+  public Map<String,Object> buildNurseCallsJson(boolean mergeIdenticalFlows) {
+    return buildJson(nurseCalls, nurseGroupToUnits, true, mergeIdenticalFlows);
   }
   public Map<String,Object> buildClinicalsJson() {
-    return buildJson(clinicals, clinicalGroupToUnits, false);
+    return buildClinicalsJson(false);
+  }
+  public Map<String,Object> buildClinicalsJson(boolean mergeIdenticalFlows) {
+    return buildJson(clinicals, clinicalGroupToUnits, false, mergeIdenticalFlows);
   }
 
   // ---------- Build JSON core ----------
   private Map<String,Object> buildJson(List<FlowRow> rows,
                                        Map<String,List<Map<String,String>>> groupToUnits,
-                                       boolean nurseSide) {
+                                       boolean nurseSide,
+                                       boolean mergeIdenticalFlows) {
     Map<String,Object> root = new LinkedHashMap<>();
     root.put("version", "1.1.0");
     root.put("alarmAlertDefinitions", buildAlarmDefs(rows, nurseSide));
 
+    List<Map<String,Object>> flows;
+    if (mergeIdenticalFlows) {
+      flows = buildFlowsMerged(rows, groupToUnits, nurseSide);
+    } else {
+      flows = buildFlowsNormal(rows, groupToUnits, nurseSide);
+    }
+    root.put("deliveryFlows", flows);
+    return root;
+  }
+
+  // ---------- Build flows (normal mode) - one flow per row ----------
+  private List<Map<String,Object>> buildFlowsNormal(List<FlowRow> rows,
+                                                     Map<String,List<Map<String,String>>> groupToUnits,
+                                                     boolean nurseSide) {
     List<Map<String,Object>> flows = new ArrayList<>();
     for (FlowRow r : rows) {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
@@ -284,8 +305,115 @@ public class ExcelParserV5 {
       if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
       flows.add(flow);
     }
-    root.put("deliveryFlows", flows);
-    return root;
+    return flows;
+  }
+
+  // ---------- Build flows (merge mode) - merge flows with identical delivery parameters ----------
+  private List<Map<String,Object>> buildFlowsMerged(List<FlowRow> rows,
+                                                     Map<String,List<Map<String,String>>> groupToUnits,
+                                                     boolean nurseSide) {
+    // Group rows by their "merge key" (identical delivery parameters)
+    Map<String, List<FlowRow>> groupedByMergeKey = new LinkedHashMap<>();
+    
+    for (FlowRow r : rows) {
+      if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
+      
+      String mergeKey = buildMergeKey(r, groupToUnits);
+      groupedByMergeKey.computeIfAbsent(mergeKey, k -> new ArrayList<>()).add(r);
+    }
+
+    // Build one flow per merge group
+    List<Map<String,Object>> flows = new ArrayList<>();
+    for (List<FlowRow> group : groupedByMergeKey.values()) {
+      if (group.isEmpty()) continue;
+      
+      // Use the first row as the template
+      FlowRow template = group.get(0);
+      List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(nvl(template.configGroup, ""), List.of());
+      String mappedPriority = mapPrioritySafe(template.priorityRaw);
+
+      // Collect all alarm names from the group
+      List<String> alarmNames = group.stream()
+        .map(r -> nvl(r.alarmName, r.sendingName))
+        .distinct()
+        .collect(Collectors.toList());
+
+      Map<String,Object> flow = new LinkedHashMap<>();
+      flow.put("alarmsAlerts", alarmNames);
+      flow.put("conditions", nurseSide ? nurseConditions() : List.of());
+      flow.put("destinations", buildDestinationsMerged(template, unitRefs, nurseSide));
+      flow.put("interfaces", List.of(Map.of("componentName","OutgoingWCTP","referenceName","OutgoingWCTP")));
+      flow.put("name", buildFlowNameMerged(nurseSide, mappedPriority, alarmNames, template, unitRefs));
+      flow.put("parameterAttributes", buildParamAttributesQuoted(template, nurseSide, mappedPriority));
+      flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
+      flow.put("status", "Active");
+      if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
+      flows.add(flow);
+    }
+    return flows;
+  }
+
+  // ---------- Build merge key for grouping flows with identical delivery parameters ----------
+  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits) {
+    List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(nvl(r.configGroup, ""), List.of());
+    String mappedPriority = mapPrioritySafe(r.priorityRaw);
+    
+    // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units
+    StringBuilder key = new StringBuilder();
+    key.append("priority=").append(mappedPriority).append("|");
+    key.append("device=").append(nvl(r.deviceA, "")).append("|");
+    key.append("ringtone=").append(nvl(r.ringtone, "")).append("|");
+    key.append("responseOptions=").append(nvl(r.responseOptions, "")).append("|");
+    key.append("t1=").append(nvl(r.t1, "")).append("|");
+    key.append("r1=").append(nvl(r.r1, "")).append("|");
+    key.append("t2=").append(nvl(r.t2, "")).append("|");
+    key.append("r2=").append(nvl(r.r2, "")).append("|");
+    key.append("t3=").append(nvl(r.t3, "")).append("|");
+    key.append("r3=").append(nvl(r.r3, "")).append("|");
+    key.append("t4=").append(nvl(r.t4, "")).append("|");
+    key.append("r4=").append(nvl(r.r4, "")).append("|");
+    key.append("t5=").append(nvl(r.t5, "")).append("|");
+    key.append("r5=").append(nvl(r.r5, "")).append("|");
+    key.append("configGroup=").append(nvl(r.configGroup, "")).append("|");
+    
+    // Add units to the key
+    String unitsKey = unitRefs.stream()
+      .map(u -> u.get("facilityName") + ":" + u.get("name"))
+      .sorted()
+      .collect(Collectors.joining(","));
+    key.append("units=").append(unitsKey);
+    
+    return key.toString();
+  }
+
+  // ---------- Build flow name for merged flows ----------
+  private String buildFlowNameMerged(boolean nurseSide,
+                                     String mappedPriority,
+                                     List<String> alarmNames,
+                                     FlowRow template,
+                                     List<Map<String,String>> unitRefs) {
+    String group = template.configGroup == null ? "" : template.configGroup.trim();
+    String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
+    List<String> unitNames = unitRefs.stream()
+      .map(u -> u.getOrDefault("name",""))
+      .filter(s -> !isBlank(s))
+      .distinct().collect(Collectors.toList());
+
+    List<String> parts = new ArrayList<>();
+    parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
+    if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
+    
+    // If multiple alarms, show count instead of listing all
+    if (alarmNames.size() == 1) {
+      parts.add(alarmNames.get(0));
+    } else {
+      parts.add("(" + alarmNames.size() + " alarms)");
+    }
+    
+    if (!isBlank(group)) parts.add(group);
+    if (!unitNames.isEmpty()) parts.add(String.join(" / ", unitNames));
+    else if (!isBlank(facility)) parts.add(facility);
+    return String.join(" | ", parts);
   }
 
   private List<Map<String,Object>> buildAlarmDefs(List<FlowRow> rows, boolean nurseSide) {
@@ -520,15 +648,21 @@ public class ExcelParserV5 {
 
   // ---------- File writers (JSON) ----------
   public void writeNurseCallsJson(File nurseFile) throws Exception {
+    writeNurseCallsJson(nurseFile, false);
+  }
+  public void writeNurseCallsJson(File nurseFile, boolean useAdvancedMerge) throws Exception {
     ensureParent(nurseFile);
     try (FileWriter out = new FileWriter(nurseFile, false)) {
-      out.write(pretty(buildNurseCallsJson()));
+      out.write(pretty(buildNurseCallsJson(useAdvancedMerge)));
     }
   }
   public void writeClinicalsJson(File clinicalFile) throws Exception {
+    writeClinicalsJson(clinicalFile, false);
+  }
+  public void writeClinicalsJson(File clinicalFile, boolean useAdvancedMerge) throws Exception {
     ensureParent(clinicalFile);
     try (FileWriter out = new FileWriter(clinicalFile, false)) {
-      out.write(pretty(buildClinicalsJson()));
+      out.write(pretty(buildClinicalsJson(useAdvancedMerge)));
     }
   }
   public void writeJson(File summaryFile) throws Exception {
