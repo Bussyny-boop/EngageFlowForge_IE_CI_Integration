@@ -157,7 +157,7 @@ class GetColLooseTest {
         Path tempDir = Files.createTempDirectory("emdan-header-test");
         File excelFile = tempDir.resolve("test.xlsx").toFile();
 
-        // Test with newlines (simulated with spaces): "EMDAN Compliant (Y/N)"
+        // Test with newlines: "EMDAN\nCompliant?\n(Y/N)"
         createTestWorkbookWithEmdanVariants(excelFile, "EMDAN\nCompliant?\n(Y/N)");
 
         ExcelParserV5 parser = new ExcelParserV5();

@@ -1097,15 +1097,13 @@ public class ExcelParserV5 {
    * Finds a column that contains a keyword anywhere in the header text
    * (case-insensitive, ignores punctuation, spaces, and newlines).
    * This ensures headers like "EMDAN Compliant? (Y/N)" or multi-line labels are detected.
+   * Note: The header map keys are already normalized (lowercase, non-alphanumeric replaced with spaces).
    */
   private static int getColLoose(Map<String,Integer> map, String keyword) {
     if (map.isEmpty() || keyword == null) return -1;
     String search = normalize(keyword);
     for (Map.Entry<String,Integer> e : map.entrySet()) {
-      String key = e.getKey()
-          .replaceAll("[^a-z0-9]+", " ")  // remove symbols like ?, /, (, )
-          .trim();
-      if (key.contains(search)) {
+      if (e.getKey().contains(search)) {
         return e.getValue();
       }
     }
