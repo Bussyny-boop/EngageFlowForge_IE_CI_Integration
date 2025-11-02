@@ -1269,7 +1269,7 @@ public class ExcelParserV5 {
    * Returns true if value is "Yes" or "Y" (case-insensitive).
    * Returns false for any other value (including blank, "No", "N", etc.).
    */
-  private static boolean isEmdanCompliant(String emdanValue) {
+  public static boolean isEmdanCompliant(String emdanValue) {
     if (isBlank(emdanValue)) {
       return false;
     }

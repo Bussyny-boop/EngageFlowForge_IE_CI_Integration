@@ -125,7 +125,8 @@ public class AppController {
             jsonPreview.setText(parser.getLoadSummary());
             
             int movedCount = parser.getEmdanMovedCount();
-            statusLabel.setText("Loaded Excel. " + movedCount + " EMDAN rows moved to Clinical tab.");
+            String rowText = (movedCount == 1) ? " EMDAN row moved" : " EMDAN rows moved";
+            statusLabel.setText("Loaded Excel. " + movedCount + rowText + " to Clinical tab.");
 
             refreshTables();
             tableUnits.refresh();
@@ -355,7 +356,7 @@ public class AppController {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setStyle("");
-                    } else if ("yes".equalsIgnoreCase(item) || "y".equalsIgnoreCase(item)) {
+                    } else if (ExcelParserV5.isEmdanCompliant(item)) {
                         setStyle("-fx-background-color: #E6F7FF; -fx-font-weight: bold;");
                     } else {
                         setStyle("");
