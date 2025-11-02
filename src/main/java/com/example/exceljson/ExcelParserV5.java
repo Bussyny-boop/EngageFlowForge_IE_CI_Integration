@@ -243,7 +243,7 @@ public class ExcelParserV5 {
       enunciateColumns.add(exactCol);
     }
     
-    int cEmdan = getCol(hm, "EMDAN Compliant? (Y/N)", "EMDAN Compliant", "EMDAN");
+    int cEmdan = getColLoose(hm, "emdan");
     
     int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
     int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
@@ -292,6 +292,7 @@ public class ExcelParserV5 {
         f.type = "Clinicals";
         clinicals.add(f);
         emdanMovedCount++;
+        System.out.println("✅ Moved EMDAN row to Clinicals: " + f.alarmName);
       } else if (nurseSide) {
         nurseCalls.add(f);
       } else {
@@ -1091,6 +1092,26 @@ public class ExcelParserV5 {
     }
     return -1;
   }
+  
+  /**
+   * Finds a column that contains a keyword anywhere in the header text
+   * (case-insensitive, ignores punctuation, spaces, and newlines).
+   * This ensures headers like "EMDAN Compliant? (Y/N)" or multi-line labels are detected.
+   */
+  private static int getColLoose(Map<String,Integer> map, String keyword) {
+    if (map.isEmpty() || keyword == null) return -1;
+    String search = normalize(keyword);
+    for (Map.Entry<String,Integer> e : map.entrySet()) {
+      String key = e.getKey()
+          .replaceAll("[^a-z0-9]+", " ")  // remove symbols like ?, /, (, )
+          .trim();
+      if (key.contains(search)) {
+        return e.getValue();
+      }
+    }
+    return -1;
+  }
+  
   private static String getCell(Row row, int col) {
     if (row == null || col < 0) return "";
     try {
