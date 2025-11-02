@@ -125,8 +125,7 @@ public class AppController {
             jsonPreview.setText(parser.getLoadSummary());
             
             int movedCount = parser.getEmdanMovedCount();
-            String rowText = (movedCount == 1) ? " EMDAN row moved" : " EMDAN rows moved";
-            statusLabel.setText("Loaded Excel. " + movedCount + rowText + " to Clinical tab.");
+            statusLabel.setText("Excel loaded: " + file.getName() + " | Moved " + movedCount + " EMDAN rows to Clinicals");
 
             refreshTables();
             tableUnits.refresh();
