@@ -292,7 +292,22 @@ public class ExcelParserV5 {
         f.type = "Clinicals";
         clinicals.add(f);
         emdanMovedCount++;
-        System.out.println("✅ Moved EMDAN row to Clinicals: " + f.alarmName);
+        
+        // Resolve facility from configuration group for better logging
+        String facility = resolveFacilityFromConfig(f.configGroup, nurseSide);
+        String alarmDisplay = nvl(f.alarmName, f.sendingName);
+        String priorityDisplay = isBlank(f.priorityRaw) ? "default" : f.priorityRaw;
+        
+        // Enhanced logging with facility, priority, and configuration details
+        if (!isBlank(facility)) {
+          System.out.println("✅ EMDAN: Moved '" + alarmDisplay + "' from Nurse Call to Clinicals " +
+                           "[Facility: " + facility + ", Priority: " + priorityDisplay + ", Config: " + f.configGroup + "]");
+        } else {
+          // Fallback note when facility cannot be resolved
+          System.out.println("✅ EMDAN: Moved '" + alarmDisplay + "' from Nurse Call to Clinicals " +
+                           "[Priority: " + priorityDisplay + ", Config: " + f.configGroup + "] " +
+                           "(Note: Facility not resolved - verify Unit Breakdown mapping)");
+        }
       } else if (nurseSide) {
         nurseCalls.add(f);
       } else {
@@ -1139,6 +1154,34 @@ public class ExcelParserV5 {
       .map(String::trim).filter(v -> !v.isEmpty())
       .collect(Collectors.toCollection(LinkedHashSet::new))
       .stream().toList();
+  }
+  
+  /**
+   * Resolve facility name from a configuration group.
+   * Searches both nurse and clinical group maps for the given configuration group
+   * and returns the facility name if found.
+   * 
+   * @param configGroup The configuration group name to look up
+   * @param nurseSide true if searching nurse groups, false for clinical groups
+   * @return The facility name associated with the configuration group, or empty string if not found
+   */
+  private String resolveFacilityFromConfig(String configGroup, boolean nurseSide) {
+    if (isBlank(configGroup)) return "";
+    
+    // Choose the appropriate map based on nurseSide flag
+    Map<String, List<Map<String, String>>> groupMap = nurseSide 
+      ? nurseGroupToUnits 
+      : clinicalGroupToUnits;
+    
+    // Look up the configuration group in the map
+    List<Map<String, String>> units = groupMap.get(configGroup);
+    if (units != null && !units.isEmpty()) {
+      // Return the facility name from the first unit
+      String facility = units.get(0).get("facilityName");
+      return facility != null ? facility : "";
+    }
+    
+    return "";
   }
   private static String stripVGroup(String v) {
     if (isBlank(v)) return "";

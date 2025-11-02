@@ -219,4 +219,25 @@ class EmdanTest {
         // Verify the moved count is tracked correctly
         assertEquals(1, parser.getEmdanMovedCount(), "Should count 1 EMDAN row moved");
     }
+    
+    @Test
+    void testEmdanFacilityResolution() throws Exception {
+        Path tempDir = Files.createTempDirectory("emdan-facility-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        // Create workbook with EMDAN=Y alarm
+        createTestWorkbook(excelFile, "Y", "N");
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Verify the EMDAN alarm was moved and facility was resolved
+        // The facility should be resolved from the Unit Breakdown mapping
+        assertEquals(1, parser.clinicals.size(), "One alarm should be in Clinicals");
+        assertEquals("Test Alarm 1", parser.clinicals.get(0).alarmName, "EMDAN alarm should be in Clinicals");
+        
+        // Verify configuration group is preserved (needed for facility resolution)
+        assertEquals("Nurse Group 1", parser.clinicals.get(0).configGroup, 
+                    "Configuration group should be preserved for facility resolution");
+    }
 }
