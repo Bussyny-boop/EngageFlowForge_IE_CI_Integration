@@ -17,6 +17,7 @@ public class FlowRow {
     private final StringProperty breakThroughDND = new SimpleStringProperty("");
     private final StringProperty escalateAfter = new SimpleStringProperty("");
     private final StringProperty ttlValue = new SimpleStringProperty("");
+    private final StringProperty enunciate = new SimpleStringProperty("");
     private final StringProperty emdan = new SimpleStringProperty("");
     private final StringProperty comments = new SimpleStringProperty("");
 
@@ -74,6 +75,10 @@ public class FlowRow {
     public String getTtlValue() { return ttlValue.get(); }
     public void setTtlValue(String v) { ttlValue.set(v); }
     public StringProperty ttlValueProperty() { return ttlValue; }
+
+    public String getEnunciate() { return enunciate.get(); }
+    public void setEnunciate(String v) { enunciate.set(v); }
+    public StringProperty enunciateProperty() { return enunciate; }
 
     public String getEmdan() { return emdan.get(); }
     public void setEmdan(String v) { emdan.set(v); }

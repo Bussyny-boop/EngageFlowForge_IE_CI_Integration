@@ -40,6 +40,7 @@ public class ExcelParserV5 {
     public String breakThroughDND = "";
     public String escalateAfter = "";
     public String ttlValue = "";
+    public String enunciate = "";
     public String t1 = ""; public String r1 = "";
     public String t2 = ""; public String r2 = "";
     public String t3 = ""; public String r3 = "";
@@ -219,6 +220,7 @@ public class ExcelParserV5 {
     int cBreakDND= getCol(hm, "Break Through DND");
     int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
     int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
+    int cEnunciate = getColContaining(hm, "Genie Enunciation");
     int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
     int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
     int cT2 = getCol(hm, "Time to 2nd Recipient", "Delay to 2nd");
@@ -246,6 +248,7 @@ public class ExcelParserV5 {
       f.breakThroughDND = getCell(row, cBreakDND);
       f.escalateAfter = getCell(row, cEscalateAfter);
       f.ttlValue = getCell(row, cTTL);
+      f.enunciate = getCell(row, cEnunciate);
       f.t1 = getCell(row, cT1); f.r1 = getCell(row, cR1);
       f.t2 = getCell(row, cT2); f.r2 = getCell(row, cR2);
       f.t3 = getCell(row, cT3); f.r3 = getCell(row, cR3);
@@ -609,7 +612,10 @@ public class ExcelParserV5 {
       breakThroughValue = urgent ? "voceraAndDevice" : "none";
     }
     params.add(paQ("breakThrough", breakThroughValue));
-    params.add(paLiteralBool("enunciate", true));
+    
+    // Use parsed enunciate value if available, otherwise default to true
+    boolean enunciateValue = isBlank(r.enunciate) ? true : parseEnunciateToBoolean(r.enunciate);
+    params.add(paLiteralBool("enunciate", enunciateValue));
     
     // Message differs between NurseCall and Clinical
     if (nurseSide) {
@@ -797,6 +803,7 @@ public class ExcelParserV5 {
       "Break Through DND",
       "Engage 6.6+: Escalate after all declines or 1 decline",
       "Engage/Edge Display Time (Time to Live) (Device - A)",
+      "Genie Enunciation",
       "Time to 1st Recipient","1st Recipient",
       "Time to 2nd Recipient","2nd Recipient",
       "Time to 3rd Recipient","3rd Recipient",
@@ -816,11 +823,12 @@ public class ExcelParserV5 {
     set(row,7,f.breakThroughDND);
     set(row,8,f.escalateAfter);
     set(row,9,f.ttlValue);
-    set(row,10,f.t1); set(row,11,f.r1);
-    set(row,12,f.t2); set(row,13,f.r2);
-    set(row,14,f.t3); set(row,15,f.r3);
-    set(row,16,f.t4); set(row,17,f.r4);
-    set(row,18,f.t5); set(row,19,f.r5);
+    set(row,10,f.enunciate);
+    set(row,11,f.t1); set(row,12,f.r1);
+    set(row,13,f.t2); set(row,14,f.r2);
+    set(row,15,f.t3); set(row,16,f.r3);
+    set(row,17,f.t4); set(row,18,f.r4);
+    set(row,19,f.t5); set(row,20,f.r5);
   }
 
   private static void writeHeader(Sheet s, String[] headers) {
@@ -1027,6 +1035,21 @@ public class ExcelParserV5 {
     }
     return -1;
   }
+  
+  /**
+   * Find a column whose header contains the specified substring (case-insensitive).
+   * This is specifically designed for columns that may have varying names but share a common keyword.
+   */
+  private static int getColContaining(Map<String,Integer> map, String substring) {
+    if (map.isEmpty() || substring == null) return -1;
+    String searchFor = normalize(substring);
+    for (Map.Entry<String,Integer> e : map.entrySet()) {
+      if (e.getKey().contains(searchFor)) {
+        return e.getValue();
+      }
+    }
+    return -1;
+  }
   private static String getCell(Row row, int col) {
     if (row == null || col < 0) return "";
     try {
@@ -1158,6 +1181,24 @@ public class ExcelParserV5 {
       default -> "";
     };
   }
+  
+  /**
+   * Convert Excel enunciation value to boolean.
+   * Returns true if value is "Yes", "Y", "Enunciate", "Enunciation", or "True" (case-insensitive).
+   * Otherwise returns false.
+   */
+  private static boolean parseEnunciateToBoolean(String excelValue) {
+    if (isBlank(excelValue)) {
+      return false;
+    }
+    String normalized = excelValue.trim().toLowerCase(Locale.ROOT);
+    return normalized.equals("yes") || 
+           normalized.equals("y") || 
+           normalized.equals("enunciate") || 
+           normalized.equals("enunciation") || 
+           normalized.equals("true");
+  }
+  
   private static boolean containsWord(String hay, String needle) {
     if (isBlank(hay) || isBlank(needle)) return false;
     return hay.toLowerCase(Locale.ROOT).contains(needle.toLowerCase(Locale.ROOT));
