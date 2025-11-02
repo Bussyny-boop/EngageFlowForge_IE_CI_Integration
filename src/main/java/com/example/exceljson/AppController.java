@@ -47,6 +47,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseBreakThroughDNDCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseEscalateAfterCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseTtlValueCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseEnunciateCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseT2Col;
@@ -70,6 +71,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalBreakThroughDNDCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalEscalateAfterCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalTtlValueCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalEnunciateCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR1Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT2Col;
@@ -314,6 +316,7 @@ public class AppController {
         setupEditable(nurseBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
         setupEditable(nurseEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(nurseTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
+        setupEditable(nurseEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
         setupEditable(nurseT1Col, f -> f.t1, (f, v) -> f.t1 = v);
         setupEditable(nurseR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(nurseT2Col, f -> f.t2, (f, v) -> f.t2 = v);
@@ -338,6 +341,7 @@ public class AppController {
         setupEditable(clinicalBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
         setupEditable(clinicalEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(clinicalTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
+        setupEditable(clinicalEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
         setupEditable(clinicalT1Col, f -> f.t1, (f, v) -> f.t1 = v);
         setupEditable(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(clinicalT2Col, f -> f.t2, (f, v) -> f.t2 = v);
