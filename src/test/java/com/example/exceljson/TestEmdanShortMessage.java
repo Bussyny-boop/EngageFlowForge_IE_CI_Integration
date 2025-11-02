@@ -131,13 +131,5 @@ class TestEmdanShortMessage {
         assertNotNull(shortMessageParam, "shortMessage parameter should exist");
         assertEquals("\"#{alert_type} #{bed.room.name}\"", shortMessageParam.get("value"), 
                     "shortMessage should have the correct value");
-        
-        System.out.println("✅ EMDAN-moved alarm has shortMessage parameter: " + shortMessageParam.get("value"));
-    }
-
-    public static void main(String[] args) throws Exception {
-        TestEmdanShortMessage test = new TestEmdanShortMessage();
-        test.testEmdanAlarmHasShortMessage();
-        System.out.println("Test passed!");
     }
 }
