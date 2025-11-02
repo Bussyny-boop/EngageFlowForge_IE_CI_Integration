@@ -15,6 +15,8 @@ public class FlowRow {
     private final StringProperty ringtone = new SimpleStringProperty("");
     private final StringProperty responseOptions = new SimpleStringProperty("");
     private final StringProperty breakThroughDND = new SimpleStringProperty("");
+    private final StringProperty escalateAfter = new SimpleStringProperty("");
+    private final StringProperty ttlValue = new SimpleStringProperty("");
     private final StringProperty emdan = new SimpleStringProperty("");
     private final StringProperty comments = new SimpleStringProperty("");
 
@@ -64,6 +66,14 @@ public class FlowRow {
     public String getBreakThroughDND() { return breakThroughDND.get(); }
     public void setBreakThroughDND(String v) { breakThroughDND.set(v); }
     public StringProperty breakThroughDNDProperty() { return breakThroughDND; }
+
+    public String getEscalateAfter() { return escalateAfter.get(); }
+    public void setEscalateAfter(String v) { escalateAfter.set(v); }
+    public StringProperty escalateAfterProperty() { return escalateAfter; }
+
+    public String getTtlValue() { return ttlValue.get(); }
+    public void setTtlValue(String v) { ttlValue.set(v); }
+    public StringProperty ttlValueProperty() { return ttlValue; }
 
     public String getEmdan() { return emdan.get(); }
     public void setEmdan(String v) { emdan.set(v); }

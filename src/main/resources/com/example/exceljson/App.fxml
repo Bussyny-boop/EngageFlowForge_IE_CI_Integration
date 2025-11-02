@@ -71,6 +71,8 @@
                                                 <TableColumn fx:id="nurseRingtoneCol" prefWidth="160.0" text="Ringtone" />
                                                 <TableColumn fx:id="nurseResponseOptionsCol" prefWidth="160.0" text="Response Options" />
                                                 <TableColumn fx:id="nurseBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
+                                                <TableColumn fx:id="nurseEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
+                                                <TableColumn fx:id="nurseTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
                                                 <TableColumn fx:id="nurseT1Col" prefWidth="140.0" text="Time to 1st" />
                                                 <TableColumn fx:id="nurseR1Col" prefWidth="220.0" text="1st Recipient" />
                                                 <TableColumn fx:id="nurseT2Col" prefWidth="140.0" text="Time to 2nd" />
@@ -103,6 +105,8 @@
                                                 <TableColumn fx:id="clinicalRingtoneCol" prefWidth="160.0" text="Ringtone" />
                                                 <TableColumn fx:id="clinicalResponseOptionsCol" prefWidth="160.0" text="Response Options" />
                                                 <TableColumn fx:id="clinicalBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
+                                                <TableColumn fx:id="clinicalEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
+                                                <TableColumn fx:id="clinicalTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
                                                 <TableColumn fx:id="clinicalT1Col" prefWidth="140.0" text="Time to 1st" />
                                                 <TableColumn fx:id="clinicalR1Col" prefWidth="220.0" text="1st Recipient" />
                                                 <TableColumn fx:id="clinicalT2Col" prefWidth="140.0" text="Time to 2nd" />
