@@ -445,12 +445,16 @@ public class ExcelParserV5 {
                                                            List<Map<String,String>> unitRefs,
                                                            boolean nurseSide) {
     String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
+    
+    // Determine presenceConfig based on Break Through DND value
+    String presenceConfig = getPresenceConfigFromBreakThrough(r.breakThroughDND);
+    
     List<Map<String,Object>> out = new ArrayList<>();
-    addOrder(out, facility, 0, r.t1, r.r1);
-    addOrder(out, facility, 1, r.t2, r.r2);
-    addOrder(out, facility, 2, r.t3, r.r3);
-    addOrder(out, facility, 3, r.t4, r.r4);
-    addOrder(out, facility, 4, r.t5, r.r5);
+    addOrder(out, facility, 0, r.t1, r.r1, presenceConfig);
+    addOrder(out, facility, 1, r.t2, r.r2, presenceConfig);
+    addOrder(out, facility, 2, r.t3, r.r3, presenceConfig);
+    addOrder(out, facility, 3, r.t4, r.r4, presenceConfig);
+    addOrder(out, facility, 4, r.t5, r.r5, presenceConfig);
 
     if (!nurseSide && !isBlank(facility)) {
       String noCare = noCaregiverByFacility.getOrDefault(facility, "");
@@ -462,7 +466,7 @@ public class ExcelParserV5 {
         d.put("users", List.of());
         d.put("functionalRoles", List.of());
         d.put("groups", List.of(Map.of("facilityName", facility, "name", noCare)));
-        d.put("presenceConfig", "device");
+        d.put("presenceConfig", presenceConfig);
         d.put("recipientType", "group");
         out.add(d);
       }
@@ -474,7 +478,8 @@ public class ExcelParserV5 {
                         String facility,
                         int order,
                         String delayText,
-                        String recipientText) {
+                        String recipientText,
+                        String presenceConfig) {
     if (isBlank(recipientText)) return;
     List<String> recipients = Arrays.stream(recipientText.split("[,;\\n]"))
       .map(String::trim)
@@ -506,11 +511,12 @@ public class ExcelParserV5 {
     dest.put("functionalRoles", roles);
     dest.put("groups", groups);
 
+    // Use presenceConfig from Break Through DND value
+    dest.put("presenceConfig", presenceConfig);
+    
     if (!roles.isEmpty()) {
-      dest.put("presenceConfig", "user_and_device");
       dest.put("recipientType", "functional_role");
     } else {
-      dest.put("presenceConfig", "device");
       dest.put("recipientType", "group");
     }
     out.add(dest);
@@ -1086,6 +1092,33 @@ public class ExcelParserV5 {
     // Unknown value: pass through with original casing but log warning in future
     // This allows for new API values without code changes
     return excelValue.trim();
+  }
+
+  /**
+   * Determine presenceConfig based on Break Through DND value.
+   * 
+   * Mapping rules:
+   * - "Yes" or "Y" (case insensitive) -> "device"
+   * - "No" or "N" (case insensitive) -> "user_and_device"
+   * - Otherwise (including empty/blank) -> "user_and_device" (default)
+   * 
+   * @param excelValue The value from the Excel "Break Through DND" column
+   * @return The presenceConfig value for destinations
+   */
+  private static String getPresenceConfigFromBreakThrough(String excelValue) {
+    if (isBlank(excelValue)) {
+      return "user_and_device";
+    }
+    
+    String normalized = excelValue.trim().toLowerCase(Locale.ROOT);
+    
+    // Yes/Y means breakthrough is enabled -> use device only
+    if (normalized.equals("yes") || normalized.equals("y")) {
+      return "device";
+    }
+    
+    // No/N or any other value -> use user_and_device
+    return "user_and_device";
   }
 
   private static String mapPrioritySafe(String priority) {

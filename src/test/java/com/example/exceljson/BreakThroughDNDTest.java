@@ -152,6 +152,46 @@ class BreakThroughDNDTest {
     }
 
     @Test
+    void breakThroughDNDYesSetsPresenceConfigToDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Normal", "Yes");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"device\""), 
+            "Excel value 'Yes' should set presenceConfig to 'device'");
+    }
+
+    @Test
+    void breakThroughDNDYSetsPresenceConfigToDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Normal", "Y");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"device\""), 
+            "Excel value 'Y' should set presenceConfig to 'device'");
+    }
+
+    @Test
+    void breakThroughDNDNoSetsPresenceConfigToUserAndDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Urgent", "No");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"user_and_device\""), 
+            "Excel value 'No' should set presenceConfig to 'user_and_device'");
+    }
+
+    @Test
+    void breakThroughDNDNSetsPresenceConfigToUserAndDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Urgent", "N");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"user_and_device\""), 
+            "Excel value 'N' should set presenceConfig to 'user_and_device'");
+    }
+
+    @Test
+    void breakThroughDNDEmptySetsPresenceConfigToUserAndDevice() throws Exception {
+        String json = generateJsonWithoutBreakThroughDND("Normal");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"user_and_device\""), 
+            "Empty Break Through DND should set presenceConfig to 'user_and_device' (default)");
+    }
+
+    @Test
     void excelSaveAndLoadPreservesBreakThroughDND() throws Exception {
         Path tempDir = Files.createTempDirectory("breakthrough-test");
         Path excelPath1 = tempDir.resolve("test1.xlsx");
