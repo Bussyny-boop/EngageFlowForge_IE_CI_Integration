@@ -123,7 +123,9 @@ public class AppController {
             currentExcelFile = file;
 
             jsonPreview.setText(parser.getLoadSummary());
-            statusLabel.setText("Excel loaded: " + file.getName());
+            
+            int movedCount = parser.getEmdanMovedCount();
+            statusLabel.setText("Loaded Excel. " + movedCount + " EMDAN rows moved to Clinical tab.");
 
             refreshTables();
             tableUnits.refresh();
@@ -343,7 +345,29 @@ public class AppController {
         setupEditable(clinicalEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(clinicalTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
         setupEditable(clinicalEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
-        setupEditable(clinicalEmdanCol, f -> safe(f.emdan), (f, v) -> f.emdan = safe(v));
+        
+        // Setup EMDAN column with visual styling for Y/Yes values
+        if (clinicalEmdanCol != null) {
+            clinicalEmdanCol.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().emdan)));
+            clinicalEmdanCol.setCellFactory(col -> new TableCell<ExcelParserV5.FlowRow, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty ? "" : item);
+                    if ("yes".equalsIgnoreCase(item) || "y".equalsIgnoreCase(item)) {
+                        setStyle("-fx-background-color: #E6F7FF; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            });
+            clinicalEmdanCol.setOnEditCommit(ev -> {
+                ExcelParserV5.FlowRow row = ev.getRowValue();
+                row.emdan = safe(ev.getNewValue());
+                if (clinicalEmdanCol.getTableView() != null) clinicalEmdanCol.getTableView().refresh();
+            });
+        }
+        
         setupEditable(clinicalT1Col, f -> f.t1, (f, v) -> f.t1 = v);
         setupEditable(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(clinicalT2Col, f -> f.t2, (f, v) -> f.t2 = v);
