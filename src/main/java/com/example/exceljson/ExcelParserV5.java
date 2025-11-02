@@ -1079,21 +1079,6 @@ public class ExcelParserV5 {
   }
   
   /**
-   * Find a column whose header contains the specified substring (case-insensitive).
-   * This is specifically designed for columns that may have varying names but share a common keyword.
-   */
-  private static int getColContaining(Map<String,Integer> map, String substring) {
-    if (map.isEmpty() || substring == null) return -1;
-    String searchFor = normalize(substring);
-    for (Map.Entry<String,Integer> e : map.entrySet()) {
-      if (e.getKey().contains(searchFor)) {
-        return e.getValue();
-      }
-    }
-    return -1;
-  }
-  
-  /**
    * Finds a column that contains a keyword anywhere in the header text
    * (case-insensitive, ignores punctuation, spaces, and newlines).
    * This ensures headers like "EMDAN Compliant? (Y/N)" or multi-line labels are detected.
