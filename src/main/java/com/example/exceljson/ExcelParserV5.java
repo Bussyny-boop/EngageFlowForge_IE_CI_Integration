@@ -349,6 +349,31 @@ public class ExcelParserV5 {
     root.put("deliveryFlows", flows);
     return root;
   }
+  
+  /**
+   * Resolve unit references for a configuration group.
+   * For clinical flows, checks both clinical and nurse group maps to support EMDAN-moved alarms.
+   * 
+   * @param configGroup The configuration group to look up
+   * @param primaryMap The primary map to check (clinicalGroupToUnits or nurseGroupToUnits)
+   * @param nurseSide true if building nurse calls, false if building clinicals
+   * @return List of unit references, or empty list if not found
+   */
+  private List<Map<String,String>> resolveUnitRefs(String configGroup,
+                                                   Map<String,List<Map<String,String>>> primaryMap,
+                                                   boolean nurseSide) {
+    if (isBlank(configGroup)) return List.of();
+    
+    // First check the primary map
+    List<Map<String,String>> units = primaryMap.getOrDefault(configGroup, List.of());
+    
+    // For clinicals, also check nurse groups map (for EMDAN-moved alarms)
+    if (!nurseSide && units.isEmpty()) {
+      units = nurseGroupToUnits.getOrDefault(configGroup, List.of());
+    }
+    
+    return units;
+  }
 
   // ---------- Build flows (normal mode) - one flow per row ----------
   private List<Map<String,Object>> buildFlowsNormal(List<FlowRow> rows,
@@ -358,7 +383,7 @@ public class ExcelParserV5 {
     for (FlowRow r : rows) {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
 
-      List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(r.configGroup, List.of());
+      List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
       String mappedPriority = mapPrioritySafe(r.priorityRaw);
 
       Map<String,Object> flow = new LinkedHashMap<>();
@@ -386,7 +411,7 @@ public class ExcelParserV5 {
     for (FlowRow r : rows) {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
       
-      String mergeKey = buildMergeKey(r, groupToUnits);
+      String mergeKey = buildMergeKey(r, groupToUnits, nurseSide);
       groupedByMergeKey.computeIfAbsent(mergeKey, k -> new ArrayList<>()).add(r);
     }
 
@@ -397,7 +422,7 @@ public class ExcelParserV5 {
       
       // Use the first row as the template
       FlowRow template = group.get(0);
-      List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(nvl(template.configGroup, ""), List.of());
+      List<Map<String,String>> unitRefs = resolveUnitRefs(template.configGroup, groupToUnits, nurseSide);
       String mappedPriority = mapPrioritySafe(template.priorityRaw);
 
       // Collect all alarm names from the group
@@ -422,8 +447,8 @@ public class ExcelParserV5 {
   }
 
   // ---------- Build merge key for grouping flows with identical delivery parameters ----------
-  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits) {
-    List<Map<String,String>> unitRefs = groupToUnits.getOrDefault(nvl(r.configGroup, ""), List.of());
+  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, boolean nurseSide) {
+    List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
     String mappedPriority = mapPrioritySafe(r.priorityRaw);
     
     // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units
