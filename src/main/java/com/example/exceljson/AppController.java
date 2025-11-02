@@ -346,30 +346,7 @@ public class AppController {
         setupEditable(clinicalEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(clinicalTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
         setupEditable(clinicalEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
-        
-        // Setup EMDAN column with visual styling for Y/Yes values
-        if (clinicalEmdanCol != null) {
-            clinicalEmdanCol.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().emdan)));
-            clinicalEmdanCol.setCellFactory(col -> new TextFieldTableCell<ExcelParserV5.FlowRow, String>() {
-                @Override
-                public void updateItem(String item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setStyle("");
-                    } else if (ExcelParserV5.isEmdanCompliant(item)) {
-                        setStyle("-fx-background-color: #E6F7FF; -fx-font-weight: bold;");
-                    } else {
-                        setStyle("");
-                    }
-                }
-            });
-            clinicalEmdanCol.setOnEditCommit(ev -> {
-                ExcelParserV5.FlowRow row = ev.getRowValue();
-                row.emdan = safe(ev.getNewValue());
-                if (clinicalEmdanCol.getTableView() != null) clinicalEmdanCol.getTableView().refresh();
-            });
-        }
-        
+        setupEditable(clinicalEmdanCol, f -> safe(f.emdan), (f, v) -> f.emdan = safe(v));
         setupEditable(clinicalT1Col, f -> f.t1, (f, v) -> f.t1 = v);
         setupEditable(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(clinicalT2Col, f -> f.t2, (f, v) -> f.t2 = v);
