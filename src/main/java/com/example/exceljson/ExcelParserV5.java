@@ -38,6 +38,8 @@ public class ExcelParserV5 {
     public String ringtone = "";
     public String responseOptions = "";
     public String breakThroughDND = "";
+    public String escalateAfter = "";
+    public String ttlValue = "";
     public String t1 = ""; public String r1 = "";
     public String t2 = ""; public String r2 = "";
     public String t3 = ""; public String r3 = "";
@@ -215,6 +217,8 @@ public class ExcelParserV5 {
     int cRing    = getCol(hm, "Ringtone Device - A", "Ringtone");
     int cResp    = getCol(hm, "Response Options", "Response Option");
     int cBreakDND= getCol(hm, "Break Through DND");
+    int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
+    int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live)", "Engage/Edge Display Time (Time to Live) (Device - B)", "Time to Live");
     int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
     int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
     int cT2 = getCol(hm, "Time to 2nd Recipient", "Delay to 2nd");
@@ -240,6 +244,8 @@ public class ExcelParserV5 {
       f.ringtone    = getCell(row, cRing);
       f.responseOptions = getCell(row, cResp);
       f.breakThroughDND = getCell(row, cBreakDND);
+      f.escalateAfter = getCell(row, cEscalateAfter);
+      f.ttlValue = getCell(row, cTTL);
       f.t1 = getCell(row, cT1); f.r1 = getCell(row, cR1);
       f.t2 = getCell(row, cT2); f.r2 = getCell(row, cR2);
       f.t3 = getCell(row, cT3); f.r3 = getCell(row, cR3);
@@ -780,6 +786,8 @@ public class ExcelParserV5 {
       "Ringtone Device - A",
       "Response Options",
       "Break Through DND",
+      "Engage 6.6+: Escalate after all declines or 1 decline",
+      "Engage/Edge Display Time (Time to Live)",
       "Time to 1st Recipient","1st Recipient",
       "Time to 2nd Recipient","2nd Recipient",
       "Time to 3rd Recipient","3rd Recipient",
@@ -797,11 +805,13 @@ public class ExcelParserV5 {
     set(row,5,f.ringtone);
     set(row,6,f.responseOptions);
     set(row,7,f.breakThroughDND);
-    set(row,8,f.t1); set(row,9,f.r1);
-    set(row,10,f.t2); set(row,11,f.r2);
-    set(row,12,f.t3); set(row,13,f.r3);
-    set(row,14,f.t4); set(row,15,f.r4);
-    set(row,16,f.t5); set(row,17,f.r5);
+    set(row,8,f.escalateAfter);
+    set(row,9,f.ttlValue);
+    set(row,10,f.t1); set(row,11,f.r1);
+    set(row,12,f.t2); set(row,13,f.r2);
+    set(row,14,f.t3); set(row,15,f.r3);
+    set(row,16,f.t4); set(row,17,f.r4);
+    set(row,18,f.t5); set(row,19,f.r5);
   }
 
   private static void writeHeader(Sheet s, String[] headers) {
