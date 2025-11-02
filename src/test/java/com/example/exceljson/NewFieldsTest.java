@@ -43,6 +43,100 @@ class NewFieldsTest {
     }
 
     @Test
+    void testTTLInJsonOutput() throws Exception {
+        Path tempDir = Files.createTempDirectory("ttl-json-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        // Create test workbook with custom TTL values
+        createTestWorkbook(excelFile);
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Build JSON for nurse calls
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (java.util.List<?>) nurseJson.get("deliveryFlows");
+        assertNotNull(flows, "Delivery flows should not be null");
+        assertEquals(1, flows.size(), "Should have 1 nurse call flow");
+
+        var flow = (java.util.Map<?, ?>) flows.get(0);
+        var params = (java.util.List<?>) flow.get("parameterAttributes");
+        assertNotNull(params, "Parameter attributes should not be null");
+
+        // Find the TTL parameter
+        boolean foundTtl = false;
+        for (Object param : params) {
+            var paramMap = (java.util.Map<?, ?>) param;
+            if ("ttl".equals(paramMap.get("name"))) {
+                assertEquals("15", paramMap.get("value"), "TTL should be 15 from Excel");
+                foundTtl = true;
+                break;
+            }
+        }
+        assertTrue(foundTtl, "TTL parameter should be present");
+
+        // Build JSON for clinicals
+        var clinicalJson = parser.buildClinicalsJson();
+        var clinicalFlows = (java.util.List<?>) clinicalJson.get("deliveryFlows");
+        assertNotNull(clinicalFlows, "Delivery flows should not be null");
+        assertEquals(1, clinicalFlows.size(), "Should have 1 clinical flow");
+
+        var clinicalFlow = (java.util.Map<?, ?>) clinicalFlows.get(0);
+        var clinicalParams = (java.util.List<?>) clinicalFlow.get("parameterAttributes");
+        assertNotNull(clinicalParams, "Parameter attributes should not be null");
+
+        // Find the TTL parameter
+        foundTtl = false;
+        for (Object param : clinicalParams) {
+            var paramMap = (java.util.Map<?, ?>) param;
+            if ("ttl".equals(paramMap.get("name"))) {
+                assertEquals("20", paramMap.get("value"), "TTL should be 20 from Excel");
+                foundTtl = true;
+                break;
+            }
+        }
+        assertTrue(foundTtl, "TTL parameter should be present in clinicals");
+
+        // Clean up
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
+    void testTTLDefaultsToTenWhenBlank() throws Exception {
+        Path tempDir = Files.createTempDirectory("ttl-default-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        // Create test workbook with blank TTL value
+        createTestWorkbookBlankTTL(excelFile);
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Build JSON for nurse calls
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (java.util.List<?>) nurseJson.get("deliveryFlows");
+        var flow = (java.util.Map<?, ?>) flows.get(0);
+        var params = (java.util.List<?>) flow.get("parameterAttributes");
+
+        // Find the TTL parameter
+        boolean foundTtl = false;
+        for (Object param : params) {
+            var paramMap = (java.util.Map<?, ?>) param;
+            if ("ttl".equals(paramMap.get("name"))) {
+                assertEquals("10", paramMap.get("value"), "TTL should default to 10 when blank");
+                foundTtl = true;
+                break;
+            }
+        }
+        assertTrue(foundTtl, "TTL parameter should be present with default value");
+
+        // Clean up
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
     void testNewFieldsInExcelExport() throws Exception {
         Path tempDir = Files.createTempDirectory("export-fields-test");
         File inputFile = tempDir.resolve("input.xlsx").toFile();
@@ -147,6 +241,63 @@ class NewFieldsTest {
             clinicalRow.createCell(9).setCellValue("20");
             clinicalRow.createCell(10).setCellValue("0");
             clinicalRow.createCell(11).setCellValue("Primary Team");
+
+            try (FileOutputStream fos = new FileOutputStream(target)) {
+                workbook.write(fos);
+            }
+        }
+    }
+
+    private void createTestWorkbookBlankTTL(File target) throws Exception {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            // Unit Breakdown sheet
+            Sheet units = workbook.createSheet("Unit Breakdown");
+            Row unitsHeader = units.createRow(2);
+            unitsHeader.createCell(0).setCellValue("Facility");
+            unitsHeader.createCell(1).setCellValue("Common Unit Name");
+            unitsHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+            unitsHeader.createCell(3).setCellValue("Patient Monitoring Configuration Group");
+            
+            Row unitsRow = units.createRow(3);
+            unitsRow.createCell(0).setCellValue("Test Facility");
+            unitsRow.createCell(1).setCellValue("Test Unit");
+            unitsRow.createCell(2).setCellValue("TestGroup");
+            unitsRow.createCell(3).setCellValue("TestClinicalGroup");
+
+            // Nurse Call sheet with BLANK TTL
+            Sheet nurseCalls = workbook.createSheet("Nurse Call");
+            Row nurseHeader = nurseCalls.createRow(2);
+            nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(2).setCellValue("Sending System Alert Name");
+            nurseHeader.createCell(3).setCellValue("Priority");
+            nurseHeader.createCell(4).setCellValue("Device - A");
+            nurseHeader.createCell(5).setCellValue("Ringtone Device - A");
+            nurseHeader.createCell(6).setCellValue("Response Options");
+            nurseHeader.createCell(7).setCellValue("Break Through DND");
+            nurseHeader.createCell(8).setCellValue("Engage 6.6+: Escalate after all declines or 1 decline");
+            nurseHeader.createCell(9).setCellValue("Engage/Edge Display Time (Time to Live) (Device - A)");
+            nurseHeader.createCell(10).setCellValue("Time to 1st Recipient");
+            nurseHeader.createCell(11).setCellValue("1st Recipient");
+            
+            Row nurseRow = nurseCalls.createRow(3);
+            nurseRow.createCell(0).setCellValue("TestGroup");
+            nurseRow.createCell(1).setCellValue("Test Alarm");
+            nurseRow.createCell(2).setCellValue("System Alarm");
+            nurseRow.createCell(3).setCellValue("High");
+            nurseRow.createCell(4).setCellValue("Badge");
+            nurseRow.createCell(5).setCellValue("Tone 1");
+            nurseRow.createCell(6).setCellValue("Accept");
+            nurseRow.createCell(7).setCellValue("Yes");
+            nurseRow.createCell(8).setCellValue("All declines");
+            // TTL (cell 9) is intentionally left blank
+            nurseRow.createCell(10).setCellValue("0");
+            nurseRow.createCell(11).setCellValue("Nurse Team");
+
+            // Patient Monitoring sheet (not needed for this test)
+            Sheet clinicals = workbook.createSheet("Patient Monitoring");
+            Row clinicalHeader = clinicals.createRow(2);
+            clinicalHeader.createCell(0).setCellValue("Configuration Group");
 
             try (FileOutputStream fos = new FileOutputStream(target)) {
                 workbook.write(fos);
