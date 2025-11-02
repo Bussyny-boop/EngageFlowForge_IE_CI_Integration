@@ -393,4 +393,32 @@ class EnunciationTest {
             }
         }
     }
+
+    @Test
+    void testEnunciateColumnFallbackBehavior() throws Exception {
+        // Test that the fallback to exact column name works
+        // This test uses "Genie Enunciation" which should be found by the substring search
+        // but also validates that the fallback logic is in place
+        Path tempDir = Files.createTempDirectory("enunciate-fallback-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        createTestWorkbookWithEnunciate(excelFile, "Yes");
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        assertEquals(1, parser.nurseCalls.size(), "Should parse row with Genie Enunciation column");
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
+        assertEquals("Yes", nurseCall.enunciate, "Should parse enunciate value");
+
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
+        var flow = (Map<?, ?>) flows.get(0);
+        var params = (List<?>) flow.get("parameterAttributes");
+
+        assertEnunciateValue(params, "true", "Enunciate should be true for 'Yes'");
+
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
 }

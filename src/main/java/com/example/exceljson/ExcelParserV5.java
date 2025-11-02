@@ -220,7 +220,21 @@ public class ExcelParserV5 {
     int cBreakDND= getCol(hm, "Break Through DND");
     int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
     int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
-    int cEnunciate = getColContaining(hm, "Genie Enunciation");
+    
+    // Flexible detection for "Genie Enunciation" column with fallback
+    int cEnunciate = -1;
+    String searchTerm = normalize("Genie Enunciation");
+    for (Map.Entry<String, Integer> entry : hm.entrySet()) {
+      if (entry.getKey().contains(searchTerm)) {
+        cEnunciate = entry.getValue();
+        break;
+      }
+    }
+    // Fallback to exact column name matching if not found
+    if (cEnunciate == -1) {
+      cEnunciate = getCol(hm, "Genie Enunciation");
+    }
+    
     int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
     int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
     int cT2 = getCol(hm, "Time to 2nd Recipient", "Delay to 2nd");
