@@ -349,12 +349,13 @@ public class AppController {
         // Setup EMDAN column with visual styling for Y/Yes values
         if (clinicalEmdanCol != null) {
             clinicalEmdanCol.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().emdan)));
-            clinicalEmdanCol.setCellFactory(col -> new TableCell<ExcelParserV5.FlowRow, String>() {
+            clinicalEmdanCol.setCellFactory(col -> new TextFieldTableCell<ExcelParserV5.FlowRow, String>() {
                 @Override
-                protected void updateItem(String item, boolean empty) {
+                public void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    setText(empty ? "" : item);
-                    if ("yes".equalsIgnoreCase(item) || "y".equalsIgnoreCase(item)) {
+                    if (empty || item == null) {
+                        setStyle("");
+                    } else if ("yes".equalsIgnoreCase(item) || "y".equalsIgnoreCase(item)) {
                         setStyle("-fx-background-color: #E6F7FF; -fx-font-weight: bold;");
                     } else {
                         setStyle("");
