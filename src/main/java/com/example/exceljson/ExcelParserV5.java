@@ -620,7 +620,8 @@ public class ExcelParserV5 {
     params.add(paQ("eventIdentification", nurseSide ? "NurseCalls:#{id}" : "#{id}"));
     params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name}"));
     params.add(paQ("subject", "#{alert_type} #{bed.room.name}"));
-    params.add(paLiteral("ttl", isBlank(r.ttlValue) ? "10" : r.ttlValue));
+    String ttlStr = isBlank(r.ttlValue) ? "10" : String.valueOf(parseDelay(r.ttlValue));
+    params.add(paLiteral("ttl", ttlStr));
     params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
     params.add(paQ("vibrate", "short"));
 
