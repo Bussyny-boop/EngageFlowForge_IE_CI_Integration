@@ -204,4 +204,19 @@ class EmdanTest {
         assertEquals("Y", parser2.clinicals.get(0).emdan, "EMDAN value should be preserved in clinicals");
         assertEquals("N", parser2.nurseCalls.get(0).emdan, "EMDAN value should be preserved in nurse calls");
     }
+    
+    @Test
+    void testEmdanMovedCount() throws Exception {
+        Path tempDir = Files.createTempDirectory("emdan-count-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        // Create workbook with one EMDAN=Y and one EMDAN=N
+        createTestWorkbook(excelFile, "Y", "N");
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Verify the moved count is tracked correctly
+        assertEquals(1, parser.getEmdanMovedCount(), "Should count 1 EMDAN row moved");
+    }
 }

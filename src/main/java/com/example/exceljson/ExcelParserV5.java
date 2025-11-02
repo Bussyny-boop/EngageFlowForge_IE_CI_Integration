@@ -57,6 +57,8 @@ public class ExcelParserV5 {
   private final Map<String, List<Map<String, String>>> nurseGroupToUnits = new LinkedHashMap<>();
   private final Map<String, List<Map<String, String>>> clinicalGroupToUnits = new LinkedHashMap<>();
   private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
+  
+  private int emdanMovedCount = 0;
 
   private static final String SHEET_UNIT = "Unit Breakdown";
   private static final String SHEET_NURSE = "Nurse Call";
@@ -103,6 +105,10 @@ public class ExcelParserV5 {
       units.size(), nurseCalls.size(), clinicals.size(),
       nurseGroupToUnits.size(), clinicalGroupToUnits.size());
   }
+  
+  public int getEmdanMovedCount() {
+    return emdanMovedCount;
+  }
 
   private void clear() {
     units.clear();
@@ -111,6 +117,7 @@ public class ExcelParserV5 {
     nurseGroupToUnits.clear();
     clinicalGroupToUnits.clear();
     noCaregiverByFacility.clear();
+    emdanMovedCount = 0;
   }
 
   // ---------- Parse: Unit Breakdown ----------
@@ -284,6 +291,7 @@ public class ExcelParserV5 {
       if (nurseSide && isEmdanCompliant(f.emdan)) {
         f.type = "Clinicals";
         clinicals.add(f);
+        emdanMovedCount++;
       } else if (nurseSide) {
         nurseCalls.add(f);
       } else {
@@ -1261,7 +1269,7 @@ public class ExcelParserV5 {
    * Returns true if value is "Yes" or "Y" (case-insensitive).
    * Returns false for any other value (including blank, "No", "N", etc.).
    */
-  private static boolean isEmdanCompliant(String emdanValue) {
+  public static boolean isEmdanCompliant(String emdanValue) {
     if (isBlank(emdanValue)) {
       return false;
     }
