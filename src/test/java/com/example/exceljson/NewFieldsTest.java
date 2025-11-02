@@ -100,7 +100,7 @@ class NewFieldsTest {
             nurseHeader.createCell(6).setCellValue("Response Options");
             nurseHeader.createCell(7).setCellValue("Break Through DND");
             nurseHeader.createCell(8).setCellValue("Engage 6.6+: Escalate after all declines or 1 decline");
-            nurseHeader.createCell(9).setCellValue("Engage/Edge Display Time (Time to Live)");
+            nurseHeader.createCell(9).setCellValue("Engage/Edge Display Time (Time to Live) (Device - A)");
             nurseHeader.createCell(10).setCellValue("Time to 1st Recipient");
             nurseHeader.createCell(11).setCellValue("1st Recipient");
             
@@ -130,7 +130,7 @@ class NewFieldsTest {
             clinicalHeader.createCell(6).setCellValue("Response Options");
             clinicalHeader.createCell(7).setCellValue("Break Through DND");
             clinicalHeader.createCell(8).setCellValue("Engage 6.6+: Escalate after all declines or 1 decline");
-            clinicalHeader.createCell(9).setCellValue("Time to Live");
+            clinicalHeader.createCell(9).setCellValue("Engage/Edge Display Time (Time to Live) (Device - A)");
             clinicalHeader.createCell(10).setCellValue("Time to 1st Recipient");
             clinicalHeader.createCell(11).setCellValue("1st Recipient");
             

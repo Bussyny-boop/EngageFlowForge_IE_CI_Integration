@@ -218,7 +218,7 @@ public class ExcelParserV5 {
     int cResp    = getCol(hm, "Response Options", "Response Option");
     int cBreakDND= getCol(hm, "Break Through DND");
     int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
-    int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live)", "Engage/Edge Display Time (Time to Live) (Device - B)", "Time to Live");
+    int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
     int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
     int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
     int cT2 = getCol(hm, "Time to 2nd Recipient", "Delay to 2nd");
@@ -787,7 +787,7 @@ public class ExcelParserV5 {
       "Response Options",
       "Break Through DND",
       "Engage 6.6+: Escalate after all declines or 1 decline",
-      "Engage/Edge Display Time (Time to Live)",
+      "Engage/Edge Display Time (Time to Live) (Device - A)",
       "Time to 1st Recipient","1st Recipient",
       "Time to 2nd Recipient","2nd Recipient",
       "Time to 3rd Recipient","3rd Recipient",
