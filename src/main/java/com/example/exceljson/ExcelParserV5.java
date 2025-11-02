@@ -591,6 +591,14 @@ public class ExcelParserV5 {
       params.add(paQ("responseType", "None"));
     }
 
+    // 2a. Add declineCount if escalateAfter contains "all"
+    if (!isBlank(r.escalateAfter)) {
+      String lower = r.escalateAfter.trim().toLowerCase(Locale.ROOT);
+      if (lower.contains("all")) {
+        params.add(paQ("declineCount", "All Recipients"));
+      }
+    }
+
     // 3. Add shared attributes
     // Use breakThroughDND from Excel if available, otherwise fallback to priority-based logic
     String breakThroughValue;
