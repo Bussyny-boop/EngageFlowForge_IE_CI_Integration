@@ -221,18 +221,18 @@ public class ExcelParserV5 {
     int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
     int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
     
-    // Flexible detection for "Genie Enunciation" column with fallback
-    int cEnunciate = -1;
+    // Find all columns that contain "Genie Enunciation" to support multiple column variants
+    List<Integer> enunciateColumns = new ArrayList<>();
     String searchTerm = normalize("Genie Enunciation");
     for (Map.Entry<String, Integer> entry : hm.entrySet()) {
       if (entry.getKey().contains(searchTerm)) {
-        cEnunciate = entry.getValue();
-        break;
+        enunciateColumns.add(entry.getValue());
       }
     }
-    // Fallback to exact column name matching if not found
-    if (cEnunciate == -1) {
-      cEnunciate = getCol(hm, "Genie Enunciation");
+    // Also try exact column name matching as fallback
+    int exactCol = getCol(hm, "Genie Enunciation");
+    if (exactCol != -1 && !enunciateColumns.contains(exactCol)) {
+      enunciateColumns.add(exactCol);
     }
     
     int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
@@ -262,7 +262,10 @@ public class ExcelParserV5 {
       f.breakThroughDND = getCell(row, cBreakDND);
       f.escalateAfter = getCell(row, cEscalateAfter);
       f.ttlValue = getCell(row, cTTL);
-      f.enunciate = getCell(row, cEnunciate);
+      
+      // Extract enunciate from multiple possible columns, use first non-empty value
+      f.enunciate = getFirstNonEmptyValue(row, enunciateColumns);
+      
       f.t1 = getCell(row, cT1); f.r1 = getCell(row, cR1);
       f.t2 = getCell(row, cT2); f.r2 = getCell(row, cR2);
       f.t3 = getCell(row, cT3); f.r3 = getCell(row, cR3);
@@ -1083,6 +1086,24 @@ public class ExcelParserV5 {
     } catch (Exception e) {
       return "";
     }
+  }
+  
+  /**
+   * Get the first non-empty value from multiple columns.
+   * Used for extracting values that may exist in multiple possible columns.
+   * @param row The row to read from
+   * @param columns List of column indices to check
+   * @return The first non-empty value found, or empty string if none found
+   */
+  private static String getFirstNonEmptyValue(Row row, List<Integer> columns) {
+    if (row == null || columns == null || columns.isEmpty()) return "";
+    for (int col : columns) {
+      String value = getCell(row, col);
+      if (!isBlank(value)) {
+        return value;
+      }
+    }
+    return "";
   }
   private static List<String> splitUnits(String s) {
     if (s == null) return List.of();
