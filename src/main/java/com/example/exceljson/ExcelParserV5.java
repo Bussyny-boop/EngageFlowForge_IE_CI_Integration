@@ -294,7 +294,8 @@ public class ExcelParserV5 {
         emdanMovedCount++;
         
         // Resolve facility from configuration group for better logging
-        String facility = resolveFacilityFromConfig(f.configGroup, nurseSide);
+        // Use nurseSide=true because the alarm originated from Nurse Call sheet (source mapping)
+        String facility = resolveFacilityFromConfig(f.configGroup, true);
         String alarmDisplay = nvl(f.alarmName, f.sendingName);
         String priorityDisplay = isBlank(f.priorityRaw) ? "default" : f.priorityRaw;
         
@@ -1158,7 +1159,7 @@ public class ExcelParserV5 {
   
   /**
    * Resolve facility name from a configuration group.
-   * Searches both nurse and clinical group maps for the given configuration group
+   * Searches the appropriate group map (nurse or clinical) for the given configuration group
    * and returns the facility name if found.
    * 
    * @param configGroup The configuration group name to look up
