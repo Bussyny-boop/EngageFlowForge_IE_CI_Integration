@@ -357,7 +357,8 @@ public class ExcelParserV5 {
    * @param configGroup The configuration group to look up
    * @param primaryMap The primary map to check (clinicalGroupToUnits or nurseGroupToUnits)
    * @param nurseSide true if building nurse calls, false if building clinicals
-   * @return List of unit references, or empty list if not found
+   * @return List of unit references with facility names and unit names, or empty list if the
+   *         configuration group is blank or not found in any map
    */
   private List<Map<String,String>> resolveUnitRefs(String configGroup,
                                                    Map<String,List<Map<String,String>>> primaryMap,
