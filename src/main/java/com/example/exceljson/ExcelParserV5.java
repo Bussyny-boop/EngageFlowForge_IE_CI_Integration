@@ -223,7 +223,7 @@ public class ExcelParserV5 {
     
     // Flexible detection for "Genie Enunciation" column with fallback
     int cEnunciate = -1;
-    String searchTerm = "genie enunciation";
+    String searchTerm = normalize("Genie Enunciation");
     for (Map.Entry<String, Integer> entry : hm.entrySet()) {
       if (entry.getKey().contains(searchTerm)) {
         cEnunciate = entry.getValue();
