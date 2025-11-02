@@ -165,6 +165,27 @@ class EnunciationTest {
     }
 
     @Test
+    void testEnunciateNBecomesFalse() throws Exception {
+        Path tempDir = Files.createTempDirectory("enunciate-n-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        createTestWorkbookWithEnunciate(excelFile, "N");
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
+        var flow = (Map<?, ?>) flows.get(0);
+        var params = (List<?>) flow.get("parameterAttributes");
+
+        assertEnunciateValue(params, "false", "Enunciate should be false for 'N'");
+
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
     void testEnunciateFalseBecomesFalse() throws Exception {
         Path tempDir = Files.createTempDirectory("enunciate-false-test");
         File excelFile = tempDir.resolve("test.xlsx").toFile();

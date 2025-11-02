@@ -1185,18 +1185,24 @@ public class ExcelParserV5 {
   /**
    * Convert Excel enunciation value to boolean.
    * Returns true if value is "Yes", "Y", "Enunciate", "Enunciation", or "True" (case-insensitive).
-   * Otherwise returns false.
+   * Returns false for "No", "N", "False", or any other value.
+   * Note: This method is only called for non-blank values; blank values are handled by the caller.
    */
   private static boolean parseEnunciateToBoolean(String excelValue) {
     if (isBlank(excelValue)) {
-      return false;
+      return false;  // Should not happen; caller checks blank first
     }
     String normalized = excelValue.trim().toLowerCase(Locale.ROOT);
-    return normalized.equals("yes") || 
-           normalized.equals("y") || 
-           normalized.equals("enunciate") || 
-           normalized.equals("enunciation") || 
-           normalized.equals("true");
+    // True values
+    if (normalized.equals("yes") || 
+        normalized.equals("y") || 
+        normalized.equals("enunciate") || 
+        normalized.equals("enunciation") || 
+        normalized.equals("true")) {
+      return true;
+    }
+    // All other values (including "no", "n", "false") return false
+    return false;
   }
   
   private static boolean containsWord(String hay, String needle) {
