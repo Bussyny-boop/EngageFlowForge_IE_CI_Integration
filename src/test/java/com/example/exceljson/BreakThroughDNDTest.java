@@ -80,6 +80,118 @@ class BreakThroughDNDTest {
     }
 
     @Test
+    void breakThroughDNDYesMapsToVoceraAndDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Normal", "Yes");
+        
+        assertTrue(json.contains("\"name\": \"breakThrough\""), 
+            "Should have breakThrough parameter");
+        assertTrue(json.contains("\"value\": \"\\\"voceraAndDevice\\\"\""), 
+            "Excel value 'Yes' should map to 'voceraAndDevice'");
+    }
+
+    @Test
+    void breakThroughDNDYMapsToVoceraAndDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Normal", "Y");
+        
+        assertTrue(json.contains("\"name\": \"breakThrough\""), 
+            "Should have breakThrough parameter");
+        assertTrue(json.contains("\"value\": \"\\\"voceraAndDevice\\\"\""), 
+            "Excel value 'Y' should map to 'voceraAndDevice'");
+    }
+
+    @Test
+    void breakThroughDNDNoMapsToNone() throws Exception {
+        String json = generateJsonForBreakThroughDND("Urgent", "No");
+        
+        assertTrue(json.contains("\"name\": \"breakThrough\""), 
+            "Should have breakThrough parameter");
+        assertTrue(json.contains("\"value\": \"\\\"none\\\"\""), 
+            "Excel value 'No' should map to 'none' even when priority is Urgent");
+    }
+
+    @Test
+    void breakThroughDNDNMapsToNone() throws Exception {
+        String json = generateJsonForBreakThroughDND("Urgent", "N");
+        
+        assertTrue(json.contains("\"name\": \"breakThrough\""), 
+            "Should have breakThrough parameter");
+        assertTrue(json.contains("\"value\": \"\\\"none\\\"\""), 
+            "Excel value 'N' should map to 'none' even when priority is Urgent");
+    }
+
+    @Test
+    void breakThroughDNDCaseInsensitive() throws Exception {
+        String json1 = generateJsonForBreakThroughDND("Normal", "yes");
+        String json2 = generateJsonForBreakThroughDND("Normal", "YES");
+        String json3 = generateJsonForBreakThroughDND("Urgent", "no");
+        String json4 = generateJsonForBreakThroughDND("Urgent", "NO");
+        
+        assertTrue(json1.contains("\"value\": \"\\\"voceraAndDevice\\\"\""), 
+            "Lowercase 'yes' should map to 'voceraAndDevice'");
+        assertTrue(json2.contains("\"value\": \"\\\"voceraAndDevice\\\"\""), 
+            "Uppercase 'YES' should map to 'voceraAndDevice'");
+        assertTrue(json3.contains("\"value\": \"\\\"none\\\"\""), 
+            "Lowercase 'no' should map to 'none'");
+        assertTrue(json4.contains("\"value\": \"\\\"none\\\"\""), 
+            "Uppercase 'NO' should map to 'none'");
+    }
+
+    @Test
+    void breakThroughDNDDirectAPIValuesPassThrough() throws Exception {
+        // Test that direct API values are normalized and passed through
+        String json1 = generateJsonForBreakThroughDND("Normal", "VoceraAndDevice");
+        String json2 = generateJsonForBreakThroughDND("Normal", "DEVICE");
+        String json3 = generateJsonForBreakThroughDND("Urgent", "NONE");
+        
+        assertTrue(json1.contains("\"value\": \"\\\"voceraAndDevice\\\"\""), 
+            "Direct API value 'VoceraAndDevice' should be normalized to 'voceraAndDevice'");
+        assertTrue(json2.contains("\"value\": \"\\\"device\\\"\""), 
+            "Direct API value 'DEVICE' should be normalized to 'device'");
+        assertTrue(json3.contains("\"value\": \"\\\"none\\\"\""), 
+            "Direct API value 'NONE' should be normalized to 'none'");
+    }
+
+    @Test
+    void breakThroughDNDYesSetsPresenceConfigToDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Normal", "Yes");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"device\""), 
+            "Excel value 'Yes' should set presenceConfig to 'device'");
+    }
+
+    @Test
+    void breakThroughDNDYSetsPresenceConfigToDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Normal", "Y");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"device\""), 
+            "Excel value 'Y' should set presenceConfig to 'device'");
+    }
+
+    @Test
+    void breakThroughDNDNoSetsPresenceConfigToUserAndDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Urgent", "No");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"user_and_device\""), 
+            "Excel value 'No' should set presenceConfig to 'user_and_device'");
+    }
+
+    @Test
+    void breakThroughDNDNSetsPresenceConfigToUserAndDevice() throws Exception {
+        String json = generateJsonForBreakThroughDND("Urgent", "N");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"user_and_device\""), 
+            "Excel value 'N' should set presenceConfig to 'user_and_device'");
+    }
+
+    @Test
+    void breakThroughDNDEmptySetsPresenceConfigToUserAndDevice() throws Exception {
+        String json = generateJsonWithoutBreakThroughDND("Normal");
+        
+        assertTrue(json.contains("\"presenceConfig\": \"user_and_device\""), 
+            "Empty Break Through DND should set presenceConfig to 'user_and_device' (default)");
+    }
+
+    @Test
     void excelSaveAndLoadPreservesBreakThroughDND() throws Exception {
         Path tempDir = Files.createTempDirectory("breakthrough-test");
         Path excelPath1 = tempDir.resolve("test1.xlsx");
