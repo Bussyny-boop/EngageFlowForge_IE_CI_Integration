@@ -9,10 +9,28 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class NewFieldsTest {
+
+    /**
+     * Helper method to find and verify the TTL parameter value in a list of parameter attributes.
+     */
+    private void assertTtlValue(List<?> params, String expectedValue, String message) {
+        boolean foundTtl = false;
+        for (Object param : params) {
+            var paramMap = (Map<?, ?>) param;
+            if ("ttl".equals(paramMap.get("name"))) {
+                assertEquals(expectedValue, paramMap.get("value"), message);
+                foundTtl = true;
+                break;
+            }
+        }
+        assertTrue(foundTtl, "TTL parameter should be present");
+    }
 
     @Test
     void testEscalateAfterAndTtlFieldsParsing() throws Exception {
@@ -55,47 +73,29 @@ class NewFieldsTest {
 
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
-        var flows = (java.util.List<?>) nurseJson.get("deliveryFlows");
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
         assertNotNull(flows, "Delivery flows should not be null");
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
-        var flow = (java.util.Map<?, ?>) flows.get(0);
-        var params = (java.util.List<?>) flow.get("parameterAttributes");
+        var flow = (Map<?, ?>) flows.get(0);
+        var params = (List<?>) flow.get("parameterAttributes");
         assertNotNull(params, "Parameter attributes should not be null");
 
-        // Find the TTL parameter
-        boolean foundTtl = false;
-        for (Object param : params) {
-            var paramMap = (java.util.Map<?, ?>) param;
-            if ("ttl".equals(paramMap.get("name"))) {
-                assertEquals("15", paramMap.get("value"), "TTL should be 15 from Excel");
-                foundTtl = true;
-                break;
-            }
-        }
-        assertTrue(foundTtl, "TTL parameter should be present");
+        // Verify TTL parameter
+        assertTtlValue(params, "15", "TTL should be 15 from Excel");
 
         // Build JSON for clinicals
         var clinicalJson = parser.buildClinicalsJson();
-        var clinicalFlows = (java.util.List<?>) clinicalJson.get("deliveryFlows");
+        var clinicalFlows = (List<?>) clinicalJson.get("deliveryFlows");
         assertNotNull(clinicalFlows, "Delivery flows should not be null");
         assertEquals(1, clinicalFlows.size(), "Should have 1 clinical flow");
 
-        var clinicalFlow = (java.util.Map<?, ?>) clinicalFlows.get(0);
-        var clinicalParams = (java.util.List<?>) clinicalFlow.get("parameterAttributes");
+        var clinicalFlow = (Map<?, ?>) clinicalFlows.get(0);
+        var clinicalParams = (List<?>) clinicalFlow.get("parameterAttributes");
         assertNotNull(clinicalParams, "Parameter attributes should not be null");
 
-        // Find the TTL parameter
-        foundTtl = false;
-        for (Object param : clinicalParams) {
-            var paramMap = (java.util.Map<?, ?>) param;
-            if ("ttl".equals(paramMap.get("name"))) {
-                assertEquals("20", paramMap.get("value"), "TTL should be 20 from Excel");
-                foundTtl = true;
-                break;
-            }
-        }
-        assertTrue(foundTtl, "TTL parameter should be present in clinicals");
+        // Verify TTL parameter
+        assertTtlValue(clinicalParams, "20", "TTL should be 20 from Excel");
 
         // Clean up
         Files.deleteIfExists(excelFile.toPath());
@@ -115,21 +115,12 @@ class NewFieldsTest {
 
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
-        var flows = (java.util.List<?>) nurseJson.get("deliveryFlows");
-        var flow = (java.util.Map<?, ?>) flows.get(0);
-        var params = (java.util.List<?>) flow.get("parameterAttributes");
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
+        var flow = (Map<?, ?>) flows.get(0);
+        var params = (List<?>) flow.get("parameterAttributes");
 
-        // Find the TTL parameter
-        boolean foundTtl = false;
-        for (Object param : params) {
-            var paramMap = (java.util.Map<?, ?>) param;
-            if ("ttl".equals(paramMap.get("name"))) {
-                assertEquals("10", paramMap.get("value"), "TTL should default to 10 when blank");
-                foundTtl = true;
-                break;
-            }
-        }
-        assertTrue(foundTtl, "TTL parameter should be present with default value");
+        // Verify TTL defaults to 10
+        assertTtlValue(params, "10", "TTL should default to 10 when blank");
 
         // Clean up
         Files.deleteIfExists(excelFile.toPath());
@@ -290,7 +281,7 @@ class NewFieldsTest {
             nurseRow.createCell(6).setCellValue("Accept");
             nurseRow.createCell(7).setCellValue("Yes");
             nurseRow.createCell(8).setCellValue("All declines");
-            // TTL (cell 9) is intentionally left blank
+            // TTL (cell 9) is intentionally left blank to test default value of 10
             nurseRow.createCell(10).setCellValue("0");
             nurseRow.createCell(11).setCellValue("Nurse Team");
 
