@@ -16,6 +16,23 @@ The column can have various names as long as it contains "Genie Enunciation" (ca
 - "Genie Enunciation"
 - "Phone: Alert Display / Genie Enunciation (if badge) B"
 - "Badge Genie Enunciation"
+- "Badge-Genie Enunciation"
+
+### Multiple Column Support
+
+The parser supports **multiple columns** containing "Genie Enunciation" in the same sheet. This is useful when different workbook templates use different column names or when migrating from one template to another.
+
+**Behavior when multiple columns exist:**
+- The parser finds all columns with "Genie Enunciation" in the header
+- For each row, it checks all these columns in order (left to right)
+- It uses the **first non-empty value** found
+- If all columns are empty, it defaults to `true`
+
+**Example:** If a workbook has both "Phone: Alert Display / Genie Enunciation (if badge) B" and "Badge-Genie Enunciation" columns:
+- Row 1 has "Yes" in first column, empty in second → uses "Yes" (true)
+- Row 2 has empty in first column, "No" in second → uses "No" (false)
+- Row 3 has "Yes" in first column, "No" in second → uses "Yes" (true, first column takes priority)
+- Row 4 has empty in both columns → defaults to true
 
 ### Column Position
 
@@ -24,6 +41,11 @@ The "Genie Enunciation" column is typically placed after "Engage/Edge Display Ti
 Example column order:
 ```
 Configuration Group | Alarm Name | ... | TTL | Genie Enunciation | Time to 1st Recipient | 1st Recipient | ...
+```
+
+Or with multiple columns:
+```
+Configuration Group | ... | TTL | Phone: Alert Display / Genie Enunciation (if badge) B | Badge-Genie Enunciation | Time to 1st | ...
 ```
 
 ### Accepted Values
@@ -102,12 +124,27 @@ Bed Exit       | High     | (blank)
 ```
 **Result:** Both produce `"enunciate": "true"`
 
+### Example 4: Multiple Columns with Fallback
+```
+Alarm Name       | Phone: Alert Display / Genie Enunciation | Badge-Genie Enunciation
+Code Blue        | Yes                                       | 
+Patient Request  |                                           | No
+Fall Alert       | Yes                                       | No
+Bed Exit         |                                           | 
+```
+**Results:**
+- Code Blue: uses "Yes" from first column → `"enunciate": "true"`
+- Patient Request: uses "No" from second column → `"enunciate": "false"`
+- Fall Alert: uses "Yes" from first column (has priority) → `"enunciate": "true"`
+- Bed Exit: both empty, defaults → `"enunciate": "true"`
+
 ## Implementation Details
 
-1. The parser searches for any column header containing "Genie Enunciation" (case-insensitive)
-2. Values are normalized to lowercase and matched against the list of accepted values
-3. If the column is not present or the cell is blank, enunciation defaults to `true`
-4. The boolean value is stored as a string in the JSON output to maintain consistency with the Engage API format
+1. The parser searches for **all** column headers containing "Genie Enunciation" (case-insensitive)
+2. For each row, it checks all matching columns in order and uses the first non-empty value
+3. Values are normalized to lowercase and matched against the list of accepted values
+4. If no columns are present or all cells are blank, enunciation defaults to `true`
+5. The boolean value is stored as a string in the JSON output to maintain consistency with the Engage API format
 
 ## Testing
 
@@ -118,6 +155,11 @@ The feature includes comprehensive test coverage:
 - Case-insensitive value matching
 - Multiple column name variants
 - Excel export/import round-trip preservation
+- **Multi-column extraction with fallback logic:**
+  - Value in first column only
+  - Value in second column only
+  - Values in both columns (first takes priority)
+  - Empty values in all columns (defaults to true)
 
 Run tests with:
 ```bash
