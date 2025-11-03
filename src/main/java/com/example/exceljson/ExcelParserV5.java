@@ -60,6 +60,15 @@ public class ExcelParserV5 {
   
   private int emdanMovedCount = 0;
 
+  // Default interface reference names (editable via GUI)
+  private String edgeReferenceName = "OutgoingWCTP";
+  private String vcsReferenceName = "VMP";
+
+  public void setInterfaceReferences(String edgeRef, String vcsRef) {
+    if (edgeRef != null && !edgeRef.isBlank()) this.edgeReferenceName = edgeRef;
+    if (vcsRef != null && !vcsRef.isBlank()) this.vcsReferenceName = vcsRef;
+  }
+
   private static final String SHEET_UNIT = "Unit Breakdown";
   private static final String SHEET_NURSE = "Nurse Call";
   private static final String SHEET_CLINICAL = "Patient Monitoring";
@@ -391,7 +400,7 @@ public class ExcelParserV5 {
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
       flow.put("destinations", buildDestinationsMerged(r, unitRefs, nurseSide));
-      flow.put("interfaces", List.of(Map.of("componentName","OutgoingWCTP","referenceName","OutgoingWCTP")));
+      flow.put("interfaces", buildInterfacesForDevice(r.deviceA));
       flow.put("name", buildFlowName(nurseSide, mappedPriority, r, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(r, nurseSide, mappedPriority));
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
@@ -436,7 +445,7 @@ public class ExcelParserV5 {
       flow.put("alarmsAlerts", alarmNames);
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
       flow.put("destinations", buildDestinationsMerged(template, unitRefs, nurseSide));
-      flow.put("interfaces", List.of(Map.of("componentName","OutgoingWCTP","referenceName","OutgoingWCTP")));
+      flow.put("interfaces", buildInterfacesForDevice(template.deviceA));
       flow.put("name", buildFlowNameMerged(nurseSide, mappedPriority, alarmNames, template, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(template, nurseSide, mappedPriority));
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
@@ -563,6 +572,31 @@ public class ExcelParserV5 {
       }
     }
     return out;
+  }
+
+  /**
+   * Dynamically selects the interface block based on the Device-A column.
+   * Uses the editable reference names provided from the GUI.
+   */
+  private List<Map<String, Object>> buildInterfacesForDevice(String deviceName) {
+    if (isBlank(deviceName)) return List.of();
+
+    String lower = deviceName.toLowerCase(Locale.ROOT);
+    Map<String, Object> iface = new LinkedHashMap<>();
+
+    if (lower.contains("edge") || lower.contains("iphone-edge")) {
+      iface.put("componentName", "OutgoingWCTP");
+      iface.put("referenceName", edgeReferenceName);
+      return List.of(iface);
+    }
+
+    if (lower.contains("vocera vcs") || lower.contains("vcs")) {
+      iface.put("componentName", "VMP");
+      iface.put("referenceName", vcsReferenceName);
+      return List.of(iface);
+    }
+
+    return List.of();
   }
 
   private void addOrder(List<Map<String,Object>> out,

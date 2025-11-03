@@ -27,6 +27,13 @@
                     </tooltip>
                 </CheckBox>
             </HBox>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Edge Reference Name:" />
+                <TextField fx:id="edgeRefNameField" prefWidth="150" text="OutgoingWCTP" />
+                <Label text="VCS Reference Name:" />
+                <TextField fx:id="vcsRefNameField" prefWidth="150" text="VMP" />
+                <Button fx:id="resetDefaultsButton" text="Reset Defaults" />
+            </HBox>
             <Separator />
         </VBox>
     </top>
