@@ -711,7 +711,8 @@ public class ExcelParserV5 {
     String acceptPhrase = hasAcknowledge ? "Acknowledge" : "Accept";
     String declinePhrase = hasDecline ? "Decline" : "Escalate";
     
-    // Expand accept/escalate detection to include variations
+    // Combine flags: treat "Acknowledge" as "Accept" and "Decline" as "Escalate" for flow logic
+    // The specific phrase used will be reflected in the badge phrases above
     hasAccept = hasAccept || hasAcknowledge;
     hasEscalate = hasEscalate || hasDecline;
 
