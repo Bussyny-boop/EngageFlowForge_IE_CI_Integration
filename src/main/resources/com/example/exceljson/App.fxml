@@ -33,6 +33,7 @@
                 <Label text="VCS Reference Name:" />
                 <TextField fx:id="vcsRefNameField" prefWidth="150" text="VMP" />
                 <Button fx:id="resetDefaultsButton" text="Reset Defaults" />
+                <Button fx:id="resetPathsButton" text="Reset Paths" />
             </HBox>
             <Separator />
         </VBox>

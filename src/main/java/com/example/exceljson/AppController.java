@@ -11,6 +11,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.prefs.Preferences;
 
 public class AppController {
 
@@ -26,6 +27,7 @@ public class AppController {
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private Button resetDefaultsButton;
+    @FXML private Button resetPathsButton;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
@@ -93,10 +95,29 @@ public class AppController {
     private String lastGeneratedJson = "";
     private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
 
+    // ---------- Directory Persistence ----------
+    private File lastExcelDir = null;
+    private File lastJsonDir = null;
+
+    private static final String PREF_KEY_LAST_EXCEL_DIR = "lastExcelDir";
+    private static final String PREF_KEY_LAST_JSON_DIR = "lastJsonDir";
+
     // ---------- Initialization ----------
     @FXML
     public void initialize() {
         parser = new ExcelParserV5();
+
+        // Load saved directories from preferences
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        String excelDirPath = prefs.get(PREF_KEY_LAST_EXCEL_DIR, null);
+        String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
+
+        if (excelDirPath != null) {
+            lastExcelDir = new File(excelDirPath);
+        }
+        if (jsonDirPath != null) {
+            lastJsonDir = new File(jsonDirPath);
+        }
 
         initializeUnitColumns();
         initializeNurseColumns();
@@ -117,6 +138,7 @@ public class AppController {
         exportNurseJsonButton.setOnAction(e -> exportJson(true));
         exportClinicalJsonButton.setOnAction(e -> exportJson(false));
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
+        if (resetPathsButton != null) resetPathsButton.setOnAction(e -> resetPaths());
 
         // --- Interface reference name bindings ---
         // Update parser whenever text changes or Enter is pressed
@@ -146,8 +168,16 @@ public class AppController {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Excel Workbook");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+
+            if (lastExcelDir != null && lastExcelDir.exists()) {
+                chooser.setInitialDirectory(lastExcelDir);
+            }
+
             File file = chooser.showOpenDialog(getStage());
             if (file == null) return;
+
+            // Remember directory
+            rememberDirectory(file, true);
 
             parser.load(file);
             currentExcelFile = file;
@@ -198,8 +228,16 @@ public class AppController {
             chooser.setTitle("Save Generated Excel");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
             chooser.setInitialFileName(newName);
+
+            if (lastExcelDir != null && lastExcelDir.exists()) {
+                chooser.setInitialDirectory(lastExcelDir);
+            }
+
             File out = chooser.showSaveDialog(getStage());
             if (out == null) return;
+
+            // Remember directory
+            rememberDirectory(out, true);
 
             if (out.exists()) {
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
@@ -260,8 +298,15 @@ public class AppController {
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
             chooser.setInitialFileName(nurseSide ? "NurseCalls.json" : "Clinicals.json");
 
+            if (lastJsonDir != null && lastJsonDir.exists()) {
+                chooser.setInitialDirectory(lastJsonDir);
+            }
+
             File file = chooser.showSaveDialog(getStage());
             if (file == null) return;
+
+            // Remember directory
+            rememberDirectory(file, false);
 
             if (nurseSide) parser.writeNurseCallsJson(file, useAdvanced);
             else parser.writeClinicalsJson(file, useAdvanced);
@@ -450,4 +495,38 @@ public class AppController {
     }
 
     private static String safe(String v) { return v == null ? "" : v; }
+
+    // ---------- Remember Directory ----------
+    private void rememberDirectory(File file, boolean isExcel) {
+        if (file == null) return;
+        File dir = file.getParentFile();
+        if (dir == null || !dir.exists()) return;
+
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        if (isExcel) {
+            lastExcelDir = dir;
+            prefs.put(PREF_KEY_LAST_EXCEL_DIR, dir.getAbsolutePath());
+        } else {
+            lastJsonDir = dir;
+            prefs.put(PREF_KEY_LAST_JSON_DIR, dir.getAbsolutePath());
+        }
+    }
+
+    // ---------- Reset Paths ----------
+    private void resetPaths() {
+        try {
+            Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+            prefs.remove(PREF_KEY_LAST_EXCEL_DIR);
+            prefs.remove(PREF_KEY_LAST_JSON_DIR);
+
+            lastExcelDir = null;
+            lastJsonDir = null;
+
+            statusLabel.setText("File paths reset to default");
+            showInfo("✅ Default file paths restored.\nNext time you load or save, file chooser will open in the system home directory.");
+
+        } catch (Exception ex) {
+            showError("Failed to reset paths: " + ex.getMessage());
+        }
+    }
 }
