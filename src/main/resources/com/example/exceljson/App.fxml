@@ -10,7 +10,7 @@
             styleClass="border-pane">
     <top>
         <VBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-            <Label text="⚙️ Engage Rules Generator" styleClass="header-label" />
+            <Label text="⚙️ Engage FlowForge 2.0" styleClass="header-label" />
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Button fx:id="loadButton" text="📂 Load Excel" />
                 <Button fx:id="saveExcelButton" text="💾 Save Excel (Save As)" disable="true" />

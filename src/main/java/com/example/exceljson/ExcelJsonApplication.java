@@ -19,7 +19,7 @@ public class ExcelJsonApplication extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
         Parent root = loader.load();
 
-        primaryStage.setTitle("FlowForge V1.1");
+        primaryStage.setTitle("Engage FlowForge 2.0");
         
         // Load application icon from resources
         try (InputStream iconStream = getClass().getResourceAsStream("/ICON.ico")) {
