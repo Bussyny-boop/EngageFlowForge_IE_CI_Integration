@@ -399,7 +399,7 @@ public class ExcelParserV5 {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
 
       List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
-      String mappedPriority = mapPrioritySafe(r.priorityRaw);
+      String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
 
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
@@ -438,7 +438,7 @@ public class ExcelParserV5 {
       // Use the first row as the template
       FlowRow template = group.get(0);
       List<Map<String,String>> unitRefs = resolveUnitRefs(template.configGroup, groupToUnits, nurseSide);
-      String mappedPriority = mapPrioritySafe(template.priorityRaw);
+      String mappedPriority = mapPrioritySafe(template.priorityRaw, template.deviceA);
 
       // Collect all alarm names from the group
       List<String> alarmNames = group.stream()
@@ -464,7 +464,7 @@ public class ExcelParserV5 {
   // ---------- Build merge key for grouping flows with identical delivery parameters ----------
   private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, boolean nurseSide) {
     List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
-    String mappedPriority = mapPrioritySafe(r.priorityRaw);
+    String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
     
     // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units
     StringBuilder key = new StringBuilder();
@@ -1335,12 +1335,54 @@ public class ExcelParserV5 {
     return "user_and_device";
   }
 
-  private static String mapPrioritySafe(String priority) {
+  /**
+   * Determine the interface component name based on the device name.
+   * Returns "OutgoingWCTP" for Edge devices, "VMP" for VCS devices, or empty string otherwise.
+   */
+  private static String getInterfaceComponentName(String deviceName) {
+    if (isBlank(deviceName)) return "";
+    String lower = deviceName.toLowerCase(Locale.ROOT);
+    if (lower.contains("edge") || lower.contains("iphone-edge")) {
+      return "OutgoingWCTP";
+    }
+    if (lower.contains("vocera vcs") || lower.contains("vcs")) {
+      return "VMP";
+    }
+    return "";
+  }
+
+  /**
+   * Map priority based on the interface component name.
+   * For OutgoingWCTP (Edge): Low->normal, Medium->high, High->urgent
+   * For VMP (VCS): Normal(VCS)->normal, High(VCS)->high, Urgent(VCS)->urgent
+   * For other interfaces or empty device: use OutgoingWCTP logic as default
+   */
+  private static String mapPrioritySafe(String priority, String deviceName) {
     if (priority == null) return "";
-    String norm = priority.trim().toLowerCase(Locale.ROOT)
-      .replace("(edge)", " edge")
-      .replaceAll("\\s+", " ")
-      .trim();
+    
+    String interfaceComponent = getInterfaceComponentName(deviceName);
+    String norm = priority.trim().toLowerCase(Locale.ROOT);
+    
+    // VMP (VCS) priority mapping
+    if ("VMP".equals(interfaceComponent)) {
+      norm = norm.replace("(vcs)", " vcs")
+                 .replaceAll("\\s+", " ")
+                 .trim();
+      return switch (norm) {
+        case "urgent", "u" -> "urgent";
+        case "urgent vcs" -> "urgent";
+        case "high", "h" -> "high";
+        case "high vcs" -> "high";
+        case "normal", "n" -> "normal";
+        case "normal vcs" -> "normal";
+        default -> norm.isEmpty() ? "normal" : "";
+      };
+    }
+    
+    // OutgoingWCTP (Edge) priority mapping - also used as default
+    norm = norm.replace("(edge)", " edge")
+               .replaceAll("\\s+", " ")
+               .trim();
     return switch (norm) {
       case "urgent", "u" -> "urgent";
       case "high", "h" -> "urgent";
