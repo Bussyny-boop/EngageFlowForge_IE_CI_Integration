@@ -23,6 +23,9 @@ public class AppController {
     @FXML private Button exportNurseJsonButton;
     @FXML private Button exportClinicalJsonButton;
     @FXML private CheckBox mergeFlowsCheckbox;
+    @FXML private TextField edgeRefNameField;
+    @FXML private TextField vcsRefNameField;
+    @FXML private Button resetDefaultsButton;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
@@ -98,6 +101,10 @@ public class AppController {
         initializeNurseColumns();
         initializeClinicalColumns();
 
+        // Set default reference names
+        if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
+        if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
+
         setJsonButtonsEnabled(false);
         setExcelButtonsEnabled(false);
 
@@ -108,6 +115,7 @@ public class AppController {
         generateClinicalJsonButton.setOnAction(e -> generateJson(false));
         exportNurseJsonButton.setOnAction(e -> exportJson(true));
         exportClinicalJsonButton.setOnAction(e -> exportJson(false));
+        if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
     }
 
     // ---------- Load Excel ----------
@@ -195,6 +203,7 @@ public class AppController {
             }
 
             syncEditsToParser(); // always sync before generating
+            applyInterfaceReferences(); // Apply interface references
 
             boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
 
@@ -219,6 +228,7 @@ public class AppController {
             }
 
             syncEditsToParser();
+            applyInterfaceReferences(); // Apply interface references
 
             boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
 
@@ -373,6 +383,23 @@ public class AppController {
         if (tableUnits != null) tableUnits.setItems(FXCollections.observableArrayList(parser.units));
         if (tableNurseCalls != null) tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
         if (tableClinicals != null) tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
+    }
+
+    // ---------- Reset Defaults ----------
+    private void resetDefaults() {
+        if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
+        if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
+        statusLabel.setText("Reset interface reference names to defaults");
+    }
+
+    // ---------- Apply Interface References ----------
+    private void applyInterfaceReferences() {
+        if (parser != null) {
+            parser.setInterfaceReferences(
+                edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
+                vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
+            );
+        }
     }
 
     private static String safe(String v) { return v == null ? "" : v; }
