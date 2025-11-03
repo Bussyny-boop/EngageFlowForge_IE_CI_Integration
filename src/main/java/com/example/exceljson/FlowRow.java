@@ -12,6 +12,7 @@ public class FlowRow {
     private final StringProperty sendingName = new SimpleStringProperty("");
     private final StringProperty priority = new SimpleStringProperty(""); // normal/high/urgent
     private final StringProperty deviceA = new SimpleStringProperty("");
+    private final StringProperty deviceB = new SimpleStringProperty("");
     private final StringProperty ringtone = new SimpleStringProperty("");
     private final StringProperty responseOptions = new SimpleStringProperty("");
     private final StringProperty breakThroughDND = new SimpleStringProperty("");
@@ -55,6 +56,10 @@ public class FlowRow {
     public String getDeviceA() { return deviceA.get(); }
     public void setDeviceA(String v) { deviceA.set(v); }
     public StringProperty deviceAProperty() { return deviceA; }
+
+    public String getDeviceB() { return deviceB.get(); }
+    public void setDeviceB(String v) { deviceB.set(v); }
+    public StringProperty deviceBProperty() { return deviceB; }
 
     public String getRingtone() { return ringtone.get(); }
     public void setRingtone(String v) { ringtone.set(v); }

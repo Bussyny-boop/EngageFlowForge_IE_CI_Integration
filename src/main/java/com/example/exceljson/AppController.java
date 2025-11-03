@@ -47,6 +47,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseSendingNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nursePriorityCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseDeviceACol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseDeviceBCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseRingtoneCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseResponseOptionsCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseBreakThroughDNDCol;
@@ -71,6 +72,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalSendingNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalPriorityCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalDeviceACol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalDeviceBCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalRingtoneCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalResponseOptionsCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalBreakThroughDNDCol;
@@ -392,6 +394,7 @@ public class AppController {
         setupEditable(nurseSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(nursePriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupEditable(nurseDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupEditable(nurseDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
         setupEditable(nurseRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(nurseResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(nurseBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
@@ -417,6 +420,7 @@ public class AppController {
         setupEditable(clinicalSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(clinicalPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupEditable(clinicalDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupEditable(clinicalDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
         setupEditable(clinicalRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(clinicalResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(clinicalBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));

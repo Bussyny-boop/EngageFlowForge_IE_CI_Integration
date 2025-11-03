@@ -76,6 +76,7 @@
                                                 <TableColumn fx:id="nurseSendingNameCol" prefWidth="200.0" text="Sending Name" />
                                                 <TableColumn fx:id="nursePriorityCol" prefWidth="120.0" text="Priority" />
                                                 <TableColumn fx:id="nurseDeviceACol" prefWidth="140.0" text="Device A" />
+                                                <TableColumn fx:id="nurseDeviceBCol" prefWidth="140.0" text="Device B" />
                                                 <TableColumn fx:id="nurseRingtoneCol" prefWidth="160.0" text="Ringtone" />
                                                 <TableColumn fx:id="nurseResponseOptionsCol" prefWidth="160.0" text="Response Options" />
                                                 <TableColumn fx:id="nurseBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
@@ -111,6 +112,7 @@
                                                 <TableColumn fx:id="clinicalSendingNameCol" prefWidth="200.0" text="Sending Name" />
                                                 <TableColumn fx:id="clinicalPriorityCol" prefWidth="120.0" text="Priority" />
                                                 <TableColumn fx:id="clinicalDeviceACol" prefWidth="140.0" text="Device A" />
+                                                <TableColumn fx:id="clinicalDeviceBCol" prefWidth="140.0" text="Device B" />
                                                 <TableColumn fx:id="clinicalRingtoneCol" prefWidth="160.0" text="Ringtone" />
                                                 <TableColumn fx:id="clinicalResponseOptionsCol" prefWidth="160.0" text="Response Options" />
                                                 <TableColumn fx:id="clinicalBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />

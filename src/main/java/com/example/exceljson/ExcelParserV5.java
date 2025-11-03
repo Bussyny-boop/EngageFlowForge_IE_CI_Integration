@@ -35,6 +35,7 @@ public class ExcelParserV5 {
     public String sendingName = "";
     public String priorityRaw = "";
     public String deviceA = "";
+    public String deviceB = "";
     public String ringtone = "";
     public String responseOptions = "";
     public String breakThroughDND = "";
@@ -237,6 +238,7 @@ public class ExcelParserV5 {
     int cSend    = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
     int cPriority= getCol(hm, "Priority");
     int cDevice  = getCol(hm, "Device - A", "Device");
+    int cDeviceB = getCol(hm, "Device - B");
     int cRing    = getCol(hm, "Ringtone Device - A", "Ringtone");
     int cResp    = getCol(hm, "Response Options", "Response Option");
     int cBreakDND= getCol(hm, "Break Through DND");
@@ -281,6 +283,7 @@ public class ExcelParserV5 {
       f.sendingName = getCell(row, cSend);
       f.priorityRaw = getCell(row, cPriority);
       f.deviceA     = getCell(row, cDevice);
+      f.deviceB     = getCell(row, cDeviceB);
       f.ringtone    = getCell(row, cRing);
       f.responseOptions = getCell(row, cResp);
       f.breakThroughDND = getCell(row, cBreakDND);
@@ -405,7 +408,7 @@ public class ExcelParserV5 {
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
       flow.put("destinations", buildDestinationsMerged(r, unitRefs, nurseSide));
-      flow.put("interfaces", buildInterfacesForDevice(r.deviceA));
+      flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB));
       flow.put("name", buildFlowName(nurseSide, mappedPriority, r, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(r, nurseSide, mappedPriority));
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
@@ -450,7 +453,7 @@ public class ExcelParserV5 {
       flow.put("alarmsAlerts", alarmNames);
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
       flow.put("destinations", buildDestinationsMerged(template, unitRefs, nurseSide));
-      flow.put("interfaces", buildInterfacesForDevice(template.deviceA));
+      flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
       flow.put("name", buildFlowNameMerged(nurseSide, mappedPriority, alarmNames, template, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(template, nurseSide, mappedPriority));
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
@@ -580,28 +583,61 @@ public class ExcelParserV5 {
   }
 
   /**
-   * Dynamically selects the interface block based on the Device-A column.
+   * Dynamically selects the interface block based on the Device-A and Device-B columns.
    * Uses the editable reference names provided from the GUI.
+   * If both devices contain "Edge" or "VCS", returns both OutgoingWCTP and VMP interfaces.
    */
-  private List<Map<String, Object>> buildInterfacesForDevice(String deviceName) {
-    if (isBlank(deviceName)) return List.of();
+  private List<Map<String, Object>> buildInterfacesForDevice(String deviceA, String deviceB) {
+    boolean hasEdgeA = containsEdge(deviceA);
+    boolean hasVcsA = containsVcs(deviceA);
+    boolean hasEdgeB = containsEdge(deviceB);
+    boolean hasVcsB = containsVcs(deviceB);
 
-    String lower = deviceName.toLowerCase(Locale.ROOT);
-    Map<String, Object> iface = new LinkedHashMap<>();
+    // If both devices have Edge or VCS, combine both interfaces
+    if ((hasEdgeA || hasEdgeB) && (hasVcsA || hasVcsB)) {
+      List<Map<String, Object>> interfaces = new ArrayList<>();
+      
+      Map<String, Object> edgeIface = new LinkedHashMap<>();
+      edgeIface.put("componentName", "OutgoingWCTP");
+      edgeIface.put("referenceName", edgeReferenceName);
+      interfaces.add(edgeIface);
+      
+      Map<String, Object> vcsIface = new LinkedHashMap<>();
+      vcsIface.put("componentName", "VMP");
+      vcsIface.put("referenceName", vcsReferenceName);
+      interfaces.add(vcsIface);
+      
+      return interfaces;
+    }
 
-    if (lower.contains("edge") || lower.contains("iphone-edge")) {
+    // Single device logic - check deviceA first, then deviceB
+    if (hasEdgeA || hasEdgeB) {
+      Map<String, Object> iface = new LinkedHashMap<>();
       iface.put("componentName", "OutgoingWCTP");
       iface.put("referenceName", edgeReferenceName);
       return List.of(iface);
     }
 
-    if (lower.contains("vocera vcs") || lower.contains("vcs")) {
+    if (hasVcsA || hasVcsB) {
+      Map<String, Object> iface = new LinkedHashMap<>();
       iface.put("componentName", "VMP");
       iface.put("referenceName", vcsReferenceName);
       return List.of(iface);
     }
 
     return List.of();
+  }
+
+  private boolean containsEdge(String deviceName) {
+    if (isBlank(deviceName)) return false;
+    String lower = deviceName.toLowerCase(Locale.ROOT);
+    return lower.contains("edge") || lower.contains("iphone-edge");
+  }
+
+  private boolean containsVcs(String deviceName) {
+    if (isBlank(deviceName)) return false;
+    String lower = deviceName.toLowerCase(Locale.ROOT);
+    return lower.contains("vocera vcs") || lower.contains("vcs");
   }
 
   private void addOrder(List<Map<String,Object>> out,
