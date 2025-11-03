@@ -91,6 +91,7 @@ public class AppController {
     private ExcelParserV5 parser;
     private File currentExcelFile;
     private String lastGeneratedJson = "";
+    private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
 
     // ---------- Initialization ----------
     @FXML
@@ -235,6 +236,7 @@ public class AppController {
             jsonPreview.setText(json);
             statusLabel.setText(nurseSide ? "Generated NurseCall JSON" : "Generated Clinical JSON");
             lastGeneratedJson = json;
+            lastGeneratedWasNurseSide = nurseSide; // Track the last generated type
         } catch (Exception ex) {
             showError("Error generating JSON: " + ex.getMessage());
         }
@@ -426,18 +428,17 @@ public class AppController {
     // ---------- Update Interface References (Live Update) ----------
     private void updateInterfaceRefs() {
         if (parser == null) return;
-        String edgeRef = edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP";
-        String vcsRef = vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP";
-        parser.setInterfaceReferences(edgeRef, vcsRef);
+        
+        // Apply the new interface references using existing method
+        applyInterfaceReferences();
 
         // Optional: live update preview if JSON is already generated
         if (!lastGeneratedJson.isEmpty()) {
             try {
-                // Rebuild the JSON based on the last used side (Nurse or Clinical)
-                boolean nurseSide = statusLabel.getText().toLowerCase().contains("nurse");
+                // Rebuild the JSON based on the last generated type
                 boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
                 var json = ExcelParserV5.pretty(
-                    nurseSide ? parser.buildNurseCallsJson(useAdvanced) : parser.buildClinicalsJson(useAdvanced)
+                    lastGeneratedWasNurseSide ? parser.buildNurseCallsJson(useAdvanced) : parser.buildClinicalsJson(useAdvanced)
                 );
                 jsonPreview.setText(json);
                 lastGeneratedJson = json;
