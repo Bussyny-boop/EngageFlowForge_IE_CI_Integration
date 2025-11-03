@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
 
 public class AppController {
 
@@ -699,10 +698,11 @@ public class AppController {
         // Optional: live update preview if JSON is already generated
         if (!lastGeneratedJson.isEmpty()) {
             try {
-                // Rebuild the JSON based on the last generated type
+                // Rebuild the JSON based on the last generated type using filtered data
                 boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+                ExcelParserV5 filteredParser = createFilteredParser();
                 var json = ExcelParserV5.pretty(
-                    lastGeneratedWasNurseSide ? parser.buildNurseCallsJson(useAdvanced) : parser.buildClinicalsJson(useAdvanced)
+                    lastGeneratedWasNurseSide ? filteredParser.buildNurseCallsJson(useAdvanced) : filteredParser.buildClinicalsJson(useAdvanced)
                 );
                 jsonPreview.setText(json);
                 lastGeneratedJson = json;
