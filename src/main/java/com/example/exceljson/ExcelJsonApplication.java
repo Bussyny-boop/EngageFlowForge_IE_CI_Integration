@@ -11,6 +11,9 @@ import java.io.InputStream;
 
 public class ExcelJsonApplication extends Application {
 
+    private static final int WINDOW_WIDTH = 1100;
+    private static final int WINDOW_HEIGHT = 750;
+
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
@@ -29,7 +32,7 @@ public class ExcelJsonApplication extends Application {
             System.err.println("Warning: Failed to load ICON.ico: " + e.getMessage());
         }
         
-        Scene scene = new Scene(root, 1100, 750);
+        Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
