@@ -91,6 +91,7 @@ public class AppController {
     private ExcelParserV5 parser;
     private File currentExcelFile;
     private String lastGeneratedJson = "";
+    private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
 
     // ---------- Initialization ----------
     @FXML
@@ -116,6 +117,27 @@ public class AppController {
         exportNurseJsonButton.setOnAction(e -> exportJson(true));
         exportClinicalJsonButton.setOnAction(e -> exportJson(false));
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
+
+        // --- Interface reference name bindings ---
+        // Update parser whenever text changes or Enter is pressed
+        if (edgeRefNameField != null) {
+            edgeRefNameField.setOnAction(e -> updateInterfaceRefs());
+        }
+        if (vcsRefNameField != null) {
+            vcsRefNameField.setOnAction(e -> updateInterfaceRefs());
+        }
+
+        // Also update parser when focus is lost (user tabs or clicks away)
+        if (edgeRefNameField != null) {
+            edgeRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
+                if (!newV) updateInterfaceRefs(); 
+            });
+        }
+        if (vcsRefNameField != null) {
+            vcsRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
+                if (!newV) updateInterfaceRefs(); 
+            });
+        }
     }
 
     // ---------- Load Excel ----------
@@ -214,6 +236,7 @@ public class AppController {
             jsonPreview.setText(json);
             statusLabel.setText(nurseSide ? "Generated NurseCall JSON" : "Generated Clinical JSON");
             lastGeneratedJson = json;
+            lastGeneratedWasNurseSide = nurseSide; // Track the last generated type
         } catch (Exception ex) {
             showError("Error generating JSON: " + ex.getMessage());
         }
@@ -399,6 +422,30 @@ public class AppController {
                 edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
                 vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
             );
+        }
+    }
+
+    // ---------- Update Interface References (Live Update) ----------
+    private void updateInterfaceRefs() {
+        if (parser == null) return;
+        
+        // Apply the new interface references using existing method
+        applyInterfaceReferences();
+
+        // Optional: live update preview if JSON is already generated
+        if (!lastGeneratedJson.isEmpty()) {
+            try {
+                // Rebuild the JSON based on the last generated type
+                boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+                var json = ExcelParserV5.pretty(
+                    lastGeneratedWasNurseSide ? parser.buildNurseCallsJson(useAdvanced) : parser.buildClinicalsJson(useAdvanced)
+                );
+                jsonPreview.setText(json);
+                lastGeneratedJson = json;
+                statusLabel.setText("Updated JSON with new interface references");
+            } catch (Exception ex) {
+                showError("Failed to refresh preview: " + ex.getMessage());
+            }
         }
     }
 
