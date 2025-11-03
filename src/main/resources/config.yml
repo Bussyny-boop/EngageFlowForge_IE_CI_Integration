@@ -32,3 +32,17 @@ aliases:
 recipientParsing:
   # Anything starting with VAssign: or containing [Room] = functionalRole
   functionalRoleRegex: "^(?i)(vassign:.*|.*\\[room\\].*)$"
+
+# Alert name transformations - used in flow "name" attribute to shorten long alert type names
+# This mapping allows end-users to configure how alert types appear in the flow name
+# Format: "Original Alert Name": "Shortened Name"
+# Note: These transformations ONLY affect the "name" attribute in JSON output
+alertNameTransformations:
+  "Extreme Tachycardic": "Ext Tachy"
+  "SpO2 Desaturation": "SpO2 Desat"
+  "Severe Bradycardia": "Sev Brady"
+  "Ventricular Tachycardia": "V-Tach"
+  "Atrial Fibrillation": "A-Fib"
+  "Respiratory Rate High": "RR High"
+  "Respiratory Rate Low": "RR Low"
+  # Add more transformations as needed
