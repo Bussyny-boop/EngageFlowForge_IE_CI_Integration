@@ -50,6 +50,15 @@
                         <Tab text="📊 Units">
                             <content>
                                 <BorderPane>
+                                    <top>
+                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                            <padding>
+                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                            </padding>
+                                            <Label text="Filter by Config Group:" />
+                                            <ComboBox fx:id="unitConfigGroupFilter" prefWidth="200" />
+                                        </HBox>
+                                    </top>
                                     <center>
                                         <TableView fx:id="tableUnits" editable="true">
                                             <columns>
@@ -70,6 +79,15 @@
                         <Tab text="🔔 Nurse Calls">
                             <content>
                                 <BorderPane>
+                                    <top>
+                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                            <padding>
+                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                            </padding>
+                                            <Label text="Filter by Config Group:" />
+                                            <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
+                                        </HBox>
+                                    </top>
                                     <center>
                                         <TableView fx:id="tableNurseCalls" editable="true">
                                             <columns>
@@ -106,6 +124,15 @@
                         <Tab text="🏥 Clinicals">
                             <content>
                                 <BorderPane>
+                                    <top>
+                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                            <padding>
+                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                            </padding>
+                                            <Label text="Filter by Config Group:" />
+                                            <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
+                                        </HBox>
+                                    </top>
                                     <center>
                                         <TableView fx:id="tableClinicals" editable="true">
                                             <columns>

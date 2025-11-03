@@ -2,6 +2,8 @@ package com.example.exceljson;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -9,6 +11,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
@@ -30,6 +33,11 @@ public class AppController {
     @FXML private Button resetPathsButton;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
+
+    // ---------- Config Group Filters ----------
+    @FXML private ComboBox<String> unitConfigGroupFilter;
+    @FXML private ComboBox<String> nurseConfigGroupFilter;
+    @FXML private ComboBox<String> clinicalConfigGroupFilter;
 
     // ---------- Units ----------
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
@@ -97,6 +105,16 @@ public class AppController {
     private String lastGeneratedJson = "";
     private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
 
+    // ---------- Filtered Lists for Tables ----------
+    private ObservableList<ExcelParserV5.UnitRow> unitsFullList;
+    private FilteredList<ExcelParserV5.UnitRow> unitsFilteredList;
+    
+    private ObservableList<ExcelParserV5.FlowRow> nurseCallsFullList;
+    private FilteredList<ExcelParserV5.FlowRow> nurseCallsFilteredList;
+    
+    private ObservableList<ExcelParserV5.FlowRow> clinicalsFullList;
+    private FilteredList<ExcelParserV5.FlowRow> clinicalsFilteredList;
+
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
     private File lastJsonDir = null;
@@ -124,6 +142,7 @@ public class AppController {
         initializeUnitColumns();
         initializeNurseColumns();
         initializeClinicalColumns();
+        initializeFilters();
 
         // Set default reference names
         if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
@@ -185,9 +204,6 @@ public class AppController {
             currentExcelFile = file;
 
             jsonPreview.setText(parser.getLoadSummary());
-            
-            int movedCount = parser.getEmdanMovedCount();
-            statusLabel.setText("Excel loaded: " + file.getName() + " | Moved " + movedCount + " EMDAN rows to Clinicals");
 
             refreshTables();
             tableUnits.refresh();
@@ -196,7 +212,15 @@ public class AppController {
 
             setJsonButtonsEnabled(true);
             setExcelButtonsEnabled(true);
-            showInfo("✅ Excel loaded successfully");
+            
+            updateStatusLabel(); // Update status with filter counts
+            
+            int movedCount = parser.getEmdanMovedCount();
+            if (movedCount > 0) {
+                showInfo("✅ Excel loaded successfully\nMoved " + movedCount + " EMDAN rows to Clinicals");
+            } else {
+                showInfo("✅ Excel loaded successfully");
+            }
         } catch (Exception ex) {
             showError("Failed to load Excel: " + ex.getMessage());
         }
@@ -269,9 +293,12 @@ public class AppController {
 
             boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
 
+            // Create a temporary parser with only filtered data
+            ExcelParserV5 filteredParser = createFilteredParser();
+
             String json = nurseSide
-                    ? ExcelParserV5.pretty(parser.buildNurseCallsJson(useAdvanced))
-                    : ExcelParserV5.pretty(parser.buildClinicalsJson(useAdvanced));
+                    ? ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(useAdvanced))
+                    : ExcelParserV5.pretty(filteredParser.buildClinicalsJson(useAdvanced));
 
             jsonPreview.setText(json);
             statusLabel.setText(nurseSide ? "Generated NurseCall JSON" : "Generated Clinical JSON");
@@ -310,8 +337,11 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, false);
 
-            if (nurseSide) parser.writeNurseCallsJson(file, useAdvanced);
-            else parser.writeClinicalsJson(file, useAdvanced);
+            // Create a temporary parser with only filtered data
+            ExcelParserV5 filteredParser = createFilteredParser();
+
+            if (nurseSide) filteredParser.writeNurseCallsJson(file, useAdvanced);
+            else filteredParser.writeClinicalsJson(file, useAdvanced);
 
             if (useAdvanced) {
                 statusLabel.setText("Exported Merged JSON (Advanced Mode)");
@@ -326,6 +356,35 @@ public class AppController {
     }
 
     // ---------- Helpers ----------
+    // Create a parser with only the filtered data
+    private ExcelParserV5 createFilteredParser() {
+        ExcelParserV5 filteredParser = new ExcelParserV5();
+        
+        // Copy interface references
+        filteredParser.setInterfaceReferences(
+            edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
+            vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
+        );
+        
+        // Add filtered units
+        if (unitsFilteredList != null) {
+            filteredParser.units.addAll(unitsFilteredList);
+            filteredParser.rebuildUnitMaps();
+        }
+        
+        // Add filtered nurse calls
+        if (nurseCallsFilteredList != null) {
+            filteredParser.nurseCalls.addAll(nurseCallsFilteredList);
+        }
+        
+        // Add filtered clinicals
+        if (clinicalsFilteredList != null) {
+            filteredParser.clinicals.addAll(clinicalsFilteredList);
+        }
+        
+        return filteredParser;
+    }
+
     private void setJsonButtonsEnabled(boolean enabled) {
         generateNurseJsonButton.setDisable(!enabled);
         generateClinicalJsonButton.setDisable(!enabled);
@@ -341,18 +400,18 @@ public class AppController {
     // ---------- Sync table edits back to parser ----------
     private void syncEditsToParser() {
         if (parser == null) return;
-        if (tableUnits != null && tableUnits.getItems() != null) {
+        if (unitsFullList != null) {
             parser.units.clear();
-            parser.units.addAll(tableUnits.getItems());
+            parser.units.addAll(unitsFullList);
             parser.rebuildUnitMaps();
         }
-        if (tableNurseCalls != null && tableNurseCalls.getItems() != null) {
+        if (nurseCallsFullList != null) {
             parser.nurseCalls.clear();
-            parser.nurseCalls.addAll(tableNurseCalls.getItems());
+            parser.nurseCalls.addAll(nurseCallsFullList);
         }
-        if (tableClinicals != null && tableClinicals.getItems() != null) {
+        if (clinicalsFullList != null) {
             parser.clinicals.clear();
-            parser.clinicals.addAll(tableClinicals.getItems());
+            parser.clinicals.addAll(clinicalsFullList);
         }
     }
 
@@ -453,10 +512,163 @@ public class AppController {
         });
     }
 
+    // ---------- Initialize Filters ----------
+    private void initializeFilters() {
+        // Initialize filter ComboBoxes
+        if (unitConfigGroupFilter != null) {
+            unitConfigGroupFilter.setOnAction(e -> applyUnitFilter());
+        }
+        if (nurseConfigGroupFilter != null) {
+            nurseConfigGroupFilter.setOnAction(e -> applyNurseFilter());
+        }
+        if (clinicalConfigGroupFilter != null) {
+            clinicalConfigGroupFilter.setOnAction(e -> applyClinicalFilter());
+        }
+    }
+
+    // ---------- Update Filter Options ----------
+    private void updateFilterOptions() {
+        // Collect unique config groups from Units (both Nurse and Clinical groups)
+        Set<String> unitConfigGroups = new LinkedHashSet<>();
+        if (parser != null && parser.units != null) {
+            for (ExcelParserV5.UnitRow unit : parser.units) {
+                if (unit.nurseGroup != null && !unit.nurseGroup.trim().isEmpty()) {
+                    unitConfigGroups.add(unit.nurseGroup.trim());
+                }
+                if (unit.clinGroup != null && !unit.clinGroup.trim().isEmpty()) {
+                    unitConfigGroups.add(unit.clinGroup.trim());
+                }
+            }
+        }
+        
+        // Collect unique config groups from Nurse Calls
+        Set<String> nurseConfigGroups = new LinkedHashSet<>();
+        if (parser != null && parser.nurseCalls != null) {
+            for (ExcelParserV5.FlowRow flow : parser.nurseCalls) {
+                if (flow.configGroup != null && !flow.configGroup.trim().isEmpty()) {
+                    nurseConfigGroups.add(flow.configGroup.trim());
+                }
+            }
+        }
+        
+        // Collect unique config groups from Clinicals
+        Set<String> clinicalConfigGroups = new LinkedHashSet<>();
+        if (parser != null && parser.clinicals != null) {
+            for (ExcelParserV5.FlowRow flow : parser.clinicals) {
+                if (flow.configGroup != null && !flow.configGroup.trim().isEmpty()) {
+                    clinicalConfigGroups.add(flow.configGroup.trim());
+                }
+            }
+        }
+        
+        // Update Unit filter
+        if (unitConfigGroupFilter != null) {
+            List<String> unitOptions = new ArrayList<>();
+            unitOptions.add("All");
+            unitOptions.addAll(unitConfigGroups);
+            unitConfigGroupFilter.setItems(FXCollections.observableArrayList(unitOptions));
+            unitConfigGroupFilter.getSelectionModel().select(0); // Select "All" by default
+        }
+        
+        // Update Nurse Call filter
+        if (nurseConfigGroupFilter != null) {
+            List<String> nurseOptions = new ArrayList<>();
+            nurseOptions.add("All");
+            nurseOptions.addAll(nurseConfigGroups);
+            nurseConfigGroupFilter.setItems(FXCollections.observableArrayList(nurseOptions));
+            nurseConfigGroupFilter.getSelectionModel().select(0); // Select "All" by default
+        }
+        
+        // Update Clinical filter
+        if (clinicalConfigGroupFilter != null) {
+            List<String> clinicalOptions = new ArrayList<>();
+            clinicalOptions.add("All");
+            clinicalOptions.addAll(clinicalConfigGroups);
+            clinicalConfigGroupFilter.setItems(FXCollections.observableArrayList(clinicalOptions));
+            clinicalConfigGroupFilter.getSelectionModel().select(0); // Select "All" by default
+        }
+    }
+
+    // ---------- Apply Filters ----------
+    private void applyUnitFilter() {
+        if (unitsFilteredList == null) return;
+        
+        String selected = unitConfigGroupFilter.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.equals("All")) {
+            unitsFilteredList.setPredicate(unit -> true); // Show all
+        } else {
+            unitsFilteredList.setPredicate(unit -> 
+                selected.equals(unit.nurseGroup) || selected.equals(unit.clinGroup)
+            );
+        }
+        
+        updateStatusLabel();
+    }
+
+    private void applyNurseFilter() {
+        if (nurseCallsFilteredList == null) return;
+        
+        String selected = nurseConfigGroupFilter.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.equals("All")) {
+            nurseCallsFilteredList.setPredicate(flow -> true); // Show all
+        } else {
+            nurseCallsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
+        }
+        
+        updateStatusLabel();
+    }
+
+    private void applyClinicalFilter() {
+        if (clinicalsFilteredList == null) return;
+        
+        String selected = clinicalConfigGroupFilter.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.equals("All")) {
+            clinicalsFilteredList.setPredicate(flow -> true); // Show all
+        } else {
+            clinicalsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
+        }
+        
+        updateStatusLabel();
+    }
+
+    private void updateStatusLabel() {
+        if (statusLabel == null) return;
+        
+        int unitsShown = unitsFilteredList != null ? unitsFilteredList.size() : 0;
+        int unitsTotal = unitsFullList != null ? unitsFullList.size() : 0;
+        int nurseShown = nurseCallsFilteredList != null ? nurseCallsFilteredList.size() : 0;
+        int nurseTotal = nurseCallsFullList != null ? nurseCallsFullList.size() : 0;
+        int clinicalShown = clinicalsFilteredList != null ? clinicalsFilteredList.size() : 0;
+        int clinicalTotal = clinicalsFullList != null ? clinicalsFullList.size() : 0;
+        
+        String status = String.format("Units: %d/%d | Nurse Calls: %d/%d | Clinicals: %d/%d", 
+            unitsShown, unitsTotal, nurseShown, nurseTotal, clinicalShown, clinicalTotal);
+        
+        if (currentExcelFile != null) {
+            status = currentExcelFile.getName() + " | " + status;
+        }
+        
+        statusLabel.setText(status);
+    }
+
     private void refreshTables() {
-        if (tableUnits != null) tableUnits.setItems(FXCollections.observableArrayList(parser.units));
-        if (tableNurseCalls != null) tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
-        if (tableClinicals != null) tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
+        // Create full observable lists from parser data
+        unitsFullList = FXCollections.observableArrayList(parser.units);
+        nurseCallsFullList = FXCollections.observableArrayList(parser.nurseCalls);
+        clinicalsFullList = FXCollections.observableArrayList(parser.clinicals);
+        
+        // Create filtered lists
+        unitsFilteredList = new FilteredList<>(unitsFullList, unit -> true);
+        nurseCallsFilteredList = new FilteredList<>(nurseCallsFullList, flow -> true);
+        clinicalsFilteredList = new FilteredList<>(clinicalsFullList, flow -> true);
+        
+        // Set filtered lists to tables
+        if (tableUnits != null) tableUnits.setItems(unitsFilteredList);
+        if (tableNurseCalls != null) tableNurseCalls.setItems(nurseCallsFilteredList);
+        if (tableClinicals != null) tableClinicals.setItems(clinicalsFilteredList);
+        
+        // Update filter options
+        updateFilterOptions();
     }
 
     // ---------- Reset Defaults ----------
@@ -486,10 +698,11 @@ public class AppController {
         // Optional: live update preview if JSON is already generated
         if (!lastGeneratedJson.isEmpty()) {
             try {
-                // Rebuild the JSON based on the last generated type
+                // Rebuild the JSON based on the last generated type using filtered data
                 boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+                ExcelParserV5 filteredParser = createFilteredParser();
                 var json = ExcelParserV5.pretty(
-                    lastGeneratedWasNurseSide ? parser.buildNurseCallsJson(useAdvanced) : parser.buildClinicalsJson(useAdvanced)
+                    lastGeneratedWasNurseSide ? filteredParser.buildNurseCallsJson(useAdvanced) : filteredParser.buildClinicalsJson(useAdvanced)
                 );
                 jsonPreview.setText(json);
                 lastGeneratedJson = json;
