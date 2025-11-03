@@ -3,6 +3,7 @@ package com.example.exceljson;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,55 +58,65 @@ class AlertNameTransformationTest {
     @Test
     void testMergedFlowNameUsesTransformation() throws Exception {
         Path tempDir = Files.createTempDirectory("alert-transform-test");
-        Path excelPath = tempDir.resolve("input.xlsx");
-        Path jsonPath = tempDir.resolve("clinical-merged.json");
+        try {
+            Path excelPath = tempDir.resolve("input.xlsx");
+            Path jsonPath = tempDir.resolve("clinical-merged.json");
 
-        createWorkbookWithTransformableAlerts(excelPath);
+            createWorkbookWithTransformableAlerts(excelPath);
 
-        ExcelParserV5 parser = new ExcelParserV5();
-        parser.load(excelPath.toFile());
-        parser.writeClinicalsJson(jsonPath.toFile(), true);
+            ExcelParserV5 parser = new ExcelParserV5();
+            parser.load(excelPath.toFile());
+            parser.writeClinicalsJson(jsonPath.toFile(), true);
 
-        assertTrue(Files.exists(jsonPath));
-        String json = Files.readString(jsonPath);
-        
-        // Verify the transformed names appear in the flow name
-        assertTrue(json.contains("Ext Tachy"), 
-            "Flow name should contain transformed 'Ext Tachy' instead of 'Extreme Tachycardic'");
-        assertTrue(json.contains("SpO2 Desat"), 
-            "Flow name should contain transformed 'SpO2 Desat' instead of 'SpO2 Desaturation'");
-        
-        // Verify the original names still appear in alarmsAlerts array
-        assertTrue(json.contains("Extreme Tachycardic"), 
-            "Original 'Extreme Tachycardic' should still appear in alarmsAlerts");
-        assertTrue(json.contains("SpO2 Desaturation"), 
-            "Original 'SpO2 Desaturation' should still appear in alarmsAlerts");
-        
-        // Verify "(2 alarms)" pattern does NOT appear
-        assertFalse(json.contains("(2 alarms)"), 
-            "Flow name should not contain '(2 alarms)' pattern");
+            assertTrue(Files.exists(jsonPath));
+            String json = Files.readString(jsonPath);
+            
+            // Verify the transformed names appear in the flow name
+            assertTrue(json.contains("Ext Tachy"), 
+                "Flow name should contain transformed 'Ext Tachy' instead of 'Extreme Tachycardic'");
+            assertTrue(json.contains("SpO2 Desat"), 
+                "Flow name should contain transformed 'SpO2 Desat' instead of 'SpO2 Desaturation'");
+            
+            // Verify the original names still appear in alarmsAlerts array
+            assertTrue(json.contains("Extreme Tachycardic"), 
+                "Original 'Extreme Tachycardic' should still appear in alarmsAlerts");
+            assertTrue(json.contains("SpO2 Desaturation"), 
+                "Original 'SpO2 Desaturation' should still appear in alarmsAlerts");
+            
+            // Verify "(2 alarms)" pattern does NOT appear
+            assertFalse(json.contains("(2 alarms)"), 
+                "Flow name should not contain '(2 alarms)' pattern");
+        } finally {
+            // Clean up temporary directory
+            deleteDirectory(tempDir);
+        }
     }
 
     @Test
     void testSingleFlowNameUsesTransformation() throws Exception {
         Path tempDir = Files.createTempDirectory("alert-transform-test");
-        Path excelPath = tempDir.resolve("input.xlsx");
-        Path jsonPath = tempDir.resolve("clinical-single.json");
+        try {
+            Path excelPath = tempDir.resolve("input.xlsx");
+            Path jsonPath = tempDir.resolve("clinical-single.json");
 
-        createWorkbookWithTransformableAlerts(excelPath);
+            createWorkbookWithTransformableAlerts(excelPath);
 
-        ExcelParserV5 parser = new ExcelParserV5();
-        parser.load(excelPath.toFile());
-        parser.writeClinicalsJson(jsonPath.toFile(), false);
+            ExcelParserV5 parser = new ExcelParserV5();
+            parser.load(excelPath.toFile());
+            parser.writeClinicalsJson(jsonPath.toFile(), false);
 
-        assertTrue(Files.exists(jsonPath));
-        String json = Files.readString(jsonPath);
-        
-        // Verify the transformed names appear in the flow names
-        assertTrue(json.contains("Ext Tachy"), 
-            "Flow name should contain transformed 'Ext Tachy'");
-        assertTrue(json.contains("SpO2 Desat"), 
-            "Flow name should contain transformed 'SpO2 Desat'");
+            assertTrue(Files.exists(jsonPath));
+            String json = Files.readString(jsonPath);
+            
+            // Verify the transformed names appear in the flow names
+            assertTrue(json.contains("Ext Tachy"), 
+                "Flow name should contain transformed 'Ext Tachy'");
+            assertTrue(json.contains("SpO2 Desat"), 
+                "Flow name should contain transformed 'SpO2 Desat'");
+        } finally {
+            // Clean up temporary directory
+            deleteDirectory(tempDir);
+        }
     }
 
     @Test
@@ -181,6 +192,23 @@ class AlertNameTransformationTest {
             try (OutputStream os = Files.newOutputStream(target)) {
                 workbook.write(os);
             }
+        }
+    }
+
+    /**
+     * Recursively delete a directory and all its contents.
+     */
+    private static void deleteDirectory(Path dir) throws IOException {
+        if (Files.exists(dir)) {
+            Files.walk(dir)
+                .sorted((a, b) -> -a.compareTo(b)) // Delete files before directories
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        // Ignore cleanup errors in tests
+                    }
+                });
         }
     }
 }
