@@ -701,9 +701,19 @@ public class ExcelParserV5 {
     // Note: replaceAll("\\s+", "") intentionally converts "call back" to "callback"
     String resp = nvl(r.responseOptions, "").toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
     boolean hasAccept = resp.contains("accept") && !resp.contains("noresponse");
+    boolean hasAcknowledge = resp.contains("acknowledge");
     boolean hasEscalate = resp.contains("escalate");
+    boolean hasDecline = resp.contains("decline");
     boolean hasCallBack = resp.contains("callback");
     boolean noResponse = resp.isEmpty() || resp.contains("noresponse");
+    
+    // Determine which variation to use for badge phrases
+    String acceptPhrase = hasAcknowledge ? "Acknowledge" : "Accept";
+    String declinePhrase = hasDecline ? "Decline" : "Escalate";
+    
+    // Expand accept/escalate detection to include variations
+    hasAccept = hasAccept || hasAcknowledge;
+    hasEscalate = hasEscalate || hasDecline;
 
     // 1. Add ringtone FIRST if available
     if (!isBlank(r.ringtone)) {
@@ -719,10 +729,10 @@ public class ExcelParserV5 {
       params.add(paQ("responseType", "Accept/Decline"));
       params.add(paQ("callbackNumber", "#{bed.pillow_number}"));
       params.add(paQ("accept", "Accepted"));
-      params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      params.add(paLiteral("acceptBadgePhrases", "[\"" + acceptPhrase + "\"]"));
       params.add(paQ("acceptAndCall", "Call Back"));
       params.add(paQ("decline", nurseSide ? "Decline Primary" : "Decline"));
-      params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+      params.add(paLiteral("declineBadgePhrases", "[\"" + declinePhrase + "\"]"));
       params.add(paQ("respondingLine", "responses.line.number"));
       params.add(paQ("responsePath", "responses.action"));
       params.add(paQ("respondingUser", "responses.usr.login"));
@@ -731,9 +741,9 @@ public class ExcelParserV5 {
       // Accept and Escalate
       params.add(paQ("responseType", "Accept/Decline"));
       params.add(paQ("accept", "Accepted"));
-      params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      params.add(paLiteral("acceptBadgePhrases", "[\"" + acceptPhrase + "\"]"));
       params.add(paQ("decline", nurseSide ? "Decline Primary" : "Decline"));
-      params.add(paLiteral("declineBadgePhrases", "[\"Escalate\"]"));
+      params.add(paLiteral("declineBadgePhrases", "[\"" + declinePhrase + "\"]"));
       params.add(paQ("respondingLine", "responses.line.number"));
       params.add(paQ("responsePath", "responses.action"));
       params.add(paQ("respondingUser", "responses.usr.login"));
@@ -742,7 +752,7 @@ public class ExcelParserV5 {
       // Accept only: use "Accept/Decline" and include responding fields
       params.add(paQ("responseType", "Accept/Decline"));
       params.add(paQ("accept", "Accepted"));
-      params.add(paLiteral("acceptBadgePhrases", "[\"Accept\"]"));
+      params.add(paLiteral("acceptBadgePhrases", "[\"" + acceptPhrase + "\"]"));
       params.add(paQ("respondingLine", "responses.line.number"));
       params.add(paQ("responsePath", "responses.action"));
       params.add(paQ("respondingUser", "responses.usr.login"));
