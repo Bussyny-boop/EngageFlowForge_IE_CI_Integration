@@ -29,7 +29,8 @@ public class ExcelJsonApplication extends Application {
             System.err.println("Warning: Failed to load ICON.ico: " + e.getMessage());
         }
         
-        primaryStage.setScene(new Scene(root, 900, 700));
+        Scene scene = new Scene(root, 1100, 750);
+        primaryStage.setScene(scene);
         primaryStage.show();
     }
 }
