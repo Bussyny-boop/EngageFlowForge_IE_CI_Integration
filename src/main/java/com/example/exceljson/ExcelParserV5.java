@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
  */
 public class ExcelParserV5 {
 
+  // ---------- Alert Name Transformer ----------
+  private final AlertNameTransformer alertNameTransformer = new AlertNameTransformer();
+
   // ---------- Row DTOs ----------
   public static final class UnitRow {
     public String facility = "";
@@ -514,11 +517,16 @@ public class ExcelParserV5 {
     parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
     if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
     
-    // If multiple alarms, show count instead of listing all
+    // Transform and add alarm names (removing "(X alarms)" pattern)
     if (alarmNames.size() == 1) {
-      parts.add(alarmNames.get(0));
-    } else {
-      parts.add("(" + alarmNames.size() + " alarms)");
+      // Single alarm: transform and add the name
+      parts.add(alertNameTransformer.transform(alarmNames.get(0)));
+    } else if (alarmNames.size() > 1) {
+      // Multiple alarms: transform each name and join with " | "
+      String transformedNames = alarmNames.stream()
+        .map(alertNameTransformer::transform)
+        .collect(Collectors.joining(" | "));
+      parts.add(transformedNames);
     }
     
     if (!isBlank(group)) parts.add(group);
@@ -866,7 +874,8 @@ public class ExcelParserV5 {
     List<String> parts = new ArrayList<>();
     parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
     if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
-    if (!isBlank(alarm)) parts.add(alarm);
+    // Apply alert name transformation
+    if (!isBlank(alarm)) parts.add(alertNameTransformer.transform(alarm));
     if (!isBlank(group)) parts.add(group);
     if (!unitNames.isEmpty()) parts.add(String.join(" / ", unitNames));
     else if (!isBlank(facility)) parts.add(facility);
