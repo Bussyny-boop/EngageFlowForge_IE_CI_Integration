@@ -65,8 +65,13 @@ public class ExcelParserV5 {
   private String vcsReferenceName = "VMP";
 
   public void setInterfaceReferences(String edgeRef, String vcsRef) {
-    if (edgeRef != null && !edgeRef.isBlank()) this.edgeReferenceName = edgeRef;
-    if (vcsRef != null && !vcsRef.isBlank()) this.vcsReferenceName = vcsRef;
+    // Basic validation - ensure references are reasonable
+    if (edgeRef != null && !edgeRef.isBlank() && edgeRef.length() <= 100) {
+      this.edgeReferenceName = edgeRef.trim();
+    }
+    if (vcsRef != null && !vcsRef.isBlank() && vcsRef.length() <= 100) {
+      this.vcsReferenceName = vcsRef.trim();
+    }
   }
 
   private static final String SHEET_UNIT = "Unit Breakdown";

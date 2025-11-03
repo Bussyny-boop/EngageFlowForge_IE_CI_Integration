@@ -203,12 +203,7 @@ public class AppController {
             }
 
             syncEditsToParser(); // always sync before generating
-
-            // Pass interface references to parser
-            parser.setInterfaceReferences(
-                edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
-                vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
-            );
+            applyInterfaceReferences(); // Apply interface references
 
             boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
 
@@ -233,12 +228,7 @@ public class AppController {
             }
 
             syncEditsToParser();
-
-            // Pass interface references to parser
-            parser.setInterfaceReferences(
-                edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
-                vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
-            );
+            applyInterfaceReferences(); // Apply interface references
 
             boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
 
@@ -400,6 +390,16 @@ public class AppController {
         if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
         if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
         statusLabel.setText("Reset interface reference names to defaults");
+    }
+
+    // ---------- Apply Interface References ----------
+    private void applyInterfaceReferences() {
+        if (parser != null) {
+            parser.setInterfaceReferences(
+                edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
+                vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
+            );
+        }
     }
 
     private static String safe(String v) { return v == null ? "" : v; }
