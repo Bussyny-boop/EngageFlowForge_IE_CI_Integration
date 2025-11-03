@@ -116,6 +116,27 @@ public class AppController {
         exportNurseJsonButton.setOnAction(e -> exportJson(true));
         exportClinicalJsonButton.setOnAction(e -> exportJson(false));
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
+
+        // --- Interface reference name bindings ---
+        // Update parser whenever text changes or Enter is pressed
+        if (edgeRefNameField != null) {
+            edgeRefNameField.setOnAction(e -> updateInterfaceRefs());
+        }
+        if (vcsRefNameField != null) {
+            vcsRefNameField.setOnAction(e -> updateInterfaceRefs());
+        }
+
+        // Also update parser when focus is lost (user tabs or clicks away)
+        if (edgeRefNameField != null) {
+            edgeRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
+                if (!newV) updateInterfaceRefs(); 
+            });
+        }
+        if (vcsRefNameField != null) {
+            vcsRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
+                if (!newV) updateInterfaceRefs(); 
+            });
+        }
     }
 
     // ---------- Load Excel ----------
@@ -399,6 +420,31 @@ public class AppController {
                 edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
                 vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
             );
+        }
+    }
+
+    // ---------- Update Interface References (Live Update) ----------
+    private void updateInterfaceRefs() {
+        if (parser == null) return;
+        String edgeRef = edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP";
+        String vcsRef = vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP";
+        parser.setInterfaceReferences(edgeRef, vcsRef);
+
+        // Optional: live update preview if JSON is already generated
+        if (!lastGeneratedJson.isEmpty()) {
+            try {
+                // Rebuild the JSON based on the last used side (Nurse or Clinical)
+                boolean nurseSide = statusLabel.getText().toLowerCase().contains("nurse");
+                boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+                var json = ExcelParserV5.pretty(
+                    nurseSide ? parser.buildNurseCallsJson(useAdvanced) : parser.buildClinicalsJson(useAdvanced)
+                );
+                jsonPreview.setText(json);
+                lastGeneratedJson = json;
+                statusLabel.setText("Updated JSON with new interface references");
+            } catch (Exception ex) {
+                showError("Failed to refresh preview: " + ex.getMessage());
+            }
         }
     }
 
