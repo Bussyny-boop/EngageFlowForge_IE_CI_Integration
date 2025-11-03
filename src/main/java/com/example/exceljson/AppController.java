@@ -361,6 +361,7 @@ public class AppController {
         alert.setTitle("Info");
         alert.setHeaderText(null);
         alert.setContentText(msg);
+        alert.getDialogPane().setStyle("-fx-font-size: 13px;");
         alert.showAndWait();
     }
 
@@ -369,6 +370,7 @@ public class AppController {
         alert.setTitle("Error");
         alert.setHeaderText("Operation Failed");
         alert.setContentText(msg);
+        alert.getDialogPane().setStyle("-fx-font-size: 13px;");
         alert.showAndWait();
     }
 
