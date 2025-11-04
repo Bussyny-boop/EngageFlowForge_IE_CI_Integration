@@ -245,6 +245,28 @@ class OrdersTest {
         assertTrue(jsonFile.length() > 0, "Orders JSON file should not be empty");
     }
 
+    @Test
+    void ordersSheetCanHaveNameContainingOrder() throws Exception {
+        File excelFile = createTestWorkbook("Med Orders Entry");
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        assertEquals(1, parser.orders.size(), "Should parse orders from sheet with 'Order' in name");
+        assertEquals("Orders", parser.orders.get(0).type);
+    }
+
+    @Test
+    void ordersSheetPluralForm() throws Exception {
+        File excelFile = createTestWorkbook("Orders");
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        assertEquals(1, parser.orders.size(), "Should parse orders from 'Orders' sheet");
+        assertEquals("Orders", parser.orders.get(0).type);
+    }
+
     // Helper methods
     private boolean hasParameter(List<Map<String, Object>> params, String name) {
         return params.stream().anyMatch(p -> name.equals(p.get("name")));
