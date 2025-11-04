@@ -44,7 +44,7 @@
                         <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
                     </tooltip>
                 </CheckBox>
-                <CheckBox fx:id="defaultVmpCheckbox" text="VMP">
+                <CheckBox fx:id="defaultVmpCheckbox" text="VCS">
                     <tooltip>
                         <Tooltip text="Use VMP interface as default when Device A/B are blank" />
                     </tooltip>
