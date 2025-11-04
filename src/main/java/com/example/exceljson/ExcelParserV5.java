@@ -1003,6 +1003,8 @@ public class ExcelParserV5 {
   }
 
   private static void writeFlowRow(Row row, FlowRow f) {
+    // Column indices: 0=In scope, 1=Config Group, 2=Alarm Name, etc.
+    // Keep in sync with flowHeaders() array
     set(row,0,f.inScope ? "TRUE" : "FALSE");
     set(row,1,f.configGroup);
     set(row,2,f.alarmName);
@@ -1337,8 +1339,17 @@ public class ExcelParserV5 {
   private static String nvl(String a, String b) { return isBlank(a) ? (b == null ? "" : b) : a; }
 
   /**
-   * Parse a boolean value from Excel cell (checkbox, TRUE/FALSE, YES/NO, Y/N, X).
-   * Returns true if the value represents a checked/true state.
+   * Parse a boolean value from Excel cell content (typically a checkbox column).
+   * Supports common checkbox representations:
+   * - Text values: "TRUE", "YES", "Y"
+   * - Symbols: "X", "✓", "☑"
+   * - Numeric: "1"
+   * 
+   * All comparisons are case-insensitive. Returns false for blank/empty values
+   * or any unrecognized text.
+   * 
+   * @param value The cell value to parse
+   * @return true if the value represents a checked/enabled state, false otherwise
    */
   private static boolean parseBooleanValue(String value) {
     if (isBlank(value)) return false;
