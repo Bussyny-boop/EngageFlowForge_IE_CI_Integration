@@ -263,10 +263,15 @@ public class ExcelParserV5 {
 
   // ---------- Parse: Flow Sheets ----------
   private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide, boolean ordersType) {
-    // For Orders sheets, try multiple case-insensitive sheet names
+    // For Orders sheets, try exact matches first, then any sheet containing "Order"
     Sheet sh = null;
     if (ordersType) {
+      // First try exact matches for known variations
       sh = findSheetCaseInsensitive(wb, "Order", "Med Order", "STAT MED");
+      // If not found, try finding any sheet containing "Order" in its name
+      if (sh == null) {
+        sh = findSheetContaining(wb, "Order");
+      }
     } else {
       sh = findSheet(wb, sheetName);
     }
@@ -1339,6 +1344,22 @@ public class ExcelParserV5 {
     for (String name : names) {
       Sheet sh = findSheet(wb, name);
       if (sh != null) return sh;
+    }
+    return null;
+  }
+  
+  /**
+   * Find a sheet whose name contains the given substring (case-insensitive).
+   * Returns the first sheet found that contains the substring.
+   */
+  private static Sheet findSheetContaining(Workbook wb, String substring) {
+    if (wb == null || substring == null || substring.isEmpty()) return null;
+    String searchTerm = substring.toLowerCase();
+    for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+      Sheet s = wb.getSheetAt(i);
+      if (s != null && s.getSheetName().toLowerCase().contains(searchTerm)) {
+        return s;
+      }
     }
     return null;
   }

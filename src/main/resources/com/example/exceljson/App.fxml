@@ -17,12 +17,12 @@
             </HBox>
             <Label fx:id="statusLabel" text="Ready" />
             <HBox spacing="10">
-                <Button fx:id="generateNurseJsonButton" text="🔧 Generate NurseCall JSON" />
-                <Button fx:id="generateClinicalJsonButton" text="🏥 Generate Clinical JSON" />
-                <Button fx:id="generateOrdersJsonButton" text="💊 Generate Orders JSON" />
-                <Button fx:id="exportNurseJsonButton" text="📤 Export NurseCall JSON" />
-                <Button fx:id="exportClinicalJsonButton" text="📤 Export Clinical JSON" />
-                <Button fx:id="exportOrdersJsonButton" text="📤 Export Orders JSON" />
+                <Button fx:id="generateNurseJsonButton" text="🔧 Preview Nursecall" />
+                <Button fx:id="generateClinicalJsonButton" text="🏥 Preview Clinical" />
+                <Button fx:id="generateOrdersJsonButton" text="💊 Preview Orders" />
+                <Button fx:id="exportNurseJsonButton" text="📤 Export Nursecall" />
+                <Button fx:id="exportClinicalJsonButton" text="📤 Export Clinicals" />
+                <Button fx:id="exportOrdersJsonButton" text="📤 Export Orders" />
             </HBox>
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <CheckBox fx:id="mergeFlowsCheckbox" text="🔀 Merge Identical Flows (Advanced)">
