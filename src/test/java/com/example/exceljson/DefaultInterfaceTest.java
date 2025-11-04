@@ -315,4 +315,234 @@ class DefaultInterfaceTest {
         Files.deleteIfExists(excelFile.toPath());
         Files.deleteIfExists(tempDir);
     }
+
+    @Test
+    void testDefaultInterfacesApplyWhenDevicesDoNotContainEdgeOrVcs() throws Exception {
+        Path tempDir = Files.createTempDirectory("default-interface-non-edge-vcs-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row unitHeader = unitSheet.createRow(2);
+            unitHeader.createCell(0).setCellValue("Facility");
+            unitHeader.createCell(1).setCellValue("Common Unit Name");
+            unitHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+
+            Row unitRow = unitSheet.createRow(3);
+            unitRow.createCell(0).setCellValue("Test Facility");
+            unitRow.createCell(1).setCellValue("ICU");
+            unitRow.createCell(2).setCellValue("Nurse Group 1");
+
+            // Nurse Call sheet with devices that don't contain Edge or VCS
+            Sheet nurseSheet = wb.createSheet("Nurse Call");
+            Row nurseHeader = nurseSheet.createRow(2);
+            nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(4).setCellValue("Device - A");
+            nurseHeader.createCell(5).setCellValue("Device - B");
+            nurseHeader.createCell(10).setCellValue("Time to 1st Recipient");
+            nurseHeader.createCell(11).setCellValue("1st Recipient");
+
+            // Row with Smartphone device (no Edge/VCS) - should use default
+            Row row1 = nurseSheet.createRow(3);
+            row1.createCell(0).setCellValue("Nurse Group 1");
+            row1.createCell(1).setCellValue("Smartphone");
+            row1.createCell(4).setCellValue("Smartphone");
+            row1.createCell(5).setCellValue("");
+            row1.createCell(10).setCellValue("0");
+            row1.createCell(11).setCellValue("Team");
+
+            // Row with Badge device (no Edge/VCS) - should use default
+            Row row2 = nurseSheet.createRow(4);
+            row2.createCell(0).setCellValue("Nurse Group 1");
+            row2.createCell(1).setCellValue("Badge");
+            row2.createCell(4).setCellValue("Badge");
+            row2.createCell(5).setCellValue("Badge");
+            row2.createCell(10).setCellValue("0");
+            row2.createCell(11).setCellValue("Team");
+
+            // Patient Monitoring sheet (empty)
+            Sheet clinicalSheet = wb.createSheet("Patient Monitoring");
+            Row clinicalHeader = clinicalSheet.createRow(2);
+            clinicalHeader.createCell(0).setCellValue("Configuration Group");
+
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Set default Edge interface
+        parser.setDefaultInterfaces(true, false);
+
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
+        
+        assertEquals(2, flows.size(), "Should have 2 flows");
+
+        // First flow (Smartphone device, no Edge/VCS) should use default Edge
+        var smartphoneFlow = (Map<?, ?>) flows.get(0);
+        var smartphoneInterfaces = (List<?>) smartphoneFlow.get("interfaces");
+        assertEquals(1, smartphoneInterfaces.size(), "Smartphone device should use default");
+        var smartphoneIface = (Map<?, ?>) smartphoneInterfaces.get(0);
+        assertEquals("OutgoingWCTP", smartphoneIface.get("componentName"), 
+            "Smartphone should use default Edge (OutgoingWCTP)");
+
+        // Second flow (Badge device, no Edge/VCS) should use default Edge
+        var badgeFlow = (Map<?, ?>) flows.get(1);
+        var badgeInterfaces = (List<?>) badgeFlow.get("interfaces");
+        assertEquals(1, badgeInterfaces.size(), "Badge device should use default");
+        var badgeIface = (Map<?, ?>) badgeInterfaces.get(0);
+        assertEquals("OutgoingWCTP", badgeIface.get("componentName"), 
+            "Badge should use default Edge (OutgoingWCTP)");
+
+        // Clean up
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
+    void testDefaultInterfacesDoNotApplyWhenDeviceAContainsEdge() throws Exception {
+        Path tempDir = Files.createTempDirectory("default-interface-edge-present-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row unitHeader = unitSheet.createRow(2);
+            unitHeader.createCell(0).setCellValue("Facility");
+            unitHeader.createCell(1).setCellValue("Common Unit Name");
+            unitHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+
+            Row unitRow = unitSheet.createRow(3);
+            unitRow.createCell(0).setCellValue("Test Facility");
+            unitRow.createCell(1).setCellValue("ICU");
+            unitRow.createCell(2).setCellValue("Nurse Group 1");
+
+            // Nurse Call sheet with Edge in Device A
+            Sheet nurseSheet = wb.createSheet("Nurse Call");
+            Row nurseHeader = nurseSheet.createRow(2);
+            nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(4).setCellValue("Device - A");
+            nurseHeader.createCell(5).setCellValue("Device - B");
+            nurseHeader.createCell(10).setCellValue("Time to 1st Recipient");
+            nurseHeader.createCell(11).setCellValue("1st Recipient");
+
+            // Row with Edge in Device A - should NOT use default VMP
+            Row row1 = nurseSheet.createRow(3);
+            row1.createCell(0).setCellValue("Nurse Group 1");
+            row1.createCell(1).setCellValue("Edge Device");
+            row1.createCell(4).setCellValue("iPhone-Edge");
+            row1.createCell(5).setCellValue("");
+            row1.createCell(10).setCellValue("0");
+            row1.createCell(11).setCellValue("Team");
+
+            // Patient Monitoring sheet (empty)
+            Sheet clinicalSheet = wb.createSheet("Patient Monitoring");
+            Row clinicalHeader = clinicalSheet.createRow(2);
+            clinicalHeader.createCell(0).setCellValue("Configuration Group");
+
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Set default VMP interface
+        parser.setDefaultInterfaces(false, true);
+
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
+        
+        assertEquals(1, flows.size(), "Should have 1 flow");
+
+        // Flow with Edge should use Edge from device, NOT default VMP
+        var edgeFlow = (Map<?, ?>) flows.get(0);
+        var edgeInterfaces = (List<?>) edgeFlow.get("interfaces");
+        assertEquals(1, edgeInterfaces.size(), "Edge device should have interface from device");
+        var edgeIface = (Map<?, ?>) edgeInterfaces.get(0);
+        assertEquals("OutgoingWCTP", edgeIface.get("componentName"), 
+            "Edge should use OutgoingWCTP from device, not default VMP");
+
+        // Clean up
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
+
+    @Test
+    void testDefaultInterfacesDoNotApplyWhenDeviceBContainsVcs() throws Exception {
+        Path tempDir = Files.createTempDirectory("default-interface-vcs-present-test");
+        File excelFile = tempDir.resolve("test.xlsx").toFile();
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row unitHeader = unitSheet.createRow(2);
+            unitHeader.createCell(0).setCellValue("Facility");
+            unitHeader.createCell(1).setCellValue("Common Unit Name");
+            unitHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+
+            Row unitRow = unitSheet.createRow(3);
+            unitRow.createCell(0).setCellValue("Test Facility");
+            unitRow.createCell(1).setCellValue("ICU");
+            unitRow.createCell(2).setCellValue("Nurse Group 1");
+
+            // Nurse Call sheet with VCS in Device B
+            Sheet nurseSheet = wb.createSheet("Nurse Call");
+            Row nurseHeader = nurseSheet.createRow(2);
+            nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(4).setCellValue("Device - A");
+            nurseHeader.createCell(5).setCellValue("Device - B");
+            nurseHeader.createCell(10).setCellValue("Time to 1st Recipient");
+            nurseHeader.createCell(11).setCellValue("1st Recipient");
+
+            // Row with VCS in Device B - should NOT use default Edge
+            Row row1 = nurseSheet.createRow(3);
+            row1.createCell(0).setCellValue("Nurse Group 1");
+            row1.createCell(1).setCellValue("VCS Device");
+            row1.createCell(4).setCellValue("Smartphone");
+            row1.createCell(5).setCellValue("Vocera VCS");
+            row1.createCell(10).setCellValue("0");
+            row1.createCell(11).setCellValue("Team");
+
+            // Patient Monitoring sheet (empty)
+            Sheet clinicalSheet = wb.createSheet("Patient Monitoring");
+            Row clinicalHeader = clinicalSheet.createRow(2);
+            clinicalHeader.createCell(0).setCellValue("Configuration Group");
+
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+
+        // Set default Edge interface
+        parser.setDefaultInterfaces(true, false);
+
+        var nurseJson = parser.buildNurseCallsJson();
+        var flows = (List<?>) nurseJson.get("deliveryFlows");
+        
+        assertEquals(1, flows.size(), "Should have 1 flow");
+
+        // Flow with VCS should use VCS from device, NOT default Edge
+        var vcsFlow = (Map<?, ?>) flows.get(0);
+        var vcsInterfaces = (List<?>) vcsFlow.get("interfaces");
+        assertEquals(1, vcsInterfaces.size(), "VCS device should have interface from device");
+        var vcsIface = (Map<?, ?>) vcsInterfaces.get(0);
+        assertEquals("VMP", vcsIface.get("componentName"), 
+            "VCS should use VMP from device, not default Edge");
+
+        // Clean up
+        Files.deleteIfExists(excelFile.toPath());
+        Files.deleteIfExists(tempDir);
+    }
 }

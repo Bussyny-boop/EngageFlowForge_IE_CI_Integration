@@ -656,11 +656,7 @@ public class ExcelParserV5 {
     }
 
     // Device A and B cannot determine interface - use default checkboxes if set
-    boolean deviceABlank = isBlank(deviceA);
-    boolean deviceBBlank = isBlank(deviceB);
-    
-    // Only use defaults when BOTH Device A and B are blank/empty
-    if (deviceABlank && deviceBBlank) {
+    if (shouldApplyDefaultInterfaces(deviceA, deviceB, hasEdgeA, hasEdgeB, hasVcsA, hasVcsB)) {
       // If both default checkboxes are selected, return both interfaces
       if (useDefaultEdge && useDefaultVmp) {
         List<Map<String, Object>> interfaces = new ArrayList<>();
@@ -708,6 +704,22 @@ public class ExcelParserV5 {
     if (isBlank(deviceName)) return false;
     String lower = deviceName.toLowerCase(Locale.ROOT);
     return lower.contains("vocera vcs") || lower.contains("vcs");
+  }
+
+  /**
+   * Determines if default interfaces should be applied based on device values.
+   * Defaults apply when:
+   * 1. Both devices are blank/empty, OR
+   * 2. Neither device contains "Edge" or "VCS"
+   */
+  private boolean shouldApplyDefaultInterfaces(String deviceA, String deviceB,
+                                                 boolean hasEdgeA, boolean hasEdgeB,
+                                                 boolean hasVcsA, boolean hasVcsB) {
+    boolean deviceABlank = isBlank(deviceA);
+    boolean deviceBBlank = isBlank(deviceB);
+    
+    return (deviceABlank && deviceBBlank) || 
+           (!hasEdgeA && !hasEdgeB && !hasVcsA && !hasVcsB);
   }
 
   private void addOrder(List<Map<String,Object>> out,
