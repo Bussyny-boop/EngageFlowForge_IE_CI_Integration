@@ -31,6 +31,8 @@ public class AppController {
     @FXML private CheckBox mergeFlowsCheckbox;
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
+    @FXML private CheckBox defaultEdgeCheckbox;
+    @FXML private CheckBox defaultVmpCheckbox;
     @FXML private Button resetDefaultsButton;
     @FXML private Button resetPathsButton;
     @FXML private TextArea jsonPreview;
@@ -183,6 +185,18 @@ public class AppController {
         if (vcsRefNameField != null) {
             vcsRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
                 if (!newV) updateInterfaceRefs(); 
+            });
+        }
+        
+        // --- Default interface checkbox listeners ---
+        if (defaultEdgeCheckbox != null) {
+            defaultEdgeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                checkBothDefaultInterfacesSelected();
+            });
+        }
+        if (defaultVmpCheckbox != null) {
+            defaultVmpCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                checkBothDefaultInterfacesSelected();
             });
         }
     }
@@ -369,6 +383,11 @@ public class AppController {
             edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
             vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
         );
+        
+        // Copy default interface flags
+        boolean defaultEdge = defaultEdgeCheckbox != null && defaultEdgeCheckbox.isSelected();
+        boolean defaultVmp = defaultVmpCheckbox != null && defaultVmpCheckbox.isSelected();
+        filteredParser.setDefaultInterfaces(defaultEdge, defaultVmp);
         
         // Add filtered units
         if (unitsFilteredList != null) {
@@ -706,6 +725,11 @@ public class AppController {
                 edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
                 vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP"
             );
+            
+            // Apply default interface flags
+            boolean defaultEdge = defaultEdgeCheckbox != null && defaultEdgeCheckbox.isSelected();
+            boolean defaultVmp = defaultVmpCheckbox != null && defaultVmpCheckbox.isSelected();
+            parser.setDefaultInterfaces(defaultEdge, defaultVmp);
         }
     }
 
@@ -732,6 +756,32 @@ public class AppController {
                 showError("Failed to refresh preview: " + ex.getMessage());
             }
         }
+    }
+
+    // ---------- Check Both Default Interfaces Selected ----------
+    private void checkBothDefaultInterfacesSelected() {
+        if (defaultEdgeCheckbox != null && defaultVmpCheckbox != null) {
+            boolean bothSelected = defaultEdgeCheckbox.isSelected() && defaultVmpCheckbox.isSelected();
+            if (bothSelected) {
+                showTimedWarning("Your Engage rules will be combined to send outgoing WCTP and VMP endpoints", 2000);
+            }
+        }
+    }
+
+    private void showTimedWarning(String message, int durationMs) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Warning");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.getDialogPane().setStyle("-fx-font-size: 13px;");
+        
+        // Show the alert and auto-close after duration
+        javafx.application.Platform.runLater(() -> {
+            alert.show();
+            javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(durationMs));
+            delay.setOnFinished(e -> alert.close());
+            delay.play();
+        });
     }
 
     private static String safe(String v) { return v == null ? "" : v; }
