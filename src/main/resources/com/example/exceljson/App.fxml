@@ -19,8 +19,10 @@
             <HBox spacing="10">
                 <Button fx:id="generateNurseJsonButton" text="🔧 Generate NurseCall JSON" />
                 <Button fx:id="generateClinicalJsonButton" text="🏥 Generate Clinical JSON" />
+                <Button fx:id="generateOrdersJsonButton" text="💊 Generate Orders JSON" />
                 <Button fx:id="exportNurseJsonButton" text="📤 Export NurseCall JSON" />
                 <Button fx:id="exportClinicalJsonButton" text="📤 Export Clinical JSON" />
+                <Button fx:id="exportOrdersJsonButton" text="📤 Export Orders JSON" />
             </HBox>
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <CheckBox fx:id="mergeFlowsCheckbox" text="🔀 Merge Identical Flows (Advanced)">
@@ -79,6 +81,7 @@
                                                 <TableColumn fx:id="unitNamesCol" prefWidth="160.0" text="Unit Names" />
                                                 <TableColumn fx:id="unitNurseGroupCol" prefWidth="160.0" text="Nurse Group" />
                                                 <TableColumn fx:id="unitClinicalGroupCol" prefWidth="160.0" text="Clinical Group" />
+                                                <TableColumn fx:id="unitOrdersGroupCol" prefWidth="160.0" text="Orders Group" />
                                                 <TableColumn fx:id="unitNoCareGroupCol" prefWidth="180.0" text="No Caregiver Group" />
                                                 <TableColumn fx:id="unitCommentsCol" prefWidth="220.0" text="Comments" />
                                             </columns>
@@ -174,6 +177,52 @@
                                                 <TableColumn fx:id="clinicalR4Col" prefWidth="220.0" text="4th Recipient" />
                                                 <TableColumn fx:id="clinicalT5Col" prefWidth="140.0" text="Time to 5th" />
                                                 <TableColumn fx:id="clinicalR5Col" prefWidth="220.0" text="5th Recipient" />
+                                            </columns>
+                                        </TableView>
+                                    </center>
+                                </BorderPane>
+                            </content>
+                        </Tab>
+
+                        <!-- Orders -->
+                        <Tab text="💊 Orders">
+                            <content>
+                                <BorderPane>
+                                    <top>
+                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                            <padding>
+                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                            </padding>
+                                            <Label text="Filter by Config Group:" />
+                                            <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
+                                        </HBox>
+                                    </top>
+                                    <center>
+                                        <TableView fx:id="tableOrders" editable="true">
+                                            <columns>
+                                                <TableColumn fx:id="ordersInScopeCol" prefWidth="80.0" text="In Scope" />
+                                                <TableColumn fx:id="ordersConfigGroupCol" prefWidth="160.0" text="Config Group" />
+                                                <TableColumn fx:id="ordersAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
+                                                <TableColumn fx:id="ordersSendingNameCol" prefWidth="200.0" text="Sending Name" />
+                                                <TableColumn fx:id="ordersPriorityCol" prefWidth="120.0" text="Priority" />
+                                                <TableColumn fx:id="ordersDeviceACol" prefWidth="140.0" text="Device A" />
+                                                <TableColumn fx:id="ordersDeviceBCol" prefWidth="140.0" text="Device B" />
+                                                <TableColumn fx:id="ordersRingtoneCol" prefWidth="160.0" text="Ringtone" />
+                                                <TableColumn fx:id="ordersResponseOptionsCol" prefWidth="160.0" text="Response Options" />
+                                                <TableColumn fx:id="ordersBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
+                                                <TableColumn fx:id="ordersEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
+                                                <TableColumn fx:id="ordersTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
+                                                <TableColumn fx:id="ordersEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
+                                                <TableColumn fx:id="ordersT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                <TableColumn fx:id="ordersR1Col" prefWidth="220.0" text="1st Recipient" />
+                                                <TableColumn fx:id="ordersT2Col" prefWidth="140.0" text="Time to 2nd" />
+                                                <TableColumn fx:id="ordersR2Col" prefWidth="220.0" text="2nd Recipient" />
+                                                <TableColumn fx:id="ordersT3Col" prefWidth="140.0" text="Time to 3rd" />
+                                                <TableColumn fx:id="ordersR3Col" prefWidth="220.0" text="3rd Recipient" />
+                                                <TableColumn fx:id="ordersT4Col" prefWidth="140.0" text="Time to 4th" />
+                                                <TableColumn fx:id="ordersR4Col" prefWidth="220.0" text="4th Recipient" />
+                                                <TableColumn fx:id="ordersT5Col" prefWidth="140.0" text="Time to 5th" />
+                                                <TableColumn fx:id="ordersR5Col" prefWidth="220.0" text="5th Recipient" />
                                             </columns>
                                         </TableView>
                                     </center>
