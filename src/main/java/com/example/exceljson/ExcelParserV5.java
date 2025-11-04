@@ -29,6 +29,7 @@ public class ExcelParserV5 {
   }
 
   public static final class FlowRow {
+    public boolean inScope = true; // Default to true
     public String type = ""; // NurseCalls or Clinicals
     public String configGroup = "";
     public String alarmName = "";
@@ -233,6 +234,7 @@ public class ExcelParserV5 {
     Map<String,Integer> hm = headerMap(header);
     int start = firstDataRow(sh, header);
 
+    int cInScope = getCol(hm, "In scope", "In Scope");
     int cCfg     = getCol(hm, "Configuration Group");
     int cAlarm   = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
     int cSend    = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
@@ -278,6 +280,17 @@ public class ExcelParserV5 {
 
       FlowRow f = new FlowRow();
       f.type        = nurseSide ? "NurseCalls" : "Clinicals";
+      
+      // Parse "In scope" column - default to true if column not present or value is blank
+      String inScopeStr = getCell(row, cInScope);
+      if (cInScope == -1 || isBlank(inScopeStr)) {
+        // Default to true if Config Group is present
+        f.inScope = !isBlank(getCell(row, cCfg));
+      } else {
+        // Parse checkbox value: TRUE, YES, Y, X, or checked symbol
+        f.inScope = parseBooleanValue(inScopeStr);
+      }
+      
       f.configGroup = getCell(row, cCfg);
       f.alarmName   = getCell(row, cAlarm);
       f.sendingName = getCell(row, cSend);
@@ -400,6 +413,9 @@ public class ExcelParserV5 {
     List<Map<String,Object>> flows = new ArrayList<>();
     for (FlowRow r : rows) {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
+      
+      // Skip rows that are not in scope
+      if (!r.inScope) continue;
 
       List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
       String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
@@ -428,6 +444,9 @@ public class ExcelParserV5 {
     
     for (FlowRow r : rows) {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
+      
+      // Skip rows that are not in scope
+      if (!r.inScope) continue;
       
       String mergeKey = buildMergeKey(r, groupToUnits, nurseSide);
       groupedByMergeKey.computeIfAbsent(mergeKey, k -> new ArrayList<>()).add(r);
@@ -514,11 +533,9 @@ public class ExcelParserV5 {
     parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
     if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
     
-    // If multiple alarms, show count instead of listing all
-    if (alarmNames.size() == 1) {
-      parts.add(alarmNames.get(0));
-    } else {
-      parts.add("(" + alarmNames.size() + " alarms)");
+    // List all alarm names separated by " / "
+    if (!alarmNames.isEmpty()) {
+      parts.add(String.join(" / ", alarmNames));
     }
     
     if (!isBlank(group)) parts.add(group);
@@ -530,6 +547,9 @@ public class ExcelParserV5 {
   private List<Map<String,Object>> buildAlarmDefs(List<FlowRow> rows, boolean nurseSide) {
     Map<String, Map<String,Object>> byKey = new LinkedHashMap<>();
     for (FlowRow r : rows) {
+      // Skip rows that are not in scope
+      if (!r.inScope) continue;
+      
       String name = nvl(r.alarmName, r.sendingName);
       if (isBlank(name)) continue;
       String key = name + "|" + (nurseSide ? "N" : "C");
@@ -961,6 +981,7 @@ public class ExcelParserV5 {
 
   private static String[] flowHeaders() {
     return new String[]{
+      "In scope",
       "Configuration Group",
       "Common Alert or Alarm Name",
       "Sending System Alert Name",
@@ -982,23 +1003,26 @@ public class ExcelParserV5 {
   }
 
   private static void writeFlowRow(Row row, FlowRow f) {
-    set(row,0,f.configGroup);
-    set(row,1,f.alarmName);
-    set(row,2,f.sendingName);
-    set(row,3,f.priorityRaw);
-    set(row,4,f.deviceA);
-    set(row,5,f.ringtone);
-    set(row,6,f.responseOptions);
-    set(row,7,f.breakThroughDND);
-    set(row,8,f.escalateAfter);
-    set(row,9,f.ttlValue);
-    set(row,10,f.enunciate);
-    set(row,11,f.emdan);
-    set(row,12,f.t1); set(row,13,f.r1);
-    set(row,14,f.t2); set(row,15,f.r2);
-    set(row,16,f.t3); set(row,17,f.r3);
-    set(row,18,f.t4); set(row,19,f.r4);
-    set(row,20,f.t5); set(row,21,f.r5);
+    // Column indices: 0=In scope, 1=Config Group, 2=Alarm Name, etc.
+    // Keep in sync with flowHeaders() array
+    set(row,0,f.inScope ? "TRUE" : "FALSE");
+    set(row,1,f.configGroup);
+    set(row,2,f.alarmName);
+    set(row,3,f.sendingName);
+    set(row,4,f.priorityRaw);
+    set(row,5,f.deviceA);
+    set(row,6,f.ringtone);
+    set(row,7,f.responseOptions);
+    set(row,8,f.breakThroughDND);
+    set(row,9,f.escalateAfter);
+    set(row,10,f.ttlValue);
+    set(row,11,f.enunciate);
+    set(row,12,f.emdan);
+    set(row,13,f.t1); set(row,14,f.r1);
+    set(row,15,f.t2); set(row,16,f.r2);
+    set(row,17,f.t3); set(row,18,f.r3);
+    set(row,19,f.t4); set(row,20,f.r4);
+    set(row,21,f.t5); set(row,22,f.r5);
   }
 
   private static void writeHeader(Sheet s, String[] headers) {
@@ -1313,6 +1337,28 @@ public class ExcelParserV5 {
   }
   private static boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
   private static String nvl(String a, String b) { return isBlank(a) ? (b == null ? "" : b) : a; }
+
+  /**
+   * Parse a boolean value from Excel cell content (typically a checkbox column).
+   * Supports common checkbox representations:
+   * - Text values: "TRUE", "YES", "Y"
+   * - Symbols: "X", "✓", "☑"
+   * - Numeric: "1"
+   * 
+   * All comparisons are case-insensitive. Returns false for blank/empty values
+   * or any unrecognized text.
+   * 
+   * @param value The cell value to parse
+   * @return true if the value represents a checked/enabled state, false otherwise
+   */
+  private static boolean parseBooleanValue(String value) {
+    if (isBlank(value)) return false;
+    String normalized = value.trim().toUpperCase(Locale.ROOT);
+    return normalized.equals("TRUE") || normalized.equals("YES") || 
+           normalized.equals("Y") || normalized.equals("X") || 
+           normalized.equals("✓") || normalized.equals("☑") ||
+           normalized.equals("1");
+  }
 
   /**
    * Map Break Through DND values from Excel to Engage API values.
