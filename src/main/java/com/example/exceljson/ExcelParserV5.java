@@ -659,8 +659,11 @@ public class ExcelParserV5 {
     boolean deviceABlank = isBlank(deviceA);
     boolean deviceBBlank = isBlank(deviceB);
     
-    // Only use defaults when BOTH Device A and B are blank/empty
-    if (deviceABlank && deviceBBlank) {
+    // Use defaults when BOTH Device A and B are blank/empty OR when neither contains Edge/VCS
+    boolean shouldUseDefaults = (deviceABlank && deviceBBlank) || 
+                                (!hasEdgeA && !hasEdgeB && !hasVcsA && !hasVcsB);
+    
+    if (shouldUseDefaults) {
       // If both default checkboxes are selected, return both interfaces
       if (useDefaultEdge && useDefaultVmp) {
         List<Map<String, Object>> interfaces = new ArrayList<>();
