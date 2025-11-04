@@ -56,3 +56,9 @@ The workflow will succeed when re-run. No code changes are required.
 ✅ **Code is healthy and working correctly**  
 ✅ **No action required - safe to retry the workflow**  
 ✅ **Expected outcome: Success on next run**
+
+## Re-run Status
+This document triggered a workflow re-run to verify the transient error has been resolved.
+- Local build: SUCCESS
+- Local tests: 141 tests passed
+- Ready for deployment
