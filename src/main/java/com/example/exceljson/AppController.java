@@ -26,8 +26,10 @@ public class AppController {
     @FXML private Button saveExcelAsButton;
     @FXML private Button generateNurseJsonButton;
     @FXML private Button generateClinicalJsonButton;
+    @FXML private Button generateOrdersJsonButton;
     @FXML private Button exportNurseJsonButton;
     @FXML private Button exportClinicalJsonButton;
+    @FXML private Button exportOrdersJsonButton;
     @FXML private CheckBox mergeFlowsCheckbox;
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
@@ -42,6 +44,7 @@ public class AppController {
     @FXML private ComboBox<String> unitConfigGroupFilter;
     @FXML private ComboBox<String> nurseConfigGroupFilter;
     @FXML private ComboBox<String> clinicalConfigGroupFilter;
+    @FXML private ComboBox<String> ordersConfigGroupFilter;
 
     // ---------- Units ----------
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
@@ -49,6 +52,7 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNamesCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNurseGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitClinicalGroupCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitOrdersGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNoCareGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitCommentsCol;
 
@@ -105,6 +109,32 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalT5Col;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR5Col;
 
+    // ---------- Orders ----------
+    @FXML private TableView<ExcelParserV5.FlowRow> tableOrders;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> ordersInScopeCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersConfigGroupCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersAlarmNameCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersSendingNameCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersPriorityCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersDeviceACol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersDeviceBCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersRingtoneCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersResponseOptionsCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersBreakThroughDNDCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersEscalateAfterCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersTtlValueCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersEnunciateCol;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersT1Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersR1Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersT2Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersR2Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersT3Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersR3Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersT4Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersR4Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersT5Col;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersR5Col;
+
     // ---------- Core ----------
     private ExcelParserV5 parser;
     private File currentExcelFile;
@@ -120,6 +150,9 @@ public class AppController {
     
     private ObservableList<ExcelParserV5.FlowRow> clinicalsFullList;
     private FilteredList<ExcelParserV5.FlowRow> clinicalsFilteredList;
+    
+    private ObservableList<ExcelParserV5.FlowRow> ordersFullList;
+    private FilteredList<ExcelParserV5.FlowRow> ordersFilteredList;
 
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
@@ -148,6 +181,7 @@ public class AppController {
         initializeUnitColumns();
         initializeNurseColumns();
         initializeClinicalColumns();
+        initializeOrdersColumns();
         initializeFilters();
 
         // Set default reference names
@@ -160,10 +194,12 @@ public class AppController {
         loadButton.setOnAction(e -> loadExcel());
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
-        generateNurseJsonButton.setOnAction(e -> generateJson(true));
-        generateClinicalJsonButton.setOnAction(e -> generateJson(false));
-        exportNurseJsonButton.setOnAction(e -> exportJson(true));
-        exportClinicalJsonButton.setOnAction(e -> exportJson(false));
+        generateNurseJsonButton.setOnAction(e -> generateJson("NurseCalls"));
+        generateClinicalJsonButton.setOnAction(e -> generateJson("Clinicals"));
+        if (generateOrdersJsonButton != null) generateOrdersJsonButton.setOnAction(e -> generateJson("Orders"));
+        exportNurseJsonButton.setOnAction(e -> exportJson("NurseCalls"));
+        exportClinicalJsonButton.setOnAction(e -> exportJson("Clinicals"));
+        if (exportOrdersJsonButton != null) exportOrdersJsonButton.setOnAction(e -> exportJson("Orders"));
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
         if (resetPathsButton != null) resetPathsButton.setOnAction(e -> resetPaths());
 
@@ -229,6 +265,7 @@ public class AppController {
             tableUnits.refresh();
             tableNurseCalls.refresh();
             tableClinicals.refresh();
+            if (tableOrders != null) tableOrders.refresh();
 
             setJsonButtonsEnabled(true);
             setExcelButtonsEnabled(true);
@@ -301,7 +338,7 @@ public class AppController {
     }
 
     // ---------- Generate JSON ----------
-    private void generateJson(boolean nurseSide) {
+    private void generateJson(String flowType) {
         try {
             if (parser == null) {
                 showError("Please load an Excel file first.");
@@ -316,21 +353,30 @@ public class AppController {
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();
 
-            String json = nurseSide
-                    ? ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(useAdvanced))
-                    : ExcelParserV5.pretty(filteredParser.buildClinicalsJson(useAdvanced));
+            String json = switch (flowType) {
+                case "NurseCalls" -> ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(useAdvanced));
+                case "Clinicals" -> ExcelParserV5.pretty(filteredParser.buildClinicalsJson(useAdvanced));
+                case "Orders" -> ExcelParserV5.pretty(filteredParser.buildOrdersJson(useAdvanced));
+                default -> "";
+            };
 
             jsonPreview.setText(json);
-            statusLabel.setText(nurseSide ? "Generated NurseCall JSON" : "Generated Clinical JSON");
+            String displayName = switch (flowType) {
+                case "NurseCalls" -> "NurseCall";
+                case "Clinicals" -> "Clinical";
+                case "Orders" -> "Orders";
+                default -> flowType;
+            };
+            statusLabel.setText("Generated " + displayName + " JSON");
             lastGeneratedJson = json;
-            lastGeneratedWasNurseSide = nurseSide; // Track the last generated type
+            lastGeneratedWasNurseSide = "NurseCalls".equals(flowType); // Track the last generated type
         } catch (Exception ex) {
             showError("Error generating JSON: " + ex.getMessage());
         }
     }
 
     // ---------- Export JSON ----------
-    private void exportJson(boolean nurseSide) {
+    private void exportJson(String flowType) {
         try {
             if (parser == null) {
                 showError("Please load an Excel file first.");
@@ -342,10 +388,23 @@ public class AppController {
 
             boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
 
+            String title = switch (flowType) {
+                case "NurseCalls" -> "Export NurseCall JSON";
+                case "Clinicals" -> "Export Clinical JSON";
+                case "Orders" -> "Export Orders JSON";
+                default -> "Export JSON";
+            };
+            String fileName = switch (flowType) {
+                case "NurseCalls" -> "NurseCalls.json";
+                case "Clinicals" -> "Clinicals.json";
+                case "Orders" -> "Orders.json";
+                default -> "output.json";
+            };
+
             FileChooser chooser = new FileChooser();
-            chooser.setTitle(nurseSide ? "Export NurseCall JSON" : "Export Clinical JSON");
+            chooser.setTitle(title);
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-            chooser.setInitialFileName(nurseSide ? "NurseCalls.json" : "Clinicals.json");
+            chooser.setInitialFileName(fileName);
 
             if (lastJsonDir != null && lastJsonDir.exists()) {
                 chooser.setInitialDirectory(lastJsonDir);
@@ -360,8 +419,11 @@ public class AppController {
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();
 
-            if (nurseSide) filteredParser.writeNurseCallsJson(file, useAdvanced);
-            else filteredParser.writeClinicalsJson(file, useAdvanced);
+            switch (flowType) {
+                case "NurseCalls" -> filteredParser.writeNurseCallsJson(file, useAdvanced);
+                case "Clinicals" -> filteredParser.writeClinicalsJson(file, useAdvanced);
+                case "Orders" -> filteredParser.writeOrdersJson(file, useAdvanced);
+            }
 
             if (useAdvanced) {
                 statusLabel.setText("Exported Merged JSON (Advanced Mode)");
@@ -407,14 +469,21 @@ public class AppController {
             filteredParser.clinicals.addAll(clinicalsFilteredList);
         }
         
+        // Add filtered orders
+        if (ordersFilteredList != null) {
+            filteredParser.orders.addAll(ordersFilteredList);
+        }
+        
         return filteredParser;
     }
 
     private void setJsonButtonsEnabled(boolean enabled) {
         generateNurseJsonButton.setDisable(!enabled);
         generateClinicalJsonButton.setDisable(!enabled);
+        if (generateOrdersJsonButton != null) generateOrdersJsonButton.setDisable(!enabled);
         exportNurseJsonButton.setDisable(!enabled);
         exportClinicalJsonButton.setDisable(!enabled);
+        if (exportOrdersJsonButton != null) exportOrdersJsonButton.setDisable(!enabled);
     }
 
     private void setExcelButtonsEnabled(boolean enabled) {
@@ -437,6 +506,10 @@ public class AppController {
         if (clinicalsFullList != null) {
             parser.clinicals.clear();
             parser.clinicals.addAll(clinicalsFullList);
+        }
+        if (ordersFullList != null) {
+            parser.orders.clear();
+            parser.orders.addAll(ordersFullList);
         }
     }
 
@@ -469,6 +542,7 @@ public class AppController {
         setupEditable(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
         setupEditable(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
         setupEditable(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
+        setupEditable(unitOrdersGroupCol, r -> r.ordersGroup, (r, v) -> r.ordersGroup = v);
         setupEditable(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
         setupEditable(unitCommentsCol, r -> r.comments, (r, v) -> r.comments = v);
     }
@@ -528,6 +602,33 @@ public class AppController {
         setupEditable(clinicalR5Col, f -> f.r5, (f, v) -> f.r5 = v);
     }
 
+    private void initializeOrdersColumns() {
+        if (tableOrders != null) tableOrders.setEditable(true);
+        setupCheckBox(ordersInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        setupEditable(ordersConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
+        setupEditable(ordersAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
+        setupEditable(ordersSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
+        setupEditable(ordersPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
+        setupEditable(ordersDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupEditable(ordersDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
+        setupEditable(ordersRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
+        setupEditable(ordersResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
+        setupEditable(ordersBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
+        setupEditable(ordersEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
+        setupEditable(ordersTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
+        setupEditable(ordersEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
+        setupEditable(ordersT1Col, f -> f.t1, (f, v) -> f.t1 = v);
+        setupEditable(ordersR1Col, f -> f.r1, (f, v) -> f.r1 = v);
+        setupEditable(ordersT2Col, f -> f.t2, (f, v) -> f.t2 = v);
+        setupEditable(ordersR2Col, f -> f.r2, (f, v) -> f.r2 = v);
+        setupEditable(ordersT3Col, f -> f.t3, (f, v) -> f.t3 = v);
+        setupEditable(ordersR3Col, f -> f.r3, (f, v) -> f.r3 = v);
+        setupEditable(ordersT4Col, f -> f.t4, (f, v) -> f.t4 = v);
+        setupEditable(ordersR4Col, f -> f.r4, (f, v) -> f.r4 = v);
+        setupEditable(ordersT5Col, f -> f.t5, (f, v) -> f.t5 = v);
+        setupEditable(ordersR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+    }
+
     private <R> void setupEditable(TableColumn<R, String> col, Function<R, String> getter, BiConsumer<R, String> setter) {
         if (col == null) return;
         col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
@@ -566,6 +667,9 @@ public class AppController {
         if (clinicalConfigGroupFilter != null) {
             clinicalConfigGroupFilter.setOnAction(e -> applyClinicalFilter());
         }
+        if (ordersConfigGroupFilter != null) {
+            ordersConfigGroupFilter.setOnAction(e -> applyOrdersFilter());
+        }
     }
 
     // ---------- Update Filter Options ----------
@@ -579,6 +683,9 @@ public class AppController {
                 }
                 if (unit.clinGroup != null && !unit.clinGroup.trim().isEmpty()) {
                     unitConfigGroups.add(unit.clinGroup.trim());
+                }
+                if (unit.ordersGroup != null && !unit.ordersGroup.trim().isEmpty()) {
+                    unitConfigGroups.add(unit.ordersGroup.trim());
                 }
             }
         }
@@ -599,6 +706,16 @@ public class AppController {
             for (ExcelParserV5.FlowRow flow : parser.clinicals) {
                 if (flow.configGroup != null && !flow.configGroup.trim().isEmpty()) {
                     clinicalConfigGroups.add(flow.configGroup.trim());
+                }
+            }
+        }
+        
+        // Collect unique config groups from Orders
+        Set<String> ordersConfigGroups = new LinkedHashSet<>();
+        if (parser != null && parser.orders != null) {
+            for (ExcelParserV5.FlowRow flow : parser.orders) {
+                if (flow.configGroup != null && !flow.configGroup.trim().isEmpty()) {
+                    ordersConfigGroups.add(flow.configGroup.trim());
                 }
             }
         }
@@ -629,6 +746,15 @@ public class AppController {
             clinicalConfigGroupFilter.setItems(FXCollections.observableArrayList(clinicalOptions));
             clinicalConfigGroupFilter.getSelectionModel().select(0); // Select "All" by default
         }
+        
+        // Update Orders filter
+        if (ordersConfigGroupFilter != null) {
+            List<String> ordersOptions = new ArrayList<>();
+            ordersOptions.add("All");
+            ordersOptions.addAll(ordersConfigGroups);
+            ordersConfigGroupFilter.setItems(FXCollections.observableArrayList(ordersOptions));
+            ordersConfigGroupFilter.getSelectionModel().select(0); // Select "All" by default
+        }
     }
 
     // ---------- Apply Filters ----------
@@ -640,7 +766,7 @@ public class AppController {
             unitsFilteredList.setPredicate(unit -> true); // Show all
         } else {
             unitsFilteredList.setPredicate(unit -> 
-                selected.equals(unit.nurseGroup) || selected.equals(unit.clinGroup)
+                selected.equals(unit.nurseGroup) || selected.equals(unit.clinGroup) || selected.equals(unit.ordersGroup)
             );
         }
         
@@ -673,6 +799,19 @@ public class AppController {
         updateStatusLabel();
     }
 
+    private void applyOrdersFilter() {
+        if (ordersFilteredList == null) return;
+        
+        String selected = ordersConfigGroupFilter.getSelectionModel().getSelectedItem();
+        if (selected == null || selected.equals("All")) {
+            ordersFilteredList.setPredicate(flow -> true); // Show all
+        } else {
+            ordersFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
+        }
+        
+        updateStatusLabel();
+    }
+
     private void updateStatusLabel() {
         if (statusLabel == null) return;
         
@@ -682,9 +821,11 @@ public class AppController {
         int nurseTotal = nurseCallsFullList != null ? nurseCallsFullList.size() : 0;
         int clinicalShown = clinicalsFilteredList != null ? clinicalsFilteredList.size() : 0;
         int clinicalTotal = clinicalsFullList != null ? clinicalsFullList.size() : 0;
+        int ordersShown = ordersFilteredList != null ? ordersFilteredList.size() : 0;
+        int ordersTotal = ordersFullList != null ? ordersFullList.size() : 0;
         
-        String status = String.format("Units: %d/%d | Nurse Calls: %d/%d | Clinicals: %d/%d", 
-            unitsShown, unitsTotal, nurseShown, nurseTotal, clinicalShown, clinicalTotal);
+        String status = String.format("Units: %d/%d | Nurse Calls: %d/%d | Clinicals: %d/%d | Orders: %d/%d", 
+            unitsShown, unitsTotal, nurseShown, nurseTotal, clinicalShown, clinicalTotal, ordersShown, ordersTotal);
         
         if (currentExcelFile != null) {
             status = currentExcelFile.getName() + " | " + status;
@@ -698,16 +839,19 @@ public class AppController {
         unitsFullList = FXCollections.observableArrayList(parser.units);
         nurseCallsFullList = FXCollections.observableArrayList(parser.nurseCalls);
         clinicalsFullList = FXCollections.observableArrayList(parser.clinicals);
+        ordersFullList = FXCollections.observableArrayList(parser.orders);
         
         // Create filtered lists
         unitsFilteredList = new FilteredList<>(unitsFullList, unit -> true);
         nurseCallsFilteredList = new FilteredList<>(nurseCallsFullList, flow -> true);
         clinicalsFilteredList = new FilteredList<>(clinicalsFullList, flow -> true);
+        ordersFilteredList = new FilteredList<>(ordersFullList, flow -> true);
         
         // Set filtered lists to tables
         if (tableUnits != null) tableUnits.setItems(unitsFilteredList);
         if (tableNurseCalls != null) tableNurseCalls.setItems(nurseCallsFilteredList);
         if (tableClinicals != null) tableClinicals.setItems(clinicalsFilteredList);
+        if (tableOrders != null) tableOrders.setItems(ordersFilteredList);
         
         // Update filter options
         updateFilterOptions();

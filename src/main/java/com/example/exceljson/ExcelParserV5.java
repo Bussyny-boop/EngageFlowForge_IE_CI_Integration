@@ -24,6 +24,7 @@ public class ExcelParserV5 {
     public String unitNames = "";
     public String nurseGroup = "";
     public String clinGroup = "";
+    public String ordersGroup = "";
     public String noCareGroup = "";
     public String comments = "";
   }
@@ -55,9 +56,11 @@ public class ExcelParserV5 {
   public final List<UnitRow> units = new ArrayList<>();
   public final List<FlowRow> nurseCalls = new ArrayList<>();
   public final List<FlowRow> clinicals = new ArrayList<>();
+  public final List<FlowRow> orders = new ArrayList<>();
 
   private final Map<String, List<Map<String, String>>> nurseGroupToUnits = new LinkedHashMap<>();
   private final Map<String, List<Map<String, String>>> clinicalGroupToUnits = new LinkedHashMap<>();
+  private final Map<String, List<Map<String, String>>> ordersGroupToUnits = new LinkedHashMap<>();
   private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
   
   private int emdanMovedCount = 0;
@@ -88,6 +91,7 @@ public class ExcelParserV5 {
   private static final String SHEET_UNIT = "Unit Breakdown";
   private static final String SHEET_NURSE = "Nurse Call";
   private static final String SHEET_CLINICAL = "Patient Monitoring";
+  private static final String SHEET_ORDERS = "Order";
 
   // NurseCallsCondition (requested default)
   private static final List<Map<String, Object>> NURSE_CONDITIONS;
@@ -112,8 +116,9 @@ public class ExcelParserV5 {
     try (FileInputStream fis = new FileInputStream(excelFile);
          Workbook wb = new XSSFWorkbook(fis)) {
       parseUnitBreakdown(wb);
-      parseFlowSheet(wb, SHEET_NURSE, true);
-      parseFlowSheet(wb, SHEET_CLINICAL, false);
+      parseFlowSheet(wb, SHEET_NURSE, true, false);
+      parseFlowSheet(wb, SHEET_CLINICAL, false, false);
+      parseFlowSheet(wb, SHEET_ORDERS, false, true);
     }
   }
 
@@ -123,12 +128,14 @@ public class ExcelParserV5 {
       "Loaded:%n" +
       "  • %d Unit Breakdown rows%n" +
       "  • %d Nurse Call rows%n" +
-      "  • %d Patient Monitoring rows%n%n" +
+      "  • %d Patient Monitoring rows%n" +
+      "  • %d Orders rows%n%n" +
       "Linked:%n" +
       "  • %d Configuration Groups (Nurse)%n" +
-      "  • %d Configuration Groups (Clinical)",
-      units.size(), nurseCalls.size(), clinicals.size(),
-      nurseGroupToUnits.size(), clinicalGroupToUnits.size());
+      "  • %d Configuration Groups (Clinical)%n" +
+      "  • %d Configuration Groups (Orders)",
+      units.size(), nurseCalls.size(), clinicals.size(), orders.size(),
+      nurseGroupToUnits.size(), clinicalGroupToUnits.size(), ordersGroupToUnits.size());
   }
   
   public int getEmdanMovedCount() {
@@ -139,8 +146,10 @@ public class ExcelParserV5 {
     units.clear();
     nurseCalls.clear();
     clinicals.clear();
+    orders.clear();
     nurseGroupToUnits.clear();
     clinicalGroupToUnits.clear();
+    ordersGroupToUnits.clear();
     noCaregiverByFacility.clear();
     emdanMovedCount = 0;
   }
@@ -158,6 +167,7 @@ public class ExcelParserV5 {
     int cUnitName   = getCol(hm, "Common Unit Name");
     int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call");
     int cClinGroup  = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring");
+    int cOrdersGroup = getCol(hm, "Orders", "Configuration Group", "Order", "Med Order", "STAT MED");
     int cNoCare     = getCol(hm, "No Caregiver Alert Number or Group", "No Caregiver Group");
     int cComments   = getCol(hm, "Comments");
 
@@ -169,6 +179,7 @@ public class ExcelParserV5 {
       String unitNames  = getCell(row, cUnitName);
       String nurseGroup = getCell(row, cNurseGroup);
       String clinGroup  = getCell(row, cClinGroup);
+      String ordersGroup = getCell(row, cOrdersGroup);
       String noCare     = stripVGroup(getCell(row, cNoCare));
       String comments   = getCell(row, cComments);
 
@@ -179,6 +190,8 @@ public class ExcelParserV5 {
       u.unitNames = unitNames;
       u.nurseGroup = nurseGroup;
       u.clinGroup = clinGroup;
+      u.ordersGroup = ordersGroup;
+      u.ordersGroup = ordersGroup;
       u.noCareGroup = noCare;
       u.comments = comments;
       units.add(u);
@@ -196,6 +209,12 @@ public class ExcelParserV5 {
             .add(Map.of("facilityName", facility, "name", name));
         }
       }
+      if (!isBlank(ordersGroup)) {
+        for (String name : list) {
+          ordersGroupToUnits.computeIfAbsent(ordersGroup, k -> new ArrayList<>())
+            .add(Map.of("facilityName", facility, "name", name));
+        }
+      }
       if (!isBlank(facility) && !isBlank(noCare)) {
         noCaregiverByFacility.put(facility, noCare);
       }
@@ -206,6 +225,7 @@ public class ExcelParserV5 {
   public void rebuildUnitMaps() {
     nurseGroupToUnits.clear();
     clinicalGroupToUnits.clear();
+    ordersGroupToUnits.clear();
     noCaregiverByFacility.clear();
 
     for (UnitRow u : units) {
@@ -213,6 +233,7 @@ public class ExcelParserV5 {
       String unitNames = u.unitNames;
       String nurseGroup = u.nurseGroup;
       String clinGroup = u.clinGroup;
+      String ordersGroup = u.ordersGroup;
       String noCare = u.noCareGroup;
 
       List<String> list = splitUnits(unitNames);
@@ -228,6 +249,12 @@ public class ExcelParserV5 {
             .add(Map.of("facilityName", facility, "name", name));
         }
       }
+      if (!isBlank(ordersGroup)) {
+        for (String name : list) {
+          ordersGroupToUnits.computeIfAbsent(ordersGroup, k -> new ArrayList<>())
+            .add(Map.of("facilityName", facility, "name", name));
+        }
+      }
       if (!isBlank(facility) && !isBlank(noCare)) {
         noCaregiverByFacility.put(facility, noCare);
       }
@@ -235,8 +262,14 @@ public class ExcelParserV5 {
   }
 
   // ---------- Parse: Flow Sheets ----------
-  private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide) {
-    Sheet sh = findSheet(wb, sheetName);
+  private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide, boolean ordersType) {
+    // For Orders sheets, try multiple case-insensitive sheet names
+    Sheet sh = null;
+    if (ordersType) {
+      sh = findSheetCaseInsensitive(wb, "Order", "Med Order", "STAT MED");
+    } else {
+      sh = findSheet(wb, sheetName);
+    }
     if (sh == null) return;
 
     Row header = findHeaderRow(sh);
@@ -288,7 +321,12 @@ public class ExcelParserV5 {
       if (row == null) continue;
 
       FlowRow f = new FlowRow();
-      f.type        = nurseSide ? "NurseCalls" : "Clinicals";
+      // Set type based on sheet type
+      if (ordersType) {
+        f.type = "Orders";
+      } else {
+        f.type = nurseSide ? "NurseCalls" : "Clinicals";
+      }
       
       // Parse "In scope" column - default to true if column not present or value is blank
       String inScopeStr = getCell(row, cInScope);
@@ -348,6 +386,8 @@ public class ExcelParserV5 {
                            "[Priority: " + priorityDisplay + ", Config: " + f.configGroup + "] " +
                            "(Note: Facility not resolved - verify Unit Breakdown mapping)");
         }
+      } else if (ordersType) {
+        orders.add(f);
       } else if (nurseSide) {
         nurseCalls.add(f);
       } else {
@@ -361,29 +401,38 @@ public class ExcelParserV5 {
     return buildNurseCallsJson(false);
   }
   public Map<String,Object> buildNurseCallsJson(boolean mergeIdenticalFlows) {
-    return buildJson(nurseCalls, nurseGroupToUnits, true, mergeIdenticalFlows);
+    return buildJson(nurseCalls, nurseGroupToUnits, "NurseCalls", mergeIdenticalFlows);
   }
   public Map<String,Object> buildClinicalsJson() {
     return buildClinicalsJson(false);
   }
   public Map<String,Object> buildClinicalsJson(boolean mergeIdenticalFlows) {
-    return buildJson(clinicals, clinicalGroupToUnits, false, mergeIdenticalFlows);
+    return buildJson(clinicals, clinicalGroupToUnits, "Clinicals", mergeIdenticalFlows);
+  }
+  public Map<String,Object> buildOrdersJson() {
+    return buildOrdersJson(false);
+  }
+  public Map<String,Object> buildOrdersJson(boolean mergeIdenticalFlows) {
+    return buildJson(orders, ordersGroupToUnits, "Orders", mergeIdenticalFlows);
   }
 
   // ---------- Build JSON core ----------
   private Map<String,Object> buildJson(List<FlowRow> rows,
                                        Map<String,List<Map<String,String>>> groupToUnits,
-                                       boolean nurseSide,
+                                       String flowType,
                                        boolean mergeIdenticalFlows) {
+    boolean nurseSide = "NurseCalls".equals(flowType);
+    boolean ordersType = "Orders".equals(flowType);
+    
     Map<String,Object> root = new LinkedHashMap<>();
     root.put("version", "1.1.0");
-    root.put("alarmAlertDefinitions", buildAlarmDefs(rows, nurseSide));
+    root.put("alarmAlertDefinitions", buildAlarmDefs(rows, flowType));
 
     List<Map<String,Object>> flows;
     if (mergeIdenticalFlows) {
-      flows = buildFlowsMerged(rows, groupToUnits, nurseSide);
+      flows = buildFlowsMerged(rows, groupToUnits, flowType);
     } else {
-      flows = buildFlowsNormal(rows, groupToUnits, nurseSide);
+      flows = buildFlowsNormal(rows, groupToUnits, flowType);
     }
     root.put("deliveryFlows", flows);
     return root;
@@ -418,7 +467,10 @@ public class ExcelParserV5 {
   // ---------- Build flows (normal mode) - one flow per row ----------
   private List<Map<String,Object>> buildFlowsNormal(List<FlowRow> rows,
                                                      Map<String,List<Map<String,String>>> groupToUnits,
-                                                     boolean nurseSide) {
+                                                     String flowType) {
+    boolean nurseSide = "NurseCalls".equals(flowType);
+    boolean ordersType = "Orders".equals(flowType);
+    
     List<Map<String,Object>> flows = new ArrayList<>();
     for (FlowRow r : rows) {
       if (isBlank(r.configGroup) && isBlank(r.alarmName) && isBlank(r.sendingName)) continue;
@@ -432,10 +484,10 @@ public class ExcelParserV5 {
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
-      flow.put("destinations", buildDestinationsMerged(r, unitRefs, nurseSide));
+      flow.put("destinations", buildDestinationsMerged(r, unitRefs, flowType));
       flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB));
-      flow.put("name", buildFlowName(nurseSide, mappedPriority, r, unitRefs));
-      flow.put("parameterAttributes", buildParamAttributesQuoted(r, nurseSide, mappedPriority));
+      flow.put("name", buildFlowName(flowType, mappedPriority, r, unitRefs));
+      flow.put("parameterAttributes", buildParamAttributesQuoted(r, flowType, mappedPriority));
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
       flow.put("status", "Active");
       if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
@@ -447,7 +499,9 @@ public class ExcelParserV5 {
   // ---------- Build flows (merge mode) - merge flows with identical delivery parameters ----------
   private List<Map<String,Object>> buildFlowsMerged(List<FlowRow> rows,
                                                      Map<String,List<Map<String,String>>> groupToUnits,
-                                                     boolean nurseSide) {
+                                                     String flowType) {
+    boolean nurseSide = "NurseCalls".equals(flowType);
+    
     // Group rows by their "merge key" (identical delivery parameters)
     Map<String, List<FlowRow>> groupedByMergeKey = new LinkedHashMap<>();
     
@@ -480,10 +534,10 @@ public class ExcelParserV5 {
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", alarmNames);
       flow.put("conditions", nurseSide ? nurseConditions() : List.of());
-      flow.put("destinations", buildDestinationsMerged(template, unitRefs, nurseSide));
+      flow.put("destinations", buildDestinationsMerged(template, unitRefs, flowType));
       flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
-      flow.put("name", buildFlowNameMerged(nurseSide, mappedPriority, alarmNames, template, unitRefs));
-      flow.put("parameterAttributes", buildParamAttributesQuoted(template, nurseSide, mappedPriority));
+      flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitRefs));
+      flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
       flow.put("status", "Active");
       if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
@@ -526,7 +580,7 @@ public class ExcelParserV5 {
   }
 
   // ---------- Build flow name for merged flows ----------
-  private String buildFlowNameMerged(boolean nurseSide,
+  private String buildFlowNameMerged(String flowType,
                                      String mappedPriority,
                                      List<String> alarmNames,
                                      FlowRow template,
@@ -539,7 +593,13 @@ public class ExcelParserV5 {
       .distinct().collect(Collectors.toList());
 
     List<String> parts = new ArrayList<>();
-    parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
+    String prefix = switch(flowType) {
+      case "NurseCalls" -> "SEND NURSECALL";
+      case "Clinicals" -> "SEND CLINICAL";
+      case "Orders" -> "SEND ORDER";
+      default -> "SEND " + flowType.toUpperCase(Locale.ROOT);
+    };
+    parts.add(prefix);
     if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
     
     // List all alarm names separated by " / "
@@ -553,7 +613,7 @@ public class ExcelParserV5 {
     return String.join(" | ", parts);
   }
 
-  private List<Map<String,Object>> buildAlarmDefs(List<FlowRow> rows, boolean nurseSide) {
+  private List<Map<String,Object>> buildAlarmDefs(List<FlowRow> rows, String flowType) {
     Map<String, Map<String,Object>> byKey = new LinkedHashMap<>();
     for (FlowRow r : rows) {
       // Skip rows that are not in scope
@@ -561,12 +621,12 @@ public class ExcelParserV5 {
       
       String name = nvl(r.alarmName, r.sendingName);
       if (isBlank(name)) continue;
-      String key = name + "|" + (nurseSide ? "N" : "C");
+      String key = name + "|" + flowType;
       if (byKey.containsKey(key)) continue;
 
       Map<String,Object> def = new LinkedHashMap<>();
       def.put("name", name);
-      def.put("type", nurseSide ? "NurseCalls" : "Clinicals");
+      def.put("type", flowType);
 
       Map<String,String> val = new LinkedHashMap<>();
       val.put("category", "");
@@ -580,8 +640,9 @@ public class ExcelParserV5 {
   // ---------- Destinations: one per order, merge groups ----------
   private List<Map<String,Object>> buildDestinationsMerged(FlowRow r,
                                                            List<Map<String,String>> unitRefs,
-                                                           boolean nurseSide) {
+                                                           String flowType) {
     String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
+    boolean nurseSide = "NurseCalls".equals(flowType);
     
     // Determine presenceConfig based on Break Through DND value
     String presenceConfig = getPresenceConfigFromBreakThrough(r.breakThroughDND);
@@ -772,10 +833,24 @@ public class ExcelParserV5 {
 
   // ---------- Parameter Attributes (correct Engage syntax) ----------
   private List<Map<String,Object>> buildParamAttributesQuoted(FlowRow r,
-                                                              boolean nurseSide,
+                                                              String flowType,
                                                               String mappedPriority) {
     List<Map<String,Object>> params = new ArrayList<>();
     boolean urgent = "urgent".equalsIgnoreCase(mappedPriority);
+    boolean nurseSide = "NurseCalls".equals(flowType);
+    boolean ordersType = "Orders".equals(flowType);
+
+    // ---------- Orders-specific hardcoded parameter attributes ----------
+    if (ordersType) {
+      // Hardcoded parameters for Orders type as specified in the requirements
+      params.add(paQ("message", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.name} #{patient.current_place.bed_number}\\nProcedure #{category} #{description}"));
+      params.add(paQ("patientMRN", "#{patient.mrn}:#{patient.visit_number}"));
+      params.add(paQ("patientName", "#{patient.first_name} #{patient.middle_name} #{patient.last_name}"));
+      params.add(paQ("eventIdentification", "#{id}"));
+      params.add(paQ("shortMessage", "#{alert_type} \\\\nProcedure #{category} #{description}"));
+      params.add(paQ("subject", "#{alert_type} #{patient.current_place.room.name} - #{patient.current_place.bed_number}"));
+      return params;
+    }
 
     // ---------- Unified logic for both NurseCalls and Clinicals ----------
     
@@ -933,7 +1008,7 @@ public class ExcelParserV5 {
   }
 
   // ---------- Flow name ----------
-  private String buildFlowName(boolean nurseSide,
+  private String buildFlowName(String flowType,
                                String mappedPriority,
                                FlowRow row,
                                List<Map<String,String>> unitRefs) {
@@ -946,7 +1021,13 @@ public class ExcelParserV5 {
       .distinct().collect(Collectors.toList());
 
     List<String> parts = new ArrayList<>();
-    parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
+    String prefix = switch(flowType) {
+      case "NurseCalls" -> "SEND NURSECALL";
+      case "Clinicals" -> "SEND CLINICAL";
+      case "Orders" -> "SEND ORDER";
+      default -> "SEND " + flowType.toUpperCase(Locale.ROOT);
+    };
+    parts.add(prefix);
     if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
     if (!isBlank(alarm)) parts.add(alarm);
     if (!isBlank(group)) parts.add(group);
@@ -974,12 +1055,22 @@ public class ExcelParserV5 {
       out.write(pretty(buildClinicalsJson(useAdvancedMerge)));
     }
   }
+  public void writeOrdersJson(File ordersFile) throws Exception {
+    writeOrdersJson(ordersFile, false);
+  }
+  public void writeOrdersJson(File ordersFile, boolean useAdvancedMerge) throws Exception {
+    ensureParent(ordersFile);
+    try (FileWriter out = new FileWriter(ordersFile, false)) {
+      out.write(pretty(buildOrdersJson(useAdvancedMerge)));
+    }
+  }
   public void writeJson(File summaryFile) throws Exception {
     ensureParent(summaryFile);
     Map<String,Object> summary = new LinkedHashMap<>();
-    summary.put("note", "This build now writes two separate JSON files: NurseCalls.json and Clinicals.json");
+    summary.put("note", "This build now writes three separate JSON files: NurseCalls.json, Clinicals.json, and Orders.json");
     summary.put("nurseCalls", nurseCalls.size());
     summary.put("clinicals", clinicals.size());
+    summary.put("orders", orders.size());
     try (FileWriter out = new FileWriter(summaryFile, false)) {
       out.write(pretty(summary));
     }
@@ -998,6 +1089,7 @@ public class ExcelParserV5 {
         "Common Unit Name",
         "Nurse Call Configuration Group",
         "Patient Monitoring Configuration Group",
+        "Orders Configuration Group",
         "No Caregiver Group",
         "Comments"
       };
@@ -1009,8 +1101,9 @@ public class ExcelParserV5 {
         set(row,1,u.unitNames);
         set(row,2,u.nurseGroup);
         set(row,3,u.clinGroup);
-        set(row,4,u.noCareGroup);
-        set(row,5,u.comments);
+        set(row,4,u.ordersGroup);
+        set(row,5,u.noCareGroup);
+        set(row,6,u.comments);
       }
       autosize(su, uh.length);
 
@@ -1034,6 +1127,16 @@ public class ExcelParserV5 {
         writeFlowRow(row, f);
       }
       autosize(sc, fh.length);
+
+      // Orders
+      Sheet so = wb.createSheet(SHEET_ORDERS);
+      writeHeader(so, fh);
+      r = 1;
+      for (FlowRow f : orders) {
+        Row row = so.createRow(r++);
+        writeFlowRow(row, f);
+      }
+      autosize(so, fh.length);
 
       try (FileOutputStream fos = new FileOutputStream(dest)) {
         wb.write(fos);
@@ -1226,6 +1329,20 @@ public class ExcelParserV5 {
     }
     return null;
   }
+  
+  /**
+   * Find a sheet by trying multiple possible names (case-insensitive).
+   * Returns the first sheet found matching any of the provided names.
+   */
+  private static Sheet findSheetCaseInsensitive(Workbook wb, String... names) {
+    if (wb == null || names == null) return null;
+    for (String name : names) {
+      Sheet sh = findSheet(wb, name);
+      if (sh != null) return sh;
+    }
+    return null;
+  }
+  
   private static Row findHeaderRow(Sheet sh) {
     if (sh == null) return null;
 
