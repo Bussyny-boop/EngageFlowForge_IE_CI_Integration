@@ -1,11 +1,13 @@
 package com.example.exceljson;
 
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -50,6 +52,7 @@ public class AppController {
 
     // ---------- Nurse Calls ----------
     @FXML private TableView<ExcelParserV5.FlowRow> tableNurseCalls;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> nurseInScopeCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseAlarmNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseSendingNameCol;
@@ -75,6 +78,7 @@ public class AppController {
 
     // ---------- Clinicals ----------
     @FXML private TableView<ExcelParserV5.FlowRow> tableClinicals;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> clinicalInScopeCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalAlarmNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalSendingNameCol;
@@ -450,6 +454,7 @@ public class AppController {
 
     private void initializeNurseColumns() {
         if (tableNurseCalls != null) tableNurseCalls.setEditable(true);
+        setupCheckBox(nurseInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
         setupEditable(nurseConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(nurseAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(nurseSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
@@ -476,6 +481,7 @@ public class AppController {
 
     private void initializeClinicalColumns() {
         if (tableClinicals != null) tableClinicals.setEditable(true);
+        setupCheckBox(clinicalInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
         setupEditable(clinicalConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(clinicalAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(clinicalSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
@@ -510,6 +516,21 @@ public class AppController {
             setter.accept(row, ev.getNewValue());
             if (col.getTableView() != null) col.getTableView().refresh();
         });
+    }
+
+    private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> {
+            R row = d.getValue();
+            SimpleBooleanProperty prop = new SimpleBooleanProperty(getter.apply(row));
+            prop.addListener((obs, oldVal, newVal) -> {
+                setter.accept(row, newVal);
+                if (col.getTableView() != null) col.getTableView().refresh();
+            });
+            return prop;
+        });
+        col.setCellFactory(CheckBoxTableCell.forTableColumn(col));
+        col.setEditable(true);
     }
 
     // ---------- Initialize Filters ----------

@@ -1,11 +1,14 @@
 package com.example.exceljson;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 /** FlowRow – editable row for NurseCalls / Clinicals tables. */
 public class FlowRow {
 
+    private final BooleanProperty inScope = new SimpleBooleanProperty(true); // Default to true
     private final StringProperty type = new SimpleStringProperty(""); // NurseCalls or Clinicals
     private final StringProperty configGroup = new SimpleStringProperty("");
     private final StringProperty alarmName = new SimpleStringProperty("");
@@ -33,6 +36,10 @@ public class FlowRow {
     private final StringProperty r4 = new SimpleStringProperty("");
 
     // getters/setters/properties
+    public boolean getInScope() { return inScope.get(); }
+    public void setInScope(boolean v) { inScope.set(v); }
+    public BooleanProperty inScopeProperty() { return inScope; }
+
     public String getType() { return type.get(); }
     public void setType(String v) { type.set(v); }
     public StringProperty typeProperty() { return type; }
