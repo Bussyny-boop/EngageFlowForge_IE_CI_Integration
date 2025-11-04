@@ -61,10 +61,14 @@ public class ExcelParserV5 {
   private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
   
   private int emdanMovedCount = 0;
-
+  
   // Default interface reference names (editable via GUI)
   private String edgeReferenceName = "OutgoingWCTP";
   private String vcsReferenceName = "VMP";
+  
+  // Default interface flags (when Device A/B are blank)
+  private boolean useDefaultEdge = false;
+  private boolean useDefaultVmp = false;
 
   public void setInterfaceReferences(String edgeRef, String vcsRef) {
     // Basic validation - ensure references are reasonable
@@ -74,6 +78,11 @@ public class ExcelParserV5 {
     if (vcsRef != null && !vcsRef.isBlank() && vcsRef.length() <= 100) {
       this.vcsReferenceName = vcsRef.trim();
     }
+  }
+  
+  public void setDefaultInterfaces(boolean defaultEdge, boolean defaultVmp) {
+    this.useDefaultEdge = defaultEdge;
+    this.useDefaultVmp = defaultVmp;
   }
 
   private static final String SHEET_UNIT = "Unit Breakdown";
@@ -606,6 +615,7 @@ public class ExcelParserV5 {
    * Dynamically selects the interface block based on the Device-A and Device-B columns.
    * Uses the editable reference names provided from the GUI.
    * If both devices contain "Edge" or "VCS", returns both OutgoingWCTP and VMP interfaces.
+   * If devices are blank/empty, uses default interface checkboxes if configured.
    */
   private List<Map<String, Object>> buildInterfacesForDevice(String deviceA, String deviceB) {
     boolean hasEdgeA = containsEdge(deviceA);
@@ -643,6 +653,46 @@ public class ExcelParserV5 {
       iface.put("componentName", "VMP");
       iface.put("referenceName", vcsReferenceName);
       return List.of(iface);
+    }
+
+    // Device A and B cannot determine interface - use default checkboxes if set
+    boolean deviceABlank = isBlank(deviceA);
+    boolean deviceBBlank = isBlank(deviceB);
+    
+    // Only use defaults when BOTH Device A and B are blank/empty
+    if (deviceABlank && deviceBBlank) {
+      // If both default checkboxes are selected, return both interfaces
+      if (useDefaultEdge && useDefaultVmp) {
+        List<Map<String, Object>> interfaces = new ArrayList<>();
+        
+        Map<String, Object> edgeIface = new LinkedHashMap<>();
+        edgeIface.put("componentName", "OutgoingWCTP");
+        edgeIface.put("referenceName", edgeReferenceName);
+        interfaces.add(edgeIface);
+        
+        Map<String, Object> vcsIface = new LinkedHashMap<>();
+        vcsIface.put("componentName", "VMP");
+        vcsIface.put("referenceName", vcsReferenceName);
+        interfaces.add(vcsIface);
+        
+        return interfaces;
+      }
+      
+      // If only Edge default is selected
+      if (useDefaultEdge) {
+        Map<String, Object> iface = new LinkedHashMap<>();
+        iface.put("componentName", "OutgoingWCTP");
+        iface.put("referenceName", edgeReferenceName);
+        return List.of(iface);
+      }
+      
+      // If only VMP default is selected
+      if (useDefaultVmp) {
+        Map<String, Object> iface = new LinkedHashMap<>();
+        iface.put("componentName", "VMP");
+        iface.put("referenceName", vcsReferenceName);
+        return List.of(iface);
+      }
     }
 
     return List.of();
