@@ -192,11 +192,13 @@ public class AppController {
         if (defaultEdgeCheckbox != null) {
             defaultEdgeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 checkBothDefaultInterfacesSelected();
+                updateInterfaceRefs();
             });
         }
         if (defaultVmpCheckbox != null) {
             defaultVmpCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 checkBothDefaultInterfacesSelected();
+                updateInterfaceRefs();
             });
         }
     }
