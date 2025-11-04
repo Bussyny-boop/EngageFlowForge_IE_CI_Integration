@@ -514,11 +514,9 @@ public class ExcelParserV5 {
     parts.add(nurseSide ? "SEND NURSECALL" : "SEND CLINICAL");
     if (!isBlank(mappedPriority)) parts.add(mappedPriority.toUpperCase(Locale.ROOT));
     
-    // If multiple alarms, show count instead of listing all
-    if (alarmNames.size() == 1) {
-      parts.add(alarmNames.get(0));
-    } else {
-      parts.add("(" + alarmNames.size() + " alarms)");
+    // List all alarm names separated by " / "
+    if (!alarmNames.isEmpty()) {
+      parts.add(String.join(" / ", alarmNames));
     }
     
     if (!isBlank(group)) parts.add(group);
