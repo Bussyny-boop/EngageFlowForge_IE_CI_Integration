@@ -40,13 +40,13 @@
                 <Button fx:id="resetPathsButton" text="🔄 Reset Paths" />
             </HBox>
             <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label text="Optional Default Interface:" />
-                <CheckBox fx:id="defaultEdgeCheckbox" text="Edge">
+                <Label text="Vocera Badges Alert Interface:" />
+                <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
                     <tooltip>
                         <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
                     </tooltip>
                 </CheckBox>
-                <CheckBox fx:id="defaultVmpCheckbox" text="VCS">
+                <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
                     <tooltip>
                         <Tooltip text="Use VMP interface as default when Device A/B are blank" />
                     </tooltip>

@@ -1374,12 +1374,16 @@ public class ExcelParserV5 {
     // Examples: "VAssign: Room Charge Nurse" -> "Charge Nurse"
     //           "Rld: R5: CS 1: Room PCT" -> "PCT"
     //           "[Room] Nurse" -> "Nurse"
+    //           "Room]  Charge Nurse" -> "Charge Nurse"
+    //           "Room)PCT" -> "PCT"
+    //           "Room - CNA" -> "CNA"
     int roomIdx = valuePortion.toLowerCase(Locale.ROOT).indexOf("room");
     if (roomIdx >= 0 && roomIdx + 4 < valuePortion.length()) {
-      // Skip "room" (4 chars) and any following whitespace/brackets
+      // Skip "room" (4 chars) and any following whitespace/special characters
       String afterRoom = valuePortion.substring(roomIdx + 4).trim();
-      // Remove leading brackets if present
-      afterRoom = afterRoom.replaceAll("^\\s*]\\s*", "").trim();
+      // Remove leading special characters (brackets, parentheses, dashes, etc.) and spaces
+      // Keep only alphanumeric text and spaces within the role name
+      afterRoom = afterRoom.replaceAll("^[^a-zA-Z0-9]+", "").trim();
       if (!afterRoom.isEmpty()) {
         valuePortion = afterRoom;
         isFunctionalRole = true; // If "Room" keyword found, it's a functional role
