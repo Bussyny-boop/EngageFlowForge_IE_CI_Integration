@@ -23,16 +23,19 @@ public class ExcelJsonApplication extends Application {
         
         // Load application icon from resources
         // Try uppercase first (local override), then lowercase (tracked in git)
-        String iconPath = getClass().getResource("/ICON.ico") != null ? "/ICON.ico" : "/icon.ico";
+        String iconPath = "/ICON.ico";
+        if (getClass().getResource(iconPath) == null) {
+            iconPath = "/icon.ico";
+        }
         
         try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
             if (iconInputStream != null) {
                 primaryStage.getIcons().add(new Image(iconInputStream));
             } else {
-                System.err.println("Warning: icon.ico not found in resources. Using default application icon.");
+                System.err.println("Warning: " + iconPath + " not found in resources. Using default application icon.");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Failed to load icon: " + e.getMessage());
+            System.err.println("Warning: Failed to load icon from " + iconPath + ": " + e.getMessage());
         }
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
