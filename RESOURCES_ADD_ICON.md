@@ -17,24 +17,25 @@ This file is tracked in the repository and included automatically in builds.
 
 The icon is used in two places:
 
-1. **JavaFX Application Window**: The icon is loaded in `ExcelJsonApplication.java` and set on the primary stage
-2. **Windows Installer (MSI)**: The icon is embedded in the MSI installer via the `jpackage` command in the GitHub Actions workflow
+1. **JavaFX Application Window**: The icon is loaded in `ExcelJsonApplication.java` as `icon.png` and set on the primary stage (PNG format is used for JavaFX compatibility)
+2. **Windows Installer (MSI)**: The icon is embedded in the MSI installer as `icon.ico` via the `jpackage` command in the GitHub Actions workflow (ICO format is required for Windows)
 
 ## Replacing the Icon
 
 If you need to replace the icon with a custom one:
 
-1. **Prepare Your Icon File**
-   - Format: `.ico` file (Windows icon format)
-   - Recommended sizes: 16x16, 32x32, 48x48, and 256x256 pixels
-   - Name: Must be exactly `icon.ico` (all lowercase)
+1. **Prepare Your Icon Files**
+   - For application window: Prepare a PNG file (recommended size: 256x256 pixels)
+   - For Windows installer: Prepare an ICO file with multiple sizes (16x16, 32x32, 48x48, 256x256)
+   - Names: Must be exactly `icon.png` and `icon.ico` (all lowercase)
 
-2. **Replace the Icon File**
+2. **Replace the Icon Files**
    ```bash
    # Navigate to the resources directory
    cd src/main/resources/
    
-   # Replace with your icon file
+   # Replace with your icon files
+   cp /path/to/your/custom-icon.png icon.png
    cp /path/to/your/custom-icon.ico icon.ico
    ```
 
@@ -64,11 +65,11 @@ The application window should display your custom icon in the title bar. For tas
 
 If the icon doesn't appear in the application window:
 
-1. **Check File Location**: Verify the file is at `src/main/resources/icon.ico`
-2. **Check File Name**: Must be exactly `icon.ico` (all lowercase)
+1. **Check File Location**: Verify both files are at `src/main/resources/icon.png` and `src/main/resources/icon.ico`
+2. **Check File Names**: Must be exactly `icon.png` and `icon.ico` (all lowercase)
 3. **Check Console**: Look for warning messages like:
    ```
-   Warning: /icon.ico not found in resources. Using default application icon.
+   Warning: /icon.png not found in resources. Using default application icon.
    ```
 4. **Rebuild**: Run `mvn clean package` to ensure resources are properly included
 
@@ -86,13 +87,15 @@ If the icon doesn't appear in the Windows taskbar or search:
 
 The icon is loaded in `ExcelJsonApplication.java` using:
 ```java
-String iconPath = "/icon.ico";
+String iconPath = "/icon.png";
 try (InputStream iconStream = getClass().getResourceAsStream(iconPath)) {
     if (iconStream != null) {
         primaryStage.getIcons().add(new Image(iconStream));
     }
 }
 ```
+
+Note: PNG format is used for the JavaFX window icon because it has better compatibility with JavaFX's Image class compared to ICO format.
 
 ### Windows Installer Icon
 
