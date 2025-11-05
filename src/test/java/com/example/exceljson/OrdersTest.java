@@ -594,6 +594,69 @@ class OrdersTest {
     }
 
     @Test
+    void ordersFlowHandlesMultipleRoomsInOneRecipient() throws Exception {
+        File excelFile = tempDir.resolve("test-orders-multiple-rooms.xlsx").toFile();
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Create Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row headerRow = unitSheet.createRow(2);
+            headerRow.createCell(0).setCellValue("Facility");
+            headerRow.createCell(1).setCellValue("Common Unit Name");
+            headerRow.createCell(4).setCellValue("Orders Configuration Group");
+            
+            Row dataRow = unitSheet.createRow(3);
+            dataRow.createCell(0).setCellValue("BCH");
+            dataRow.createCell(1).setCellValue("Test Unit");
+            dataRow.createCell(4).setCellValue("Orders Group 1");
+            
+            // Create Orders sheet with multiple rooms in one recipient field
+            Sheet ordersSheet = wb.createSheet("Order");
+            Row orderHeader = ordersSheet.createRow(2);
+            orderHeader.createCell(0).setCellValue("In scope");
+            orderHeader.createCell(1).setCellValue("Configuration Group");
+            orderHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            orderHeader.createCell(7).setCellValue("1st Recipient");
+            
+            Row orderData = ordersSheet.createRow(3);
+            orderData.createCell(0).setCellValue("TRUE");
+            orderData.createCell(1).setCellValue("Orders Group 1");
+            orderData.createCell(2).setCellValue("Med Order");
+            // Multiple rooms separated by newline
+            orderData.createCell(7).setCellValue("Rld: R5: CS 1: Room Nurse\nRld: R5: CS 2: Room CNA");
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
+        
+        assertEquals(1, destinations.size(), "Should have one destination");
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> functionalRoles = (List<Map<String, String>>) destinations.get(0).get("functionalRoles");
+        
+        assertNotNull(functionalRoles);
+        assertEquals(2, functionalRoles.size(), "Should have two functional roles from the two Room keywords");
+        
+        // Verify the two functional roles
+        assertEquals("BCH", functionalRoles.get(0).get("facilityName"));
+        assertEquals("Nurse", functionalRoles.get(0).get("name"));
+        
+        assertEquals("BCH", functionalRoles.get(1).get("facilityName"));
+        assertEquals("CNA", functionalRoles.get(1).get("name"));
+    }
+
+    @Test
     void ordersFlowsDoNotHaveNoDeliveriesDestination() throws Exception {
         File excelFile = tempDir.resolve("test-orders-nodeliveries.xlsx").toFile();
         

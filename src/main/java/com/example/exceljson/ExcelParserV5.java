@@ -1032,9 +1032,12 @@ public class ExcelParserV5 {
     // Examples: "VAssign: Room Charge Nurse" -> "Charge Nurse"
     //           "Rld: R5: CS 1: Room PCT" -> "PCT"
     int roomIdx = raw.toLowerCase(Locale.ROOT).indexOf("room");
-    if (roomIdx >= 0) {
+    if (roomIdx >= 0 && roomIdx + 4 < raw.length()) {
       // Extract everything after "room" (skip the word itself)
       value = raw.substring(roomIdx + 4).trim();
+    } else if (roomIdx >= 0) {
+      // "room" is at the end or near the end
+      value = "";
     } else {
       value = "Group";
     }
@@ -1372,14 +1375,19 @@ public class ExcelParserV5 {
     //           "Rld: R5: CS 1: Room PCT" -> "PCT"
     //           "[Room] Nurse" -> "Nurse"
     int roomIdx = valuePortion.toLowerCase(Locale.ROOT).indexOf("room");
-    if (roomIdx >= 0) {
+    if (roomIdx >= 0 && roomIdx + 4 < valuePortion.length()) {
       // Skip "room" (4 chars) and any following whitespace/brackets
       String afterRoom = valuePortion.substring(roomIdx + 4).trim();
       // Remove leading brackets if present
       afterRoom = afterRoom.replaceAll("^\\s*]\\s*", "").trim();
       if (!afterRoom.isEmpty()) {
         valuePortion = afterRoom;
+        isFunctionalRole = true; // If "Room" keyword found, it's a functional role
       }
+    } else if (roomIdx >= 0) {
+      // "room" is at the end, nothing after it
+      // Keep the original value before "room" or use empty
+      valuePortion = "";
     }
     
     return new ParsedRecipient(facility, valuePortion, isFunctionalRole);
