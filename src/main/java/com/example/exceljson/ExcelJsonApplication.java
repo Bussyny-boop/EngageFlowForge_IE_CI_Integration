@@ -29,9 +29,8 @@ public class ExcelJsonApplication extends Application {
         }
         
         if (iconStream != null) {
-            try {
-                primaryStage.getIcons().add(new Image(iconStream));
-                iconStream.close();
+            try (InputStream is = iconStream) {
+                primaryStage.getIcons().add(new Image(is));
             } catch (Exception e) {
                 System.err.println("Warning: Failed to load icon: " + e.getMessage());
             }
