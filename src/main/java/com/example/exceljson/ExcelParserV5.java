@@ -847,13 +847,41 @@ public class ExcelParserV5 {
 
     // ---------- Orders-specific hardcoded parameter attributes ----------
     if (ordersType) {
+      // Add ringtone FIRST if available (same logic as NurseCalls/Clinicals)
+      if (!isBlank(r.ringtone)) {
+        params.add(paQ("alertSound", r.ringtone));
+      }
+      
       // Hardcoded parameters for Orders type as specified in the requirements
       params.add(paQ("message", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.name} #{patient.current_place.bed_number}\\nProcedure #{category} #{description}"));
       params.add(paQ("patientMRN", "#{patient.mrn}:#{patient.visit_number}"));
       params.add(paQ("patientName", "#{patient.first_name} #{patient.middle_name} #{patient.last_name}"));
+      
+      // Add breakThrough using same logic as NurseCalls/Clinicals
+      String breakThroughValue;
+      if (!isBlank(r.breakThroughDND)) {
+        breakThroughValue = mapBreakThroughDND(r.breakThroughDND, urgent);
+      } else {
+        // Backward compatibility: use priority-based logic if column not provided
+        breakThroughValue = urgent ? "voceraAndDevice" : "none";
+      }
+      params.add(paQ("breakThrough", breakThroughValue));
+      
+      // Use parsed enunciate value if available, otherwise default to true (same as NurseCalls/Clinicals)
+      boolean enunciateValue = isBlank(r.enunciate) ? true : parseEnunciateToBoolean(r.enunciate);
+      params.add(paLiteralBool("enunciate", enunciateValue));
+      
+      params.add(paLiteralBool("popup", true));
       params.add(paQ("eventIdentification", "#{id}"));
       params.add(paQ("shortMessage", "#{alert_type} \\\\nProcedure #{category} #{description}"));
       params.add(paQ("subject", "#{alert_type} #{patient.current_place.room.name} - #{patient.current_place.bed_number}"));
+      
+      // Add TTL from Excel column (same logic as NurseCalls/Clinicals)
+      String ttlStr = isBlank(r.ttlValue) ? "10" : String.valueOf(parseDelay(r.ttlValue));
+      params.add(paLiteral("ttl", ttlStr));
+      params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
+      params.add(paQ("vibrate", "short"));
+      
       return params;
     }
 
