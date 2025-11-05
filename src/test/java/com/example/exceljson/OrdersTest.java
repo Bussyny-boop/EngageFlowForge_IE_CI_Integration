@@ -267,6 +267,151 @@ class OrdersTest {
         assertEquals("Orders", parser.orders.get(0).type);
     }
 
+    @Test
+    void ordersIncludesParametersFromNursecallFlow() throws Exception {
+        File excelFile = tempDir.resolve("test-orders-params.xlsx").toFile();
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Create Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row headerRow = unitSheet.createRow(2);
+            headerRow.createCell(0).setCellValue("Facility");
+            headerRow.createCell(1).setCellValue("Common Unit Name");
+            headerRow.createCell(2).setCellValue("Nurse Call Configuration Group");
+            headerRow.createCell(3).setCellValue("Patient Monitoring Configuration Group");
+            headerRow.createCell(4).setCellValue("Orders Configuration Group");
+            headerRow.createCell(5).setCellValue("No Caregiver Group");
+            
+            Row dataRow = unitSheet.createRow(3);
+            dataRow.createCell(0).setCellValue("Test Facility");
+            dataRow.createCell(1).setCellValue("Test Unit");
+            dataRow.createCell(2).setCellValue("Nurse Group 1");
+            dataRow.createCell(3).setCellValue("Clinical Group 1");
+            dataRow.createCell(4).setCellValue("Orders Group 1");
+            dataRow.createCell(5).setCellValue("No Caregiver Group");
+            
+            // Create Orders sheet with all parameter columns
+            Sheet ordersSheet = wb.createSheet("Order");
+            Row orderHeader = ordersSheet.createRow(2);
+            orderHeader.createCell(0).setCellValue("In scope");
+            orderHeader.createCell(1).setCellValue("Configuration Group");
+            orderHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            orderHeader.createCell(3).setCellValue("Sending System Alert Name");
+            orderHeader.createCell(4).setCellValue("Priority");
+            orderHeader.createCell(5).setCellValue("Device - A");
+            orderHeader.createCell(6).setCellValue("Ringtone Device - A");
+            orderHeader.createCell(7).setCellValue("Break Through DND");
+            orderHeader.createCell(8).setCellValue("Genie Enunciation");
+            orderHeader.createCell(9).setCellValue("Engage/Edge Display Time (Time to Live) (Device - A)");
+            orderHeader.createCell(10).setCellValue("Time to 1st Recipient");
+            orderHeader.createCell(11).setCellValue("1st Recipient");
+            
+            Row orderData = ordersSheet.createRow(3);
+            orderData.createCell(0).setCellValue("TRUE");
+            orderData.createCell(1).setCellValue("Orders Group 1");
+            orderData.createCell(2).setCellValue("Med Order");
+            orderData.createCell(3).setCellValue("Medication Order");
+            orderData.createCell(4).setCellValue("High");
+            orderData.createCell(5).setCellValue("Edge");
+            orderData.createCell(6).setCellValue("Alert1");
+            orderData.createCell(7).setCellValue("Vocera and Device");
+            orderData.createCell(8).setCellValue("FALSE");
+            orderData.createCell(9).setCellValue("20");
+            orderData.createCell(10).setCellValue("0");
+            orderData.createCell(11).setCellValue("VAssign:[Room]");
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        assertNotNull(flows);
+        assertEquals(1, flows.size());
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        assertNotNull(params);
+        
+        // Verify all parameters from NursecallFlow logic are present
+        assertTrue(hasParameter(params, "alertSound"), "Should have alertSound parameter");
+        assertTrue(hasParameter(params, "breakThrough"), "Should have breakThrough parameter");
+        assertTrue(hasParameter(params, "enunciate"), "Should have enunciate parameter");
+        assertTrue(hasParameter(params, "popup"), "Should have popup parameter");
+        assertTrue(hasParameter(params, "ttl"), "Should have ttl parameter");
+        assertTrue(hasParameter(params, "retractRules"), "Should have retractRules parameter");
+        assertTrue(hasParameter(params, "vibrate"), "Should have vibrate parameter");
+        
+        // Verify parameter values
+        String alertSound = getParameterValue(params, "alertSound");
+        assertTrue(alertSound.contains("Alert1"), "alertSound should be Alert1 from Excel");
+        
+        String breakThrough = getParameterValue(params, "breakThrough");
+        assertTrue(breakThrough.contains("Vocera and Device"), "breakThrough should be 'Vocera and Device' from Excel");
+        
+        Object enunciate = getParameterObjectValue(params, "enunciate");
+        assertEquals("false", enunciate, "enunciate should be false (string) from Excel");
+        
+        Object popup = getParameterObjectValue(params, "popup");
+        assertEquals("true", popup, "popup should be true (string)");
+        
+        Object ttl = getParameterObjectValue(params, "ttl");
+        assertEquals("20", ttl, "ttl should be 20 (from Excel)");
+        
+        Object retractRules = getParameterObjectValue(params, "retractRules");
+        assertEquals("[\"ttlHasElapsed\"]", retractRules, "retractRules should be array");
+        
+        String vibrate = getParameterValue(params, "vibrate");
+        assertTrue(vibrate.contains("short"), "vibrate should be 'short'");
+    }
+
+    @Test
+    void ordersDestinationsDoNotHaveParameterAttributes() throws Exception {
+        File excelFile = createTestWorkbook("Order");
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        assertNotNull(flows);
+        assertEquals(1, flows.size());
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
+        assertNotNull(destinations);
+        assertTrue(destinations.size() > 0, "Should have at least one destination");
+        
+        // Verify destinations have order, delayTime, destinationType as properties (not parameterAttributes)
+        for (Map<String, Object> dest : destinations) {
+            assertTrue(dest.containsKey("order"), "Destination should have 'order' property");
+            assertTrue(dest.containsKey("delayTime"), "Destination should have 'delayTime' property");
+            assertTrue(dest.containsKey("destinationType"), "Destination should have 'destinationType' property");
+            
+            // These should be direct properties of the destination object
+            assertNotNull(dest.get("order"), "order should not be null");
+            assertNotNull(dest.get("delayTime"), "delayTime should not be null");
+            assertNotNull(dest.get("destinationType"), "destinationType should not be null");
+        }
+        
+        // Verify these are NOT in parameterAttributes
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        assertNotNull(params);
+        
+        assertFalse(hasParameter(params, "order"), "parameterAttributes should NOT contain 'order'");
+        assertFalse(hasParameter(params, "delayTime"), "parameterAttributes should NOT contain 'delayTime'");
+        assertFalse(hasParameter(params, "destinationType"), "parameterAttributes should NOT contain 'destinationType'");
+    }
+
     // Helper methods
     private boolean hasParameter(List<Map<String, Object>> params, String name) {
         return params.stream().anyMatch(p -> name.equals(p.get("name")));
@@ -276,6 +421,14 @@ class OrdersTest {
         return params.stream()
             .filter(p -> name.equals(p.get("name")))
             .map(p -> (String) p.get("value"))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private Object getParameterObjectValue(List<Map<String, Object>> params, String name) {
+        return params.stream()
+            .filter(p -> name.equals(p.get("name")))
+            .map(p -> p.get("value"))
             .findFirst()
             .orElse(null);
     }
