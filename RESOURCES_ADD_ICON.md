@@ -2,35 +2,40 @@
 
 ## Overview
 
-The FlowForge application has been updated to load a custom application icon (`ICON.ico`) from the project's resources directory. This icon will appear in the application window title bar and taskbar.
+The FlowForge application includes a custom application icon (`icon.ico`) that appears in the application window title bar, Windows taskbar, and Windows search results.
 
 ## Icon File Location
 
-The application expects the icon file at:
+The icon file is located at:
 ```
-src/main/resources/ICON.ico
+src/main/resources/icon.ico
 ```
 
-## Current Status
+This file is tracked in the repository and included automatically in builds.
 
-**Important**: The `ICON.ico` file is **NOT included** in this repository (it is excluded via `.gitignore`). You must add your own icon file before running the application for the icon to appear.
+## How the Icon is Used
 
-## How to Add the Icon
+The icon is used in two places:
 
-You must add your own `ICON.ico` file to the resources directory:
+1. **JavaFX Application Window**: The icon is loaded in `ExcelJsonApplication.java` and set on the primary stage
+2. **Windows Installer (MSI)**: The icon is embedded in the MSI installer via the `jpackage` command in the GitHub Actions workflow
+
+## Replacing the Icon
+
+If you need to replace the icon with a custom one:
 
 1. **Prepare Your Icon File**
    - Format: `.ico` file (Windows icon format)
    - Recommended sizes: 16x16, 32x32, 48x48, and 256x256 pixels
-   - Name: Must be exactly `ICON.ico` (all uppercase)
+   - Name: Must be exactly `icon.ico` (all lowercase)
 
-2. **Add the Icon to Resources**
+2. **Replace the Icon File**
    ```bash
    # Navigate to the resources directory
    cd src/main/resources/
    
-   # Copy your icon file
-   cp /path/to/your/icon.ico ICON.ico
+   # Replace with your icon file
+   cp /path/to/your/custom-icon.ico icon.ico
    ```
 
 3. **Rebuild the Application**
@@ -44,48 +49,56 @@ You must add your own `ICON.ico` file to the resources directory:
 
 ## Testing the Icon
 
-After adding or replacing the icon, run the application to verify:
+After replacing the icon, run the application to verify:
 
 ```bash
 # Run the JavaFX application
 mvn javafx:run
 ```
 
-The application window should display:
-- Title: "FlowForge V1.1"
-- Icon: Your custom icon in the title bar and taskbar
+The application window should display your custom icon in the title bar. For taskbar and Windows search icons, you need to build the MSI installer using the GitHub Actions workflow.
 
 ## Troubleshooting
 
-### Icon Not Showing
+### Icon Not Showing in Application Window
 
-If the icon doesn't appear:
+If the icon doesn't appear in the application window:
 
-1. **Check File Location**: Verify the file is at `src/main/resources/ICON.ico`
-2. **Check File Name**: Must be exactly `ICON.ico` (all uppercase)
+1. **Check File Location**: Verify the file is at `src/main/resources/icon.ico`
+2. **Check File Name**: Must be exactly `icon.ico` (all lowercase)
 3. **Check Console**: Look for warning messages like:
    ```
-   Warning: ICON.ico not found in resources. Using default application icon.
+   Warning: /icon.ico not found in resources. Using default application icon.
    ```
 4. **Rebuild**: Run `mvn clean package` to ensure resources are properly included
 
-### Building a Distribution
+### Icon Not Showing in Taskbar/Search
 
-When building a distribution package (e.g., MSI installer), ensure the icon is included in the resources directory before running the build.
+If the icon doesn't appear in the Windows taskbar or search:
+
+- This requires building and installing the MSI package via the GitHub Actions workflow
+- The icon is embedded during the `jpackage` step
+- Download and install the MSI from GitHub Actions artifacts to test
 
 ## Technical Details
 
+### JavaFX Window Icon
+
 The icon is loaded in `ExcelJsonApplication.java` using:
 ```java
-try (InputStream iconStream = getClass().getResourceAsStream("/ICON.ico")) {
+String iconPath = "/icon.ico";
+try (InputStream iconStream = getClass().getResourceAsStream(iconPath)) {
     if (iconStream != null) {
         primaryStage.getIcons().add(new Image(iconStream));
-    } else {
-        System.err.println("Warning: ICON.ico not found in resources.");
     }
-} catch (Exception e) {
-    System.err.println("Warning: Failed to load ICON.ico: " + e.getMessage());
 }
 ```
 
-The code handles missing or invalid icons gracefully by logging a warning and using the default Java icon.
+### Windows Installer Icon
+
+The icon is embedded in the MSI installer via the GitHub Actions workflow:
+```yaml
+jpackage --icon src/main/resources/icon.ico ...
+```
+
+The `--icon` parameter tells jpackage to use this icon for the installed application, which affects the taskbar and Windows search appearance.
