@@ -169,7 +169,7 @@ class ClinicalParameterAttributesTest {
         assertTrue(shortMessage.contains("NoCaregiver Assigned"), "shortMessage should mention NoCaregiver");
         assertTrue(shortMessage.contains("#{bed.room.name}"), "shortMessage should contain bed.room.name");
         assertTrue(shortMessage.contains("#{bed.bed_number}"), "shortMessage should contain bed.bed_number");
-        assertEquals("\"Short NoCaregiver Assigned for #{alert_type} in #{bed.room.name} Bed #{bed.bed_number}\"", shortMessage,
+        assertEquals("\"NoCaregiver Assigned for #{alert_type} in #{bed.room.name} Bed #{bed.bed_number}\"", shortMessage,
             "NoCaregiver shortMessage should have correct format");
     }
 
