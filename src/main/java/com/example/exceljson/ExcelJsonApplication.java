@@ -22,7 +22,8 @@ public class ExcelJsonApplication extends Application {
         primaryStage.setTitle("Engage FlowForge 2.0");
         
         // Load application icon from resources
-        String iconPath = "/icon.ico";
+        // Use PNG format for JavaFX compatibility (ICO format is for Windows installer)
+        String iconPath = "/icon.png";
         
         try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
             if (iconInputStream != null) {
