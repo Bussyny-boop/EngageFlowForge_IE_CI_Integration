@@ -1366,7 +1366,22 @@ public class ExcelParserV5 {
         valuePortion = text.substring(sepIdx + 1).trim();
       }
     }
-    valuePortion = valuePortion.replaceAll("(?i)^\\[\\s*room\\s*]\\s*", "").trim();
+    
+    // Extract text after "Room" keyword (case-insensitive)
+    // Examples: "VAssign: Room Charge Nurse" -> "Charge Nurse"
+    //           "Rld: R5: CS 1: Room PCT" -> "PCT"
+    //           "[Room] Nurse" -> "Nurse"
+    int roomIdx = valuePortion.toLowerCase(Locale.ROOT).indexOf("room");
+    if (roomIdx >= 0) {
+      // Skip "room" (4 chars) and any following whitespace/brackets
+      String afterRoom = valuePortion.substring(roomIdx + 4).trim();
+      // Remove leading brackets if present
+      afterRoom = afterRoom.replaceAll("^\\s*]\\s*", "").trim();
+      if (!afterRoom.isEmpty()) {
+        valuePortion = afterRoom;
+      }
+    }
+    
     return new ParsedRecipient(facility, valuePortion, isFunctionalRole);
   }
 
