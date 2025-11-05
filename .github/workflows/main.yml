@@ -45,7 +45,7 @@ jobs:
         run: |
           & jpackage `
             --type msi `
-            --name "Engage FlowForge 2.0" `
+            --name "EngageFlowForge" `
             --input target `
             --main-jar engage-rules-generator-1.1.0.jar `
             --main-class com.example.exceljson.Main `
@@ -54,7 +54,7 @@ jobs:
             --win-menu `
             --win-shortcut `
             --icon src/main/resources/icon.ico `
-            --description "Engage rules generation" `
+            --description "Engage FlowForge 2.0 - Engage rules generation" `
             --vendor "Your Organization"
 
       - name: Remove older MSI artifacts
@@ -91,7 +91,7 @@ jobs:
         with:
           name: engage-rules-generator-msi
           path: |
-            Engage FlowForge 2.0-1.1.msi
+            EngageFlowForge-1.1.msi
           retention-days: 14
 
 
