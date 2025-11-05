@@ -97,10 +97,10 @@ The built JAR will be available at: `target/engage-rules-generator-1.1.0.jar`
 2. **Load an Excel workbook:**
    - Click the **📂 Load Excel** button
    - Select your Excel configuration file (.xlsx)
-   - The application will parse and display the data in three tabs
+   - The application will parse and display the data in four tabs
 
 3. **Review and edit data:**
-   - Navigate through the **Units**, **Nurse Calls**, and **Clinicals** tabs
+   - Navigate through the **Units**, **Nurse Calls**, **Clinicals**, and **Orders** tabs
    - Edit any cell by double-clicking it
 
 4. **Generate JSON output:**
@@ -128,7 +128,7 @@ java -cp engage-rules-generator-1.1.0.jar \
 
 ### Application Layout
 
-The GUI features a modern orange-themed interface with three main sections:
+The GUI features a modern orange-themed interface with the following main areas:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
