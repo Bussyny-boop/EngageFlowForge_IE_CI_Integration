@@ -884,6 +884,13 @@ public class ExcelParserV5 {
       params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
       params.add(paQ("vibrate", "short"));
       
+      // Add destination names for Orders flows
+      addDestNameParam(params, 0, firstToken(r.r1));
+      addDestNameParam(params, 1, firstToken(r.r2));
+      addDestNameParam(params, 2, firstToken(r.r3));
+      addDestNameParam(params, 3, firstToken(r.r4));
+      addDestNameParam(params, 4, firstToken(r.r5));
+      
       return params;
     }
 
@@ -1007,6 +1014,7 @@ public class ExcelParserV5 {
       addDestNameParam(params, 3, firstToken(r.r4));
       addDestNameParam(params, 4, firstToken(r.r5));
     } else {
+      // For Clinicals flows (not Orders, which return early above)
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
       params.add(paOrderQ(1, "shortMessage", "NoCaregiver Assigned for #{alert_type} in #{bed.room.name} Bed #{bed.bed_number}"));
@@ -1018,13 +1026,19 @@ public class ExcelParserV5 {
 
   private void addDestNameParam(List<Map<String,Object>> params, int order, String raw) {
     if (isBlank(raw)) return;
-    String lower = raw.toLowerCase(Locale.ROOT);
     String value;
-    if (lower.startsWith("vassign")) {
-      value = raw.replaceFirst("(?i)^\\s*vassign\\s*:\\s*\\[\\s*room\\s*]\\s*", "").trim();
+    
+    // Extract text after "Room" keyword (case-insensitive)
+    // Examples: "VAssign: Room Charge Nurse" -> "Charge Nurse"
+    //           "Rld: R5: CS 1: Room PCT" -> "PCT"
+    int roomIdx = raw.toLowerCase(Locale.ROOT).indexOf("room");
+    if (roomIdx >= 0) {
+      // Extract everything after "room" (skip the word itself)
+      value = raw.substring(roomIdx + 4).trim();
     } else {
       value = "Group";
     }
+    
     params.add(paOrderQ(order, "destinationName", value));
   }
 
