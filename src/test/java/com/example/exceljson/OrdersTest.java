@@ -434,6 +434,229 @@ class OrdersTest {
     }
 
     @Test
+    void ordersFlowHasDestinationNameParameters() throws Exception {
+        File excelFile = tempDir.resolve("test-orders-destname.xlsx").toFile();
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Create Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row headerRow = unitSheet.createRow(2);
+            headerRow.createCell(0).setCellValue("Facility");
+            headerRow.createCell(1).setCellValue("Common Unit Name");
+            headerRow.createCell(2).setCellValue("Nurse Call Configuration Group");
+            headerRow.createCell(3).setCellValue("Patient Monitoring Configuration Group");
+            headerRow.createCell(4).setCellValue("Orders Configuration Group");
+            headerRow.createCell(5).setCellValue("No Caregiver Group");
+            
+            Row dataRow = unitSheet.createRow(3);
+            dataRow.createCell(0).setCellValue("Test Facility");
+            dataRow.createCell(1).setCellValue("Test Unit");
+            dataRow.createCell(2).setCellValue("Nurse Group 1");
+            dataRow.createCell(3).setCellValue("Clinical Group 1");
+            dataRow.createCell(4).setCellValue("Orders Group 1");
+            dataRow.createCell(5).setCellValue("No Caregiver Group");
+            
+            // Create Orders sheet with various recipient formats
+            Sheet ordersSheet = wb.createSheet("Order");
+            Row orderHeader = ordersSheet.createRow(2);
+            orderHeader.createCell(0).setCellValue("In scope");
+            orderHeader.createCell(1).setCellValue("Configuration Group");
+            orderHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            orderHeader.createCell(3).setCellValue("Sending System Alert Name");
+            orderHeader.createCell(4).setCellValue("Priority");
+            orderHeader.createCell(5).setCellValue("Device - A");
+            orderHeader.createCell(6).setCellValue("Time to 1st Recipient");
+            orderHeader.createCell(7).setCellValue("1st Recipient");
+            orderHeader.createCell(8).setCellValue("Time to 2nd Recipient");
+            orderHeader.createCell(9).setCellValue("2nd Recipient");
+            orderHeader.createCell(10).setCellValue("Time to 3rd Recipient");
+            orderHeader.createCell(11).setCellValue("3rd Recipient");
+            
+            Row orderData = ordersSheet.createRow(3);
+            orderData.createCell(0).setCellValue("TRUE");
+            orderData.createCell(1).setCellValue("Orders Group 1");
+            orderData.createCell(2).setCellValue("Med Order");
+            orderData.createCell(3).setCellValue("Medication Order");
+            orderData.createCell(4).setCellValue("High");
+            orderData.createCell(5).setCellValue("Edge");
+            orderData.createCell(6).setCellValue("0");
+            orderData.createCell(7).setCellValue("VAssign: Room Charge Nurse");
+            orderData.createCell(8).setCellValue("1");
+            orderData.createCell(9).setCellValue("Rld: R5: CS 1: Room PCT");
+            orderData.createCell(10).setCellValue("2");
+            orderData.createCell(11).setCellValue("Rld: R5: CS 2: Room RN");
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        assertNotNull(flows);
+        assertEquals(1, flows.size());
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        assertNotNull(params);
+        
+        // Find destinationName parameters by destinationOrder
+        Map<String, Object> dest0 = findParameterWithDestinationOrder(params, "destinationName", 0);
+        Map<String, Object> dest1 = findParameterWithDestinationOrder(params, "destinationName", 1);
+        Map<String, Object> dest2 = findParameterWithDestinationOrder(params, "destinationName", 2);
+        
+        assertNotNull(dest0, "Should have destinationName parameter for order 0");
+        assertNotNull(dest1, "Should have destinationName parameter for order 1");
+        assertNotNull(dest2, "Should have destinationName parameter for order 2");
+        
+        // Verify the captured functional role names (text after "Room" keyword)
+        assertEquals("\"Charge Nurse\"", dest0.get("value"), "Should capture 'Charge Nurse' from 'VAssign: Room Charge Nurse'");
+        assertEquals("\"PCT\"", dest1.get("value"), "Should capture 'PCT' from 'Rld: R5: CS 1: Room PCT'");
+        assertEquals("\"RN\"", dest2.get("value"), "Should capture 'RN' from 'Rld: R5: CS 2: Room RN'");
+        
+        // Verify destinationOrder values
+        assertEquals(0, dest0.get("destinationOrder"));
+        assertEquals(1, dest1.get("destinationOrder"));
+        assertEquals(2, dest2.get("destinationOrder"));
+    }
+    
+    // Helper to find a parameter by name and destinationOrder
+    private Map<String, Object> findParameterWithDestinationOrder(List<Map<String, Object>> params, String name, int order) {
+        return params.stream()
+            .filter(p -> name.equals(p.get("name")) && Integer.valueOf(order).equals(p.get("destinationOrder")))
+            .findFirst()
+            .orElse(null);
+    }
+
+    @Test
+    void ordersDestinationNameExtractsTextAfterRoom() throws Exception {
+        File excelFile = tempDir.resolve("test-orders-room-extraction.xlsx").toFile();
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Create Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row headerRow = unitSheet.createRow(2);
+            headerRow.createCell(0).setCellValue("Facility");
+            headerRow.createCell(1).setCellValue("Common Unit Name");
+            headerRow.createCell(4).setCellValue("Orders Configuration Group");
+            
+            Row dataRow = unitSheet.createRow(3);
+            dataRow.createCell(0).setCellValue("Test Facility");
+            dataRow.createCell(1).setCellValue("Test Unit");
+            dataRow.createCell(4).setCellValue("Orders Group 1");
+            
+            // Create Orders sheet with edge case recipients
+            Sheet ordersSheet = wb.createSheet("Order");
+            Row orderHeader = ordersSheet.createRow(2);
+            orderHeader.createCell(0).setCellValue("In scope");
+            orderHeader.createCell(1).setCellValue("Configuration Group");
+            orderHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            orderHeader.createCell(7).setCellValue("1st Recipient");
+            orderHeader.createCell(9).setCellValue("2nd Recipient");
+            orderHeader.createCell(11).setCellValue("3rd Recipient");
+            
+            Row orderData = ordersSheet.createRow(3);
+            orderData.createCell(0).setCellValue("TRUE");
+            orderData.createCell(1).setCellValue("Orders Group 1");
+            orderData.createCell(2).setCellValue("Med Order");
+            orderData.createCell(7).setCellValue("room Nurse");  // lowercase
+            orderData.createCell(9).setCellValue("ROOM Physician");  // uppercase
+            orderData.createCell(11).setCellValue("Room Tech");  // mixed case
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        
+        // Verify case-insensitive Room detection
+        Map<String, Object> dest0 = findParameterWithDestinationOrder(params, "destinationName", 0);
+        Map<String, Object> dest1 = findParameterWithDestinationOrder(params, "destinationName", 1);
+        Map<String, Object> dest2 = findParameterWithDestinationOrder(params, "destinationName", 2);
+        
+        assertEquals("\"Nurse\"", dest0.get("value"), "Should extract text after 'room' (case-insensitive)");
+        assertEquals("\"Physician\"", dest1.get("value"), "Should extract text after 'ROOM' (case-insensitive)");
+        assertEquals("\"Tech\"", dest2.get("value"), "Should extract text after 'Room' (case-insensitive)");
+    }
+
+    @Test
+    void ordersFlowHandlesMultipleRoomsInOneRecipient() throws Exception {
+        File excelFile = tempDir.resolve("test-orders-multiple-rooms.xlsx").toFile();
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Create Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row headerRow = unitSheet.createRow(2);
+            headerRow.createCell(0).setCellValue("Facility");
+            headerRow.createCell(1).setCellValue("Common Unit Name");
+            headerRow.createCell(4).setCellValue("Orders Configuration Group");
+            
+            Row dataRow = unitSheet.createRow(3);
+            dataRow.createCell(0).setCellValue("BCH");
+            dataRow.createCell(1).setCellValue("Test Unit");
+            dataRow.createCell(4).setCellValue("Orders Group 1");
+            
+            // Create Orders sheet with multiple rooms in one recipient field
+            Sheet ordersSheet = wb.createSheet("Order");
+            Row orderHeader = ordersSheet.createRow(2);
+            orderHeader.createCell(0).setCellValue("In scope");
+            orderHeader.createCell(1).setCellValue("Configuration Group");
+            orderHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            orderHeader.createCell(7).setCellValue("1st Recipient");
+            
+            Row orderData = ordersSheet.createRow(3);
+            orderData.createCell(0).setCellValue("TRUE");
+            orderData.createCell(1).setCellValue("Orders Group 1");
+            orderData.createCell(2).setCellValue("Med Order");
+            // Multiple rooms separated by newline
+            orderData.createCell(7).setCellValue("Rld: R5: CS 1: Room Nurse\nRld: R5: CS 2: Room CNA");
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
+        
+        assertEquals(1, destinations.size(), "Should have one destination");
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> functionalRoles = (List<Map<String, String>>) destinations.get(0).get("functionalRoles");
+        
+        assertNotNull(functionalRoles);
+        assertEquals(2, functionalRoles.size(), "Should have two functional roles from the two Room keywords");
+        
+        // Verify the two functional roles
+        assertEquals("BCH", functionalRoles.get(0).get("facilityName"));
+        assertEquals("Nurse", functionalRoles.get(0).get("name"));
+        
+        assertEquals("BCH", functionalRoles.get(1).get("facilityName"));
+        assertEquals("CNA", functionalRoles.get(1).get("name"));
+    }
+
+    @Test
     void ordersFlowsDoNotHaveNoDeliveriesDestination() throws Exception {
         File excelFile = tempDir.resolve("test-orders-nodeliveries.xlsx").toFile();
         
