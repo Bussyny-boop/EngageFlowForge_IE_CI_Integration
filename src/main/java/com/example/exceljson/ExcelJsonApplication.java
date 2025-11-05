@@ -22,14 +22,20 @@ public class ExcelJsonApplication extends Application {
         primaryStage.setTitle("Engage FlowForge 2.0");
         
         // Load application icon from resources
-        try (InputStream iconStream = getClass().getResourceAsStream("/ICON.ico")) {
-            if (iconStream != null) {
-                primaryStage.getIcons().add(new Image(iconStream));
+        // Try uppercase first (local override), then lowercase (tracked in git)
+        String iconPath = "/ICON.ico";
+        if (getClass().getResource(iconPath) == null) {
+            iconPath = "/icon.ico";
+        }
+        
+        try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
+            if (iconInputStream != null) {
+                primaryStage.getIcons().add(new Image(iconInputStream));
             } else {
-                System.err.println("Warning: ICON.ico not found in resources. Using default application icon.");
+                System.err.println("Warning: " + iconPath + " not found in resources. Using default application icon.");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Failed to load ICON.ico: " + e.getMessage());
+            System.err.println("Warning: Failed to load icon from " + iconPath + ": " + e.getMessage());
         }
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
