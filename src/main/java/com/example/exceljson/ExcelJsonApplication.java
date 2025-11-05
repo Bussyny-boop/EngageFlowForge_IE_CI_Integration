@@ -33,6 +33,9 @@ public class ExcelJsonApplication extends Application {
         }
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+        scene.getStylesheets().add(
+            getClass().getResource("/css/stryker-theme.css").toExternalForm()
+        );
         primaryStage.setScene(scene);
         primaryStage.show();
     }
