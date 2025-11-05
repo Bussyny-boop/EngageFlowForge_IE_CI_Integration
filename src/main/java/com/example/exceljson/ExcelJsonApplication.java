@@ -33,6 +33,19 @@ public class ExcelJsonApplication extends Application {
         }
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+        
+        // Load Stryker theme CSS
+        try {
+            var cssResource = getClass().getResource("/css/stryker-theme.css");
+            if (cssResource != null) {
+                scene.getStylesheets().add(cssResource.toExternalForm());
+            } else {
+                System.err.println("Warning: stryker-theme.css not found in resources. Using default styling.");
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Failed to load stryker-theme.css: " + e.getMessage());
+        }
+        
         primaryStage.setScene(scene);
         primaryStage.show();
     }
