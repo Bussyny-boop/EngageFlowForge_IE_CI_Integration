@@ -16,7 +16,7 @@
 
 ## Overview
 
-**Engage FlowForge 2.0** (formerly "Engage Rules Generator") is a Java application that converts Vocera Engage Excel configuration sheets into JSON rule files. The application provides both a graphical user interface (GUI) and a command-line interface (CLI) for processing Excel workbooks containing nurse call and patient monitoring configurations.
+**Engage FlowForge 2.0** is a Java application that converts Vocera Engage Excel configuration sheets into JSON rule files. The application provides both a graphical user interface (GUI) and a command-line interface (CLI) for processing Excel workbooks containing nurse call and patient monitoring configurations.
 
 ### Key Capabilities
 - Import Excel workbooks with nurse call and patient monitoring configurations
