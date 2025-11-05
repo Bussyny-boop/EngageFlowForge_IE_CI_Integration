@@ -129,7 +129,7 @@ class TestEmdanShortMessage {
             .orElse(null);
         
         assertNotNull(shortMessageParam, "shortMessage parameter should exist");
-        assertEquals("\"#{alert_type} #{bed.room.name}\"", shortMessageParam.get("value"), 
-                    "shortMessage should have the correct value");
+        assertEquals("\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\"", shortMessageParam.get("value"), 
+                    "shortMessage should have the correct value with bed number");
     }
 }

@@ -112,7 +112,7 @@ class JobRunnerTest {
         assertTrue(nurseContent.contains("Alarm 1"));
         assertTrue(clinicalContent.contains("Clinical Alarm"));
         assertTrue(clinicalContent.contains("\"name\": \"subject\""));
-        assertTrue(clinicalContent.contains("\"value\": \"\\\"NoCaregiver assigned for #{alert_type} #{bed.room.name}\\\"\""));
+        assertTrue(clinicalContent.contains("\"value\": \"\\\"NoCaregiver assigned for #{alert_type} #{bed.room.name} Bed #{bed.bed_number}\\\"\""));
         assertTrue(outBuffer.toString().contains("Wrote JSON"));
         assertTrue(errBuffer.toString().isEmpty());
     }
