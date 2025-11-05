@@ -22,11 +22,7 @@ public class ExcelJsonApplication extends Application {
         primaryStage.setTitle("Engage FlowForge 2.0");
         
         // Load application icon from resources
-        // Try uppercase first (local override), then lowercase (tracked in git)
-        String iconPath = "/ICON.ico";
-        if (getClass().getResource(iconPath) == null) {
-            iconPath = "/icon.ico";
-        }
+        String iconPath = "/icon.ico";
         
         try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
             if (iconInputStream != null) {
