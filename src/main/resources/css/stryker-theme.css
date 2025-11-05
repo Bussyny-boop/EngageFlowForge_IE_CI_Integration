@@ -52,7 +52,7 @@
 }
 
 .button:pressed {
-    -fx-background-color: #e0a400;
+    -fx-background-color: derive(#FFB600, -30%);
 }
 
 .button:disabled {
@@ -111,7 +111,7 @@
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-padding: 8;
-    -fx-font-family: "Consolas", monospace;
+    -fx-font-family: "Consolas", "Monaco", "Liberation Mono", monospace;
     -fx-font-size: 12.5px;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
 }
