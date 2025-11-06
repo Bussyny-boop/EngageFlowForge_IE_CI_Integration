@@ -92,6 +92,9 @@ public class ExcelParserV5 {
   private static final String SHEET_NURSE = "Nurse Call";
   private static final String SHEET_CLINICAL = "Patient Monitoring";
   private static final String SHEET_ORDERS = "Order";
+  
+  // Regex pattern to strip special characters from Custom Unit role names
+  private static final String SPECIAL_CHARS_PATTERN = "[^a-zA-Z0-9\\s]";
 
   // NurseCallsCondition (requested default)
   private static final List<Map<String, Object>> NURSE_CONDITIONS;
@@ -1709,7 +1712,7 @@ public class ExcelParserV5 {
       
       // Strip all special characters, keeping only alphanumeric and spaces
       // This handles cases like "Nurse]", "CNA#", "Charge Nurse@" -> "Nurse", "CNA", "Charge Nurse"
-      part = part.replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+      part = part.replaceAll(SPECIAL_CHARS_PATTERN, "").trim();
       
       if (!part.isEmpty()) {
         roles.add(part);
