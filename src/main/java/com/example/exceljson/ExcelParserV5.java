@@ -485,11 +485,21 @@ public class ExcelParserV5 {
 
       List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
       String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
+      
+      // Build destinations and conditions
+      DestinationsAndConditions dac = buildDestinationsAndConditions(r, unitRefs, flowType, mappedPriority);
 
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
-      flow.put("conditions", nurseSide ? nurseConditions() : List.of());
-      flow.put("destinations", buildDestinationsMerged(r, unitRefs, flowType));
+      
+      // Use custom conditions if available, otherwise use default nurse conditions
+      if (!dac.conditions.isEmpty()) {
+        flow.put("conditions", dac.conditions);
+      } else {
+        flow.put("conditions", nurseSide ? nurseConditions() : List.of());
+      }
+      
+      flow.put("destinations", dac.destinations);
       flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB));
       flow.put("name", buildFlowName(flowType, mappedPriority, r, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(r, flowType, mappedPriority));
@@ -535,11 +545,21 @@ public class ExcelParserV5 {
         .map(r -> nvl(r.alarmName, r.sendingName))
         .distinct()
         .collect(Collectors.toList());
+      
+      // Build destinations and conditions
+      DestinationsAndConditions dac = buildDestinationsAndConditions(template, unitRefs, flowType, mappedPriority);
 
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", alarmNames);
-      flow.put("conditions", nurseSide ? nurseConditions() : List.of());
-      flow.put("destinations", buildDestinationsMerged(template, unitRefs, flowType));
+      
+      // Use custom conditions if available, otherwise use default nurse conditions
+      if (!dac.conditions.isEmpty()) {
+        flow.put("conditions", dac.conditions);
+      } else {
+        flow.put("conditions", nurseSide ? nurseConditions() : List.of());
+      }
+      
+      flow.put("destinations", dac.destinations);
       flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
       flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitRefs));
       flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
@@ -643,21 +663,49 @@ public class ExcelParserV5 {
   }
 
   // ---------- Destinations: one per order, merge groups ----------
-  private List<Map<String,Object>> buildDestinationsMerged(FlowRow r,
-                                                           List<Map<String,String>> unitRefs,
-                                                           String flowType) {
+  
+  /**
+   * Result of building destinations, potentially with custom conditions.
+   */
+  private static final class DestinationsAndConditions {
+    final List<Map<String, Object>> destinations;
+    final List<Map<String, Object>> conditions;
+    
+    DestinationsAndConditions(List<Map<String, Object>> destinations, List<Map<String, Object>> conditions) {
+      this.destinations = destinations;
+      this.conditions = conditions;
+    }
+  }
+  
+  private DestinationsAndConditions buildDestinationsAndConditions(FlowRow r,
+                                                                    List<Map<String,String>> unitRefs,
+                                                                    String flowType,
+                                                                    String mappedPriority) {
     String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
     boolean nurseSide = "NurseCalls".equals(flowType);
     
     // Determine presenceConfig based on Break Through DND value
     String presenceConfig = getPresenceConfigFromBreakThrough(r.breakThroughDND);
     
-    List<Map<String,Object>> out = new ArrayList<>();
-    addOrder(out, facility, 0, r.t1, r.r1, presenceConfig);
-    addOrder(out, facility, 1, r.t2, r.r2, presenceConfig);
-    addOrder(out, facility, 2, r.t3, r.r3, presenceConfig);
-    addOrder(out, facility, 3, r.t4, r.r4, presenceConfig);
-    addOrder(out, facility, 4, r.t5, r.r5, presenceConfig);
+    // Determine interface reference name based on device A/B
+    String interfaceRef = determineInterfaceReferenceName(r.deviceA, r.deviceB);
+    
+    List<DestinationWithConditions> results = new ArrayList<>();
+    addOrderWithConditions(results, facility, 0, r.t1, r.r1, presenceConfig, mappedPriority, interfaceRef);
+    addOrderWithConditions(results, facility, 1, r.t2, r.r2, presenceConfig, mappedPriority, interfaceRef);
+    addOrderWithConditions(results, facility, 2, r.t3, r.r3, presenceConfig, mappedPriority, interfaceRef);
+    addOrderWithConditions(results, facility, 3, r.t4, r.r4, presenceConfig, mappedPriority, interfaceRef);
+    addOrderWithConditions(results, facility, 4, r.t5, r.r5, presenceConfig, mappedPriority, interfaceRef);
+    
+    List<Map<String,Object>> destinations = new ArrayList<>();
+    List<Map<String,Object>> conditions = new ArrayList<>();
+    
+    for (DestinationWithConditions dwc : results) {
+      destinations.add(dwc.destination);
+      if (dwc.condition != null) {
+        conditions.add(dwc.condition);
+      }
+    }
 
     // Only add NoDeliveries for Clinicals, not for Orders
     boolean ordersType = "Orders".equals(flowType);
@@ -665,7 +713,7 @@ public class ExcelParserV5 {
       String noCare = noCaregiverByFacility.getOrDefault(facility, "");
       if (!isBlank(noCare)) {
         Map<String,Object> d = new LinkedHashMap<>();
-        d.put("order", out.size());
+        d.put("order", destinations.size());
         d.put("delayTime", 0);
         d.put("destinationType", "NoDeliveries");
         d.put("users", List.of());
@@ -673,10 +721,52 @@ public class ExcelParserV5 {
         d.put("groups", List.of(Map.of("facilityName", facility, "name", noCare)));
         d.put("presenceConfig", presenceConfig);
         d.put("recipientType", "group");
-        out.add(d);
+        destinations.add(d);
       }
     }
-    return out;
+    
+    return new DestinationsAndConditions(destinations, conditions);
+  }
+  
+  /**
+   * Determine the primary interface reference name based on device A/B.
+   * Returns the Edge reference if Edge is detected, otherwise VMP.
+   */
+  private String determineInterfaceReferenceName(String deviceA, String deviceB) {
+    boolean hasEdgeA = containsEdge(deviceA);
+    boolean hasEdgeB = containsEdge(deviceB);
+    boolean hasVcsA = containsVcs(deviceA);
+    boolean hasVcsB = containsVcs(deviceB);
+    
+    // Prefer Edge if present
+    if (hasEdgeA || hasEdgeB) {
+      return edgeReferenceName;
+    }
+    
+    // Otherwise use VCS
+    if (hasVcsA || hasVcsB) {
+      return vcsReferenceName;
+    }
+    
+    // Default to Edge if no device specified and default is set
+    if (useDefaultEdge) {
+      return edgeReferenceName;
+    }
+    
+    if (useDefaultVmp) {
+      return vcsReferenceName;
+    }
+    
+    // Final fallback to Edge
+    return edgeReferenceName;
+  }
+  
+  private List<Map<String,Object>> buildDestinationsMerged(FlowRow r,
+                                                           List<Map<String,String>> unitRefs,
+                                                           String flowType) {
+    String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
+    DestinationsAndConditions dac = buildDestinationsAndConditions(r, unitRefs, flowType, mappedPriority);
+    return dac.destinations;
   }
 
   /**
@@ -796,7 +886,38 @@ public class ExcelParserV5 {
                         String delayText,
                         String recipientText,
                         String presenceConfig) {
+    List<DestinationWithConditions> results = new ArrayList<>();
+    addOrderWithConditions(results, facility, order, delayText, recipientText, presenceConfig, "normal", edgeReferenceName);
+    for (DestinationWithConditions dwc : results) {
+      out.add(dwc.destination);
+    }
+  }
+  
+  private void addOrderWithConditions(List<DestinationWithConditions> out,
+                                      String facility,
+                                      int order,
+                                      String delayText,
+                                      String recipientText,
+                                      String presenceConfig,
+                                      String mappedPriority,
+                                      String interfaceReferenceName) {
     if (isBlank(recipientText)) return;
+    
+    // First check if this is a Custom Unit recipient (before splitting by comma)
+    String recipientTextTrimmed = recipientText.trim();
+    String normalizedLower = recipientTextTrimmed.toLowerCase(Locale.ROOT).replaceAll("[\\s\\-_]+", "");
+    
+    if (normalizedLower.contains("customunit")) {
+      // This is a Custom Unit recipient - parse it as a whole
+      ParsedRecipient pr = parseRecipient(recipientTextTrimmed, facility);
+      if (pr.isCustomUnit && !pr.customUnitRoles.isEmpty()) {
+        int delay = parseDelay(delayText);
+        addCustomUnitDestination(out, order, delay, pr.customUnitRoles, presenceConfig, mappedPriority, interfaceReferenceName);
+        return;
+      }
+    }
+    
+    // Regular recipient processing - split by comma/semicolon
     List<String> recipients = Arrays.stream(recipientText.split("[,;\\n]"))
       .map(String::trim)
       .filter(s -> !s.isEmpty() && !s.equalsIgnoreCase("N/A"))
@@ -804,7 +925,7 @@ public class ExcelParserV5 {
     if (recipients.isEmpty()) return;
 
     int delay = parseDelay(delayText);
-
+    
     List<Map<String,String>> groups = new ArrayList<>();
     List<Map<String,String>> roles  = new ArrayList<>();
 
@@ -835,7 +956,86 @@ public class ExcelParserV5 {
     } else {
       dest.put("recipientType", "group");
     }
-    out.add(dest);
+    
+    out.add(new DestinationWithConditions(dest, null));
+  }
+  
+  /**
+   * Creates a custom unit destination with associated conditions.
+   * Based on priority:
+   * - normal/high: filters for role name, state, device status
+   * - urgent: adds presence filter
+   */
+  private void addCustomUnitDestination(List<DestinationWithConditions> out,
+                                        int order,
+                                        int delay,
+                                        List<String> roles,
+                                        String presenceConfig,
+                                        String mappedPriority,
+                                        String interfaceReferenceName) {
+    if (roles.isEmpty()) return;
+    
+    // Build the condition name from the roles
+    String roleNames = String.join(" and ", roles);
+    String conditionName = "Custom All Assigned " + roleNames;
+    
+    // Build the value string for the role filter (comma-separated)
+    String roleValue = String.join(", ", roles);
+    
+    // Build filters based on priority
+    List<Map<String, Object>> filters = new ArrayList<>();
+    
+    // Filter 1: role name
+    Map<String, Object> roleFilter = new LinkedHashMap<>();
+    roleFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.role.name");
+    roleFilter.put("operator", "in");
+    roleFilter.put("value", roleValue);
+    filters.add(roleFilter);
+    
+    // Filter 2: state
+    Map<String, Object> stateFilter = new LinkedHashMap<>();
+    stateFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.state");
+    stateFilter.put("operator", "in");
+    stateFilter.put("value", "Active");
+    filters.add(stateFilter);
+    
+    // Filter 3: device status
+    Map<String, Object> deviceFilter = new LinkedHashMap<>();
+    deviceFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.usr.devices.status");
+    deviceFilter.put("operator", "in");
+    deviceFilter.put("value", "Registered, Disconnected");
+    filters.add(deviceFilter);
+    
+    // Filter 4: presence (only for urgent priority)
+    boolean isUrgent = "urgent".equalsIgnoreCase(mappedPriority);
+    if (isUrgent) {
+      Map<String, Object> presenceFilter = new LinkedHashMap<>();
+      presenceFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.usr.presence_show");
+      presenceFilter.put("operator", "in");
+      presenceFilter.put("value", "Chat, Available");
+      filters.add(presenceFilter);
+    }
+    
+    // Build the condition
+    Map<String, Object> condition = new LinkedHashMap<>();
+    condition.put("destinationOrder", order);
+    condition.put("filters", filters);
+    condition.put("name", conditionName);
+    
+    // Build the destination
+    Map<String, Object> dest = new LinkedHashMap<>();
+    dest.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.usr.devices.lines.number");
+    dest.put("delayTime", delay);
+    dest.put("destinationType", "Normal");
+    dest.put("functionalRoles", List.of());
+    dest.put("groups", List.of());
+    dest.put("interfaceReferenceName", interfaceReferenceName);
+    dest.put("order", order);
+    dest.put("presenceConfig", presenceConfig);
+    dest.put("recipientType", "custom");
+    dest.put("users", List.of());
+    
+    out.add(new DestinationWithConditions(dest, condition));
   }
 
   // ---------- Parameter Attributes (correct Engage syntax) ----------
@@ -1336,14 +1536,38 @@ public class ExcelParserV5 {
   }
 
   // ---------- Recipients ----------
+  
+  /**
+   * Result of building a destination, potentially with custom conditions.
+   */
+  private static final class DestinationWithConditions {
+    final Map<String, Object> destination;
+    final Map<String, Object> condition; // null if no custom condition
+    
+    DestinationWithConditions(Map<String, Object> destination, Map<String, Object> condition) {
+      this.destination = destination;
+      this.condition = condition;
+    }
+  }
+  
   private static final class ParsedRecipient {
     final String facility;
     final String value;
     final boolean isFunctionalRole;
+    final boolean isCustomUnit;
+    final List<String> customUnitRoles;
+    
     ParsedRecipient(String facility, String value, boolean isFunctionalRole) {
+      this(facility, value, isFunctionalRole, false, List.of());
+    }
+    
+    ParsedRecipient(String facility, String value, boolean isFunctionalRole, 
+                    boolean isCustomUnit, List<String> customUnitRoles) {
       this.facility = facility == null ? "" : facility;
       this.value = value == null ? "" : value;
       this.isFunctionalRole = isFunctionalRole;
+      this.isCustomUnit = isCustomUnit;
+      this.customUnitRoles = customUnitRoles == null ? List.of() : new ArrayList<>(customUnitRoles);
     }
   }
   private ParsedRecipient parseRecipient(String raw, String defaultFacility) {
@@ -1356,6 +1580,12 @@ public class ExcelParserV5 {
 
     String lower = text.toLowerCase(Locale.ROOT);
     boolean isFunctionalRole = false;
+
+    // Check for "Custom Unit" keyword (case-insensitive, ignoring special characters and spaces)
+    String normalizedLower = lower.replaceAll("[\\s\\-_]+", "");
+    if (normalizedLower.contains("customunit")) {
+      return parseCustomUnitRecipient(text, facility);
+    }
 
     if (lower.startsWith("vassign room:") || lower.startsWith("vassign:")) {
       isFunctionalRole = true;
@@ -1395,6 +1625,84 @@ public class ExcelParserV5 {
     }
     
     return new ParsedRecipient(facility, valuePortion, isFunctionalRole);
+  }
+  
+  /**
+   * Parses "Custom Unit" recipient patterns.
+   * Examples:
+   *   "Custom Unit Nurse, CNA" -> roles: ["Nurse", "CNA"]
+   *   "Custom UNIT all Nurse, CNA" -> roles: ["Nurse", "CNA"]
+   *   "Custom Unit All Nurse, All CNA, Charge Nurse" -> roles: ["Nurse", "CNA", "Charge Nurse"]
+   */
+  private ParsedRecipient parseCustomUnitRecipient(String text, String facility) {
+    String lower = text.toLowerCase(Locale.ROOT);
+    
+    // Find the position of "custom" and "unit" keywords
+    String normalizedLower = lower.replaceAll("[\\s\\-_]+", "");
+    int customUnitIdx = normalizedLower.indexOf("customunit");
+    if (customUnitIdx < 0) {
+      // Shouldn't happen, but fallback to regular parsing
+      return new ParsedRecipient(facility, text, false);
+    }
+    
+    // Find where "Custom Unit" ends in the original text
+    // We need to find the end of "unit" in the original string
+    int searchIdx = 0;
+    int foundCustom = -1;
+    int foundUnit = -1;
+    
+    // Find "custom" (case-insensitive)
+    for (int i = 0; i < text.length() - 5; i++) {
+      if (text.substring(i, i + 6).equalsIgnoreCase("custom")) {
+        foundCustom = i;
+        searchIdx = i + 6;
+        break;
+      }
+    }
+    
+    // Find "unit" after "custom" (case-insensitive)
+    if (foundCustom >= 0) {
+      for (int i = searchIdx; i < text.length() - 3; i++) {
+        if (text.substring(i, i + 4).equalsIgnoreCase("unit")) {
+          foundUnit = i;
+          searchIdx = i + 4;
+          break;
+        }
+      }
+    }
+    
+    if (foundUnit < 0) {
+      // Couldn't find "unit" after "custom", fallback
+      return new ParsedRecipient(facility, text, false);
+    }
+    
+    // Get everything after "Custom Unit"
+    String afterCustomUnit = text.substring(searchIdx).trim();
+    
+    // Parse the roles, ignoring "All" keyword and treating comma-separated values as different roles
+    List<String> roles = new ArrayList<>();
+    String[] parts = afterCustomUnit.split(",");
+    
+    for (String part : parts) {
+      part = part.trim();
+      if (part.isEmpty()) continue;
+      
+      // Remove "All" keyword (case-insensitive) from the beginning
+      String partLower = part.toLowerCase(Locale.ROOT);
+      if (partLower.startsWith("all ")) {
+        part = part.substring(4).trim();
+      } else if (partLower.equals("all")) {
+        // Skip standalone "All"
+        continue;
+      }
+      
+      if (!part.isEmpty()) {
+        roles.add(part);
+      }
+    }
+    
+    // Return a custom unit recipient with the parsed roles
+    return new ParsedRecipient(facility, "", false, true, roles);
   }
 
   // ---------- Sheet helpers ----------
