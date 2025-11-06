@@ -40,6 +40,9 @@ public class AppController {
     @FXML private CheckBox defaultVmpCheckbox;
     @FXML private Button resetDefaultsButton;
     @FXML private Button resetPathsButton;
+    @FXML private TextField roomFilterNursecallField;
+    @FXML private TextField roomFilterClinicalField;
+    @FXML private TextField roomFilterOrdersField;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
 
@@ -490,6 +493,13 @@ public class AppController {
         boolean defaultEdge = defaultEdgeCheckbox != null && defaultEdgeCheckbox.isSelected();
         boolean defaultVmp = defaultVmpCheckbox != null && defaultVmpCheckbox.isSelected();
         filteredParser.setDefaultInterfaces(defaultEdge, defaultVmp);
+        
+        // Copy room filters
+        filteredParser.setRoomFilters(
+            roomFilterNursecallField != null ? roomFilterNursecallField.getText().trim() : "",
+            roomFilterClinicalField != null ? roomFilterClinicalField.getText().trim() : "",
+            roomFilterOrdersField != null ? roomFilterOrdersField.getText().trim() : ""
+        );
         
         // Add filtered units
         if (unitsFilteredList != null) {
@@ -953,6 +963,13 @@ public class AppController {
             boolean defaultEdge = defaultEdgeCheckbox != null && defaultEdgeCheckbox.isSelected();
             boolean defaultVmp = defaultVmpCheckbox != null && defaultVmpCheckbox.isSelected();
             parser.setDefaultInterfaces(defaultEdge, defaultVmp);
+            
+            // Apply room filters
+            parser.setRoomFilters(
+                roomFilterNursecallField != null ? roomFilterNursecallField.getText().trim() : "",
+                roomFilterClinicalField != null ? roomFilterClinicalField.getText().trim() : "",
+                roomFilterOrdersField != null ? roomFilterOrdersField.getText().trim() : ""
+            );
         }
     }
 
