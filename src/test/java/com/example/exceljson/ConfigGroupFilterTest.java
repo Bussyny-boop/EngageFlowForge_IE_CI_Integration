@@ -131,4 +131,100 @@ class ConfigGroupFilterTest {
         assertTrue(foundAlarmA2, "Should include Alarm A2 in JSON output");
         assertFalse(foundAlarmB, "Should NOT include Alarm B (Group B) in JSON output");
     }
+
+    @Test
+    void testInScopeAllCheckedWhenFilterSetToAll() throws Exception {
+        File excelFile = new File(tempDir, "test-config-group-all-filter.xlsx");
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row unitHeader = unitSheet.createRow(2);
+            unitHeader.createCell(0).setCellValue("Facility");
+            unitHeader.createCell(1).setCellValue("Common Unit Name");
+            unitHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+            
+            Row unitData = unitSheet.createRow(3);
+            unitData.createCell(0).setCellValue("Test Facility");
+            unitData.createCell(1).setCellValue("Unit 1");
+            unitData.createCell(2).setCellValue("Group A");
+            
+            // Nurse Call sheet with multiple config groups
+            Sheet nurseSheet = wb.createSheet("Nurse Call");
+            Row nurseHeader = nurseSheet.createRow(2);
+            nurseHeader.createCell(0).setCellValue("In scope");
+            nurseHeader.createCell(1).setCellValue("Configuration Group");
+            nurseHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(3).setCellValue("Priority");
+            nurseHeader.createCell(6).setCellValue("Time to 1st Recipient");
+            nurseHeader.createCell(7).setCellValue("1st Recipient");
+            
+            // Group A alarm
+            Row nurseData1 = nurseSheet.createRow(3);
+            nurseData1.createCell(0).setCellValue("TRUE");
+            nurseData1.createCell(1).setCellValue("Group A");
+            nurseData1.createCell(2).setCellValue("Alarm A");
+            nurseData1.createCell(3).setCellValue("Normal");
+            nurseData1.createCell(6).setCellValue("0");
+            nurseData1.createCell(7).setCellValue("Charge Nurse");
+            
+            // Group B alarm
+            Row nurseData2 = nurseSheet.createRow(4);
+            nurseData2.createCell(0).setCellValue("TRUE");
+            nurseData2.createCell(1).setCellValue("Group B");
+            nurseData2.createCell(2).setCellValue("Alarm B");
+            nurseData2.createCell(3).setCellValue("Normal");
+            nurseData2.createCell(6).setCellValue("0");
+            nurseData2.createCell(7).setCellValue("Charge Nurse");
+            
+            // Group C alarm
+            Row nurseData3 = nurseSheet.createRow(5);
+            nurseData3.createCell(0).setCellValue("TRUE");
+            nurseData3.createCell(1).setCellValue("Group C");
+            nurseData3.createCell(2).setCellValue("Alarm C");
+            nurseData3.createCell(3).setCellValue("Normal");
+            nurseData3.createCell(6).setCellValue("0");
+            nurseData3.createCell(7).setCellValue("Charge Nurse");
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        // Initially all flows should have inScope=true
+        assertEquals(3, parser.nurseCalls.size());
+        
+        // Simulate filtering by Group A - only Group A flows should have inScope=true
+        String filterGroup = "Group A";
+        for (ExcelParserV5.FlowRow flow : parser.nurseCalls) {
+            flow.inScope = filterGroup.equals(flow.configGroup);
+        }
+        
+        // Verify only Group A is in scope
+        assertTrue(parser.nurseCalls.get(0).inScope, "Group A flow should be in scope");
+        assertFalse(parser.nurseCalls.get(1).inScope, "Group B flow should NOT be in scope");
+        assertFalse(parser.nurseCalls.get(2).inScope, "Group C flow should NOT be in scope");
+        
+        // Now simulate switching filter to "All" - all rows should be checked
+        for (ExcelParserV5.FlowRow flow : parser.nurseCalls) {
+            flow.inScope = true;
+        }
+        
+        // Verify ALL flows are now in scope
+        assertTrue(parser.nurseCalls.get(0).inScope, "Group A flow should be in scope when 'All' is selected");
+        assertTrue(parser.nurseCalls.get(1).inScope, "Group B flow should be in scope when 'All' is selected");
+        assertTrue(parser.nurseCalls.get(2).inScope, "Group C flow should be in scope when 'All' is selected");
+        
+        // Build JSON with all flows - should include all 3 flows
+        Map<String, Object> nurseJson = parser.buildNurseCallsJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
+        
+        // Should have all 3 flows when "All" is selected
+        assertEquals(3, flows.size(), "Should generate JSON for all flows when 'All' filter is selected");
+    }
 }
