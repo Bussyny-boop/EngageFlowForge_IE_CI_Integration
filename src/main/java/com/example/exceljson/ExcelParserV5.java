@@ -92,6 +92,9 @@ public class ExcelParserV5 {
   private static final String SHEET_NURSE = "Nurse Call";
   private static final String SHEET_CLINICAL = "Patient Monitoring";
   private static final String SHEET_ORDERS = "Order";
+  
+  // Regex pattern to strip special characters from Custom Unit role names
+  private static final String SPECIAL_CHARS_PATTERN = "[^a-zA-Z0-9\\s]";
 
   // NurseCallsCondition (requested default)
   private static final List<Map<String, Object>> NURSE_CONDITIONS;
@@ -691,11 +694,11 @@ public class ExcelParserV5 {
     String interfaceRef = determineInterfaceReferenceName(r.deviceA, r.deviceB);
     
     List<DestinationWithConditions> results = new ArrayList<>();
-    addOrderWithConditions(results, facility, 0, r.t1, r.r1, presenceConfig, mappedPriority, interfaceRef);
-    addOrderWithConditions(results, facility, 1, r.t2, r.r2, presenceConfig, mappedPriority, interfaceRef);
-    addOrderWithConditions(results, facility, 2, r.t3, r.r3, presenceConfig, mappedPriority, interfaceRef);
-    addOrderWithConditions(results, facility, 3, r.t4, r.r4, presenceConfig, mappedPriority, interfaceRef);
-    addOrderWithConditions(results, facility, 4, r.t5, r.r5, presenceConfig, mappedPriority, interfaceRef);
+    addOrderWithConditions(results, facility, 0, r.t1, r.r1, presenceConfig, mappedPriority, interfaceRef, flowType);
+    addOrderWithConditions(results, facility, 1, r.t2, r.r2, presenceConfig, mappedPriority, interfaceRef, flowType);
+    addOrderWithConditions(results, facility, 2, r.t3, r.r3, presenceConfig, mappedPriority, interfaceRef, flowType);
+    addOrderWithConditions(results, facility, 3, r.t4, r.r4, presenceConfig, mappedPriority, interfaceRef, flowType);
+    addOrderWithConditions(results, facility, 4, r.t5, r.r5, presenceConfig, mappedPriority, interfaceRef, flowType);
     
     List<Map<String,Object>> destinations = new ArrayList<>();
     List<Map<String,Object>> conditions = new ArrayList<>();
@@ -887,7 +890,7 @@ public class ExcelParserV5 {
                         String recipientText,
                         String presenceConfig) {
     List<DestinationWithConditions> results = new ArrayList<>();
-    addOrderWithConditions(results, facility, order, delayText, recipientText, presenceConfig, "normal", edgeReferenceName);
+    addOrderWithConditions(results, facility, order, delayText, recipientText, presenceConfig, "normal", edgeReferenceName, "Orders");
     for (DestinationWithConditions dwc : results) {
       out.add(dwc.destination);
     }
@@ -900,7 +903,8 @@ public class ExcelParserV5 {
                                       String recipientText,
                                       String presenceConfig,
                                       String mappedPriority,
-                                      String interfaceReferenceName) {
+                                      String interfaceReferenceName,
+                                      String flowType) {
     if (isBlank(recipientText)) return;
     
     // First check if this is a Custom Unit recipient (before splitting by comma)
@@ -912,7 +916,7 @@ public class ExcelParserV5 {
       ParsedRecipient pr = parseRecipient(recipientTextTrimmed, facility);
       if (pr.isCustomUnit && !pr.customUnitRoles.isEmpty()) {
         int delay = parseDelay(delayText);
-        addCustomUnitDestination(out, order, delay, pr.customUnitRoles, presenceConfig, mappedPriority, interfaceReferenceName);
+        addCustomUnitDestination(out, order, delay, pr.customUnitRoles, presenceConfig, mappedPriority, interfaceReferenceName, flowType);
         return;
       }
     }
@@ -965,6 +969,9 @@ public class ExcelParserV5 {
    * Based on priority:
    * - normal/high: filters for role name, state, device status
    * - urgent: adds presence filter
+   * 
+   * For Orders flows, uses "patient.current_place.locs.units" path.
+   * For other flows, uses "bed.room.unit.rooms.beds" path.
    */
   private void addCustomUnitDestination(List<DestinationWithConditions> out,
                                         int order,
@@ -972,8 +979,15 @@ public class ExcelParserV5 {
                                         List<String> roles,
                                         String presenceConfig,
                                         String mappedPriority,
-                                        String interfaceReferenceName) {
+                                        String interfaceReferenceName,
+                                        String flowType) {
     if (roles.isEmpty()) return;
+    
+    // Determine the base path based on flow type
+    boolean isOrdersFlow = "Orders".equals(flowType);
+    String basePath = isOrdersFlow 
+        ? "patient.current_place.locs.units.locs.assignments"
+        : "bed.room.unit.rooms.beds.locs.assignments";
     
     // Build the condition name from the roles
     String roleNames = String.join(" and ", roles);
@@ -987,21 +1001,21 @@ public class ExcelParserV5 {
     
     // Filter 1: role name
     Map<String, Object> roleFilter = new LinkedHashMap<>();
-    roleFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.role.name");
+    roleFilter.put("attributePath", basePath + ".role.name");
     roleFilter.put("operator", "in");
     roleFilter.put("value", roleValue);
     filters.add(roleFilter);
     
     // Filter 2: state
     Map<String, Object> stateFilter = new LinkedHashMap<>();
-    stateFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.state");
+    stateFilter.put("attributePath", basePath + ".state");
     stateFilter.put("operator", "in");
     stateFilter.put("value", "Active");
     filters.add(stateFilter);
     
     // Filter 3: device status
     Map<String, Object> deviceFilter = new LinkedHashMap<>();
-    deviceFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.usr.devices.status");
+    deviceFilter.put("attributePath", basePath + ".usr.devices.status");
     deviceFilter.put("operator", "in");
     deviceFilter.put("value", "Registered, Disconnected");
     filters.add(deviceFilter);
@@ -1010,7 +1024,7 @@ public class ExcelParserV5 {
     boolean isUrgent = "urgent".equalsIgnoreCase(mappedPriority);
     if (isUrgent) {
       Map<String, Object> presenceFilter = new LinkedHashMap<>();
-      presenceFilter.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.usr.presence_show");
+      presenceFilter.put("attributePath", basePath + ".usr.presence_show");
       presenceFilter.put("operator", "in");
       presenceFilter.put("value", "Chat, Available");
       filters.add(presenceFilter);
@@ -1024,7 +1038,7 @@ public class ExcelParserV5 {
     
     // Build the destination
     Map<String, Object> dest = new LinkedHashMap<>();
-    dest.put("attributePath", "bed.room.unit.rooms.beds.locs.assignments.usr.devices.lines.number");
+    dest.put("attributePath", basePath + ".usr.devices.lines.number");
     dest.put("delayTime", delay);
     dest.put("destinationType", "Normal");
     dest.put("functionalRoles", List.of());
@@ -1695,6 +1709,10 @@ public class ExcelParserV5 {
         // Skip standalone "All"
         continue;
       }
+      
+      // Strip all special characters, keeping only alphanumeric and spaces
+      // This handles cases like "Nurse]", "CNA#", "Charge Nurse@" -> "Nurse", "CNA", "Charge Nurse"
+      part = part.replaceAll(SPECIAL_CHARS_PATTERN, "").trim();
       
       if (!part.isEmpty()) {
         roles.add(part);
