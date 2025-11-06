@@ -150,6 +150,9 @@ public class AppController {
     private File currentExcelFile;
     private String lastGeneratedJson = "";
     private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
+    
+    // Tab animation
+    private FadeTransition tabFadeTransition = null;
 
     // ---------- Filtered Lists for Tables ----------
     private ObservableList<ExcelParserV5.UnitRow> unitsFullList;
@@ -253,10 +256,22 @@ public class AppController {
             mainTabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
                 if (newTab != null && newTab.getContent() != null) {
                     Node content = newTab.getContent();
-                    FadeTransition fade = new FadeTransition(Duration.millis(200), content);
-                    fade.setFromValue(0.0);
-                    fade.setToValue(1.0);
-                    fade.play();
+                    
+                    // Stop any ongoing animation
+                    if (tabFadeTransition != null) {
+                        tabFadeTransition.stop();
+                    }
+                    
+                    // Create or reuse fade transition
+                    if (tabFadeTransition == null) {
+                        tabFadeTransition = new FadeTransition(Duration.millis(200));
+                    }
+                    
+                    // Configure and play
+                    tabFadeTransition.setNode(content);
+                    tabFadeTransition.setFromValue(0.0);
+                    tabFadeTransition.setToValue(1.0);
+                    tabFadeTransition.play();
                 }
             });
         }

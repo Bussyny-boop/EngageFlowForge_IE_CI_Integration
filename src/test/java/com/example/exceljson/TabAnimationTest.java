@@ -28,8 +28,8 @@ public class TabAnimationTest {
         var cssResource = getClass().getResource("/css/vocera-theme.css");
         assertNotNull(cssResource, "vocera-theme.css should exist");
         
-        try {
-            String cssContent = new String(cssResource.openStream().readAllBytes());
+        try (var stream = cssResource.openStream()) {
+            String cssContent = new String(stream.readAllBytes());
             
             // Verify tab-related styles are present
             assertTrue(cssContent.contains(".tab-pane"), "CSS should contain tab-pane styles");
@@ -47,8 +47,8 @@ public class TabAnimationTest {
         var fxmlResource = getClass().getResource("/com/example/exceljson/App.fxml");
         assertNotNull(fxmlResource, "App.fxml should exist");
         
-        try {
-            String fxmlContent = new String(fxmlResource.openStream().readAllBytes());
+        try (var stream = fxmlResource.openStream()) {
+            String fxmlContent = new String(stream.readAllBytes());
             
             // Verify tabs have fx:id attributes
             assertTrue(fxmlContent.contains("fx:id=\"mainTabs\""), "FXML should contain mainTabs TabPane");
