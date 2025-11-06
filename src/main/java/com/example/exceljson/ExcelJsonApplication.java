@@ -37,16 +37,16 @@ public class ExcelJsonApplication extends Application {
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
         
-        // Load Stryker theme CSS
+        // Load Vocera theme CSS
         try {
-            var cssResource = getClass().getResource("/css/stryker-theme.css");
+            var cssResource = getClass().getResource("/css/vocera-theme.css");
             if (cssResource != null) {
                 scene.getStylesheets().add(cssResource.toExternalForm());
             } else {
-                System.err.println("Warning: stryker-theme.css not found in resources. Using default styling.");
+                System.err.println("Warning: vocera-theme.css not found in resources. Using default styling.");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Failed to load stryker-theme.css: " + e.getMessage());
+            System.err.println("Warning: Failed to load vocera-theme.css: " + e.getMessage());
         }
         
         primaryStage.setScene(scene);

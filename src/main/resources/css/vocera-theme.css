@@ -1,0 +1,289 @@
+/* =========================================
+   Vocera Engage Theme
+   Teal (#00979D) + Dark Gray + White
+   Professional, clean interface
+   ========================================= */
+
+/* --- Global Font and Layout --- */
+.root {
+    -fx-font-family: "Segoe UI", "Open Sans", "Roboto", sans-serif;
+    -fx-background-color: #f7f7f7;
+    -fx-text-fill: #333333;
+}
+
+/* --- BorderPane --- */
+.border-pane {
+    -fx-background-color: #ffffff;
+}
+
+/* --- Header Bar --- */
+.header-bar {
+    -fx-background-color: #00979D;
+    -fx-padding: 8 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);
+}
+
+.header-bar Label {
+    -fx-text-fill: white;
+}
+
+/* --- Buttons --- */
+.button, .button-secondary {
+    -fx-background-radius: 5;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.button {
+    -fx-background-color: #00979D;
+    -fx-text-fill: white;
+}
+
+.button:hover {
+    -fx-background-color: #00A8AF;
+}
+
+.button:pressed {
+    -fx-background-color: #007C80;
+}
+
+.button:disabled {
+    -fx-opacity: 0.5;
+    -fx-background-color: #95a5a6;
+}
+
+.button-secondary {
+    -fx-background-color: #E0E0E0;
+    -fx-text-fill: #333;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #D5D5D5;
+}
+
+.button-secondary:pressed {
+    -fx-background-color: #C0C0C0;
+}
+
+/* --- Tabs --- */
+.tab-pane {
+    -fx-background-color: white;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: #EAEAEA;
+}
+
+.tab-pane .tab-content-area {
+    -fx-background-color: #FFFFFF;
+}
+
+.tab {
+    -fx-background-color: #F5F5F5;
+    -fx-background-radius: 6 6 0 0;
+    -fx-border-color: #CCC;
+    -fx-border-width: 1 1 0 1;
+}
+
+.tab:selected {
+    -fx-background-color: #00979D;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+}
+
+.tab .graphic {
+    -fx-opacity: 0.8;
+    -fx-translate-y: 1px;
+}
+
+.tab:selected .graphic {
+    -fx-opacity: 1.0;
+}
+
+.tab:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+.tab:selected:hover {
+    -fx-background-color: #00A8AF;
+}
+
+/* --- Table --- */
+.table-view {
+    -fx-border-color: #CCC;
+    -fx-background-color: white;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #F0F0F0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-background-color: white;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #FAFAFA;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #00979D;
+    -fx-text-fill: white;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #E8F5F6;
+}
+
+.table-row-cell:selected:hover {
+    -fx-background-color: #00A8AF;
+}
+
+/* --- Text Fields --- */
+.text-field {
+    -fx-border-color: #CCC;
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 4 6;
+    -fx-font-size: 13px;
+}
+
+.text-field:focused {
+    -fx-border-color: #00979D;
+    -fx-border-width: 2;
+}
+
+/* --- TextArea (JSON Preview) --- */
+.text-area {
+    -fx-background-color: white;
+    -fx-border-color: #CCC;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+    -fx-font-family: "Consolas", "Monaco", "Liberation Mono", monospace;
+    -fx-font-size: 12px;
+}
+
+.text-area .content {
+    -fx-background-color: white;
+}
+
+.text-area:focused {
+    -fx-border-color: #00979D;
+    -fx-border-width: 2;
+}
+
+/* --- Labels --- */
+.label {
+    -fx-text-fill: #333;
+    -fx-font-size: 13px;
+}
+
+/* --- CheckBox --- */
+.check-box {
+    -fx-text-fill: #333;
+}
+
+.check-box .box {
+    -fx-background-color: white;
+    -fx-border-color: #CCC;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #00979D;
+    -fx-border-color: #007C80;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+.check-box:hover .box {
+    -fx-border-color: #00979D;
+}
+
+/* --- ComboBox --- */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #CCC;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.combo-box:focused {
+    -fx-border-color: #00979D;
+}
+
+/* --- Status Bar --- */
+.status-bar {
+    -fx-background-color: #2C2C2C;
+    -fx-text-fill: #B0B0B0;
+    -fx-padding: 4 10;
+}
+
+/* --- Separator --- */
+.separator {
+    -fx-background-color: transparent;
+}
+
+.separator .line {
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* --- ScrollBar --- */
+.scroll-bar {
+    -fx-background-color: #F5F5F5;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #C0C0C0;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #00979D;
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #007C80;
+}
+
+/* --- Tooltip --- */
+.tooltip {
+    -fx-background-color: #2C2C2C;
+    -fx-text-fill: white;
+    -fx-padding: 6 8;
+    -fx-font-size: 12px;
+    -fx-background-radius: 4;
+}
+
+/* --- SplitPane --- */
+.split-pane .split-pane-divider {
+    -fx-background-color: #CCC;
+}
+
+.split-pane .split-pane-divider:hover {
+    -fx-background-color: #00979D;
+}
