@@ -1212,7 +1212,7 @@ public class ExcelParserV5 {
       : "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
     params.add(paQ("placeUid", "#{bed.uid}"));
     params.add(paLiteralBool("popup", true));
-    params.add(paQ("eventIdentification", nurseSide ? "Nursecall:#{id}" : "Clinicals:#{id}"));
+    params.add(paQ("eventIdentification", nurseSide ? "NurseCalls:#{id}" : "Clinicals:#{id}"));
     params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
     params.add(paQ("subject", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
     String ttlStr = isBlank(r.ttlValue) ? "10" : String.valueOf(parseDelay(r.ttlValue));

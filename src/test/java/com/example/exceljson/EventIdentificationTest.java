@@ -82,7 +82,7 @@ class EventIdentificationTest {
         for (Map<String, Object> param : params) {
             if ("eventIdentification".equals(param.get("name"))) {
                 String value = (String) param.get("value");
-                assertEquals("\"Nursecall:#{id}\"", value, "Nursecall eventIdentification should be Nursecall:#{id}");
+                assertEquals("\"NurseCalls:#{id}\"", value, "NurseCalls eventIdentification should be NurseCalls:#{id}");
                 foundEventId = true;
                 break;
             }
