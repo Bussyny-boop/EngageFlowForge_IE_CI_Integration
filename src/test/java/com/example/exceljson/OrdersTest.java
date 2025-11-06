@@ -594,6 +594,75 @@ class OrdersTest {
     }
 
     @Test
+    void ordersDestinationNameStripsSpecialCharactersAfterRoom() throws Exception {
+        File excelFile = tempDir.resolve("test-orders-special-chars.xlsx").toFile();
+        
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            // Create Unit Breakdown sheet
+            Sheet unitSheet = wb.createSheet("Unit Breakdown");
+            Row headerRow = unitSheet.createRow(2);
+            headerRow.createCell(0).setCellValue("Facility");
+            headerRow.createCell(1).setCellValue("Common Unit Name");
+            headerRow.createCell(4).setCellValue("Orders Configuration Group");
+            
+            Row dataRow = unitSheet.createRow(3);
+            dataRow.createCell(0).setCellValue("Test Facility");
+            dataRow.createCell(1).setCellValue("Test Unit");
+            dataRow.createCell(4).setCellValue("Orders Group 1");
+            
+            // Create Orders sheet with special characters between "Room" and role name
+            Sheet ordersSheet = wb.createSheet("Order");
+            Row orderHeader = ordersSheet.createRow(2);
+            orderHeader.createCell(0).setCellValue("In scope");
+            orderHeader.createCell(1).setCellValue("Configuration Group");
+            orderHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            orderHeader.createCell(7).setCellValue("1st Recipient");
+            orderHeader.createCell(9).setCellValue("2nd Recipient");
+            orderHeader.createCell(11).setCellValue("3rd Recipient");
+            orderHeader.createCell(13).setCellValue("4th Recipient");
+            orderHeader.createCell(15).setCellValue("5th Recipient");
+            
+            Row orderData = ordersSheet.createRow(3);
+            orderData.createCell(0).setCellValue("TRUE");
+            orderData.createCell(1).setCellValue("Orders Group 1");
+            orderData.createCell(2).setCellValue("Med Order");
+            // Test various special character patterns that should be stripped
+            orderData.createCell(7).setCellValue("VAssign:[Room] CNA");  // Bracket before role
+            orderData.createCell(9).setCellValue("Rld: R5: Room] Nurse");  // Bracket after Room
+            orderData.createCell(11).setCellValue("Room) PCT");  // Parenthesis after Room
+            orderData.createCell(13).setCellValue("Room - RN");  // Dash after Room
+            orderData.createCell(15).setCellValue("Room]  Charge Nurse");  // Bracket and spaces
+            
+            try (FileOutputStream fos = new FileOutputStream(excelFile)) {
+                wb.write(fos);
+            }
+        }
+        
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelFile);
+        
+        Map<String, Object> ordersJson = parser.buildOrdersJson();
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        
+        // Verify special characters are stripped from destinationName values
+        Map<String, Object> dest0 = findParameterWithDestinationOrder(params, "destinationName", 0);
+        Map<String, Object> dest1 = findParameterWithDestinationOrder(params, "destinationName", 1);
+        Map<String, Object> dest2 = findParameterWithDestinationOrder(params, "destinationName", 2);
+        Map<String, Object> dest3 = findParameterWithDestinationOrder(params, "destinationName", 3);
+        Map<String, Object> dest4 = findParameterWithDestinationOrder(params, "destinationName", 4);
+        
+        assertEquals("\"CNA\"", dest0.get("value"), "Should strip '] ' before 'CNA'");
+        assertEquals("\"Nurse\"", dest1.get("value"), "Should strip '] ' before 'Nurse'");
+        assertEquals("\"PCT\"", dest2.get("value"), "Should strip ') ' before 'PCT'");
+        assertEquals("\"RN\"", dest3.get("value"), "Should strip '- ' before 'RN'");
+        assertEquals("\"Charge Nurse\"", dest4.get("value"), "Should strip ']  ' before 'Charge Nurse'");
+    }
+
+    @Test
     void ordersFlowHandlesMultipleRoomsInOneRecipient() throws Exception {
         File excelFile = tempDir.resolve("test-orders-multiple-rooms.xlsx").toFile();
         

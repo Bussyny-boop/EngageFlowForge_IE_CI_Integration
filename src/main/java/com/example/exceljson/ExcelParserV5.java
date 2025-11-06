@@ -1245,10 +1245,17 @@ public class ExcelParserV5 {
     // Extract text after "Room" keyword (case-insensitive)
     // Examples: "VAssign: Room Charge Nurse" -> "Charge Nurse"
     //           "Rld: R5: CS 1: Room PCT" -> "PCT"
+    //           "VAssign:[Room] CNA" -> "CNA"
+    //           "Room] Nurse" -> "Nurse"
+    //           "Room - RN" -> "RN"
     int roomIdx = raw.toLowerCase(Locale.ROOT).indexOf("room");
     if (roomIdx >= 0 && roomIdx + 4 < raw.length()) {
-      // Extract everything after "room" (skip the word itself)
-      value = raw.substring(roomIdx + 4).trim();
+      // Extract everything after "room" (skip the word itself) and trim
+      String afterRoom = raw.substring(roomIdx + 4).trim();
+      // Remove leading special characters (brackets, parentheses, dashes, etc.) and spaces
+      // Keep only alphanumeric text and spaces within the role name
+      afterRoom = afterRoom.replaceAll("^[^a-zA-Z0-9]+", "").trim();
+      value = afterRoom.isEmpty() ? "" : afterRoom;
     } else if (roomIdx >= 0) {
       // "room" is at the end or near the end
       value = "";
