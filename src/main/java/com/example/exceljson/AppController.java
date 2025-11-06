@@ -780,6 +780,12 @@ public class AppController {
         if (selected == null || selected.equals("All")) {
             nurseCallsFilteredList.setPredicate(flow -> true); // Show all
         } else {
+            // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
+            if (nurseCallsFullList != null) {
+                for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
+                    flow.inScope = selected.equals(flow.configGroup);
+                }
+            }
             nurseCallsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
@@ -793,6 +799,12 @@ public class AppController {
         if (selected == null || selected.equals("All")) {
             clinicalsFilteredList.setPredicate(flow -> true); // Show all
         } else {
+            // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
+            if (clinicalsFullList != null) {
+                for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
+                    flow.inScope = selected.equals(flow.configGroup);
+                }
+            }
             clinicalsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
@@ -806,6 +818,12 @@ public class AppController {
         if (selected == null || selected.equals("All")) {
             ordersFilteredList.setPredicate(flow -> true); // Show all
         } else {
+            // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
+            if (ordersFullList != null) {
+                for (ExcelParserV5.FlowRow flow : ordersFullList) {
+                    flow.inScope = selected.equals(flow.configGroup);
+                }
+            }
             ordersFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
