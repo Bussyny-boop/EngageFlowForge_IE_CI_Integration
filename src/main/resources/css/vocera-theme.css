@@ -11,6 +11,11 @@
     -fx-text-fill: #333333;
 }
 
+/* --- BorderPane --- */
+.border-pane {
+    -fx-background-color: #ffffff;
+}
+
 /* --- Header Bar --- */
 .header-bar {
     -fx-background-color: #00979D;
