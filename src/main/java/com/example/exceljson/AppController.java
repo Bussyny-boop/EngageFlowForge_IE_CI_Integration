@@ -778,6 +778,12 @@ public class AppController {
         
         String selected = nurseConfigGroupFilter.getSelectionModel().getSelectedItem();
         if (selected == null || selected.equals("All")) {
+            // Check all rows when "All" is selected
+            if (nurseCallsFullList != null) {
+                for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
+                    flow.inScope = true;
+                }
+            }
             nurseCallsFilteredList.setPredicate(flow -> true); // Show all
         } else {
             // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
@@ -789,6 +795,7 @@ public class AppController {
             nurseCallsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
+        if (tableNurseCalls != null) tableNurseCalls.refresh();
         updateStatusLabel();
     }
 
@@ -797,6 +804,12 @@ public class AppController {
         
         String selected = clinicalConfigGroupFilter.getSelectionModel().getSelectedItem();
         if (selected == null || selected.equals("All")) {
+            // Check all rows when "All" is selected
+            if (clinicalsFullList != null) {
+                for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
+                    flow.inScope = true;
+                }
+            }
             clinicalsFilteredList.setPredicate(flow -> true); // Show all
         } else {
             // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
@@ -808,6 +821,7 @@ public class AppController {
             clinicalsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
+        if (tableClinicals != null) tableClinicals.refresh();
         updateStatusLabel();
     }
 
@@ -816,6 +830,12 @@ public class AppController {
         
         String selected = ordersConfigGroupFilter.getSelectionModel().getSelectedItem();
         if (selected == null || selected.equals("All")) {
+            // Check all rows when "All" is selected
+            if (ordersFullList != null) {
+                for (ExcelParserV5.FlowRow flow : ordersFullList) {
+                    flow.inScope = true;
+                }
+            }
             ordersFilteredList.setPredicate(flow -> true); // Show all
         } else {
             // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
@@ -827,6 +847,7 @@ public class AppController {
             ordersFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
+        if (tableOrders != null) tableOrders.refresh();
         updateStatusLabel();
     }
 
