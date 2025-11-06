@@ -1045,7 +1045,7 @@ public class ExcelParserV5 {
     dest.put("groups", List.of());
     dest.put("interfaceReferenceName", interfaceReferenceName);
     dest.put("order", order);
-    dest.put("presenceConfig", presenceConfig);
+    dest.put("presenceConfig", "none");  // Always "none" for Custom Unit workflows
     dest.put("recipientType", "custom");
     dest.put("users", List.of());
     
@@ -1088,7 +1088,7 @@ public class ExcelParserV5 {
       params.add(paLiteralBool("enunciate", enunciateValue));
       
       params.add(paLiteralBool("popup", true));
-      params.add(paQ("eventIdentification", "#{id}"));
+      params.add(paQ("eventIdentification", "Orders:#{id}"));
       params.add(paQ("shortMessage", "#{alert_type} \\\\nProcedure #{category} #{description}"));
       params.add(paQ("subject", "#{alert_type} #{patient.current_place.room.name} - #{patient.current_place.bed_number}"));
       
@@ -1212,7 +1212,7 @@ public class ExcelParserV5 {
       : "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
     params.add(paQ("placeUid", "#{bed.uid}"));
     params.add(paLiteralBool("popup", true));
-    params.add(paQ("eventIdentification", nurseSide ? "NurseCalls:#{id}" : "#{id}"));
+    params.add(paQ("eventIdentification", nurseSide ? "Nursecall:#{id}" : "Clinicals:#{id}"));
     params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
     params.add(paQ("subject", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
     String ttlStr = isBlank(r.ttlValue) ? "10" : String.valueOf(parseDelay(r.ttlValue));

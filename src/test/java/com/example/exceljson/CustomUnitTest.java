@@ -112,6 +112,7 @@ class CustomUnitTest {
         assertEquals("bed.room.unit.rooms.beds.locs.assignments.usr.devices.lines.number", dest.get("attributePath"));
         assertEquals(0, dest.get("delayTime"));
         assertEquals("OutgoingWCTP", dest.get("interfaceReferenceName"));
+        assertEquals("none", dest.get("presenceConfig"), "Custom Unit should have presenceConfig set to none");
     }
 
     @Test
