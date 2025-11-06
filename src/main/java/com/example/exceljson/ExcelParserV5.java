@@ -95,6 +95,9 @@ public class ExcelParserV5 {
   
   // Regex pattern to strip special characters from Custom Unit role names
   private static final String SPECIAL_CHARS_PATTERN = "[^a-zA-Z0-9\\s]";
+  
+  // Regex pattern to strip leading special characters after "Room" keyword
+  private static final String LEADING_SPECIAL_CHARS_PATTERN = "^[^a-zA-Z0-9]+";
 
   // NurseCallsCondition (requested default)
   private static final List<Map<String, Object>> NURSE_CONDITIONS;
@@ -1254,7 +1257,7 @@ public class ExcelParserV5 {
       String afterRoom = raw.substring(roomIdx + 4).trim();
       // Remove leading special characters (brackets, parentheses, dashes, etc.) and spaces
       // Keep only alphanumeric text and spaces within the role name
-      afterRoom = afterRoom.replaceAll("^[^a-zA-Z0-9]+", "").trim();
+      afterRoom = afterRoom.replaceAll(LEADING_SPECIAL_CHARS_PATTERN, "").trim();
       value = afterRoom.isEmpty() ? "" : afterRoom;
     } else if (roomIdx >= 0) {
       // "room" is at the end or near the end
@@ -1634,7 +1637,7 @@ public class ExcelParserV5 {
       String afterRoom = valuePortion.substring(roomIdx + 4).trim();
       // Remove leading special characters (brackets, parentheses, dashes, etc.) and spaces
       // Keep only alphanumeric text and spaces within the role name
-      afterRoom = afterRoom.replaceAll("^[^a-zA-Z0-9]+", "").trim();
+      afterRoom = afterRoom.replaceAll(LEADING_SPECIAL_CHARS_PATTERN, "").trim();
       if (!afterRoom.isEmpty()) {
         valuePortion = afterRoom;
         isFunctionalRole = true; // If "Room" keyword found, it's a functional role
