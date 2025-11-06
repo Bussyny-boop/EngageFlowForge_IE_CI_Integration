@@ -59,10 +59,13 @@
     <center>
         <SplitPane orientation="VERTICAL" dividerPositions="0.65">
             <items>
-                <TabPane tabClosingPolicy="UNAVAILABLE">
+                <TabPane fx:id="mainTabs" tabClosingPolicy="UNAVAILABLE">
                     <tabs>
                         <!-- Units -->
-                        <Tab text="📊 Units">
+                        <Tab fx:id="tabUnits" text="  Units">
+                            <graphic>
+                                <Label text="📊" style="-fx-font-size: 14px;"/>
+                            </graphic>
                             <content>
                                 <BorderPane>
                                     <top>
@@ -92,7 +95,10 @@
                         </Tab>
 
                         <!-- Nurse Calls -->
-                        <Tab text="🔔 Nurse Calls">
+                        <Tab fx:id="tabNurse" text="  Nurse Calls">
+                            <graphic>
+                                <Label text="🔔" style="-fx-font-size: 14px;"/>
+                            </graphic>
                             <content>
                                 <BorderPane>
                                     <top>
@@ -138,7 +144,10 @@
                         </Tab>
 
                         <!-- Clinicals -->
-                        <Tab text="🏥 Clinicals">
+                        <Tab fx:id="tabClinicals" text="  Clinicals">
+                            <graphic>
+                                <Label text="🏥" style="-fx-font-size: 14px;"/>
+                            </graphic>
                             <content>
                                 <BorderPane>
                                     <top>
@@ -185,7 +194,10 @@
                         </Tab>
 
                         <!-- Orders -->
-                        <Tab text="💊 Orders">
+                        <Tab fx:id="tabOrders" text="  Orders">
+                            <graphic>
+                                <Label text="💊" style="-fx-font-size: 14px;"/>
+                            </graphic>
                             <content>
                                 <BorderPane>
                                     <top>

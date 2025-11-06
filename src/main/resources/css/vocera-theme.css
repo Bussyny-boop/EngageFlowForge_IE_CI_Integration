@@ -20,6 +20,7 @@
 .header-bar {
     -fx-background-color: #00979D;
     -fx-padding: 8 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);
 }
 
 .header-bar Label {
@@ -75,6 +76,10 @@
     -fx-background-color: #EAEAEA;
 }
 
+.tab-pane .tab-content-area {
+    -fx-background-color: #FFFFFF;
+}
+
 .tab {
     -fx-background-color: #F5F5F5;
     -fx-background-radius: 6 6 0 0;
@@ -93,6 +98,16 @@
 
 .tab .tab-label {
     -fx-text-fill: #333;
+    -fx-font-weight: bold;
+}
+
+.tab .graphic {
+    -fx-opacity: 0.8;
+    -fx-translate-y: 1px;
+}
+
+.tab:selected .graphic {
+    -fx-opacity: 1.0;
 }
 
 .tab:hover {

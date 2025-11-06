@@ -1,16 +1,19 @@
 package com.example.exceljson;
 
+import javafx.animation.FadeTransition;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.util.*;
@@ -39,6 +42,13 @@ public class AppController {
     @FXML private Button resetPathsButton;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
+
+    // ---------- Tabs ----------
+    @FXML private TabPane mainTabs;
+    @FXML private Tab tabUnits;
+    @FXML private Tab tabNurse;
+    @FXML private Tab tabClinicals;
+    @FXML private Tab tabOrders;
 
     // ---------- Config Group Filters ----------
     @FXML private ComboBox<String> unitConfigGroupFilter;
@@ -235,6 +245,19 @@ public class AppController {
             defaultVmpCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 checkBothDefaultInterfacesSelected();
                 updateInterfaceRefs();
+            });
+        }
+        
+        // --- Smooth fade animation when tab changes ---
+        if (mainTabs != null) {
+            mainTabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (newTab != null && newTab.getContent() != null) {
+                    Node content = newTab.getContent();
+                    FadeTransition fade = new FadeTransition(Duration.millis(200), content);
+                    fade.setFromValue(0.0);
+                    fade.setToValue(1.0);
+                    fade.play();
+                }
             });
         }
     }
