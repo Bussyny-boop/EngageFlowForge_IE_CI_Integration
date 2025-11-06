@@ -53,6 +53,27 @@
                     </CheckBox>
                     <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
                 </HBox>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Room Filter:" />
+                    <Label text="Nursecall:" />
+                    <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="100">
+                        <tooltip>
+                            <Tooltip text="Filter Nursecall flows by room number" />
+                        </tooltip>
+                    </TextField>
+                    <Label text="Clinical:" />
+                    <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="100">
+                        <tooltip>
+                            <Tooltip text="Filter Clinical flows by room number" />
+                        </tooltip>
+                    </TextField>
+                    <Label text="Orders:" />
+                    <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="100">
+                        <tooltip>
+                            <Tooltip text="Filter Orders flows by room number" />
+                        </tooltip>
+                    </TextField>
+                </HBox>
                 <Separator />
             </VBox>
         </VBox>

@@ -72,6 +72,11 @@ public class ExcelParserV5 {
   // Default interface flags (when Device A/B are blank)
   private boolean useDefaultEdge = false;
   private boolean useDefaultVmp = false;
+  
+  // Room filter values (optional filters for each flow type)
+  private String roomFilterNursecall = "";
+  private String roomFilterClinical = "";
+  private String roomFilterOrders = "";
 
   public void setInterfaceReferences(String edgeRef, String vcsRef) {
     // Basic validation - ensure references are reasonable
@@ -86,6 +91,12 @@ public class ExcelParserV5 {
   public void setDefaultInterfaces(boolean defaultEdge, boolean defaultVmp) {
     this.useDefaultEdge = defaultEdge;
     this.useDefaultVmp = defaultVmp;
+  }
+  
+  public void setRoomFilters(String nursecall, String clinical, String orders) {
+    this.roomFilterNursecall = (nursecall != null && !nursecall.isBlank()) ? nursecall.trim() : "";
+    this.roomFilterClinical = (clinical != null && !clinical.isBlank()) ? clinical.trim() : "";
+    this.roomFilterOrders = (orders != null && !orders.isBlank()) ? orders.trim() : "";
   }
 
   private static final String SHEET_UNIT = "Unit Breakdown";
@@ -498,12 +509,40 @@ public class ExcelParserV5 {
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", List.of(nvl(r.alarmName, r.sendingName)));
       
-      // Use custom conditions if available, otherwise use default nurse conditions
+      // Build conditions with room filter if applicable
+      List<Map<String,Object>> flowConditions = new ArrayList<>();
+      
       if (!dac.conditions.isEmpty()) {
-        flow.put("conditions", dac.conditions);
-      } else {
-        flow.put("conditions", nurseSide ? nurseConditions() : List.of());
+        flowConditions.addAll(dac.conditions);
+      } else if (nurseSide) {
+        flowConditions.addAll(nurseConditions());
+      } else if (ordersType) {
+        // Orders need a global condition
+        Map<String, Object> filter = new LinkedHashMap<>();
+        filter.put("attributePath", "patient.current_place");
+        filter.put("operator", "not_null");
+        
+        Map<String, Object> globalCond = new LinkedHashMap<>();
+        globalCond.put("filters", List.of(filter));
+        globalCond.put("name", "Global Condition");
+        flowConditions.add(globalCond);
       }
+      
+      // Add room filter condition based on flow type
+      Map<String,Object> roomFilterCond = null;
+      if (nurseSide && !roomFilterNursecall.isEmpty()) {
+        roomFilterCond = buildRoomFilterCondition(roomFilterNursecall);
+      } else if ("Clinicals".equals(flowType) && !roomFilterClinical.isEmpty()) {
+        roomFilterCond = buildRoomFilterCondition(roomFilterClinical);
+      } else if (ordersType && !roomFilterOrders.isEmpty()) {
+        roomFilterCond = buildOrdersRoomFilterCondition(roomFilterOrders);
+      }
+      
+      if (roomFilterCond != null) {
+        flowConditions.add(roomFilterCond);
+      }
+      
+      flow.put("conditions", flowConditions);
       
       flow.put("destinations", dac.destinations);
       flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB));
@@ -558,12 +597,41 @@ public class ExcelParserV5 {
       Map<String,Object> flow = new LinkedHashMap<>();
       flow.put("alarmsAlerts", alarmNames);
       
-      // Use custom conditions if available, otherwise use default nurse conditions
+      // Build conditions with room filter if applicable
+      boolean ordersType = "Orders".equals(flowType);
+      List<Map<String,Object>> flowConditions = new ArrayList<>();
+      
       if (!dac.conditions.isEmpty()) {
-        flow.put("conditions", dac.conditions);
-      } else {
-        flow.put("conditions", nurseSide ? nurseConditions() : List.of());
+        flowConditions.addAll(dac.conditions);
+      } else if (nurseSide) {
+        flowConditions.addAll(nurseConditions());
+      } else if (ordersType) {
+        // Orders need a global condition
+        Map<String, Object> filter = new LinkedHashMap<>();
+        filter.put("attributePath", "patient.current_place");
+        filter.put("operator", "not_null");
+        
+        Map<String, Object> globalCond = new LinkedHashMap<>();
+        globalCond.put("filters", List.of(filter));
+        globalCond.put("name", "Global Condition");
+        flowConditions.add(globalCond);
       }
+      
+      // Add room filter condition based on flow type
+      Map<String,Object> roomFilterCond = null;
+      if (nurseSide && !roomFilterNursecall.isEmpty()) {
+        roomFilterCond = buildRoomFilterCondition(roomFilterNursecall);
+      } else if ("Clinicals".equals(flowType) && !roomFilterClinical.isEmpty()) {
+        roomFilterCond = buildRoomFilterCondition(roomFilterClinical);
+      } else if (ordersType && !roomFilterOrders.isEmpty()) {
+        roomFilterCond = buildOrdersRoomFilterCondition(roomFilterOrders);
+      }
+      
+      if (roomFilterCond != null) {
+        flowConditions.add(roomFilterCond);
+      }
+      
+      flow.put("conditions", flowConditions);
       
       flow.put("destinations", dac.destinations);
       flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
@@ -1282,6 +1350,44 @@ public class ExcelParserV5 {
     List<Map<String,Object>> out = new ArrayList<>();
     for (Map<String,Object> m : NURSE_CONDITIONS) out.add(new LinkedHashMap<>(m));
     return out;
+  }
+  
+  /**
+   * Build room filter condition for Nursecall or Clinical flows.
+   * Only adds the condition if roomValue is not blank.
+   */
+  private Map<String,Object> buildRoomFilterCondition(String roomValue) {
+    if (isBlank(roomValue)) return null;
+    
+    Map<String, Object> filter = new LinkedHashMap<>();
+    filter.put("attributePath", "bed.room.room_number");
+    filter.put("operator", "equal");
+    filter.put("value", roomValue);
+    
+    Map<String, Object> condition = new LinkedHashMap<>();
+    condition.put("filters", List.of(filter));
+    condition.put("name", "Room Filter For TT");
+    
+    return condition;
+  }
+  
+  /**
+   * Build room filter condition for Orders flows (different structure).
+   * Only adds the condition if roomValue is not blank.
+   */
+  private Map<String,Object> buildOrdersRoomFilterCondition(String roomValue) {
+    if (isBlank(roomValue)) return null;
+    
+    Map<String, Object> filter = new LinkedHashMap<>();
+    filter.put("attributePath", "patient.current_place.locs.units.rooms.room_number");
+    filter.put("operator", "in");
+    filter.put("value", roomValue);
+    
+    Map<String, Object> condition = new LinkedHashMap<>();
+    condition.put("filters", List.of(filter));
+    condition.put("name", "Room Filter for TT");
+    
+    return condition;
   }
 
   // ---------- Flow name ----------
