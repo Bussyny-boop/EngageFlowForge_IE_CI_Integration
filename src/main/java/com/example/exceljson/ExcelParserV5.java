@@ -617,56 +617,71 @@ public class ExcelParserV5 {
         .distinct()
         .collect(Collectors.toList());
       
-      // Build destinations and conditions
-      DestinationsAndConditions dac = buildDestinationsAndConditions(template, unitRefs, flowType, mappedPriority);
+      // Determine the config group type for No Caregiver Group lookup
+      String configGroupType = getConfigGroupType(flowType);
+      
+      // Group units by their No Caregiver Group to split flows when necessary
+      Map<String, List<Map<String,String>>> unitsByNoCareGroup = new LinkedHashMap<>();
+      for (Map<String,String> unitRef : unitRefs) {
+        String facility = unitRef.get("facilityName");
+        String lookupKey = buildNoCaregiverKey(facility, configGroupType, template.configGroup);
+        String noCareValue = noCaregiverByFacilityAndGroup.getOrDefault(lookupKey, "");
+        unitsByNoCareGroup.computeIfAbsent(noCareValue, k -> new ArrayList<>()).add(unitRef);
+      }
+      
+      // Create separate flows for each unique No Caregiver Group
+      for (List<Map<String,String>> unitsForNoCareGroup : unitsByNoCareGroup.values()) {
+        // Build destinations and conditions for this subset of units
+        DestinationsAndConditions dac = buildDestinationsAndConditions(template, unitsForNoCareGroup, flowType, mappedPriority);
 
-      Map<String,Object> flow = new LinkedHashMap<>();
-      flow.put("alarmsAlerts", alarmNames);
-      
-      // Build conditions with room filter if applicable
-      boolean ordersType = "Orders".equals(flowType);
-      List<Map<String,Object>> flowConditions = new ArrayList<>();
-      
-      if (!dac.conditions.isEmpty()) {
-        flowConditions.addAll(dac.conditions);
-      } else if (nurseSide) {
-        flowConditions.addAll(nurseConditions());
-      } else if (ordersType) {
-        // Orders need a global condition
-        Map<String, Object> filter = new LinkedHashMap<>();
-        filter.put("attributePath", "patient.current_place");
-        filter.put("operator", "not_null");
+        Map<String,Object> flow = new LinkedHashMap<>();
+        flow.put("alarmsAlerts", alarmNames);
         
-        Map<String, Object> globalCond = new LinkedHashMap<>();
-        globalCond.put("filters", List.of(filter));
-        globalCond.put("name", "Global Condition");
-        flowConditions.add(globalCond);
+        // Build conditions with room filter if applicable
+        boolean ordersType = "Orders".equals(flowType);
+        List<Map<String,Object>> flowConditions = new ArrayList<>();
+        
+        if (!dac.conditions.isEmpty()) {
+          flowConditions.addAll(dac.conditions);
+        } else if (nurseSide) {
+          flowConditions.addAll(nurseConditions());
+        } else if (ordersType) {
+          // Orders need a global condition
+          Map<String, Object> filter = new LinkedHashMap<>();
+          filter.put("attributePath", "patient.current_place");
+          filter.put("operator", "not_null");
+          
+          Map<String, Object> globalCond = new LinkedHashMap<>();
+          globalCond.put("filters", List.of(filter));
+          globalCond.put("name", "Global Condition");
+          flowConditions.add(globalCond);
+        }
+        
+        // Add room filter condition based on flow type
+        Map<String,Object> roomFilterCond = null;
+        if (nurseSide && !roomFilterNursecall.isEmpty()) {
+          roomFilterCond = buildRoomFilterCondition(roomFilterNursecall);
+        } else if ("Clinicals".equals(flowType) && !roomFilterClinical.isEmpty()) {
+          roomFilterCond = buildRoomFilterCondition(roomFilterClinical);
+        } else if (ordersType && !roomFilterOrders.isEmpty()) {
+          roomFilterCond = buildOrdersRoomFilterCondition(roomFilterOrders);
+        }
+        
+        if (roomFilterCond != null) {
+          flowConditions.add(roomFilterCond);
+        }
+        
+        flow.put("conditions", flowConditions);
+        
+        flow.put("destinations", dac.destinations);
+        flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
+        flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitsForNoCareGroup));
+        flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
+        flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
+        flow.put("status", "Active");
+        if (!unitsForNoCareGroup.isEmpty()) flow.put("units", unitsForNoCareGroup);
+        flows.add(flow);
       }
-      
-      // Add room filter condition based on flow type
-      Map<String,Object> roomFilterCond = null;
-      if (nurseSide && !roomFilterNursecall.isEmpty()) {
-        roomFilterCond = buildRoomFilterCondition(roomFilterNursecall);
-      } else if ("Clinicals".equals(flowType) && !roomFilterClinical.isEmpty()) {
-        roomFilterCond = buildRoomFilterCondition(roomFilterClinical);
-      } else if (ordersType && !roomFilterOrders.isEmpty()) {
-        roomFilterCond = buildOrdersRoomFilterCondition(roomFilterOrders);
-      }
-      
-      if (roomFilterCond != null) {
-        flowConditions.add(roomFilterCond);
-      }
-      
-      flow.put("conditions", flowConditions);
-      
-      flow.put("destinations", dac.destinations);
-      flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
-      flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitRefs));
-      flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
-      flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
-      flow.put("status", "Active");
-      if (!unitRefs.isEmpty()) flow.put("units", unitRefs);
-      flows.add(flow);
     }
     return flows;
   }
