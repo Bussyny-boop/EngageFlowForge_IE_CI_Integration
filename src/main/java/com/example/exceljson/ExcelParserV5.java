@@ -2102,7 +2102,9 @@ public class ExcelParserV5 {
     } else if ("Orders".equals(flowType)) {
       return "orders";
     } else {
-      return "nurse"; // default
+      // Default to "nurse" for backward compatibility with legacy code paths
+      // This should never happen in normal operation as flowType is always one of the three values above
+      return "nurse";
     }
   }
 
