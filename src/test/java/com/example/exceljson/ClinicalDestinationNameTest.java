@@ -142,23 +142,16 @@ class ClinicalDestinationNameTest {
         List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
+        // In the test workbook, we have 3 recipients (r1, r2, r3), so NoDeliveries should be at order 3
+        int expectedNoCareOrder = 3;
+        
         // Verify that Clinical flows still have NoCaregivers parameters
-        // These are for the NoDeliveries destination (destinationOrder=1 for NoDeliveries)
-        Map<String, Object> noCareDestName = findParameterWithDestinationOrder(params, "destinationName", 1);
+        Map<String, Object> noCareDestName = findParameterWithDestinationOrder(params, "destinationName", expectedNoCareOrder);
         assertNotNull(noCareDestName, "Should have destinationName for NoCaregivers");
-        
-        // Find the second destinationName with destinationOrder=1 (the NoCaregivers one)
-        // Note: There might be a destinationName from r2 recipient with order 1, 
-        // so we need to check for the NoCaregivers value specifically
-        List<Map<String, Object>> destNamesOrder1 = findAllParametersWithDestinationOrder(params, "destinationName", 1);
-        
-        boolean hasNoCaregivers = destNamesOrder1.stream()
-            .anyMatch(p -> "\"NoCaregivers\"".equals(p.get("value")));
-        
-        assertTrue(hasNoCaregivers, "Should have NoCaregivers destinationName parameter for NoDeliveries destination");
+        assertEquals("\"NoCaregivers\"", noCareDestName.get("value"), "Should have NoCaregivers as the value");
         
         // Verify other NoCaregivers-related parameters exist
-        Map<String, Object> noCareMessage = findParameterWithDestinationOrder(params, "message", 1);
+        Map<String, Object> noCareMessage = findParameterWithDestinationOrder(params, "message", expectedNoCareOrder);
         assertNotNull(noCareMessage, "Should have message parameter for NoCaregivers");
         assertTrue(((String) noCareMessage.get("value")).contains("without any caregivers"), 
             "NoCaregivers message should mention 'without any caregivers'");
