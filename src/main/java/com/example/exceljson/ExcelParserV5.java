@@ -1582,6 +1582,7 @@ public class ExcelParserV5 {
       "Sending System Alert Name",
       "Priority",
       "Device - A",
+      "Device - B",
       "Ringtone Device - A",
       "Response Options",
       "Break Through DND",
@@ -1606,18 +1607,19 @@ public class ExcelParserV5 {
     set(row,3,f.sendingName);
     set(row,4,f.priorityRaw);
     set(row,5,f.deviceA);
-    set(row,6,f.ringtone);
-    set(row,7,f.responseOptions);
-    set(row,8,f.breakThroughDND);
-    set(row,9,f.escalateAfter);
-    set(row,10,f.ttlValue);
-    set(row,11,f.enunciate);
-    set(row,12,f.emdan);
-    set(row,13,f.t1); set(row,14,f.r1);
-    set(row,15,f.t2); set(row,16,f.r2);
-    set(row,17,f.t3); set(row,18,f.r3);
-    set(row,19,f.t4); set(row,20,f.r4);
-    set(row,21,f.t5); set(row,22,f.r5);
+    set(row,6,f.deviceB);
+    set(row,7,f.ringtone);
+    set(row,8,f.responseOptions);
+    set(row,9,f.breakThroughDND);
+    set(row,10,f.escalateAfter);
+    set(row,11,f.ttlValue);
+    set(row,12,f.enunciate);
+    set(row,13,f.emdan);
+    set(row,14,f.t1); set(row,15,f.r1);
+    set(row,16,f.t2); set(row,17,f.r2);
+    set(row,18,f.t3); set(row,19,f.r3);
+    set(row,20,f.t4); set(row,21,f.r4);
+    set(row,22,f.t5); set(row,23,f.r5);
   }
 
   private static void writeHeader(Sheet s, String[] headers) {
