@@ -190,7 +190,7 @@ class ClinicalDestinationNameTest {
             nurseData.createCell(1).setCellValue("ICU NC");
             nurseData.createCell(2).setCellValue("Heart Rate Alert");
             nurseData.createCell(5).setCellValue("Y");  // EMDAN=Y moves to Clinicals
-            nurseData.createCell(8).setCellValue("VAssign:[Room] CNA");  // Bracket after Room keyword
+            nurseData.createCell(8).setCellValue("VAssign:[Room] CNA");  // Special chars around Room keyword
             
             try (FileOutputStream fos = new FileOutputStream(excelFile)) {
                 wb.write(fos);
