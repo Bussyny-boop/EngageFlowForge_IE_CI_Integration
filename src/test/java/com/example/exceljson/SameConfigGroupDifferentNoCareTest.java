@@ -101,7 +101,7 @@ class SameConfigGroupDifferentNoCareTest {
             nurseRow1.createCell(6).setCellValue("0");
             nurseRow1.createCell(7).setCellValue("Nurse Team");
             
-            // Second alarm with SharedGroup (same delivery params and config group, but different No Caregiver Group)
+            // Second alarm with SharedGroup (same delivery parameters and config group, but different No Caregiver Group)
             Row nurseRow2 = nurseCalls.createRow(4);
             nurseRow2.createCell(0).setCellValue("SharedGroup");
             nurseRow2.createCell(1).setCellValue("Alarm 2");
