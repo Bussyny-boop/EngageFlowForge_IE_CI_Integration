@@ -61,7 +61,9 @@ public class ExcelParserV5 {
   private final Map<String, List<Map<String, String>>> nurseGroupToUnits = new LinkedHashMap<>();
   private final Map<String, List<Map<String, String>>> clinicalGroupToUnits = new LinkedHashMap<>();
   private final Map<String, List<Map<String, String>>> ordersGroupToUnits = new LinkedHashMap<>();
-  private final Map<String, String> noCaregiverByFacility = new LinkedHashMap<>();
+  // Map from (facility, configGroup) -> No Caregiver Group value
+  // Key format: "facilityName|configGroupType|configGroup" where configGroupType is "nurse", "clinical", or "orders"
+  private final Map<String, String> noCaregiverByFacilityAndGroup = new LinkedHashMap<>();
   
   private int emdanMovedCount = 0;
   
@@ -167,7 +169,7 @@ public class ExcelParserV5 {
     nurseGroupToUnits.clear();
     clinicalGroupToUnits.clear();
     ordersGroupToUnits.clear();
-    noCaregiverByFacility.clear();
+    noCaregiverByFacilityAndGroup.clear();
     emdanMovedCount = 0;
   }
 
@@ -219,11 +221,21 @@ public class ExcelParserV5 {
           nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
             .add(Map.of("facilityName", facility, "name", name));
         }
+        // Store No Caregiver Group for this (facility, nurseGroup) pair
+        if (!isBlank(facility) && !isBlank(noCare)) {
+          String key = facility + "|nurse|" + nurseGroup;
+          noCaregiverByFacilityAndGroup.put(key, noCare);
+        }
       }
       if (!isBlank(clinGroup)) {
         for (String name : list) {
           clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
             .add(Map.of("facilityName", facility, "name", name));
+        }
+        // Store No Caregiver Group for this (facility, clinGroup) pair
+        if (!isBlank(facility) && !isBlank(noCare)) {
+          String key = facility + "|clinical|" + clinGroup;
+          noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
       if (!isBlank(ordersGroup)) {
@@ -231,9 +243,11 @@ public class ExcelParserV5 {
           ordersGroupToUnits.computeIfAbsent(ordersGroup, k -> new ArrayList<>())
             .add(Map.of("facilityName", facility, "name", name));
         }
-      }
-      if (!isBlank(facility) && !isBlank(noCare)) {
-        noCaregiverByFacility.put(facility, noCare);
+        // Store No Caregiver Group for this (facility, ordersGroup) pair
+        if (!isBlank(facility) && !isBlank(noCare)) {
+          String key = facility + "|orders|" + ordersGroup;
+          noCaregiverByFacilityAndGroup.put(key, noCare);
+        }
       }
     }
   }
@@ -243,7 +257,7 @@ public class ExcelParserV5 {
     nurseGroupToUnits.clear();
     clinicalGroupToUnits.clear();
     ordersGroupToUnits.clear();
-    noCaregiverByFacility.clear();
+    noCaregiverByFacilityAndGroup.clear();
 
     for (UnitRow u : units) {
       String facility = u.facility;
@@ -259,11 +273,21 @@ public class ExcelParserV5 {
           nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
             .add(Map.of("facilityName", facility, "name", name));
         }
+        // Store No Caregiver Group for this (facility, nurseGroup) pair
+        if (!isBlank(facility) && !isBlank(noCare)) {
+          String key = facility + "|nurse|" + nurseGroup;
+          noCaregiverByFacilityAndGroup.put(key, noCare);
+        }
       }
       if (!isBlank(clinGroup)) {
         for (String name : list) {
           clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
             .add(Map.of("facilityName", facility, "name", name));
+        }
+        // Store No Caregiver Group for this (facility, clinGroup) pair
+        if (!isBlank(facility) && !isBlank(noCare)) {
+          String key = facility + "|clinical|" + clinGroup;
+          noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
       if (!isBlank(ordersGroup)) {
@@ -271,9 +295,11 @@ public class ExcelParserV5 {
           ordersGroupToUnits.computeIfAbsent(ordersGroup, k -> new ArrayList<>())
             .add(Map.of("facilityName", facility, "name", name));
         }
-      }
-      if (!isBlank(facility) && !isBlank(noCare)) {
-        noCaregiverByFacility.put(facility, noCare);
+        // Store No Caregiver Group for this (facility, ordersGroup) pair
+        if (!isBlank(facility) && !isBlank(noCare)) {
+          String key = facility + "|orders|" + ordersGroup;
+          noCaregiverByFacilityAndGroup.put(key, noCare);
+        }
       }
     }
   }
@@ -571,7 +597,7 @@ public class ExcelParserV5 {
       // Skip rows that are not in scope
       if (!r.inScope) continue;
       
-      String mergeKey = buildMergeKey(r, groupToUnits, nurseSide);
+      String mergeKey = buildMergeKey(r, groupToUnits, flowType);
       groupedByMergeKey.computeIfAbsent(mergeKey, k -> new ArrayList<>()).add(r);
     }
 
@@ -646,9 +672,22 @@ public class ExcelParserV5 {
   }
 
   // ---------- Build merge key for grouping flows with identical delivery parameters ----------
-  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, boolean nurseSide) {
+  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, String flowType) {
+    boolean nurseSide = "NurseCalls".equals(flowType);
     List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
     String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
+    
+    // Determine the config group type for No Caregiver Group lookup
+    String configGroupType;
+    if ("NurseCalls".equals(flowType)) {
+      configGroupType = "nurse";
+    } else if ("Clinicals".equals(flowType)) {
+      configGroupType = "clinical";
+    } else if ("Orders".equals(flowType)) {
+      configGroupType = "orders";
+    } else {
+      configGroupType = "nurse"; // default
+    }
     
     // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units, noCareGroup
     StringBuilder key = new StringBuilder();
@@ -676,12 +715,16 @@ public class ExcelParserV5 {
     key.append("units=").append(unitsKey).append("|");
     
     // Add No Caregiver Group to the key
-    // Extract unique facilities from unit refs and get their noCareGroup values
+    // For each facility, look up the No Caregiver Group specific to this (facility, configGroup) combination
     String noCareKey = unitRefs.stream()
       .map(u -> u.get("facilityName"))
       .distinct()
       .sorted()
-      .map(facility -> facility + ":" + nvl(noCaregiverByFacility.get(facility), ""))
+      .map(facility -> {
+        String lookupKey = facility + "|" + configGroupType + "|" + nvl(r.configGroup, "");
+        String noCareValue = noCaregiverByFacilityAndGroup.getOrDefault(lookupKey, "");
+        return facility + ":" + noCareValue;
+      })
       .collect(Collectors.joining(","));
     key.append("noCareGroup=").append(noCareKey);
     
@@ -794,7 +837,10 @@ public class ExcelParserV5 {
     // Only add NoDeliveries for Clinicals, not for Orders
     boolean ordersType = "Orders".equals(flowType);
     if (!nurseSide && !ordersType && !isBlank(facility)) {
-      String noCare = noCaregiverByFacility.getOrDefault(facility, "");
+      // Determine the config group type for No Caregiver Group lookup
+      String configGroupType = "clinical"; // Since we're in the !nurseSide branch
+      String lookupKey = facility + "|" + configGroupType + "|" + nvl(r.configGroup, "");
+      String noCare = noCaregiverByFacilityAndGroup.getOrDefault(lookupKey, "");
       if (!isBlank(noCare)) {
         Map<String,Object> d = new LinkedHashMap<>();
         d.put("order", destinations.size());

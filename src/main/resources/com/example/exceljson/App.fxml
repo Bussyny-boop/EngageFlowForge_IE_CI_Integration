@@ -14,7 +14,7 @@
             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header-bar">
                 <Label text="Engage FlowForge 2.0" style="-fx-font-size:18; -fx-font-weight:bold; -fx-text-fill:white;" />
                 <Region HBox.hgrow="ALWAYS"/>
-                <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flows (Advanced)" style="-fx-text-fill:white;">
+                <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true" style="-fx-text-fill:white;">
                     <tooltip>
                         <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
                     </tooltip>
