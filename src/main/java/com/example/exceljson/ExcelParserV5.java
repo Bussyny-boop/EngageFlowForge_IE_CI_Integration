@@ -106,6 +106,11 @@ public class ExcelParserV5 {
   private static final String SHEET_CLINICAL = "Patient Monitoring";
   private static final String SHEET_ORDERS = "Order";
   
+  // Unit map field keys
+  private static final String UNIT_FIELD_FACILITY = "facilityName";
+  private static final String UNIT_FIELD_NAME = "name";
+  private static final String UNIT_FIELD_NO_CAREGIVER = "noCaregiverGroup";
+  
   // Regex pattern to strip special characters from Custom Unit role names
   private static final String SPECIAL_CHARS_PATTERN = "[^a-zA-Z0-9\\s]";
   
@@ -623,7 +628,7 @@ public class ExcelParserV5 {
       // Group units by their No Caregiver Group to split flows when necessary
       Map<String, List<Map<String,String>>> unitsByNoCareGroup = new LinkedHashMap<>();
       for (Map<String,String> unitRef : unitRefs) {
-        String noCareValue = unitRef.getOrDefault("noCaregiverGroup", "");
+        String noCareValue = unitRef.getOrDefault(UNIT_FIELD_NO_CAREGIVER, "");
         unitsByNoCareGroup.computeIfAbsent(noCareValue, k -> new ArrayList<>()).add(unitRef);
       }
       
@@ -721,7 +726,7 @@ public class ExcelParserV5 {
     // Add No Caregiver Group to the key
     // Use the No Caregiver Group from each unit reference
     String noCareKey = unitRefs.stream()
-      .map(u -> u.get("facilityName") + ":" + u.getOrDefault("noCaregiverGroup", ""))
+      .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
       .sorted()
       .collect(Collectors.joining(","));
     key.append("noCareGroup=").append(noCareKey);
@@ -836,7 +841,7 @@ public class ExcelParserV5 {
     boolean ordersType = "Orders".equals(flowType);
     if (!nurseSide && !ordersType && !isBlank(facility)) {
       // Get No Caregiver Group from the first unit ref
-      String noCare = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("noCaregiverGroup", "");
+      String noCare = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault(UNIT_FIELD_NO_CAREGIVER, "");
       if (!isBlank(noCare)) {
         Map<String,Object> d = new LinkedHashMap<>();
         d.put("order", destinations.size());
@@ -2313,14 +2318,34 @@ public class ExcelParserV5 {
   
   /**
    * Filters unit references to remove internal fields that shouldn't appear in JSON output.
-   * Currently removes the "noCaregiverGroup" field which is used internally for grouping logic.
+   * <p>
+   * The unit references contain internal fields used for flow grouping logic that are not
+   * part of the Engage JSON schema. This method creates a new list containing only the
+   * fields that should appear in the final JSON output.
+   * </p>
+   * <p>
+   * <b>Fields included in output:</b>
+   * </p>
+   * <ul>
+   *   <li>{@code facilityName} - The facility name for the unit</li>
+   *   <li>{@code name} - The unit name</li>
+   * </ul>
+   * <p>
+   * <b>Fields removed from output:</b>
+   * </p>
+   * <ul>
+   *   <li>{@code noCaregiverGroup} - Internal field used for flow grouping/splitting logic</li>
+   * </ul>
+   * 
+   * @param unitRefs The original unit references including internal fields
+   * @return A new list of unit references containing only output-appropriate fields
    */
   private static List<Map<String,String>> filterUnitRefsForOutput(List<Map<String,String>> unitRefs) {
     return unitRefs.stream()
       .map(unit -> {
         Map<String,String> filtered = new LinkedHashMap<>();
-        filtered.put("facilityName", unit.getOrDefault("facilityName", ""));
-        filtered.put("name", unit.getOrDefault("name", ""));
+        filtered.put(UNIT_FIELD_FACILITY, unit.getOrDefault(UNIT_FIELD_FACILITY, ""));
+        filtered.put(UNIT_FIELD_NAME, unit.getOrDefault(UNIT_FIELD_NAME, ""));
         return filtered;
       })
       .collect(Collectors.toList());

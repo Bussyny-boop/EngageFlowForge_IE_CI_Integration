@@ -39,9 +39,6 @@ class SameFacilitySameConfigDiffNoCareTest {
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        System.out.println("Generated JSON:");
-        System.out.println(json);
-        
         // Both alarms should be present
         assertTrue(json.contains("Alarm 1"), "Alarm 1 should be in the output");
         assertTrue(json.contains("Alarm 2"), "Alarm 2 should be in the output");
