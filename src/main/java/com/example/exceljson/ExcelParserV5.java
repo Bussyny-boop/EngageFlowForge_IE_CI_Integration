@@ -1132,54 +1132,7 @@ public class ExcelParserV5 {
     boolean nurseSide = "NurseCalls".equals(flowType);
     boolean ordersType = "Orders".equals(flowType);
 
-    // ---------- Orders-specific hardcoded parameter attributes ----------
-    if (ordersType) {
-      // Add ringtone FIRST if available (same logic as NurseCalls/Clinicals)
-      if (!isBlank(r.ringtone)) {
-        params.add(paQ("alertSound", r.ringtone));
-      }
-      
-      // Hardcoded parameters for Orders type as specified in the requirements
-      params.add(paQ("message", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.name} #{patient.current_place.bed_number}\\nProcedure #{category} #{description}"));
-      params.add(paQ("patientMRN", "#{patient.mrn}:#{patient.visit_number}"));
-      params.add(paQ("patientName", "#{patient.first_name} #{patient.middle_name} #{patient.last_name}"));
-      
-      // Add breakThrough using same logic as NurseCalls/Clinicals
-      String breakThroughValue;
-      if (!isBlank(r.breakThroughDND)) {
-        breakThroughValue = mapBreakThroughDND(r.breakThroughDND, urgent);
-      } else {
-        // Backward compatibility: use priority-based logic if column not provided
-        breakThroughValue = urgent ? "voceraAndDevice" : "none";
-      }
-      params.add(paQ("breakThrough", breakThroughValue));
-      
-      // Use parsed enunciate value if available, otherwise default to true (same as NurseCalls/Clinicals)
-      boolean enunciateValue = isBlank(r.enunciate) ? true : parseEnunciateToBoolean(r.enunciate);
-      params.add(paLiteralBool("enunciate", enunciateValue));
-      
-      params.add(paLiteralBool("popup", true));
-      params.add(paQ("eventIdentification", "Orders:#{id}"));
-      params.add(paQ("shortMessage", "#{alert_type} \\\\nProcedure #{category} #{description}"));
-      params.add(paQ("subject", "#{alert_type} #{patient.current_place.room.name} - #{patient.current_place.bed_number}"));
-      
-      // Add TTL from Excel column (same logic as NurseCalls/Clinicals)
-      String ttlStr = isBlank(r.ttlValue) ? "10" : String.valueOf(parseDelay(r.ttlValue));
-      params.add(paLiteral("ttl", ttlStr));
-      params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
-      params.add(paQ("vibrate", "short"));
-      
-      // Add destination names for Orders flows
-      addDestNameParam(params, 0, firstToken(r.r1));
-      addDestNameParam(params, 1, firstToken(r.r2));
-      addDestNameParam(params, 2, firstToken(r.r3));
-      addDestNameParam(params, 3, firstToken(r.r4));
-      addDestNameParam(params, 4, firstToken(r.r5));
-      
-      return params;
-    }
-
-    // ---------- Unified logic for both NurseCalls and Clinicals ----------
+    // ---------- Unified logic for NurseCalls, Clinicals, and Orders ----------
     
     // Parse response options (case-insensitive, ignore whitespace)
     // Note: replaceAll("\\s+", "") intentionally converts "call back" to "callback"
@@ -1188,17 +1141,20 @@ public class ExcelParserV5 {
     boolean hasAcknowledge = resp.contains("acknowledge");
     boolean hasEscalate = resp.contains("escalate");
     boolean hasDecline = resp.contains("decline");
+    boolean hasReject = resp.contains("reject");
     boolean hasCallBack = resp.contains("callback");
     boolean noResponse = resp.isEmpty() || resp.contains("noresponse");
     
     // Determine which variation to use for badge phrases
+    // Priority: Acknowledge > Accept for accept phrases
     String acceptPhrase = hasAcknowledge ? "Acknowledge" : "Accept";
-    String declinePhrase = hasDecline ? "Decline" : "Escalate";
+    // Priority: Decline > Reject > Escalate for decline phrases
+    String declinePhrase = hasDecline ? "Decline" : (hasReject ? "Reject" : "Escalate");
     
-    // Combine flags: treat "Acknowledge" as "Accept" and "Decline" as "Escalate" for flow logic
+    // Combine flags: treat "Acknowledge" as "Accept" and "Decline"/"Reject" as "Escalate" for flow logic
     // The specific phrase used will be reflected in the badge phrases above
     hasAccept = hasAccept || hasAcknowledge;
-    hasEscalate = hasEscalate || hasDecline;
+    hasEscalate = hasEscalate || hasDecline || hasReject;
 
     // 1. Add ringtone FIRST if available
     if (!isBlank(r.ringtone)) {
@@ -1269,37 +1225,57 @@ public class ExcelParserV5 {
     boolean enunciateValue = isBlank(r.enunciate) ? true : parseEnunciateToBoolean(r.enunciate);
     params.add(paLiteralBool("enunciate", enunciateValue));
     
-    // Message differs between NurseCall and Clinical
-    if (nurseSide) {
+    // Message differs between NurseCall, Clinical, and Orders
+    if (ordersType) {
+      params.add(paQ("message", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.name} #{patient.current_place.bed_number}\\nProcedure #{category} #{description}"));
+      params.add(paQ("patientMRN", "#{patient.mrn}:#{patient.visit_number}"));
+      params.add(paQ("patientName", "#{patient.first_name} #{patient.middle_name} #{patient.last_name}"));
+    } else if (nurseSide) {
       params.add(paQ("message", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}"));
       params.add(paQ("patientMRN", "#{bed.patient.mrn}:#{bed.patient.visit_number}"));
+      params.add(paQ("patientName", "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"));
     } else {
       params.add(paQ("message", "Clinical Alert ${destinationName}\\nRoom: #{bed.room.name} - #{bed.bed_number}\\nAlert Type: #{alert_type}\\nAlarm Time: #{alarm_time.as_time}"));
       params.add(paQ("patientMRN", "#{clinical_patient.mrn}:#{clinical_patient.visit_number}"));
+      params.add(paQ("patientName", "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
     }
     
-    params.add(paQ("patientName", nurseSide 
-      ? "#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}"
-      : "#{clinical_patient.first_name} #{clinical_patient.middle_name} #{clinical_patient.last_name}"));
-    params.add(paQ("placeUid", "#{bed.uid}"));
+    // placeUid differs for Orders vs NurseCalls/Clinicals
+    if (!ordersType) {
+      params.add(paQ("placeUid", "#{bed.uid}"));
+    }
+    
     params.add(paLiteralBool("popup", true));
-    params.add(paQ("eventIdentification", nurseSide ? "NurseCalls:#{id}" : "Clinicals:#{id}"));
-    params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
-    params.add(paQ("subject", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
+    
+    // eventIdentification, shortMessage, and subject differ by flow type
+    if (ordersType) {
+      params.add(paQ("eventIdentification", "Orders:#{id}"));
+      params.add(paQ("shortMessage", "#{alert_type} \\\\nProcedure #{category} #{description}"));
+      params.add(paQ("subject", "#{alert_type} #{patient.current_place.room.name} - #{patient.current_place.bed_number}"));
+    } else if (nurseSide) {
+      params.add(paQ("eventIdentification", "NurseCalls:#{id}"));
+      params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
+      params.add(paQ("subject", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
+    } else {
+      params.add(paQ("eventIdentification", "Clinicals:#{id}"));
+      params.add(paQ("shortMessage", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
+      params.add(paQ("subject", "#{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
+    }
+    
     String ttlStr = isBlank(r.ttlValue) ? "10" : String.valueOf(parseDelay(r.ttlValue));
     params.add(paLiteral("ttl", ttlStr));
     params.add(paLiteral("retractRules", "[\"ttlHasElapsed\"]"));
     params.add(paQ("vibrate", "short"));
 
     // 4. Add destination names
-    if (nurseSide) {
+    if (nurseSide || ordersType) {
       addDestNameParam(params, 0, firstToken(r.r1));
       addDestNameParam(params, 1, firstToken(r.r2));
       addDestNameParam(params, 2, firstToken(r.r3));
       addDestNameParam(params, 3, firstToken(r.r4));
       addDestNameParam(params, 4, firstToken(r.r5));
     } else {
-      // For Clinicals flows (not Orders, which return early above)
+      // For Clinicals flows only
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
       params.add(paOrderQ(1, "shortMessage", "NoCaregiver Assigned for #{alert_type} in #{bed.room.name} Bed #{bed.bed_number}"));

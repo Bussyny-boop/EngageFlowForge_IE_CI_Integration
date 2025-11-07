@@ -29,6 +29,7 @@
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Button fx:id="loadButton" text="📂 Load Excel" />
                     <Button fx:id="saveExcelButton" text="💾 Save Excel (Save As)" disable="true" />
+                    <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
                 </HBox>
                 <Label fx:id="statusLabel" text="Ready" />
                 <HBox spacing="10">
@@ -51,7 +52,6 @@
                             <Tooltip text="Use VMP interface as default when Device A/B are blank" />
                         </tooltip>
                     </CheckBox>
-                    <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
                 </HBox>
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Label text="Room Filter:" />
