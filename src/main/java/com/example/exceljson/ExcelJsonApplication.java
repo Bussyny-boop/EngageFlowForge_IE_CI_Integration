@@ -13,6 +13,16 @@ public class ExcelJsonApplication extends Application {
 
     private static final int WINDOW_WIDTH = 1100;
     private static final int WINDOW_HEIGHT = 750;
+    
+    // Icon paths for different sizes - JavaFX will automatically select the best size
+    private static final String[] ICON_PATHS = {
+        "/icon_16.png",
+        "/icon_32.png",
+        "/icon_48.png",
+        "/icon_64.png",
+        "/icon_128.png",
+        "/icon.png"
+    };
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -23,9 +33,7 @@ public class ExcelJsonApplication extends Application {
         
         // Load application icon from resources - use multiple sizes for best quality
         // JavaFX will automatically select the most appropriate size for different contexts
-        String[] iconPaths = {"/icon_16.png", "/icon_32.png", "/icon_48.png", "/icon_64.png", "/icon_128.png", "/icon.png"};
-        
-        for (String iconPath : iconPaths) {
+        for (String iconPath : ICON_PATHS) {
             try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
                 if (iconInputStream != null) {
                     primaryStage.getIcons().add(new Image(iconInputStream));

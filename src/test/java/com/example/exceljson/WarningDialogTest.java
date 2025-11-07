@@ -46,8 +46,7 @@ public class WarningDialogTest {
             Method showTimedWarningMethod = AppController.class.getDeclaredMethod("showTimedWarning", String.class, int.class);
             fail("showTimedWarning method should not exist - it should be replaced with showWarning");
         } catch (NoSuchMethodException e) {
-            // Expected - this is good, the old method has been removed
-            assertTrue(true, "showTimedWarning correctly removed");
+            // Expected - the old method has been removed, which is correct
         }
     }
 }
