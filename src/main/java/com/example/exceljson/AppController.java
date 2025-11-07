@@ -703,7 +703,7 @@ public class AppController {
         col.setEditable(true);
     }
 
-    // ---------- Setup Header CheckBox for "In Scope" columns ----------
+    // ---------- Setup header checkbox for "In Scope" columns ----------
     private void setupHeaderCheckBox(TableColumn<ExcelParserV5.FlowRow, Boolean> col, FilteredList<ExcelParserV5.FlowRow> filteredList) {
         if (col == null) return;
         

@@ -12,8 +12,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test to verify the header checkbox functionality would work correctly.
+ * Test to verify the header checkbox functionality works correctly.
  * This tests the underlying data model behavior that the header checkbox relies on.
+ * 
+ * Test scenarios:
+ * 1. Basic toggle functionality - verifies that toggling the header checkbox updates all rows
+ * 2. Filter interaction - verifies that the header checkbox only affects visible/filtered rows
  */
 class HeaderCheckboxTest {
 
