@@ -703,6 +703,28 @@ public class AppController {
         col.setEditable(true);
     }
 
+    // ---------- Setup header checkbox for "In Scope" columns ----------
+    private void setupHeaderCheckBox(TableColumn<ExcelParserV5.FlowRow, Boolean> col, FilteredList<ExcelParserV5.FlowRow> filteredList) {
+        if (col == null) return;
+        
+        CheckBox headerCheckBox = new CheckBox();
+        headerCheckBox.setSelected(true); // Default to checked
+        
+        // When header checkbox is clicked, update all visible rows
+        headerCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (filteredList != null) {
+                for (ExcelParserV5.FlowRow row : filteredList) {
+                    row.inScope = newVal;
+                }
+                if (col.getTableView() != null) {
+                    col.getTableView().refresh();
+                }
+            }
+        });
+        
+        col.setGraphic(headerCheckBox);
+    }
+
     // ---------- Initialize Filters ----------
     private void initializeFilters() {
         // Initialize filter ComboBoxes
@@ -939,6 +961,11 @@ public class AppController {
         if (tableNurseCalls != null) tableNurseCalls.setItems(nurseCallsFilteredList);
         if (tableClinicals != null) tableClinicals.setItems(clinicalsFilteredList);
         if (tableOrders != null) tableOrders.setItems(ordersFilteredList);
+        
+        // Setup header checkboxes for "In Scope" columns
+        setupHeaderCheckBox(nurseInScopeCol, nurseCallsFilteredList);
+        setupHeaderCheckBox(clinicalInScopeCol, clinicalsFilteredList);
+        setupHeaderCheckBox(ordersInScopeCol, ordersFilteredList);
         
         // Update filter options
         updateFilterOptions();

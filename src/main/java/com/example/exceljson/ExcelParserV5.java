@@ -650,7 +650,7 @@ public class ExcelParserV5 {
     List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
     String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
     
-    // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units
+    // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units, noCareGroup
     StringBuilder key = new StringBuilder();
     key.append("priority=").append(mappedPriority).append("|");
     key.append("device=").append(nvl(r.deviceA, "")).append("|");
@@ -673,7 +673,17 @@ public class ExcelParserV5 {
       .map(u -> u.get("facilityName") + ":" + u.get("name"))
       .sorted()
       .collect(Collectors.joining(","));
-    key.append("units=").append(unitsKey);
+    key.append("units=").append(unitsKey).append("|");
+    
+    // Add No Caregiver Group to the key
+    // Extract unique facilities from unit refs and get their noCareGroup values
+    String noCareKey = unitRefs.stream()
+      .map(u -> u.get("facilityName"))
+      .distinct()
+      .sorted()
+      .map(facility -> facility + ":" + nvl(noCaregiverByFacility.get(facility), ""))
+      .collect(Collectors.joining(","));
+    key.append("noCareGroup=").append(noCareKey);
     
     return key.toString();
   }
