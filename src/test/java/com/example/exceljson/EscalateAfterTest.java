@@ -226,6 +226,7 @@ class EscalateAfterTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (FileOutputStream fos = new FileOutputStream(target)) {
                 workbook.write(fos);
@@ -253,6 +254,7 @@ class EscalateAfterTest {
             Sheet nurseCalls = workbook.createSheet("Nurse Call");
             Row nurseHeader = nurseCalls.createRow(2);
             nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             // Patient Monitoring sheet
             Sheet clinicals = workbook.createSheet("Patient Monitoring");

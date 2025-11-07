@@ -182,6 +182,8 @@ class ClinicalDestinationNameTest {
             nurseHeader.createCell(0).setCellValue("In scope");
             nurseHeader.createCell(1).setCellValue("Configuration Group");
             nurseHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(3).setCellValue("Priority");
+            nurseHeader.createCell(4).setCellValue("Device - A");
             nurseHeader.createCell(5).setCellValue("EMDAN");
             nurseHeader.createCell(8).setCellValue("1st Recipient");
             
@@ -189,6 +191,8 @@ class ClinicalDestinationNameTest {
             nurseData.createCell(0).setCellValue("TRUE");
             nurseData.createCell(1).setCellValue("ICU NC");
             nurseData.createCell(2).setCellValue("Heart Rate Alert");
+            nurseData.createCell(3).setCellValue("Normal");
+            nurseData.createCell(4).setCellValue("VMP");
             nurseData.createCell(5).setCellValue("Y");  // EMDAN=Y moves to Clinicals
             nurseData.createCell(8).setCellValue("VAssign:[Room] CNA");  // Special chars around Room keyword
             

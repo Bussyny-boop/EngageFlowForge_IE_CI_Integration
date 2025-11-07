@@ -179,7 +179,7 @@ public class ExcelParserV5 {
   }
 
   // ---------- Parse: Unit Breakdown ----------
-  private void parseUnitBreakdown(Workbook wb) {
+  private void parseUnitBreakdown(Workbook wb) throws Exception {
     Sheet sh = findSheet(wb, SHEET_UNIT);
     if (sh == null) return;
 
@@ -189,6 +189,12 @@ public class ExcelParserV5 {
     int start = firstDataRow(sh, header);
     int cFacility   = getCol(hm, "Facility");
     int cUnitName   = getCol(hm, "Common Unit Name");
+    
+    // Validate required headers for Unit Breakdown sheet
+    validateRequiredHeaders(SHEET_UNIT, hm,
+      new String[]{"Facility", "Common Unit Name"},
+      new String[][]{{"Facility"}, {"Common Unit Name"}}
+    );
     int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call");
     int cClinGroup  = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring");
     int cOrdersGroup = getCol(hm, "Orders", "Configuration Group", "Order", "Med Order", "STAT MED");
@@ -310,7 +316,7 @@ public class ExcelParserV5 {
   }
 
   // ---------- Parse: Flow Sheets ----------
-  private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide, boolean ordersType) {
+  private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide, boolean ordersType) throws Exception {
     // For Orders sheets, try exact matches first, then any sheet containing "Order"
     Sheet sh = null;
     if (ordersType) {
@@ -328,6 +334,16 @@ public class ExcelParserV5 {
     Row header = findHeaderRow(sh);
     Map<String,Integer> hm = headerMap(header);
     int start = firstDataRow(sh, header);
+    
+    // Validate required headers for Flow sheets
+    String displayName = ordersType ? "Orders" : sheetName;
+    validateRequiredHeaders(displayName, hm,
+      new String[]{"Configuration Group", "Common Alert or Alarm Name"},
+      new String[][]{
+        {"Configuration Group"},
+        {"Common Alert or Alarm Name", "Alarm Name"}
+      }
+    );
 
     int cInScope = getCol(hm, "In scope", "In Scope");
     int cCfg     = getCol(hm, "Configuration Group");
@@ -1991,6 +2007,63 @@ public class ExcelParserV5 {
         if (e.getKey().contains(key)) return e.getValue();
     }
     return -1;
+  }
+  
+  /**
+   * Validates that required headers are present in the sheet.
+   * Throws an exception with a descriptive message if any required headers are missing.
+   * 
+   * @param sheetName the name of the sheet being validated (for error messages)
+   * @param headerMap the map of normalized header names to column indices
+   * @param displayNames the user-friendly header names for error messages
+   * @param alternatives the alternative header names to search for (each array is a set of alternatives for one required header)
+   * @throws Exception if any required headers are missing
+   */
+  private static void validateRequiredHeaders(String sheetName, Map<String,Integer> headerMap, 
+                                               String[] displayNames, String[][] alternatives) throws Exception {
+    if (headerMap.isEmpty()) {
+      throw new Exception(String.format(
+        "❌ Invalid Excel file: No headers found in '%s' sheet.%n%n" +
+        "The sheet must contain a header row with the following required columns:%n%s",
+        sheetName,
+        formatRequiredHeaders(displayNames)
+      ));
+    }
+    
+    List<String> missingHeaders = new ArrayList<>();
+    for (int i = 0; i < displayNames.length; i++) {
+      int col = getCol(headerMap, alternatives[i]);
+      if (col == -1) {
+        missingHeaders.add(displayNames[i]);
+      }
+    }
+    
+    if (!missingHeaders.isEmpty()) {
+      throw new Exception(String.format(
+        "❌ Invalid Excel file: Missing required header%s in '%s' sheet:%n%n%s%n%n" +
+        "Please ensure your Excel file contains all required columns.%n" +
+        "You can use 'Save Excel As' from a valid file to generate a properly formatted template.",
+        missingHeaders.size() > 1 ? "s" : "",
+        sheetName,
+        formatMissingHeaders(missingHeaders)
+      ));
+    }
+  }
+  
+  private static String formatRequiredHeaders(String[] headers) {
+    StringBuilder sb = new StringBuilder();
+    for (String header : headers) {
+      sb.append("  • ").append(header).append("\n");
+    }
+    return sb.toString();
+  }
+  
+  private static String formatMissingHeaders(List<String> headers) {
+    StringBuilder sb = new StringBuilder();
+    for (String header : headers) {
+      sb.append("  ❌ ").append(header).append("\n");
+    }
+    return sb.toString();
   }
   
   /**

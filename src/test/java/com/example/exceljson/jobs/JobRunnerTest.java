@@ -134,6 +134,7 @@ class JobRunnerTest {
             nurseHeader.createCell(0).setCellValue("Configuration Group");
             nurseHeader.createCell(4).setCellValue("Alarm Name");
             nurseHeader.createCell(5).setCellValue("Priority");
+            nurseHeader.createCell(6).setCellValue("Device - A");
             nurseHeader.createCell(7).setCellValue("Ringtone");
             nurseHeader.createCell(32).setCellValue("Response Options");
             nurseHeader.createCell(33).setCellValue("1st recipients");
@@ -141,6 +142,7 @@ class JobRunnerTest {
             nurseRow.createCell(0).setCellValue("Group 1");
             nurseRow.createCell(4).setCellValue("Alarm 1");
             nurseRow.createCell(5).setCellValue("High");
+            nurseRow.createCell(6).setCellValue("Edge");
             nurseRow.createCell(7).setCellValue("Tone 1");
             nurseRow.createCell(32).setCellValue("Ack");
             nurseRow.createCell(33).setCellValue("Nurse Team");
@@ -148,8 +150,10 @@ class JobRunnerTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(0);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
             clinicalHeader.createCell(4).setCellValue("Alarm Name");
             clinicalHeader.createCell(5).setCellValue("Priority");
+            clinicalHeader.createCell(6).setCellValue("Device - A");
             clinicalHeader.createCell(7).setCellValue("Ringtone");
             clinicalHeader.createCell(32).setCellValue("Response Options");
             clinicalHeader.createCell(33).setCellValue("1st recipients");
@@ -158,6 +162,7 @@ class JobRunnerTest {
             clinicalRow.createCell(0).setCellValue("Group 1");
             clinicalRow.createCell(4).setCellValue("Clinical Alarm");
             clinicalRow.createCell(5).setCellValue("Medium");
+            clinicalRow.createCell(6).setCellValue("VMP");
             clinicalRow.createCell(7).setCellValue("Tone 2");
             clinicalRow.createCell(32).setCellValue("Escalate");
             clinicalRow.createCell(33).setCellValue("Primary");
@@ -216,7 +221,8 @@ class JobRunnerTest {
             nurseHeader.createCell(4).setCellValue("Common Alert or Alarm Name");
             nurseHeader.createCell(5).setCellValue("Sending System Alert Name");
             nurseHeader.createCell(6).setCellValue("Priority");
-            nurseHeader.createCell(7).setCellValue("Ringtone");
+            nurseHeader.createCell(7).setCellValue("Device - A");
+            nurseHeader.createCell(8).setCellValue("Ringtone");
             nurseHeader.createCell(32).setCellValue("Response Options");
             nurseHeader.createCell(33).setCellValue("1st recipients");
             
@@ -225,7 +231,8 @@ class JobRunnerTest {
             nurseRow.createCell(4).setCellValue("Common Alarm Name");
             nurseRow.createCell(5).setCellValue("Sending System Alarm Name");
             nurseRow.createCell(6).setCellValue("High");
-            nurseRow.createCell(7).setCellValue("Tone 1");
+            nurseRow.createCell(7).setCellValue("Edge");
+            nurseRow.createCell(8).setCellValue("Tone 1");
             nurseRow.createCell(32).setCellValue("Accept");
             nurseRow.createCell(33).setCellValue("Nurse Team");
 
