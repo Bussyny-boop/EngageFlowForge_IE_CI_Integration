@@ -1325,14 +1325,15 @@ public class ExcelParserV5 {
     params.add(paQ("vibrate", "short"));
 
     // 4. Add destination names
-    if (nurseSide || ordersType) {
-      addDestNameParam(params, 0, firstToken(r.r1));
-      addDestNameParam(params, 1, firstToken(r.r2));
-      addDestNameParam(params, 2, firstToken(r.r3));
-      addDestNameParam(params, 3, firstToken(r.r4));
-      addDestNameParam(params, 4, firstToken(r.r5));
-    } else {
-      // For Clinicals flows only
+    // All flow types (NurseCalls, Clinicals, Orders) extract destinationName from recipients
+    addDestNameParam(params, 0, firstToken(r.r1));
+    addDestNameParam(params, 1, firstToken(r.r2));
+    addDestNameParam(params, 2, firstToken(r.r3));
+    addDestNameParam(params, 3, firstToken(r.r4));
+    addDestNameParam(params, 4, firstToken(r.r5));
+    
+    // For Clinicals flows, also add NoCaregivers parameters for NoDeliveries destination
+    if (!nurseSide && !ordersType) {
       params.add(paOrderQ(1, "destinationName", "NoCaregivers"));
       params.add(paOrderQ(1, "message", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room."));
       params.add(paOrderQ(1, "shortMessage", "NoCaregiver Assigned for #{alert_type} in #{bed.room.name} Bed #{bed.bed_number}"));
