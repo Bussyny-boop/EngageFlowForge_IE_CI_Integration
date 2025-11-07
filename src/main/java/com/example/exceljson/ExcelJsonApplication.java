@@ -13,6 +13,16 @@ public class ExcelJsonApplication extends Application {
 
     private static final int WINDOW_WIDTH = 1100;
     private static final int WINDOW_HEIGHT = 750;
+    
+    // Icon paths for different sizes - JavaFX will automatically select the best size
+    private static final String[] ICON_PATHS = {
+        "/icon_16.png",
+        "/icon_32.png",
+        "/icon_48.png",
+        "/icon_64.png",
+        "/icon_128.png",
+        "/icon.png"
+    };
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -21,18 +31,20 @@ public class ExcelJsonApplication extends Application {
 
         primaryStage.setTitle("Engage FlowForge 2.0");
         
-        // Load application icon from resources
-        // Use PNG format for JavaFX compatibility (ICO format is for Windows installer)
-        String iconPath = "/icon.png";
-        
-        try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
-            if (iconInputStream != null) {
-                primaryStage.getIcons().add(new Image(iconInputStream));
-            } else {
-                System.err.println("Warning: " + iconPath + " not found in resources. Using default application icon.");
+        // Load application icon from resources - use multiple sizes for best quality
+        // JavaFX will automatically select the most appropriate size for different contexts
+        for (String iconPath : ICON_PATHS) {
+            try (InputStream iconInputStream = getClass().getResourceAsStream(iconPath)) {
+                if (iconInputStream != null) {
+                    primaryStage.getIcons().add(new Image(iconInputStream));
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to load icon from " + iconPath + ": " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("Warning: Failed to load icon from " + iconPath + ": " + e.getMessage());
+        }
+        
+        if (primaryStage.getIcons().isEmpty()) {
+            System.err.println("Warning: No icons loaded. Using default application icon.");
         }
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
