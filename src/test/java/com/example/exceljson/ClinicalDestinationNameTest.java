@@ -213,17 +213,11 @@ class ClinicalDestinationNameTest {
         assertEquals("\"CNA\"", dest0.get("value"), "Should strip special characters and extract 'CNA'");
     }
 
-    // Helper methods
+    // Helper method
     private Map<String, Object> findParameterWithDestinationOrder(List<Map<String, Object>> params, String name, int order) {
         return params.stream()
             .filter(p -> name.equals(p.get("name")) && Integer.valueOf(order).equals(p.get("destinationOrder")))
             .findFirst()
             .orElse(null);
-    }
-
-    private List<Map<String, Object>> findAllParametersWithDestinationOrder(List<Map<String, Object>> params, String name, int order) {
-        return params.stream()
-            .filter(p -> name.equals(p.get("name")) && Integer.valueOf(order).equals(p.get("destinationOrder")))
-            .collect(java.util.stream.Collectors.toList());
     }
 }
