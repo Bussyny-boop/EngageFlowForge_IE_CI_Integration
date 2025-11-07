@@ -140,75 +140,81 @@ class RejectResponseTest {
         File xlsxFile = tmpDir.resolve("test.xlsx").toFile();
         File jsonFile = tmpDir.resolve("test.json").toFile();
 
-        try (XSSFWorkbook wb = new XSSFWorkbook()) {
-            // Create Unit Breakdown sheet
-            Sheet unitSheet = wb.createSheet("Unit Breakdown");
-            Row headerRow = unitSheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Facility");
-            headerRow.createCell(1).setCellValue("Unit Names");
-            headerRow.createCell(2).setCellValue("Nurse Group");
-            headerRow.createCell(3).setCellValue("Clinical Group");
-            headerRow.createCell(4).setCellValue("Orders Group");
+        try {
+            try (XSSFWorkbook wb = new XSSFWorkbook()) {
+                // Create Unit Breakdown sheet
+                Sheet unitSheet = wb.createSheet("Unit Breakdown");
+                Row headerRow = unitSheet.createRow(0);
+                headerRow.createCell(0).setCellValue("Facility");
+                headerRow.createCell(1).setCellValue("Unit Names");
+                headerRow.createCell(2).setCellValue("Nurse Group");
+                headerRow.createCell(3).setCellValue("Clinical Group");
+                headerRow.createCell(4).setCellValue("Orders Group");
 
-            Row dataRow = unitSheet.createRow(1);
-            dataRow.createCell(0).setCellValue("TestFacility");
-            dataRow.createCell(1).setCellValue("TestUnit");
-            dataRow.createCell(2).setCellValue("TestGroup");
-            dataRow.createCell(3).setCellValue("TestGroup");
-            dataRow.createCell(4).setCellValue("TestGroup");
+                Row dataRow = unitSheet.createRow(1);
+                dataRow.createCell(0).setCellValue("TestFacility");
+                dataRow.createCell(1).setCellValue("TestUnit");
+                dataRow.createCell(2).setCellValue("TestGroup");
+                dataRow.createCell(3).setCellValue("TestGroup");
+                dataRow.createCell(4).setCellValue("TestGroup");
 
-            // Create the appropriate flow sheet based on flowType
-            String sheetName;
+                // Create the appropriate flow sheet based on flowType
+                String sheetName;
+                if (flowType.equals("NurseCalls")) {
+                    sheetName = "Nurse Call";
+                } else if (flowType.equals("Clinicals")) {
+                    sheetName = "Patient Monitoring";
+                } else {
+                    sheetName = "Order";  // Orders sheet name
+                }
+                
+                Sheet flowSheet = wb.createSheet(sheetName);
+                Row flowHeader = flowSheet.createRow(0);
+                flowHeader.createCell(0).setCellValue("Configuration Group");
+                flowHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+                flowHeader.createCell(2).setCellValue("Sending System Alert Name");
+                flowHeader.createCell(3).setCellValue("Priority");
+                flowHeader.createCell(4).setCellValue("Device-A");
+                flowHeader.createCell(5).setCellValue("Ringtone");
+                flowHeader.createCell(6).setCellValue("Response Options");
+
+                Row flowData = flowSheet.createRow(1);
+                flowData.createCell(0).setCellValue("TestGroup");
+                flowData.createCell(1).setCellValue("TestAlarm");
+                flowData.createCell(2).setCellValue("TestSending");
+                flowData.createCell(3).setCellValue("Urgent");
+                flowData.createCell(4).setCellValue("Edge");
+                flowData.createCell(5).setCellValue("Alert1");
+                flowData.createCell(6).setCellValue(responseOption);
+
+                try (OutputStream os = Files.newOutputStream(xlsxFile.toPath())) {
+                    wb.write(os);
+                }
+            }
+
+            ExcelParserV5 parser = new ExcelParserV5();
+            parser.load(xlsxFile);
+            
             if (flowType.equals("NurseCalls")) {
-                sheetName = "Nurse Call";
+                parser.writeNurseCallsJson(jsonFile, false);
             } else if (flowType.equals("Clinicals")) {
-                sheetName = "Patient Monitoring";
+                parser.writeClinicalsJson(jsonFile, false);
             } else {
-                sheetName = "Order";  // Orders sheet name
+                parser.writeOrdersJson(jsonFile, false);
             }
             
-            Sheet flowSheet = wb.createSheet(sheetName);
-            Row flowHeader = flowSheet.createRow(0);
-            flowHeader.createCell(0).setCellValue("Configuration Group");
-            flowHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
-            flowHeader.createCell(2).setCellValue("Sending System Alert Name");
-            flowHeader.createCell(3).setCellValue("Priority");
-            flowHeader.createCell(4).setCellValue("Device-A");
-            flowHeader.createCell(5).setCellValue("Ringtone");
-            flowHeader.createCell(6).setCellValue("Response Options");
-
-            Row flowData = flowSheet.createRow(1);
-            flowData.createCell(0).setCellValue("TestGroup");
-            flowData.createCell(1).setCellValue("TestAlarm");
-            flowData.createCell(2).setCellValue("TestSending");
-            flowData.createCell(3).setCellValue("Urgent");
-            flowData.createCell(4).setCellValue("Edge");
-            flowData.createCell(5).setCellValue("Alert1");
-            flowData.createCell(6).setCellValue(responseOption);
-
-            try (OutputStream os = Files.newOutputStream(xlsxFile.toPath())) {
-                wb.write(os);
-            }
+            return Files.readString(jsonFile.toPath());
+        } finally {
+            // Cleanup - ensure all files are deleted even if test fails
+            try {
+                if (xlsxFile.exists()) xlsxFile.delete();
+            } catch (Exception ignored) {}
+            try {
+                if (jsonFile.exists()) jsonFile.delete();
+            } catch (Exception ignored) {}
+            try {
+                Files.deleteIfExists(tmpDir);
+            } catch (Exception ignored) {}
         }
-
-        ExcelParserV5 parser = new ExcelParserV5();
-        parser.load(xlsxFile);
-        
-        if (flowType.equals("NurseCalls")) {
-            parser.writeNurseCallsJson(jsonFile, false);
-        } else if (flowType.equals("Clinicals")) {
-            parser.writeClinicalsJson(jsonFile, false);
-        } else {
-            parser.writeOrdersJson(jsonFile, false);
-        }
-        
-        String json = Files.readString(jsonFile.toPath());
-        
-        // Cleanup
-        xlsxFile.delete();
-        jsonFile.delete();
-        tmpDir.toFile().delete();
-        
-        return json;
     }
 }
