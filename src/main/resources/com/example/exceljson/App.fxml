@@ -19,26 +19,31 @@
                         <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
                     </tooltip>
                 </CheckBox>
-                <Label text="Edge Reference Name:" style="-fx-text-fill:white;" />
-                <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" />
-                <Label text="VCS Reference Name:" style="-fx-text-fill:white;" />
-                <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" />
+                <VBox spacing="2" alignment="CENTER_LEFT">
+                    <Label text="Adapter Reference name" style="-fx-text-fill:white; -fx-font-size:10; -fx-font-weight:bold;" />
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Label text="Edge" style="-fx-text-fill:white;" />
+                        <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" />
+                        <Label text="VMP" style="-fx-text-fill:white;" />
+                        <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" />
+                    </HBox>
+                </VBox>
                 <Button fx:id="resetDefaultsButton" text="Reset Defaults" styleClass="button-secondary" />
             </HBox>
             <VBox spacing="10" style="-fx-padding: 10;">
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Button fx:id="loadButton" text="📂 Load Excel" />
-                    <Button fx:id="saveExcelButton" text="💾 Save Excel As..." disable="true" />
+                    <Button fx:id="saveExcelButton" text="💾 Save Changes" disable="true" />
                     <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
                 </HBox>
                 <Label fx:id="statusLabel" text="Ready" />
                 <HBox spacing="15" alignment="CENTER_LEFT">
-                    <Label text="Preview:" style="-fx-font-weight: bold;" />
+                    <Label text="Preview Json:" style="-fx-font-weight: bold;" />
                     <Button fx:id="generateNurseJsonButton" text="Nursecall" />
                     <Button fx:id="generateClinicalJsonButton" text="Clinical" />
                     <Button fx:id="generateOrdersJsonButton" text="Orders" />
                     <Separator orientation="VERTICAL" />
-                    <Label text="Export:" style="-fx-font-weight: bold;" />
+                    <Label text="Export Json:" style="-fx-font-weight: bold;" />
                     <Button fx:id="exportNurseJsonButton" text="Nursecall" />
                     <Button fx:id="exportClinicalJsonButton" text="Clinical" />
                     <Button fx:id="exportOrdersJsonButton" text="Orders" />
