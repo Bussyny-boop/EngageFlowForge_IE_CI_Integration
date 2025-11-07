@@ -81,6 +81,7 @@ class InScopeFilterTest {
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("In scope");
             clinicalHeader.createCell(1).setCellValue("Configuration Group");
+            clinicalHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);
@@ -231,6 +232,7 @@ class InScopeFilterTest {
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("In scope");
             clinicalHeader.createCell(1).setCellValue("Configuration Group");
+            clinicalHeader.createCell(2).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);

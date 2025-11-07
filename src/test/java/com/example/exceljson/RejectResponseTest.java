@@ -144,14 +144,14 @@ class RejectResponseTest {
             try (XSSFWorkbook wb = new XSSFWorkbook()) {
                 // Create Unit Breakdown sheet
                 Sheet unitSheet = wb.createSheet("Unit Breakdown");
-                Row headerRow = unitSheet.createRow(0);
+                Row headerRow = unitSheet.createRow(2);
                 headerRow.createCell(0).setCellValue("Facility");
-                headerRow.createCell(1).setCellValue("Unit Names");
-                headerRow.createCell(2).setCellValue("Nurse Group");
-                headerRow.createCell(3).setCellValue("Clinical Group");
-                headerRow.createCell(4).setCellValue("Orders Group");
+                headerRow.createCell(1).setCellValue("Common Unit Name");
+                headerRow.createCell(2).setCellValue("Nurse Call Configuration Group");
+                headerRow.createCell(3).setCellValue("Patient Monitoring Configuration Group");
+                headerRow.createCell(4).setCellValue("Orders Configuration Group");
 
-                Row dataRow = unitSheet.createRow(1);
+                Row dataRow = unitSheet.createRow(3);
                 dataRow.createCell(0).setCellValue("TestFacility");
                 dataRow.createCell(1).setCellValue("TestUnit");
                 dataRow.createCell(2).setCellValue("TestGroup");
@@ -169,7 +169,7 @@ class RejectResponseTest {
                 }
                 
                 Sheet flowSheet = wb.createSheet(sheetName);
-                Row flowHeader = flowSheet.createRow(0);
+                Row flowHeader = flowSheet.createRow(2);
                 flowHeader.createCell(0).setCellValue("Configuration Group");
                 flowHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
                 flowHeader.createCell(2).setCellValue("Sending System Alert Name");
@@ -178,7 +178,7 @@ class RejectResponseTest {
                 flowHeader.createCell(5).setCellValue("Ringtone");
                 flowHeader.createCell(6).setCellValue("Response Options");
 
-                Row flowData = flowSheet.createRow(1);
+                Row flowData = flowSheet.createRow(3);
                 flowData.createCell(0).setCellValue("TestGroup");
                 flowData.createCell(1).setCellValue("TestAlarm");
                 flowData.createCell(2).setCellValue("TestSending");

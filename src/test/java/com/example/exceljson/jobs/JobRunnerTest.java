@@ -120,53 +120,54 @@ class JobRunnerTest {
     private static void createSampleWorkbook(Path target) throws Exception {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet units = workbook.createSheet("Unit Breakdown");
-            Row unitsHeader = units.createRow(0);
+            Row unitsHeader = units.createRow(2);
             unitsHeader.createCell(0).setCellValue("Facility");
-            unitsHeader.createCell(2).setCellValue("Common Unit Name");
-            unitsHeader.createCell(3).setCellValue("Configuration Group");
-            Row unitsRow = units.createRow(1);
+            unitsHeader.createCell(1).setCellValue("Common Unit Name");
+            unitsHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+            unitsHeader.createCell(3).setCellValue("Patient Monitoring Configuration Group");
+            Row unitsRow = units.createRow(3);
             unitsRow.createCell(0).setCellValue("Facility A");
-            unitsRow.createCell(2).setCellValue("Unit A");
+            unitsRow.createCell(1).setCellValue("Unit A");
+            unitsRow.createCell(2).setCellValue("Group 1");
             unitsRow.createCell(3).setCellValue("Group 1");
 
             Sheet nurseCalls = workbook.createSheet("Nurse call");
-            Row nurseHeader = nurseCalls.createRow(0);
+            Row nurseHeader = nurseCalls.createRow(2);
             nurseHeader.createCell(0).setCellValue("Configuration Group");
-            nurseHeader.createCell(4).setCellValue("Alarm Name");
-            nurseHeader.createCell(5).setCellValue("Priority");
-            nurseHeader.createCell(6).setCellValue("Device - A");
-            nurseHeader.createCell(7).setCellValue("Ringtone");
-            nurseHeader.createCell(32).setCellValue("Response Options");
-            nurseHeader.createCell(33).setCellValue("1st recipients");
-            Row nurseRow = nurseCalls.createRow(1);
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(2).setCellValue("Priority");
+            nurseHeader.createCell(3).setCellValue("Device - A");
+            nurseHeader.createCell(4).setCellValue("Ringtone");
+            nurseHeader.createCell(5).setCellValue("Response Options");
+            nurseHeader.createCell(6).setCellValue("1st Recipient");
+            Row nurseRow = nurseCalls.createRow(3);
             nurseRow.createCell(0).setCellValue("Group 1");
-            nurseRow.createCell(4).setCellValue("Alarm 1");
-            nurseRow.createCell(5).setCellValue("High");
-            nurseRow.createCell(6).setCellValue("Edge");
-            nurseRow.createCell(7).setCellValue("Tone 1");
-            nurseRow.createCell(32).setCellValue("Ack");
-            nurseRow.createCell(33).setCellValue("Nurse Team");
+            nurseRow.createCell(1).setCellValue("Alarm 1");
+            nurseRow.createCell(2).setCellValue("High");
+            nurseRow.createCell(3).setCellValue("Edge");
+            nurseRow.createCell(4).setCellValue("Tone 1");
+            nurseRow.createCell(5).setCellValue("Ack");
+            nurseRow.createCell(6).setCellValue("Nurse Team");
 
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
-            Row clinicalHeader = clinicals.createRow(0);
+            Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
             clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
-            clinicalHeader.createCell(4).setCellValue("Alarm Name");
-            clinicalHeader.createCell(5).setCellValue("Priority");
-            clinicalHeader.createCell(6).setCellValue("Device - A");
-            clinicalHeader.createCell(7).setCellValue("Ringtone");
-            clinicalHeader.createCell(32).setCellValue("Response Options");
-            clinicalHeader.createCell(33).setCellValue("1st recipients");
-            clinicalHeader.createCell(34).setCellValue("Fail safe recipients");
-            Row clinicalRow = clinicals.createRow(1);
+            clinicalHeader.createCell(2).setCellValue("Priority");
+            clinicalHeader.createCell(3).setCellValue("Device - A");
+            clinicalHeader.createCell(4).setCellValue("Ringtone");
+            clinicalHeader.createCell(5).setCellValue("Response Options");
+            clinicalHeader.createCell(6).setCellValue("1st Recipient");
+            clinicalHeader.createCell(7).setCellValue("Fail safe recipients");
+            Row clinicalRow = clinicals.createRow(3);
             clinicalRow.createCell(0).setCellValue("Group 1");
-            clinicalRow.createCell(4).setCellValue("Clinical Alarm");
-            clinicalRow.createCell(5).setCellValue("Medium");
-            clinicalRow.createCell(6).setCellValue("VMP");
-            clinicalRow.createCell(7).setCellValue("Tone 2");
-            clinicalRow.createCell(32).setCellValue("Escalate");
-            clinicalRow.createCell(33).setCellValue("Primary");
-            clinicalRow.createCell(34).setCellValue("Backup");
+            clinicalRow.createCell(1).setCellValue("Clinical Alarm");
+            clinicalRow.createCell(2).setCellValue("Medium");
+            clinicalRow.createCell(3).setCellValue("VMP");
+            clinicalRow.createCell(4).setCellValue("Tone 2");
+            clinicalRow.createCell(5).setCellValue("Escalate");
+            clinicalRow.createCell(6).setCellValue("Primary");
+            clinicalRow.createCell(7).setCellValue("Backup");
 
             try (OutputStream os = Files.newOutputStream(target)) {
                 workbook.write(os);
@@ -206,35 +207,41 @@ class JobRunnerTest {
     private static void createWorkbookWithBothNameColumns(Path target) throws Exception {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet units = workbook.createSheet("Unit Breakdown");
-            Row unitsHeader = units.createRow(0);
+            Row unitsHeader = units.createRow(2);
             unitsHeader.createCell(0).setCellValue("Facility");
-            unitsHeader.createCell(2).setCellValue("Common Unit Name");
-            unitsHeader.createCell(3).setCellValue("Configuration Group");
-            Row unitsRow = units.createRow(1);
+            unitsHeader.createCell(1).setCellValue("Common Unit Name");
+            unitsHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
+            Row unitsRow = units.createRow(3);
             unitsRow.createCell(0).setCellValue("Test Facility");
-            unitsRow.createCell(2).setCellValue("Test Unit");
-            unitsRow.createCell(3).setCellValue("TestGroup");
+            unitsRow.createCell(1).setCellValue("Test Unit");
+            unitsRow.createCell(2).setCellValue("TestGroup");
 
             Sheet nurseCalls = workbook.createSheet("Nurse call");
-            Row nurseHeader = nurseCalls.createRow(0);
+            Row nurseHeader = nurseCalls.createRow(2);
             nurseHeader.createCell(0).setCellValue("Configuration Group");
-            nurseHeader.createCell(4).setCellValue("Common Alert or Alarm Name");
-            nurseHeader.createCell(5).setCellValue("Sending System Alert Name");
-            nurseHeader.createCell(6).setCellValue("Priority");
-            nurseHeader.createCell(7).setCellValue("Device - A");
-            nurseHeader.createCell(8).setCellValue("Ringtone");
-            nurseHeader.createCell(32).setCellValue("Response Options");
-            nurseHeader.createCell(33).setCellValue("1st recipients");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
+            nurseHeader.createCell(2).setCellValue("Sending System Alert Name");
+            nurseHeader.createCell(3).setCellValue("Priority");
+            nurseHeader.createCell(4).setCellValue("Device - A");
+            nurseHeader.createCell(5).setCellValue("Ringtone");
+            nurseHeader.createCell(6).setCellValue("Response Options");
+            nurseHeader.createCell(7).setCellValue("1st Recipient");
             
-            Row nurseRow = nurseCalls.createRow(1);
+            Row nurseRow = nurseCalls.createRow(3);
             nurseRow.createCell(0).setCellValue("TestGroup");
-            nurseRow.createCell(4).setCellValue("Common Alarm Name");
-            nurseRow.createCell(5).setCellValue("Sending System Alarm Name");
-            nurseRow.createCell(6).setCellValue("High");
-            nurseRow.createCell(7).setCellValue("Edge");
-            nurseRow.createCell(8).setCellValue("Tone 1");
-            nurseRow.createCell(32).setCellValue("Accept");
-            nurseRow.createCell(33).setCellValue("Nurse Team");
+            nurseRow.createCell(1).setCellValue("Common Alarm Name");
+            nurseRow.createCell(2).setCellValue("Sending System Alarm Name");
+            nurseRow.createCell(3).setCellValue("High");
+            nurseRow.createCell(4).setCellValue("Edge");
+            nurseRow.createCell(5).setCellValue("Tone 1");
+            nurseRow.createCell(6).setCellValue("Accept");
+            nurseRow.createCell(7).setCellValue("Nurse Team");
+
+            // Add empty Patient Monitoring sheet
+            Sheet clinicals = workbook.createSheet("Patient Monitoring");
+            Row clinicalHeader = clinicals.createRow(2);
+            clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(target)) {
                 workbook.write(os);
