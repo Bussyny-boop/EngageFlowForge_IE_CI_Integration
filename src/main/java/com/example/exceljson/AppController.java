@@ -1030,25 +1030,18 @@ public class AppController {
         if (defaultEdgeCheckbox != null && defaultVmpCheckbox != null) {
             boolean bothSelected = defaultEdgeCheckbox.isSelected() && defaultVmpCheckbox.isSelected();
             if (bothSelected) {
-                showTimedWarning("Your Engage rules will be combined to send outgoing WCTP and VMP endpoints", 2000);
+                showWarning("Your Engage rules will be combined to send outgoing WCTP and VMP endpoints");
             }
         }
     }
 
-    private void showTimedWarning(String message, int durationMs) {
+    private void showWarning(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Warning");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.getDialogPane().setStyle("-fx-font-size: 13px;");
-        
-        // Show the alert and auto-close after duration
-        javafx.application.Platform.runLater(() -> {
-            alert.show();
-            javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(durationMs));
-            delay.setOnFinished(e -> alert.close());
-            delay.play();
-        });
+        alert.showAndWait();
     }
 
     private static String safe(String v) { return v == null ? "" : v; }

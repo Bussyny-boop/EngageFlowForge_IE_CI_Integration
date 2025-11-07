@@ -28,17 +28,20 @@
             <VBox spacing="10" style="-fx-padding: 10;">
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Button fx:id="loadButton" text="📂 Load Excel" />
-                    <Button fx:id="saveExcelButton" text="💾 Save Excel (Save As)" disable="true" />
+                    <Button fx:id="saveExcelButton" text="💾 Save Excel As..." disable="true" />
                     <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
                 </HBox>
                 <Label fx:id="statusLabel" text="Ready" />
-                <HBox spacing="10">
-                    <Button fx:id="generateNurseJsonButton" text="🔧 Preview Nursecall" />
-                    <Button fx:id="generateClinicalJsonButton" text="🏥 Preview Clinical" />
-                    <Button fx:id="generateOrdersJsonButton" text="💊 Preview Orders" />
-                    <Button fx:id="exportNurseJsonButton" text="📤 Export Nursecall" />
-                    <Button fx:id="exportClinicalJsonButton" text="📤 Export Clinicals" />
-                    <Button fx:id="exportOrdersJsonButton" text="📤 Export Orders" />
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label text="Preview:" style="-fx-font-weight: bold;" />
+                    <Button fx:id="generateNurseJsonButton" text="Nursecall" />
+                    <Button fx:id="generateClinicalJsonButton" text="Clinical" />
+                    <Button fx:id="generateOrdersJsonButton" text="Orders" />
+                    <Separator orientation="VERTICAL" />
+                    <Label text="Export:" style="-fx-font-weight: bold;" />
+                    <Button fx:id="exportNurseJsonButton" text="Nursecall" />
+                    <Button fx:id="exportClinicalJsonButton" text="Clinical" />
+                    <Button fx:id="exportOrdersJsonButton" text="Orders" />
                 </HBox>
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Label text="Vocera Badges Alert Interface:" />
