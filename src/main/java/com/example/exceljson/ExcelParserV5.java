@@ -223,7 +223,7 @@ public class ExcelParserV5 {
         }
         // Store No Caregiver Group for this (facility, nurseGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
-          String key = facility + "|nurse|" + nurseGroup;
+          String key = buildNoCaregiverKey(facility, "nurse", nurseGroup);
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
@@ -234,7 +234,7 @@ public class ExcelParserV5 {
         }
         // Store No Caregiver Group for this (facility, clinGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
-          String key = facility + "|clinical|" + clinGroup;
+          String key = buildNoCaregiverKey(facility, "clinical", clinGroup);
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
@@ -245,7 +245,7 @@ public class ExcelParserV5 {
         }
         // Store No Caregiver Group for this (facility, ordersGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
-          String key = facility + "|orders|" + ordersGroup;
+          String key = buildNoCaregiverKey(facility, "orders", ordersGroup);
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
@@ -275,7 +275,7 @@ public class ExcelParserV5 {
         }
         // Store No Caregiver Group for this (facility, nurseGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
-          String key = facility + "|nurse|" + nurseGroup;
+          String key = buildNoCaregiverKey(facility, "nurse", nurseGroup);
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
@@ -286,7 +286,7 @@ public class ExcelParserV5 {
         }
         // Store No Caregiver Group for this (facility, clinGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
-          String key = facility + "|clinical|" + clinGroup;
+          String key = buildNoCaregiverKey(facility, "clinical", clinGroup);
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
@@ -297,7 +297,7 @@ public class ExcelParserV5 {
         }
         // Store No Caregiver Group for this (facility, ordersGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
-          String key = facility + "|orders|" + ordersGroup;
+          String key = buildNoCaregiverKey(facility, "orders", ordersGroup);
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
@@ -678,16 +678,7 @@ public class ExcelParserV5 {
     String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
     
     // Determine the config group type for No Caregiver Group lookup
-    String configGroupType;
-    if ("NurseCalls".equals(flowType)) {
-      configGroupType = "nurse";
-    } else if ("Clinicals".equals(flowType)) {
-      configGroupType = "clinical";
-    } else if ("Orders".equals(flowType)) {
-      configGroupType = "orders";
-    } else {
-      configGroupType = "nurse"; // default
-    }
+    String configGroupType = getConfigGroupType(flowType);
     
     // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units, noCareGroup
     StringBuilder key = new StringBuilder();
@@ -721,7 +712,7 @@ public class ExcelParserV5 {
       .distinct()
       .sorted()
       .map(facility -> {
-        String lookupKey = facility + "|" + configGroupType + "|" + nvl(r.configGroup, "");
+        String lookupKey = buildNoCaregiverKey(facility, configGroupType, r.configGroup);
         String noCareValue = noCaregiverByFacilityAndGroup.getOrDefault(lookupKey, "");
         return facility + ":" + noCareValue;
       })
@@ -838,8 +829,8 @@ public class ExcelParserV5 {
     boolean ordersType = "Orders".equals(flowType);
     if (!nurseSide && !ordersType && !isBlank(facility)) {
       // Determine the config group type for No Caregiver Group lookup
-      String configGroupType = "clinical"; // Since we're in the !nurseSide branch
-      String lookupKey = facility + "|" + configGroupType + "|" + nvl(r.configGroup, "");
+      String configGroupType = getConfigGroupType(flowType);
+      String lookupKey = buildNoCaregiverKey(facility, configGroupType, r.configGroup);
       String noCare = noCaregiverByFacilityAndGroup.getOrDefault(lookupKey, "");
       if (!isBlank(noCare)) {
         Map<String,Object> d = new LinkedHashMap<>();
@@ -2083,6 +2074,37 @@ public class ExcelParserV5 {
   }
   private static boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
   private static String nvl(String a, String b) { return isBlank(a) ? (b == null ? "" : b) : a; }
+
+  /**
+   * Build a key for looking up No Caregiver Group values.
+   * Key format: "facilityName|configGroupType|configGroup"
+   * 
+   * @param facility The facility name
+   * @param configGroupType One of "nurse", "clinical", or "orders"
+   * @param configGroup The configuration group name
+   * @return The lookup key
+   */
+  private static String buildNoCaregiverKey(String facility, String configGroupType, String configGroup) {
+    return facility + "|" + configGroupType + "|" + nvl(configGroup, "");
+  }
+
+  /**
+   * Determine the config group type string based on flow type.
+   * 
+   * @param flowType One of "NurseCalls", "Clinicals", or "Orders"
+   * @return The config group type string ("nurse", "clinical", or "orders")
+   */
+  private static String getConfigGroupType(String flowType) {
+    if ("NurseCalls".equals(flowType)) {
+      return "nurse";
+    } else if ("Clinicals".equals(flowType)) {
+      return "clinical";
+    } else if ("Orders".equals(flowType)) {
+      return "orders";
+    } else {
+      return "nurse"; // default
+    }
+  }
 
   /**
    * Parse a boolean value from Excel cell content (typically a checkbox column).
