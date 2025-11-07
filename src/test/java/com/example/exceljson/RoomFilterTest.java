@@ -192,6 +192,7 @@ class RoomFilterTest {
             Sheet nurseCalls = workbook.createSheet("Nurse call");
             Row nurseHeader = nurseCalls.createRow(2);
             nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             // Clinical
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
@@ -273,6 +274,7 @@ class RoomFilterTest {
             Sheet nurseCalls = workbook.createSheet("Nurse call");
             Row nurseHeader = nurseCalls.createRow(2);
             nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
             
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
