@@ -218,6 +218,7 @@ class InterfaceReferencesTest {
             Sheet clinicalSheet = wb.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicalSheet.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (FileOutputStream fos = new FileOutputStream(excelFile)) {
                 wb.write(fos);

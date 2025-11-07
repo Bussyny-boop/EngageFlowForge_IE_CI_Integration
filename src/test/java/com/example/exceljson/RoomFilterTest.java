@@ -54,10 +54,12 @@ class RoomFilterTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
             
             Sheet orders = workbook.createSheet("Order");
             Row ordersHeader = orders.createRow(2);
             ordersHeader.createCell(0).setCellValue("Configuration Group");
+            ordersHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);
@@ -134,10 +136,12 @@ class RoomFilterTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
             
             Sheet orders = workbook.createSheet("Order");
             Row ordersHeader = orders.createRow(2);
             ordersHeader.createCell(0).setCellValue("Configuration Group");
+            ordersHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);
@@ -207,6 +211,7 @@ class RoomFilterTest {
             Sheet orders = workbook.createSheet("Order");
             Row ordersHeader = orders.createRow(2);
             ordersHeader.createCell(0).setCellValue("Configuration Group");
+            ordersHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);
@@ -272,6 +277,7 @@ class RoomFilterTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             // Orders
             Sheet orders = workbook.createSheet("Order");

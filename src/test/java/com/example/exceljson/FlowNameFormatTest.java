@@ -70,6 +70,7 @@ class FlowNameFormatTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);
@@ -122,6 +123,7 @@ class FlowNameFormatTest {
             Sheet nurseCalls = workbook.createSheet("Nurse call");
             Row nurseHeader = nurseCalls.createRow(2);
             nurseHeader.createCell(0).setCellValue("Configuration Group");
+            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             // Clinical with two alarms
             Sheet clinicals = workbook.createSheet("Patient Monitoring");

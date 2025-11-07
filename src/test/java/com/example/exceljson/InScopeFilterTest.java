@@ -145,6 +145,7 @@ class InScopeFilterTest {
             Sheet clinicals = workbook.createSheet("Patient Monitoring");
             Row clinicalHeader = clinicals.createRow(2);
             clinicalHeader.createCell(0).setCellValue("Configuration Group");
+            clinicalHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
 
             try (OutputStream os = Files.newOutputStream(excelPath)) {
                 workbook.write(os);
