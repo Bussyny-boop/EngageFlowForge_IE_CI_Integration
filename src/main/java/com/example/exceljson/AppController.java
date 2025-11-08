@@ -38,9 +38,11 @@ public class AppController {
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private TextField voceraRefNameField;
+    @FXML private TextField xmppRefNameField;
     @FXML private CheckBox defaultEdgeCheckbox;
     @FXML private CheckBox defaultVmpCheckbox;
     @FXML private CheckBox defaultVoceraCheckbox;
+    @FXML private CheckBox defaultXmppCheckbox;
     @FXML private Button resetDefaultsButton;
     @FXML private Button resetPathsButton;
     @FXML private TextField roomFilterNursecallField;
@@ -207,6 +209,7 @@ public class AppController {
         if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
         if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
         if (voceraRefNameField != null) voceraRefNameField.setText("Vocera");
+        if (xmppRefNameField != null) xmppRefNameField.setText("XMPP");
 
         setJsonButtonsEnabled(false);
         setExcelButtonsEnabled(false);
@@ -235,6 +238,9 @@ public class AppController {
         if (voceraRefNameField != null) {
             voceraRefNameField.setOnAction(e -> updateInterfaceRefs());
         }
+        if (xmppRefNameField != null) {
+            xmppRefNameField.setOnAction(e -> updateInterfaceRefs());
+        }
 
         // Also update parser when focus is lost (user tabs or clicks away)
         if (edgeRefNameField != null) {
@@ -249,6 +255,11 @@ public class AppController {
         }
         if (voceraRefNameField != null) {
             voceraRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
+                if (!newV) updateInterfaceRefs(); 
+            });
+        }
+        if (xmppRefNameField != null) {
+            xmppRefNameField.focusedProperty().addListener((obs, oldV, newV) -> { 
                 if (!newV) updateInterfaceRefs(); 
             });
         }
@@ -268,6 +279,12 @@ public class AppController {
         }
         if (defaultVoceraCheckbox != null) {
             defaultVoceraCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                checkBothDefaultInterfacesSelected();
+                updateInterfaceRefs();
+            });
+        }
+        if (defaultXmppCheckbox != null) {
+            defaultXmppCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 checkBothDefaultInterfacesSelected();
                 updateInterfaceRefs();
             });
@@ -506,14 +523,16 @@ public class AppController {
         filteredParser.setInterfaceReferences(
             edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
             vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP",
-            voceraRefNameField != null ? voceraRefNameField.getText().trim() : "Vocera"
+            voceraRefNameField != null ? voceraRefNameField.getText().trim() : "Vocera",
+            xmppRefNameField != null ? xmppRefNameField.getText().trim() : "XMPP"
         );
         
         // Copy default interface flags
         boolean defaultEdge = defaultEdgeCheckbox != null && defaultEdgeCheckbox.isSelected();
         boolean defaultVmp = defaultVmpCheckbox != null && defaultVmpCheckbox.isSelected();
         boolean defaultVocera = defaultVoceraCheckbox != null && defaultVoceraCheckbox.isSelected();
-        filteredParser.setDefaultInterfaces(defaultEdge, defaultVmp, defaultVocera);
+        boolean defaultXmpp = defaultXmppCheckbox != null && defaultXmppCheckbox.isSelected();
+        filteredParser.setDefaultInterfaces(defaultEdge, defaultVmp, defaultVocera, defaultXmpp);
         
         // Copy room filters
         filteredParser.setRoomFilters(
@@ -998,6 +1017,7 @@ public class AppController {
         if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
         if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
         if (voceraRefNameField != null) voceraRefNameField.setText("Vocera");
+        if (xmppRefNameField != null) xmppRefNameField.setText("XMPP");
         statusLabel.setText("Reset interface reference names to defaults");
     }
 
@@ -1067,14 +1087,16 @@ public class AppController {
             parser.setInterfaceReferences(
                 edgeRefNameField != null ? edgeRefNameField.getText().trim() : "OutgoingWCTP",
                 vcsRefNameField != null ? vcsRefNameField.getText().trim() : "VMP",
-                voceraRefNameField != null ? voceraRefNameField.getText().trim() : "Vocera"
+                voceraRefNameField != null ? voceraRefNameField.getText().trim() : "Vocera",
+                xmppRefNameField != null ? xmppRefNameField.getText().trim() : "XMPP"
             );
             
             // Apply default interface flags
             boolean defaultEdge = defaultEdgeCheckbox != null && defaultEdgeCheckbox.isSelected();
             boolean defaultVmp = defaultVmpCheckbox != null && defaultVmpCheckbox.isSelected();
             boolean defaultVocera = defaultVoceraCheckbox != null && defaultVoceraCheckbox.isSelected();
-            parser.setDefaultInterfaces(defaultEdge, defaultVmp, defaultVocera);
+            boolean defaultXmpp = defaultXmppCheckbox != null && defaultXmppCheckbox.isSelected();
+            parser.setDefaultInterfaces(defaultEdge, defaultVmp, defaultVocera, defaultXmpp);
             
             // Apply room filters
             parser.setRoomFilters(

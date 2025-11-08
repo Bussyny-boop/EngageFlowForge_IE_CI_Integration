@@ -41,6 +41,7 @@ public class ExcelParserV5 {
     public String ringtone = "";
     public String responseOptions = "";
     public String breakThroughDND = "";
+    public String multiUserAccept = ""; // Platform: Multi-User Accept column
     public String escalateAfter = "";
     public String ttlValue = "";
     public String enunciate = "";
@@ -71,11 +72,13 @@ public class ExcelParserV5 {
   private String edgeReferenceName = "OutgoingWCTP";
   private String vcsReferenceName = "VMP";
   private String voceraReferenceName = "Vocera";
+  private String xmppReferenceName = "XMPP";
   
   // Default interface flags (when Device A/B are blank)
   private boolean useDefaultEdge = false;
   private boolean useDefaultVmp = false;
   private boolean useDefaultVocera = false;
+  private boolean useDefaultXmpp = false;
   
   // Room filter values (optional filters for each flow type)
   private String roomFilterNursecall = "";
@@ -105,6 +108,22 @@ public class ExcelParserV5 {
     }
   }
   
+  public void setInterfaceReferences(String edgeRef, String vcsRef, String voceraRef, String xmppRef) {
+    // Basic validation - ensure references are reasonable
+    if (edgeRef != null && !edgeRef.isBlank() && edgeRef.length() <= 100) {
+      this.edgeReferenceName = edgeRef.trim();
+    }
+    if (vcsRef != null && !vcsRef.isBlank() && vcsRef.length() <= 100) {
+      this.vcsReferenceName = vcsRef.trim();
+    }
+    if (voceraRef != null && !voceraRef.isBlank() && voceraRef.length() <= 100) {
+      this.voceraReferenceName = voceraRef.trim();
+    }
+    if (xmppRef != null && !xmppRef.isBlank() && xmppRef.length() <= 100) {
+      this.xmppReferenceName = xmppRef.trim();
+    }
+  }
+  
   public void setDefaultInterfaces(boolean defaultEdge, boolean defaultVmp) {
     this.useDefaultEdge = defaultEdge;
     this.useDefaultVmp = defaultVmp;
@@ -114,6 +133,13 @@ public class ExcelParserV5 {
     this.useDefaultEdge = defaultEdge;
     this.useDefaultVmp = defaultVmp;
     this.useDefaultVocera = defaultVocera;
+  }
+  
+  public void setDefaultInterfaces(boolean defaultEdge, boolean defaultVmp, boolean defaultVocera, boolean defaultXmpp) {
+    this.useDefaultEdge = defaultEdge;
+    this.useDefaultVmp = defaultVmp;
+    this.useDefaultVocera = defaultVocera;
+    this.useDefaultXmpp = defaultXmpp;
   }
   
   public void setRoomFilters(String nursecall, String clinical, String orders) {
@@ -376,6 +402,7 @@ public class ExcelParserV5 {
     int cRing    = getCol(hm, "Ringtone Device - A", "Ringtone");
     int cResp    = getCol(hm, "Response Options", "Response Option");
     int cBreakDND= getCol(hm, "Break Through DND");
+    int cMultiUserAccept = getCol(hm, "Platform: Multi-User Accept");
     int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
     int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
     
@@ -437,6 +464,7 @@ public class ExcelParserV5 {
       f.ringtone    = getCell(row, cRing);
       f.responseOptions = getCell(row, cResp);
       f.breakThroughDND = getCell(row, cBreakDND);
+      f.multiUserAccept = getCell(row, cMultiUserAccept);
       f.escalateAfter = getCell(row, cEscalateAfter);
       f.ttlValue = getCell(row, cTTL);
       
@@ -615,7 +643,15 @@ public class ExcelParserV5 {
       flow.put("destinations", dac.destinations);
       flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB));
       flow.put("name", buildFlowName(flowType, mappedPriority, r, unitRefs));
-      flow.put("parameterAttributes", buildParamAttributesQuoted(r, flowType, mappedPriority));
+      
+      // Use XMPP-specific parameter attributes if XMPP device is detected
+      boolean isXmpp = containsXmpp(r.deviceA) || containsXmpp(r.deviceB);
+      if (isXmpp) {
+        flow.put("parameterAttributes", buildXmppParamAttributes(r, flowType));
+      } else {
+        flow.put("parameterAttributes", buildParamAttributesQuoted(r, flowType, mappedPriority));
+      }
+      
       flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
       flow.put("status", "Active");
       if (!unitRefs.isEmpty()) flow.put("units", filterUnitRefsForOutput(unitRefs));
@@ -716,7 +752,15 @@ public class ExcelParserV5 {
         flow.put("destinations", dac.destinations);
         flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
         flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitsForNoCareGroup));
-        flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
+        
+        // Use XMPP-specific parameter attributes if XMPP device is detected
+        boolean isXmpp = containsXmpp(template.deviceA) || containsXmpp(template.deviceB);
+        if (isXmpp) {
+          flow.put("parameterAttributes", buildXmppParamAttributes(template, flowType));
+        } else {
+          flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
+        }
+        
         flow.put("priority", mappedPriority.isEmpty() ? "normal" : mappedPriority);
         flow.put("status", "Active");
         if (!unitsForNoCareGroup.isEmpty()) flow.put("units", filterUnitRefsForOutput(unitsForNoCareGroup));
@@ -898,11 +942,13 @@ public class ExcelParserV5 {
   
   /**
    * Determine the primary interface reference name based on device A/B.
-   * Returns the appropriate reference name in priority order: Edge, Vocera, VMP.
+   * Returns the appropriate reference name in priority order: Edge, XMPP, Vocera, VMP.
    */
   private String determineInterfaceReferenceName(String deviceA, String deviceB) {
     boolean hasEdgeA = containsEdge(deviceA);
     boolean hasEdgeB = containsEdge(deviceB);
+    boolean hasXmppA = containsXmpp(deviceA);
+    boolean hasXmppB = containsXmpp(deviceB);
     boolean hasVoceraA = containsVocera(deviceA);
     boolean hasVoceraB = containsVocera(deviceB);
     boolean hasVcsA = containsVcs(deviceA);
@@ -911,6 +957,11 @@ public class ExcelParserV5 {
     // Prefer Edge if present
     if (hasEdgeA || hasEdgeB) {
       return edgeReferenceName;
+    }
+    
+    // Then check for XMPP
+    if (hasXmppA || hasXmppB) {
+      return xmppReferenceName;
     }
     
     // Then check for Vocera
@@ -926,6 +977,10 @@ public class ExcelParserV5 {
     // Default to Edge if no device specified and default is set
     if (useDefaultEdge) {
       return edgeReferenceName;
+    }
+    
+    if (useDefaultXmpp) {
+      return xmppReferenceName;
     }
     
     if (useDefaultVocera) {
@@ -961,6 +1016,8 @@ public class ExcelParserV5 {
     boolean hasVcsB = containsVcs(deviceB);
     boolean hasVoceraA = containsVocera(deviceA);
     boolean hasVoceraB = containsVocera(deviceB);
+    boolean hasXmppA = containsXmpp(deviceA);
+    boolean hasXmppB = containsXmpp(deviceB);
 
     List<Map<String, Object>> interfaces = new ArrayList<>();
     
@@ -970,6 +1027,14 @@ public class ExcelParserV5 {
       edgeIface.put("componentName", "OutgoingWCTP");
       edgeIface.put("referenceName", edgeReferenceName);
       interfaces.add(edgeIface);
+    }
+    
+    // Add XMPP interface if detected
+    if (hasXmppA || hasXmppB) {
+      Map<String, Object> xmppIface = new LinkedHashMap<>();
+      xmppIface.put("componentName", "XMPP");
+      xmppIface.put("referenceName", xmppReferenceName);
+      interfaces.add(xmppIface);
     }
     
     // Add Vocera interface if detected (checked before VCS to ensure proper priority)
@@ -995,13 +1060,20 @@ public class ExcelParserV5 {
     }
 
     // Device A and B cannot determine interface - use default checkboxes if set
-    if (shouldApplyDefaultInterfaces(deviceA, deviceB, hasEdgeA, hasEdgeB, hasVcsA, hasVcsB, hasVoceraA, hasVoceraB)) {
+    if (shouldApplyDefaultInterfaces(deviceA, deviceB, hasEdgeA, hasEdgeB, hasVcsA, hasVcsB, hasVoceraA, hasVoceraB, hasXmppA, hasXmppB)) {
       // Add all selected default interfaces
       if (useDefaultEdge) {
         Map<String, Object> edgeIface = new LinkedHashMap<>();
         edgeIface.put("componentName", "OutgoingWCTP");
         edgeIface.put("referenceName", edgeReferenceName);
         interfaces.add(edgeIface);
+      }
+      
+      if (useDefaultXmpp) {
+        Map<String, Object> xmppIface = new LinkedHashMap<>();
+        xmppIface.put("componentName", "XMPP");
+        xmppIface.put("referenceName", xmppReferenceName);
+        interfaces.add(xmppIface);
       }
       
       if (useDefaultVocera) {
@@ -1052,20 +1124,31 @@ public class ExcelParserV5 {
   }
 
   /**
+   * Checks if the device name contains "XMPP" (case-insensitive).
+   * This is used to identify XMPP adapter interface devices.
+   */
+  private boolean containsXmpp(String deviceName) {
+    if (isBlank(deviceName)) return false;
+    String lower = deviceName.toLowerCase(Locale.ROOT);
+    return lower.contains("xmpp");
+  }
+
+  /**
    * Determines if default interfaces should be applied based on device values.
    * Defaults apply when:
    * 1. Both devices are blank/empty, OR
-   * 2. Neither device contains "Edge", "VCS", or "Vocera"
+   * 2. Neither device contains "Edge", "VCS", "Vocera", or "XMPP"
    */
   private boolean shouldApplyDefaultInterfaces(String deviceA, String deviceB,
                                                  boolean hasEdgeA, boolean hasEdgeB,
                                                  boolean hasVcsA, boolean hasVcsB,
-                                                 boolean hasVoceraA, boolean hasVoceraB) {
+                                                 boolean hasVoceraA, boolean hasVoceraB,
+                                                 boolean hasXmppA, boolean hasXmppB) {
     boolean deviceABlank = isBlank(deviceA);
     boolean deviceBBlank = isBlank(deviceB);
     
     return (deviceABlank && deviceBBlank) || 
-           (!hasEdgeA && !hasEdgeB && !hasVcsA && !hasVcsB && !hasVoceraA && !hasVoceraB);
+           (!hasEdgeA && !hasEdgeB && !hasVcsA && !hasVcsB && !hasVoceraA && !hasVoceraB && !hasXmppA && !hasXmppB);
   }
 
   private void addOrder(List<Map<String,Object>> out,
@@ -1410,6 +1493,51 @@ public class ExcelParserV5 {
       params.add(paOrderQ(noDeliveriesOrder, "subject", "NoCaregiver assigned for #{alert_type} #{bed.room.name} Bed #{bed.bed_number}"));
     }
     
+    return params;
+  }
+
+  /**
+   * Build XMPP-specific parameter attributes.
+   * XMPP follows VMP logic with specific exceptions:
+   * - alertSound: Take ringtone value and append ".wav"
+   * - additionalContent: Static value (different for Nurse/Clinical vs Orders)
+   * - audible: true
+   * - realert: false
+   * - multipleAccepts: Value from "Platform: Multi-User Accept" column
+   * - delayedResponses: false
+   */
+  private List<Map<String,Object>> buildXmppParamAttributes(FlowRow r, String flowType) {
+    List<Map<String,Object>> params = new ArrayList<>();
+    boolean nurseSide = "NurseCalls".equals(flowType);
+    boolean ordersType = "Orders".equals(flowType);
+
+    // 1. alertSound: Ringtone + ".wav"
+    if (!isBlank(r.ringtone)) {
+      String alertSoundValue = r.ringtone.trim() + ".wav";
+      params.add(paQ("alertSound", alertSoundValue));
+    }
+
+    // 2. additionalContent: Different for Nurse/Clinical vs Orders
+    if (ordersType) {
+      params.add(paQ("additionalContent", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.room_number} - #{patient.current_place.bed_number}\\nProcedure: #{category} - #{description}\\nOrdered By: #{provider.last_name}, #{provider.first_name}\\nOrder Time: #{order_time.as_date} #{order_time.as_time}\\n\\nOrder Notes:\\n#{notes.as_list(notes_line_number, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10)}"));
+    } else {
+      // For both NurseCalls and Clinicals
+      params.add(paQ("additionalContent", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nMRN: #{bed.patient.mrn}\\nRoom/Bed: #{bed.room.room_number} - #{bed.bed_number}\\n\\nAdmitting Reason: #{bed.patient.reason}\\nReceived: #{created_at.as_date} #{created_at.as_time}"));
+    }
+
+    // 3. audible: true
+    params.add(paLiteralBool("audible", true));
+
+    // 4. realert: false
+    params.add(paLiteralBool("realert", false));
+
+    // 5. multipleAccepts: Value from "Platform: Multi-User Accept" column
+    boolean multipleAcceptsValue = parseBooleanValue(r.multiUserAccept);
+    params.add(paLiteralBool("multipleAccepts", multipleAcceptsValue));
+
+    // 6. delayedResponses: false
+    params.add(paLiteralBool("delayedResponses", false));
+
     return params;
   }
 
