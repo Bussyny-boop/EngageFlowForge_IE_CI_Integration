@@ -13,6 +13,11 @@
         <VBox spacing="0" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
             <!-- Header Bar with Title and Main Settings -->
             <HBox alignment="CENTER_LEFT" spacing="15" styleClass="header-bar">
+                <ImageView fitHeight="32" fitWidth="32" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@/icon_64.png"/>
+                    </image>
+                </ImageView>
                 <Label text="Engage FlowForge 2.0" style="-fx-font-size:20; -fx-font-weight:bold; -fx-text-fill:white;" />
                 <Region HBox.hgrow="ALWAYS"/>
                 <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flows" selected="true" style="-fx-text-fill:white; -fx-font-size:13px;">

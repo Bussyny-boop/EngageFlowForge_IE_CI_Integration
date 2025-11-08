@@ -21,6 +21,7 @@ public class ExcelJsonApplication extends Application {
         "/icon_48.png",
         "/icon_64.png",
         "/icon_128.png",
+        "/icon_256.png",
         "/icon.png"
     };
     
