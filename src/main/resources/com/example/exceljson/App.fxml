@@ -14,6 +14,11 @@
             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header-bar">
                 <Label text="Engage FlowForge 2.0" style="-fx-font-size:18; -fx-font-weight:bold; -fx-text-fill:white;" />
                 <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="themeToggleButton" text="🌙 Dark Mode" styleClass="theme-toggle">
+                    <tooltip>
+                        <Tooltip text="Switch between light and dark themes" />
+                    </tooltip>
+                </Button>
                 <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true" style="-fx-text-fill:white;">
                     <tooltip>
                         <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />

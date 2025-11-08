@@ -8,6 +8,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.InputStream;
+import java.util.prefs.Preferences;
 
 public class ExcelJsonApplication extends Application {
 
@@ -49,16 +50,21 @@ public class ExcelJsonApplication extends Application {
         
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
         
-        // Load Vocera theme CSS
+        // Load theme based on user preference
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        boolean isDarkMode = prefs.getBoolean("darkMode", false);
+        
+        String themePath = isDarkMode ? "/css/dark-theme.css" : "/css/vocera-theme.css";
+        
         try {
-            var cssResource = getClass().getResource("/css/vocera-theme.css");
+            var cssResource = getClass().getResource(themePath);
             if (cssResource != null) {
                 scene.getStylesheets().add(cssResource.toExternalForm());
             } else {
-                System.err.println("Warning: vocera-theme.css not found in resources. Using default styling.");
+                System.err.println("Warning: " + themePath + " not found in resources. Using default styling.");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Failed to load vocera-theme.css: " + e.getMessage());
+            System.err.println("Warning: Failed to load " + themePath + ": " + e.getMessage());
         }
         
         primaryStage.setScene(scene);
