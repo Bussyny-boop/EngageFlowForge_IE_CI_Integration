@@ -26,6 +26,8 @@
                         <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" />
                         <Label text="VMP" style="-fx-text-fill:white;" />
                         <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" />
+                        <Label text="Vocera" style="-fx-text-fill:white;" />
+                        <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="100" />
                     </HBox>
                 </VBox>
                 <Button fx:id="resetDefaultsButton" text="Reset Defaults" styleClass="button-secondary" />
@@ -59,6 +61,11 @@
                     <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
                         <tooltip>
                             <Tooltip text="Use VMP interface as default when Device A/B are blank" />
+                        </tooltip>
+                    </CheckBox>
+                    <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                        <tooltip>
+                            <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
                         </tooltip>
                     </CheckBox>
                 </HBox>
