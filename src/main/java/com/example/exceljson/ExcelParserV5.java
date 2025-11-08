@@ -1546,9 +1546,12 @@ public class ExcelParserV5 {
     // 4. Add XMPP-specific additionalContent
     if (ordersType) {
       params.add(1, paQ("additionalContent", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.room_number} - #{patient.current_place.bed_number}\\nProcedure: #{category} - #{description}\\nOrdered By: #{provider.last_name}, #{provider.first_name}\\nOrder Time: #{order_time.as_date} #{order_time.as_time}\\n\\nOrder Notes:\\n#{notes.as_list(notes_line_number, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10)}"));
-    } else {
-      // For both NurseCalls and Clinicals
+    } else if (nurseSide) {
+      // NurseCalls
       params.add(1, paQ("additionalContent", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nMRN: #{bed.patient.mrn}\\nRoom/Bed: #{bed.room.room_number} - #{bed.bed_number}\\n\\nAdmitting Reason: #{bed.patient.reason}\\nReceived: #{created_at.as_date} #{created_at.as_time}"));
+    } else {
+      // Clinicals
+      params.add(1, paQ("additionalContent", "Clinical Alert ${destinationName}\\n#{alert_type}\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number} \\nPatient: #{clinical_patient.first_name} #{clinical_patient.last_name}\\nAlarm Time: #{alarm_time.as_time}\\n\\nDetails:\\n#{clinical_details.as_list(, detail_type, value, uom)}"));
     }
 
     // 5. Add audible: true (XMPP-specific)
@@ -1563,6 +1566,22 @@ public class ExcelParserV5 {
 
     // 8. Add delayedResponses: false (XMPP-specific)
     params.add(5, paLiteralBool("delayedResponses", false));
+
+    // 9. For Clinicals, add NoCaregivers additionalContent (XMPP-specific)
+    if (!nurseSide && !ordersType) {
+      // Count how many recipients are non-blank
+      int recipientCount = 0;
+      if (!isBlank(r.r1)) recipientCount++;
+      if (!isBlank(r.r2)) recipientCount++;
+      if (!isBlank(r.r3)) recipientCount++;
+      if (!isBlank(r.r4)) recipientCount++;
+      if (!isBlank(r.r5)) recipientCount++;
+      
+      // NoDeliveries destination order equals the number of normal destinations
+      int noDeliveriesOrder = recipientCount;
+      
+      params.add(paOrderQ(noDeliveriesOrder, "additionalContent", "#{alert_type}\\nIssue: A Clinical Alert has been received without any caregivers assigned to room.\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number} \\nPatient: #{clinical_patient.first_name} #{clinical_patient.last_name}\\nAlarm Time: #{alarm_time.as_time}\\n\\nDetails:\\n#{clinical_details.as_list(, detail_type, value, uom)}"));
+    }
 
     return params;
   }
