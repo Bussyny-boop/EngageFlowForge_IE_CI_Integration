@@ -1946,27 +1946,84 @@ public class ExcelParserV5 {
   private static Row findHeaderRow(Sheet sh) {
     if (sh == null) return null;
 
+    // Common header keywords to look for across all sheet types
+    Set<String> expectedHeaderTokens = Set.of(
+      "facility", "unit", "name", "configuration", "group", "config",
+      "alert", "alarm", "priority", "device", "sending", "system",
+      "patient", "monitoring", "nurse", "call", "common", "order"
+    );
+
     // Primary search: Check rows 1-3 (0-indexed: 0, 1, 2) for headers
-    // This allows headers to be in any of the first 3 rows
-    for (int r = 0; r <= Math.min(sh.getLastRowNum(), 2); r++) {
+    // Use a scoring system to find the row that best matches expected headers
+    int bestRow = -1;
+    int bestScore = 0;
+    
+    for (int r = 0; r <= 2; r++) {
       Row row = sh.getRow(r);
       if (row == null) continue;
+      
       int nonEmpty = 0;
-      for (int c = 0; c < row.getLastCellNum(); c++)
-        if (!getCell(row, c).isBlank()) nonEmpty++;
-      if (nonEmpty >= 3) return row;
+      int headerMatches = 0;
+      for (int c = 0; c < row.getLastCellNum(); c++) {
+        String val = getCell(row, c);
+        if (!val.isBlank()) {
+          nonEmpty++;
+          String normalized = normalize(val);
+          // Check if this cell contains any expected header tokens
+          for (String token : expectedHeaderTokens) {
+            if (normalized.contains(token)) {
+              headerMatches++;
+              break; // Count each cell only once
+            }
+          }
+        }
+      }
+      
+      // Score: heavily weight header matches, with non-empty cells as tiebreaker
+      // A row with 2 header matches beats a row with 5 non-header cells
+      int score = headerMatches * 100 + nonEmpty;
+      if (score > bestScore && nonEmpty >= 3) {
+        bestScore = score;
+        bestRow = r;
+      }
+    }
+    
+    if (bestRow >= 0) {
+      return sh.getRow(bestRow);
     }
 
-    // Fallback: Check rows 2-5 (original expected positions)
+    // Fallback: Check rows 2-5 (original expected positions) using same scoring
     int start = 2;
     int end = Math.min(sh.getLastRowNum(), start + 3);
     for (int r = start; r <= end; r++) {
       Row row = sh.getRow(r);
       if (row == null) continue;
+      
       int nonEmpty = 0;
-      for (int c = 0; c < row.getLastCellNum(); c++)
-        if (!getCell(row, c).isBlank()) nonEmpty++;
-      if (nonEmpty >= 3) return row;
+      int headerMatches = 0;
+      for (int c = 0; c < row.getLastCellNum(); c++) {
+        String val = getCell(row, c);
+        if (!val.isBlank()) {
+          nonEmpty++;
+          String normalized = normalize(val);
+          for (String token : expectedHeaderTokens) {
+            if (normalized.contains(token)) {
+              headerMatches++;
+              break;
+            }
+          }
+        }
+      }
+      
+      int score = headerMatches * 100 + nonEmpty;
+      if (score > bestScore && nonEmpty >= 3) {
+        bestScore = score;
+        bestRow = r;
+      }
+    }
+    
+    if (bestRow >= 0) {
+      return sh.getRow(bestRow);
     }
 
     // Final fallback: return first non-null row
