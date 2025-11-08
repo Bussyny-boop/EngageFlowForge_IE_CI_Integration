@@ -67,6 +67,24 @@
     -fx-background-color: #C0C0C0;
 }
 
+.button-warning {
+    -fx-background-color: #E74C3C;
+    -fx-text-fill: white;
+}
+
+.button-warning:hover {
+    -fx-background-color: #C0392B;
+}
+
+.button-warning:pressed {
+    -fx-background-color: #A93226;
+}
+
+.button-warning:disabled {
+    -fx-opacity: 0.5;
+    -fx-background-color: #95a5a6;
+}
+
 /* --- Tabs --- */
 .tab-pane {
     -fx-background-color: white;
