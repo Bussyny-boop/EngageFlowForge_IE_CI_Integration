@@ -8,12 +8,9 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -38,7 +35,6 @@ public class AppController {
     @FXML private Button exportClinicalJsonButton;
     @FXML private Button exportOrdersJsonButton;
     @FXML private CheckBox mergeFlowsCheckbox;
-    @FXML private ToggleButton darkModeToggle;
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private TextField voceraRefNameField;
@@ -53,7 +49,6 @@ public class AppController {
     @FXML private TextField roomFilterClinicalField;
     @FXML private TextField roomFilterOrdersField;
     @FXML private TextArea jsonPreview;
-    @FXML private Button copyJsonButton;
     @FXML private Label statusLabel;
 
     // ---------- Tabs ----------
@@ -184,40 +179,24 @@ public class AppController {
     private File lastExcelDir = null;
     private File lastJsonDir = null;
 
-    private Preferences preferences;
-    private Scene scene;
-    private boolean darkModeEnabled;
-    private String darkStylesheet;
-
     private static final String PREF_KEY_LAST_EXCEL_DIR = "lastExcelDir";
     private static final String PREF_KEY_LAST_JSON_DIR = "lastJsonDir";
-    private static final String PREF_KEY_DARK_MODE = "darkModeEnabled";
 
     // ---------- Initialization ----------
     @FXML
     public void initialize() {
         parser = new ExcelParserV5();
-        preferences = Preferences.userNodeForPackage(AppController.class);
 
         // Load saved directories from preferences
-        String excelDirPath = preferences.get(PREF_KEY_LAST_EXCEL_DIR, null);
-        String jsonDirPath = preferences.get(PREF_KEY_LAST_JSON_DIR, null);
-        darkModeEnabled = preferences.getBoolean(PREF_KEY_DARK_MODE, false);
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        String excelDirPath = prefs.get(PREF_KEY_LAST_EXCEL_DIR, null);
+        String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
 
         if (excelDirPath != null) {
             lastExcelDir = new File(excelDirPath);
         }
         if (jsonDirPath != null) {
             lastJsonDir = new File(jsonDirPath);
-        }
-
-        if (darkModeToggle != null) {
-            darkModeToggle.setSelected(darkModeEnabled);
-            darkModeToggle.selectedProperty().addListener((obs, oldV, newV) -> {
-                darkModeEnabled = newV;
-                preferences.putBoolean(PREF_KEY_DARK_MODE, darkModeEnabled);
-                applyDarkMode(darkModeEnabled);
-            });
         }
 
         initializeUnitColumns();
@@ -234,15 +213,6 @@ public class AppController {
 
         setJsonButtonsEnabled(false);
         setExcelButtonsEnabled(false);
-        updateJsonPreviewState();
-
-        if (jsonPreview != null) {
-            jsonPreview.textProperty().addListener((obs, oldText, newText) -> updateJsonPreviewState());
-        }
-
-        if (copyJsonButton != null) {
-            copyJsonButton.setOnAction(e -> copyJsonToClipboard());
-        }
 
         loadButton.setOnAction(e -> loadExcel());
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
@@ -346,67 +316,6 @@ public class AppController {
         }
     }
 
-    public void onSceneReady(Scene scene) {
-        this.scene = scene;
-        applyDarkMode(darkModeEnabled);
-    }
-
-    private void applyDarkMode(boolean enabled) {
-        ensureDarkStylesheet();
-        if (scene == null || darkStylesheet == null) {
-            return;
-        }
-
-        if (enabled) {
-            if (!scene.getStylesheets().contains(darkStylesheet)) {
-                scene.getStylesheets().add(darkStylesheet);
-            }
-        } else {
-            scene.getStylesheets().remove(darkStylesheet);
-        }
-    }
-
-    private void ensureDarkStylesheet() {
-        if (darkStylesheet == null) {
-            var resource = getClass().getResource("/css/dark-theme.css");
-            if (resource != null) {
-                darkStylesheet = resource.toExternalForm();
-            } else {
-                System.err.println("Warning: dark-theme.css not found in resources.");
-            }
-        }
-    }
-
-    private void updateJsonPreviewContent(String text) {
-        if (jsonPreview != null) {
-            jsonPreview.setText(text);
-        }
-        updateJsonPreviewState();
-    }
-
-    private void updateJsonPreviewState() {
-        if (copyJsonButton != null) {
-            boolean hasText = jsonPreview != null && jsonPreview.getText() != null && !jsonPreview.getText().isBlank();
-            copyJsonButton.setDisable(!hasText);
-        }
-    }
-
-    private void copyJsonToClipboard() {
-        if (jsonPreview == null) {
-            return;
-        }
-        String text = jsonPreview.getText();
-        if (text == null || text.isBlank()) {
-            return;
-        }
-
-        Clipboard clipboard = Clipboard.getSystemClipboard();
-        ClipboardContent content = new ClipboardContent();
-        content.putString(text);
-        clipboard.setContent(content);
-        statusLabel.setText("JSON copied to clipboard");
-    }
-
     // ---------- Load Excel ----------
     private void loadExcel() {
         try {
@@ -427,7 +336,7 @@ public class AppController {
             parser.load(file);
             currentExcelFile = file;
 
-            updateJsonPreviewContent(parser.getLoadSummary());
+            jsonPreview.setText(parser.getLoadSummary());
 
             refreshTables();
             tableUnits.refresh();
@@ -528,7 +437,7 @@ public class AppController {
                 default -> "";
             };
 
-            updateJsonPreviewContent(json);
+            jsonPreview.setText(json);
             String displayName = switch (flowType) {
                 case "NurseCalls" -> "NurseCall";
                 case "Clinicals" -> "Clinical";
@@ -1147,7 +1056,7 @@ public class AppController {
                 currentExcelFile = null;
                 
                 // Clear JSON preview
-                updateJsonPreviewContent("All data cleared. Load an Excel file to begin.");
+                jsonPreview.setText("All data cleared. Load an Excel file to begin.");
                 lastGeneratedJson = "";
                 
                 // Disable buttons
@@ -1214,7 +1123,7 @@ public class AppController {
                 var json = ExcelParserV5.pretty(
                     lastGeneratedWasNurseSide ? filteredParser.buildNurseCallsJson(useAdvanced) : filteredParser.buildClinicalsJson(useAdvanced)
                 );
-                updateJsonPreviewContent(json);
+                jsonPreview.setText(json);
                 lastGeneratedJson = json;
                 statusLabel.setText("Updated JSON with new interface references");
             } catch (Exception ex) {
