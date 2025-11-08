@@ -11,8 +11,8 @@ import java.io.InputStream;
 
 public class ExcelJsonApplication extends Application {
 
-    private static final int WINDOW_WIDTH = 1100;
-    private static final int WINDOW_HEIGHT = 750;
+    private static final int WINDOW_WIDTH = 1200;
+    private static final int WINDOW_HEIGHT = 800;
     
     // Icon paths for different sizes - JavaFX will automatically select the best size
     private static final String[] ICON_PATHS = {
@@ -21,11 +21,17 @@ public class ExcelJsonApplication extends Application {
         "/icon_48.png",
         "/icon_64.png",
         "/icon_128.png",
+        "/icon_256.png",
         "/icon.png"
     };
+    
+    // Store reference to stage for window title updates
+    private static Stage primaryStageRef;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        primaryStageRef = primaryStage;
+        
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
         Parent root = loader.load();
 
@@ -63,5 +69,19 @@ public class ExcelJsonApplication extends Application {
         
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+    
+    /**
+     * Update the window title with the current file name
+     * @param fileName the name of the loaded file, or null to reset to default
+     */
+    public static void updateWindowTitle(String fileName) {
+        if (primaryStageRef != null) {
+            if (fileName != null && !fileName.isEmpty()) {
+                primaryStageRef.setTitle("Engage FlowForge 2.0 - [" + fileName + "]");
+            } else {
+                primaryStageRef.setTitle("Engage FlowForge 2.0");
+            }
+        }
     }
 }
