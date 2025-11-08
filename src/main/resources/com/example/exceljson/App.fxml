@@ -34,6 +34,7 @@
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Button fx:id="loadButton" text="📂 Load Excel" />
                     <Button fx:id="saveExcelButton" text="💾 Save Changes" disable="true" />
+                    <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" styleClass="button-warning" />
                     <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
                 </HBox>
                 <Label fx:id="statusLabel" text="Ready" />

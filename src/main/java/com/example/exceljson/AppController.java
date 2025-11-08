@@ -27,6 +27,7 @@ public class AppController {
     @FXML private Button loadButton;
     @FXML private Button saveExcelButton;
     @FXML private Button saveExcelAsButton;
+    @FXML private Button clearAllButton;
     @FXML private Button generateNurseJsonButton;
     @FXML private Button generateClinicalJsonButton;
     @FXML private Button generateOrdersJsonButton;
@@ -210,6 +211,7 @@ public class AppController {
         loadButton.setOnAction(e -> loadExcel());
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
+        if (clearAllButton != null) clearAllButton.setOnAction(e -> clearAllData());
         generateNurseJsonButton.setOnAction(e -> generateJson("NurseCalls"));
         generateClinicalJsonButton.setOnAction(e -> generateJson("Clinicals"));
         if (generateOrdersJsonButton != null) generateOrdersJsonButton.setOnAction(e -> generateJson("Orders"));
@@ -537,6 +539,7 @@ public class AppController {
     private void setExcelButtonsEnabled(boolean enabled) {
         if (saveExcelButton != null) saveExcelButton.setDisable(!enabled);
         if (saveExcelAsButton != null) saveExcelAsButton.setDisable(!enabled);
+        if (clearAllButton != null) clearAllButton.setDisable(!enabled);
     }
 
     // ---------- Sync table edits back to parser ----------
@@ -976,6 +979,66 @@ public class AppController {
         if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
         if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
         statusLabel.setText("Reset interface reference names to defaults");
+    }
+
+    // ---------- Clear All Data ----------
+    private void clearAllData() {
+        // Show confirmation dialog with warning message
+        Alert confirmAlert = new Alert(Alert.AlertType.WARNING);
+        confirmAlert.setTitle("Clear All Data");
+        confirmAlert.setHeaderText("⚠️ You are about to delete all currently loaded data");
+        confirmAlert.setContentText("This action cannot be undone. All loaded units, nurse calls, clinicals, and orders will be cleared.\n\nDo you want to continue?");
+        confirmAlert.getDialogPane().setStyle("-fx-font-size: 13px;");
+        
+        // Add Continue and Cancel buttons
+        ButtonType continueButton = new ButtonType("Continue", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirmAlert.getButtonTypes().setAll(continueButton, cancelButton);
+        
+        Optional<ButtonType> result = confirmAlert.showAndWait();
+        
+        if (result.isPresent() && result.get() == continueButton) {
+            // User selected "Continue" - clear all data
+            try {
+                // Clear all data from parser
+                parser.units.clear();
+                parser.nurseCalls.clear();
+                parser.clinicals.clear();
+                parser.orders.clear();
+                
+                // Clear all observable lists
+                if (unitsFullList != null) unitsFullList.clear();
+                if (nurseCallsFullList != null) nurseCallsFullList.clear();
+                if (clinicalsFullList != null) clinicalsFullList.clear();
+                if (ordersFullList != null) ordersFullList.clear();
+                
+                // Clear current file reference
+                currentExcelFile = null;
+                
+                // Clear JSON preview
+                jsonPreview.setText("All data cleared. Load an Excel file to begin.");
+                lastGeneratedJson = "";
+                
+                // Disable buttons
+                setJsonButtonsEnabled(false);
+                setExcelButtonsEnabled(false);
+                
+                // Refresh tables
+                if (tableUnits != null) tableUnits.refresh();
+                if (tableNurseCalls != null) tableNurseCalls.refresh();
+                if (tableClinicals != null) tableClinicals.refresh();
+                if (tableOrders != null) tableOrders.refresh();
+                
+                // Update status
+                updateStatusLabel();
+                statusLabel.setText("✅ All data cleared successfully");
+                
+                showInfo("All data has been cleared successfully.\n\nYou can now load a new Excel file.");
+            } catch (Exception ex) {
+                showError("Failed to clear data: " + ex.getMessage());
+            }
+        }
+        // If user selected "Cancel" or closed the dialog, do nothing and return to the app
     }
 
     // ---------- Apply Interface References ----------
