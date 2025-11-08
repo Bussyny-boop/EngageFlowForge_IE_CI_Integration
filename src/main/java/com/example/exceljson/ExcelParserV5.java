@@ -1047,19 +1047,6 @@ public class ExcelParserV5 {
       Map<String, Object> voceraIface = new LinkedHashMap<>();
       voceraIface.put("componentName", "Vocera");
       voceraIface.put("referenceName", voceraReferenceName);
-      
-      // Add dynamicParameters with badgeAlertSound if ringtone is provided
-      if (!isBlank(ringtone)) {
-        List<Map<String, Object>> dynamicParams = new ArrayList<>();
-        Map<String, Object> badgeAlertSoundParam = new LinkedHashMap<>();
-        badgeAlertSoundParam.put("name", "badgeAlertSound");
-        // Ensure .wav extension and quote the value
-        String badgeAlertSoundValue = "\"" + ensureWavExtension(ringtone) + "\"";
-        badgeAlertSoundParam.put("value", badgeAlertSoundValue);
-        dynamicParams.add(badgeAlertSoundParam);
-        voceraIface.put("dynamicParameters", dynamicParams);
-      }
-      
       interfaces.add(voceraIface);
     }
     
@@ -1098,19 +1085,6 @@ public class ExcelParserV5 {
         Map<String, Object> voceraIface = new LinkedHashMap<>();
         voceraIface.put("componentName", "Vocera");
         voceraIface.put("referenceName", voceraReferenceName);
-        
-        // Add dynamicParameters with badgeAlertSound if ringtone is provided
-        if (!isBlank(ringtone)) {
-          List<Map<String, Object>> dynamicParams = new ArrayList<>();
-          Map<String, Object> badgeAlertSoundParam = new LinkedHashMap<>();
-          badgeAlertSoundParam.put("name", "badgeAlertSound");
-          // Ensure .wav extension and quote the value
-          String badgeAlertSoundValue = "\"" + ensureWavExtension(ringtone) + "\"";
-          badgeAlertSoundParam.put("value", badgeAlertSoundValue);
-          dynamicParams.add(badgeAlertSoundParam);
-          voceraIface.put("dynamicParameters", dynamicParams);
-        }
-        
         interfaces.add(voceraIface);
       }
       
@@ -1387,6 +1361,13 @@ public class ExcelParserV5 {
     // 1. Add ringtone FIRST if available
     if (!isBlank(r.ringtone)) {
       params.add(paQ("alertSound", r.ringtone));
+      
+      // Add badgeAlertSound for Vocera devices
+      boolean isVocera = containsVocera(r.deviceA) || containsVocera(r.deviceB);
+      if (isVocera) {
+        String badgeAlertSoundValue = "\"" + ensureWavExtension(r.ringtone) + "\"";
+        params.add(paLiteral("badgeAlertSound", badgeAlertSoundValue));
+      }
     }
 
     // 2. Add response logic parameters
