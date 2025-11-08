@@ -50,11 +50,35 @@
 
 /* --- Side Navigation --- */
 .side-nav {
-    -fx-background-color: #F5F7FA;
-    -fx-border-color: #E0E0E0;
+    -fx-background-color: #1E1E1E;
+    -fx-border-color: #3A3A3A;
     -fx-border-width: 0 1 0 0;
 }
 
+/* --- Navigation Buttons --- */
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E0E0E0;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-graphic-text-gap: 10;
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 4;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #2F2F2F;
+    -fx-text-fill: #FFFFFF;
+}
+
+.nav-button:selected {
+    -fx-background-color: #007C80;
+    -fx-text-fill: white;
+}
+
+/* Legacy nav-item styles for backward compatibility */
 .nav-item {
     -fx-background-color: transparent;
     -fx-text-fill: #2C3E50;

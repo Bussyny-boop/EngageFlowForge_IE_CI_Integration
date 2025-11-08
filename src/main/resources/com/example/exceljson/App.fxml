@@ -61,48 +61,46 @@
         <BorderPane>
             <!-- Left: Side Navigation Panel -->
             <left>
-                <VBox spacing="0" styleClass="side-nav" prefWidth="200">
-                    <!-- Primary Actions -->
-                    <VBox spacing="8" style="-fx-padding: 15;">
-                        <Label text="ACTIONS" style="-fx-font-size:10; -fx-font-weight:bold; -fx-opacity:0.6;" />
-                        <Button fx:id="loadButton" text="📂 Load Excel" maxWidth="Infinity" styleClass="side-nav-action" />
-                        <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" maxWidth="Infinity" styleClass="side-nav-action-warning" />
-                    </VBox>
+                <VBox spacing="8" styleClass="side-nav" prefWidth="200" style="-fx-background-color: #1E1E1E; -fx-padding: 10; -fx-spacing: 8;">
+                    <!-- Load Excel -->
+                    <Button fx:id="loadButton" text="📂 Load Excel" maxWidth="Infinity" styleClass="nav-button" />
                     
-                    <Separator />
+                    <!-- Clear All -->
+                    <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" maxWidth="Infinity" styleClass="nav-button" />
                     
-                    <!-- Navigation Items -->
-                    <VBox spacing="0" VBox.vgrow="ALWAYS" style="-fx-padding: 10 0 10 0;">
-                        <Label text="DATA VIEWS" style="-fx-font-size:10; -fx-font-weight:bold; -fx-opacity:0.6; -fx-padding: 5 15;" />
-                        <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-item" selected="true">
-                            <toggleGroup>
-                                <ToggleGroup fx:id="navigationGroup" />
-                            </toggleGroup>
-                        </ToggleButton>
-                        <ToggleButton fx:id="navNurseCalls" text="🔔 Nurse Calls" maxWidth="Infinity" styleClass="nav-item" toggleGroup="$navigationGroup" />
-                        <ToggleButton fx:id="navClinicals" text="🏥 Clinicals" maxWidth="Infinity" styleClass="nav-item" toggleGroup="$navigationGroup" />
-                        <ToggleButton fx:id="navOrders" text="💊 Orders" maxWidth="Infinity" styleClass="nav-item" toggleGroup="$navigationGroup" />
-                    </VBox>
+                    <!-- Units Navigation -->
+                    <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true">
+                        <toggleGroup>
+                            <ToggleGroup fx:id="navigationGroup" />
+                        </toggleGroup>
+                    </ToggleButton>
                     
-                    <Separator />
+                    <!-- Nurse Calls Navigation -->
+                    <ToggleButton fx:id="navNurseCalls" text="🔔 Nurse Calls" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" />
                     
-                    <!-- JSON Operations -->
-                    <VBox spacing="8" style="-fx-padding: 15;">
-                        <Label text="JSON PREVIEW" style="-fx-font-size:10; -fx-font-weight:bold; -fx-opacity:0.6;" />
-                        <Button fx:id="generateNurseJsonButton" text="Nursecall" maxWidth="Infinity" styleClass="side-nav-action" />
-                        <Button fx:id="generateClinicalJsonButton" text="Clinical" maxWidth="Infinity" styleClass="side-nav-action" />
-                        <Button fx:id="generateOrdersJsonButton" text="Orders" maxWidth="Infinity" styleClass="side-nav-action" />
-                    </VBox>
+                    <!-- Clinicals Navigation -->
+                    <ToggleButton fx:id="navClinicals" text="🏥 Clinicals" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" />
                     
-                    <Separator />
+                    <!-- Orders Navigation -->
+                    <ToggleButton fx:id="navOrders" text="💊 Orders" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" />
                     
-                    <!-- Export Operations -->
-                    <VBox spacing="8" style="-fx-padding: 15;">
-                        <Label text="JSON EXPORT" style="-fx-font-size:10; -fx-font-weight:bold; -fx-opacity:0.6;" />
-                        <Button fx:id="exportNurseJsonButton" text="Nursecall" maxWidth="Infinity" styleClass="side-nav-action" />
-                        <Button fx:id="exportClinicalJsonButton" text="Clinical" maxWidth="Infinity" styleClass="side-nav-action" />
-                        <Button fx:id="exportOrdersJsonButton" text="Orders" maxWidth="Infinity" styleClass="side-nav-action" />
-                    </VBox>
+                    <!-- Preview Nursecall JSON -->
+                    <Button fx:id="generateNurseJsonButton" text="📋 Preview Nursecall" maxWidth="Infinity" styleClass="nav-button" />
+                    
+                    <!-- Preview Clinical JSON -->
+                    <Button fx:id="generateClinicalJsonButton" text="📋 Preview Clinical" maxWidth="Infinity" styleClass="nav-button" />
+                    
+                    <!-- Preview Orders JSON -->
+                    <Button fx:id="generateOrdersJsonButton" text="📋 Preview Orders" maxWidth="Infinity" styleClass="nav-button" />
+                    
+                    <!-- Export Nursecall JSON -->
+                    <Button fx:id="exportNurseJsonButton" text="💾 Export Nursecall" maxWidth="Infinity" styleClass="nav-button" />
+                    
+                    <!-- Export Clinical JSON -->
+                    <Button fx:id="exportClinicalJsonButton" text="💾 Export Clinical" maxWidth="Infinity" styleClass="nav-button" />
+                    
+                    <!-- Export Orders JSON -->
+                    <Button fx:id="exportOrdersJsonButton" text="💾 Export Orders" maxWidth="Infinity" styleClass="nav-button" />
                 </VBox>
             </left>
             
