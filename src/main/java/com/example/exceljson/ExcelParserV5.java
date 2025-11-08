@@ -1536,6 +1536,7 @@ public class ExcelParserV5 {
    * - realert: false
    * - multipleAccepts: Value from "Platform: Multi-User Accept" column
    * - delayedResponses: false
+   * - retractRules: Removed (not needed for XMPP)
    */
   private List<Map<String,Object>> buildXmppParamAttributes(FlowRow r, String flowType, String mappedPriority) {
     // Start with all VMP/Edge parameters
@@ -1557,6 +1558,11 @@ public class ExcelParserV5 {
 
     // 2. Override additionalContent: Different for Nurse/Clinical vs Orders
     params.removeIf(p -> "additionalContent".equals(p.get("name")));
+    
+    // 3. Remove retractRules from XMPP (not needed for XMPP)
+    params.removeIf(p -> "retractRules".equals(p.get("name")));
+    
+    // 4. Add XMPP-specific additionalContent
     if (ordersType) {
       params.add(1, paQ("additionalContent", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.room_number} - #{patient.current_place.bed_number}\\nProcedure: #{category} - #{description}\\nOrdered By: #{provider.last_name}, #{provider.first_name}\\nOrder Time: #{order_time.as_date} #{order_time.as_time}\\n\\nOrder Notes:\\n#{notes.as_list(notes_line_number, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10)}"));
     } else {
@@ -1564,17 +1570,17 @@ public class ExcelParserV5 {
       params.add(1, paQ("additionalContent", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nMRN: #{bed.patient.mrn}\\nRoom/Bed: #{bed.room.room_number} - #{bed.bed_number}\\n\\nAdmitting Reason: #{bed.patient.reason}\\nReceived: #{created_at.as_date} #{created_at.as_time}"));
     }
 
-    // 3. Add audible: true (XMPP-specific)
+    // 5. Add audible: true (XMPP-specific)
     params.add(2, paLiteralBool("audible", true));
 
-    // 4. Add realert: false (XMPP-specific)
+    // 6. Add realert: false (XMPP-specific)
     params.add(3, paLiteralBool("realert", false));
 
-    // 5. Add multipleAccepts: Value from "Platform: Multi-User Accept" column (XMPP-specific)
+    // 7. Add multipleAccepts: Value from "Platform: Multi-User Accept" column (XMPP-specific)
     boolean multipleAcceptsValue = parseBooleanValue(r.multiUserAccept);
     params.add(4, paLiteralBool("multipleAccepts", multipleAcceptsValue));
 
-    // 6. Add delayedResponses: false (XMPP-specific)
+    // 8. Add delayedResponses: false (XMPP-specific)
     params.add(5, paLiteralBool("delayedResponses", false));
 
     return params;
