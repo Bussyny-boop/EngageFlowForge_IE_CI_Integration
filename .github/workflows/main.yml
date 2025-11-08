@@ -55,7 +55,8 @@ jobs:
             --win-shortcut `
             --icon src/main/resources/icon.ico `
             --description "Engage FlowForge 2.0 - Engage rules generation" `
-            --vendor "Your Organization"
+            --vendor "Your Organization" `
+            --java-options "--add-modules javafx.controls,javafx.fxml"
 
       - name: Remove older MSI artifacts
         uses: actions/github-script@v7
