@@ -15,12 +15,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for .wav extension handling to avoid duplication.
+ * Tests for .wav extension handling.
  * 
  * Requirements:
- * - If ringtone value already ends with ".wav", don't add another ".wav"
- * - If ringtone value doesn't end with ".wav", add it
- * - Apply this to both XMPP alertSound and Vocera badgeAlertSound
+ * - XMPP alertSound: Use ringtone as-is (no .wav extension added)
+ * - Vocera badgeAlertSound: Add .wav extension if not present, placed in parameterAttributes
  */
 class WavExtensionTest {
 
@@ -44,8 +43,8 @@ class WavExtensionTest {
         for (Object paramObj : params) {
             var param = (Map<?, ?>) paramObj;
             if ("alertSound".equals(param.get("name"))) {
-                assertEquals("\"list_pagers.wav\"", param.get("value"), 
-                    "alertSound should have .wav appended");
+                assertEquals("\"list_pagers\"", param.get("value"), 
+                    "alertSound should use ringtone as-is without .wav");
                 foundAlertSound = true;
             }
         }
@@ -76,7 +75,7 @@ class WavExtensionTest {
             var param = (Map<?, ?>) paramObj;
             if ("alertSound".equals(param.get("name"))) {
                 assertEquals("\"list_pagers.wav\"", param.get("value"), 
-                    "alertSound should NOT have duplicate .wav");
+                    "alertSound should use ringtone as-is, preserving .wav");
                 foundAlertSound = true;
             }
         }
@@ -106,15 +105,22 @@ class WavExtensionTest {
         var iface = (Map<?, ?>) interfaces.get(0);
         assertEquals("Vocera", iface.get("componentName"), "Should be Vocera interface");
         
-        // Check for dynamicParameters
+        // Check that dynamicParameters is NOT present
         var dynamicParams = (List<?>) iface.get("dynamicParameters");
-        assertNotNull(dynamicParams, "Should have dynamicParameters");
-        assertEquals(1, dynamicParams.size(), "Should have 1 dynamic parameter");
+        assertNull(dynamicParams, "Should NOT have dynamicParameters");
         
-        var param = (Map<?, ?>) dynamicParams.get(0);
-        assertEquals("badgeAlertSound", param.get("name"), "Parameter name should be badgeAlertSound");
-        assertEquals("\"list_pagers.wav\"", param.get("value"), 
-            "badgeAlertSound should have .wav appended");
+        // Check for badgeAlertSound in parameterAttributes instead
+        var params = (List<?>) flow.get("parameterAttributes");
+        boolean foundBadgeAlertSound = false;
+        for (Object paramObj : params) {
+            var param = (Map<?, ?>) paramObj;
+            if ("badgeAlertSound".equals(param.get("name"))) {
+                assertEquals("\"list_pagers.wav\"", param.get("value"), 
+                    "badgeAlertSound should have .wav appended");
+                foundBadgeAlertSound = true;
+            }
+        }
+        assertTrue(foundBadgeAlertSound, "Should have badgeAlertSound in parameterAttributes");
 
         Files.deleteIfExists(excelFile.toPath());
         Files.deleteIfExists(tempDir);
@@ -137,10 +143,20 @@ class WavExtensionTest {
         
         var iface = (Map<?, ?>) interfaces.get(0);
         var dynamicParams = (List<?>) iface.get("dynamicParameters");
-        var param = (Map<?, ?>) dynamicParams.get(0);
+        assertNull(dynamicParams, "Should NOT have dynamicParameters");
         
-        assertEquals("\"list_pagers.wav\"", param.get("value"), 
-            "badgeAlertSound should NOT have duplicate .wav");
+        // Check for badgeAlertSound in parameterAttributes instead
+        var params = (List<?>) flow.get("parameterAttributes");
+        boolean foundBadgeAlertSound = false;
+        for (Object paramObj : params) {
+            var param = (Map<?, ?>) paramObj;
+            if ("badgeAlertSound".equals(param.get("name"))) {
+                assertEquals("\"list_pagers.wav\"", param.get("value"), 
+                    "badgeAlertSound should NOT have duplicate .wav");
+                foundBadgeAlertSound = true;
+            }
+        }
+        assertTrue(foundBadgeAlertSound, "Should have badgeAlertSound in parameterAttributes");
 
         Files.deleteIfExists(excelFile.toPath());
         Files.deleteIfExists(tempDir);
@@ -167,6 +183,12 @@ class WavExtensionTest {
         // When no ringtone, dynamicParameters should not be present
         var dynamicParams = (List<?>) iface.get("dynamicParameters");
         assertNull(dynamicParams, "Should NOT have dynamicParameters when ringtone is empty");
+        
+        // Also verify badgeAlertSound is not in parameterAttributes
+        var params = (List<?>) flow.get("parameterAttributes");
+        boolean foundBadgeAlertSound = params.stream()
+            .anyMatch(p -> "badgeAlertSound".equals(((Map<?, ?>) p).get("name")));
+        assertFalse(foundBadgeAlertSound, "Should NOT have badgeAlertSound when ringtone is empty");
 
         Files.deleteIfExists(excelFile.toPath());
         Files.deleteIfExists(tempDir);
