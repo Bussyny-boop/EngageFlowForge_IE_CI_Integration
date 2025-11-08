@@ -34,6 +34,7 @@ public class AppController {
     @FXML private Button exportNurseJsonButton;
     @FXML private Button exportClinicalJsonButton;
     @FXML private Button exportOrdersJsonButton;
+    @FXML private Button themeToggleButton;
     @FXML private CheckBox mergeFlowsCheckbox;
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
@@ -181,6 +182,9 @@ public class AppController {
 
     private static final String PREF_KEY_LAST_EXCEL_DIR = "lastExcelDir";
     private static final String PREF_KEY_LAST_JSON_DIR = "lastJsonDir";
+    private static final String PREF_KEY_DARK_MODE = "darkMode";
+    
+    private boolean isDarkMode = false;
 
     // ---------- Initialization ----------
     @FXML
@@ -191,6 +195,7 @@ public class AppController {
         Preferences prefs = Preferences.userNodeForPackage(AppController.class);
         String excelDirPath = prefs.get(PREF_KEY_LAST_EXCEL_DIR, null);
         String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
+        isDarkMode = prefs.getBoolean(PREF_KEY_DARK_MODE, false);
 
         if (excelDirPath != null) {
             lastExcelDir = new File(excelDirPath);
@@ -226,6 +231,10 @@ public class AppController {
         if (exportOrdersJsonButton != null) exportOrdersJsonButton.setOnAction(e -> exportJson("Orders"));
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
         if (resetPathsButton != null) resetPathsButton.setOnAction(e -> resetPaths());
+        if (themeToggleButton != null) {
+            themeToggleButton.setOnAction(e -> toggleTheme());
+            updateThemeButton();
+        }
 
         // --- Interface reference name bindings ---
         // Update parser whenever text changes or Enter is pressed
@@ -1184,6 +1193,49 @@ public class AppController {
 
         } catch (Exception ex) {
             showError("Failed to reset paths: " + ex.getMessage());
+        }
+    }
+    
+    // ---------- Theme Toggle ----------
+    private void toggleTheme() {
+        isDarkMode = !isDarkMode;
+        
+        // Save preference
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        prefs.putBoolean(PREF_KEY_DARK_MODE, isDarkMode);
+        
+        // Apply theme
+        applyTheme();
+        updateThemeButton();
+        
+        statusLabel.setText(isDarkMode ? "Switched to Dark Mode" : "Switched to Light Mode");
+    }
+    
+    private void applyTheme() {
+        try {
+            var scene = getStage().getScene();
+            if (scene != null) {
+                scene.getStylesheets().clear();
+                
+                String themePath = isDarkMode ? 
+                    "/css/dark-theme.css" : 
+                    "/css/vocera-theme.css";
+                
+                var cssResource = getClass().getResource(themePath);
+                if (cssResource != null) {
+                    scene.getStylesheets().add(cssResource.toExternalForm());
+                } else {
+                    System.err.println("Warning: " + themePath + " not found in resources.");
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Failed to apply theme: " + ex.getMessage());
+        }
+    }
+    
+    private void updateThemeButton() {
+        if (themeToggleButton != null) {
+            themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
         }
     }
 }
