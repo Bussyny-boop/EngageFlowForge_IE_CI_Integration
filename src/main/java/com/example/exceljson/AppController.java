@@ -43,6 +43,9 @@ public class AppController {
     @FXML private ToggleButton navClinicals;
     @FXML private ToggleButton navOrders;
     @FXML private ToggleGroup navigationGroup;
+    @FXML private BorderPane sidebarContainer;
+    @FXML private VBox sidebarContent;
+    @FXML private Button sidebarToggleButton;
 
     // ---------- UI Elements ----------
     @FXML private Button loadButton;
@@ -197,8 +200,10 @@ public class AppController {
     private static final String PREF_KEY_LAST_EXCEL_DIR = "lastExcelDir";
     private static final String PREF_KEY_LAST_JSON_DIR = "lastJsonDir";
     private static final String PREF_KEY_DARK_MODE = "darkMode";
+    private static final String PREF_KEY_SIDEBAR_COLLAPSED = "sidebarCollapsed";
     
     private boolean isDarkMode = false;
+    private boolean isSidebarCollapsed = false;
 
     // ---------- Initialization ----------
     @FXML
@@ -210,6 +215,7 @@ public class AppController {
         String excelDirPath = prefs.get(PREF_KEY_LAST_EXCEL_DIR, null);
         String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
         isDarkMode = prefs.getBoolean(PREF_KEY_DARK_MODE, false);
+        isSidebarCollapsed = prefs.getBoolean(PREF_KEY_SIDEBAR_COLLAPSED, false);
 
         if (excelDirPath != null) {
             lastExcelDir = new File(excelDirPath);
@@ -248,6 +254,12 @@ public class AppController {
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
             updateThemeButton();
+        }
+        
+        // Setup sidebar toggle
+        if (sidebarToggleButton != null) {
+            sidebarToggleButton.setOnAction(e -> toggleSidebar());
+            applySidebarState(); // Apply saved state
         }
 
         // --- Interface reference name bindings ---
@@ -1336,6 +1348,38 @@ public class AppController {
     private void updateThemeButton() {
         if (themeToggleButton != null) {
             themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
+        }
+    }
+    
+    // ---------- Sidebar Toggle ----------
+    private void toggleSidebar() {
+        isSidebarCollapsed = !isSidebarCollapsed;
+        
+        // Save preference
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        prefs.putBoolean(PREF_KEY_SIDEBAR_COLLAPSED, isSidebarCollapsed);
+        
+        // Apply state
+        applySidebarState();
+        
+        statusLabel.setText(isSidebarCollapsed ? "Sidebar collapsed" : "Sidebar expanded");
+    }
+    
+    private void applySidebarState() {
+        if (sidebarContainer != null && sidebarContent != null && sidebarToggleButton != null) {
+            if (isSidebarCollapsed) {
+                // Collapse: hide content, make container narrow
+                sidebarContent.setVisible(false);
+                sidebarContent.setManaged(false);
+                sidebarContainer.setPrefWidth(40); // Just wide enough for the toggle button
+                sidebarToggleButton.setText("▶"); // Arrow pointing right
+            } else {
+                // Expand: show content, make container normal width
+                sidebarContent.setVisible(true);
+                sidebarContent.setManaged(true);
+                sidebarContainer.setPrefWidth(200);
+                sidebarToggleButton.setText("◀"); // Arrow pointing left
+            }
         }
     }
 }
