@@ -43,22 +43,22 @@ public class TabAnimationTest {
     }
 
     @Test
-    public void testAppFxmlContainsTabReferences() {
+    public void testAppFxmlContainsNavigationReferences() {
         var fxmlResource = getClass().getResource("/com/example/exceljson/App.fxml");
         assertNotNull(fxmlResource, "App.fxml should exist");
         
         try (var stream = fxmlResource.openStream()) {
             String fxmlContent = new String(stream.readAllBytes());
             
-            // Verify tabs have fx:id attributes
-            assertTrue(fxmlContent.contains("fx:id=\"mainTabs\""), "FXML should contain mainTabs TabPane");
-            assertTrue(fxmlContent.contains("fx:id=\"tabUnits\""), "FXML should contain tabUnits");
-            assertTrue(fxmlContent.contains("fx:id=\"tabNurse\""), "FXML should contain tabNurse");
-            assertTrue(fxmlContent.contains("fx:id=\"tabClinicals\""), "FXML should contain tabClinicals");
-            assertTrue(fxmlContent.contains("fx:id=\"tabOrders\""), "FXML should contain tabOrders");
+            // Verify navigation has fx:id attributes (new layout uses ToggleButtons instead of TabPane)
+            assertTrue(fxmlContent.contains("fx:id=\"navigationGroup\""), "FXML should contain navigationGroup");
+            assertTrue(fxmlContent.contains("fx:id=\"navUnits\""), "FXML should contain navUnits");
+            assertTrue(fxmlContent.contains("fx:id=\"navNurseCalls\""), "FXML should contain navNurseCalls");
+            assertTrue(fxmlContent.contains("fx:id=\"navClinicals\""), "FXML should contain navClinicals");
+            assertTrue(fxmlContent.contains("fx:id=\"navOrders\""), "FXML should contain navOrders");
             
-            // Verify tabs have graphics
-            assertTrue(fxmlContent.contains("<graphic>"), "FXML should contain graphic elements for tabs");
+            // Verify settings drawer exists
+            assertTrue(fxmlContent.contains("fx:id=\"settingsDrawer\""), "FXML should contain settingsDrawer");
             
         } catch (Exception e) {
             fail("Failed to read FXML file: " + e.getMessage());
