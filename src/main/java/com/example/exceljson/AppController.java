@@ -29,6 +29,7 @@ public class AppController {
     // ---------- New UI Elements for Redesigned Layout ----------
     @FXML private Label currentFileLabel;
     @FXML private Label jsonModeLabel;
+    @FXML private ProgressBar statusProgressBar;
     @FXML private Button settingsButton;
     @FXML private Button helpButton;
     @FXML private Button closeSettingsButton;
@@ -596,6 +597,25 @@ public class AppController {
             }
         }
     }
+    
+    // ---------- Progress Bar Helpers ----------
+    private void showProgressBar(String statusMessage) {
+        if (statusLabel != null) {
+            statusLabel.setText(statusMessage);
+        }
+        if (statusProgressBar != null) {
+            statusProgressBar.setProgress(-1); // Indeterminate progress
+            statusProgressBar.setVisible(true);
+            statusProgressBar.setManaged(true);
+        }
+    }
+    
+    private void hideProgressBar() {
+        if (statusProgressBar != null) {
+            statusProgressBar.setVisible(false);
+            statusProgressBar.setManaged(false);
+        }
+    }
 
     // ---------- Load Excel ----------
     private void loadExcel() {
@@ -614,6 +634,10 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, true);
 
+            // Show progress
+            showProgressBar("📥 Loading Excel file...");
+            
+            // Load file
             parser.load(file);
             currentExcelFile = file;
             
@@ -630,6 +654,8 @@ public class AppController {
             setJsonButtonsEnabled(true);
             setExcelButtonsEnabled(true);
             
+            // Hide progress and update status
+            hideProgressBar();
             updateStatusLabel(); // Update status with filter counts
             
             int movedCount = parser.getEmdanMovedCount();
@@ -639,6 +665,7 @@ public class AppController {
                 showInfo("✅ Excel loaded successfully");
             }
         } catch (Exception ex) {
+            hideProgressBar();
             showError("Failed to load Excel: " + ex.getMessage());
         }
     }
@@ -690,9 +717,19 @@ public class AppController {
                 if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
             }
 
+            // Show progress
+            showProgressBar("💾 Saving Excel file...");
+            
             parser.writeExcel(out);
+            
+            // Hide progress and show success
+            hideProgressBar();
+            if (statusLabel != null) {
+                statusLabel.setText("✅ Excel saved successfully");
+            }
             showInfo("💾 Excel generated successfully:\n" + out.getAbsolutePath());
         } catch (Exception ex) {
+            hideProgressBar();
             showError("Error saving Excel: " + ex.getMessage());
         }
     }
@@ -776,6 +813,15 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, false);
 
+            // Show progress
+            String displayName = switch (flowType) {
+                case "NurseCalls" -> "NurseCall";
+                case "Clinicals" -> "Clinical";
+                case "Orders" -> "Orders";
+                default -> "JSON";
+            };
+            showProgressBar("📤 Exporting " + displayName + " JSON...");
+            
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();
 
@@ -785,14 +831,17 @@ public class AppController {
                 case "Orders" -> filteredParser.writeOrdersJson(file, useAdvanced);
             }
 
+            // Hide progress and show success
+            hideProgressBar();
             if (useAdvanced) {
-                statusLabel.setText("Exported Merged JSON (Advanced Mode)");
+                statusLabel.setText("✅ Exported Merged JSON (Advanced Mode)");
             } else {
-                statusLabel.setText("Exported Standard JSON");
+                statusLabel.setText("✅ Exported Standard JSON");
             }
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
+            hideProgressBar();
             showError("Error exporting JSON: " + ex.getMessage());
         }
     }
