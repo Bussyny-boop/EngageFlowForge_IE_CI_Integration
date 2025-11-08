@@ -11,7 +11,6 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -51,10 +50,6 @@ public class AppController {
     @FXML private TextField roomFilterOrdersField;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
-    @FXML private Button themeToggleButton;
-    @FXML private Button adapterCollapseButton;
-    @FXML private VBox adapterSettingsContent;
-    @FXML private ProgressIndicator progressIndicator;
 
     // ---------- Tabs ----------
     @FXML private TabPane mainTabs;
@@ -163,8 +158,6 @@ public class AppController {
     private File currentExcelFile;
     private String lastGeneratedJson = "";
     private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
-    private boolean isDarkMode = false; // Track current theme
-    private boolean isAdapterSectionCollapsed = false; // Track adapter section state
     
     // Tab animation
     private FadeTransition tabFadeTransition = null;
@@ -233,8 +226,6 @@ public class AppController {
         if (exportOrdersJsonButton != null) exportOrdersJsonButton.setOnAction(e -> exportJson("Orders"));
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
         if (resetPathsButton != null) resetPathsButton.setOnAction(e -> resetPaths());
-        if (themeToggleButton != null) themeToggleButton.setOnAction(e -> toggleTheme());
-        if (adapterCollapseButton != null) adapterCollapseButton.setOnAction(e -> toggleAdapterSection());
 
         // --- Interface reference name bindings ---
         // Update parser whenever text changes or Enter is pressed
@@ -328,9 +319,6 @@ public class AppController {
     // ---------- Load Excel ----------
     private void loadExcel() {
         try {
-            setProgressVisible(true);
-            statusLabel.setText("Loading Excel file...");
-            
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Excel Workbook");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
@@ -340,11 +328,7 @@ public class AppController {
             }
 
             File file = chooser.showOpenDialog(getStage());
-            if (file == null) {
-                setProgressVisible(false);
-                statusLabel.setText("Load cancelled");
-                return;
-            }
+            if (file == null) return;
 
             // Remember directory
             rememberDirectory(file, true);
@@ -365,11 +349,6 @@ public class AppController {
             
             updateStatusLabel(); // Update status with filter counts
             
-            // Update window title with loaded file name
-            ExcelJsonApplication.updateWindowTitle(file.getName());
-            
-            setProgressVisible(false);
-            
             int movedCount = parser.getEmdanMovedCount();
             if (movedCount > 0) {
                 showInfo("✅ Excel loaded successfully\nMoved " + movedCount + " EMDAN rows to Clinicals");
@@ -377,9 +356,7 @@ public class AppController {
                 showInfo("✅ Excel loaded successfully");
             }
         } catch (Exception ex) {
-            setProgressVisible(false);
             showError("Failed to load Excel: " + ex.getMessage());
-            statusLabel.setText("Error loading Excel");
         }
     }
 
@@ -445,9 +422,6 @@ public class AppController {
                 return;
             }
 
-            setProgressVisible(true);
-            statusLabel.setText("Generating JSON...");
-
             syncEditsToParser(); // always sync before generating
             applyInterfaceReferences(); // Apply interface references
 
@@ -463,41 +437,19 @@ public class AppController {
                 default -> "";
             };
 
-            // Apply syntax highlighting to JSON
-            String highlightedJson = applySyntaxHighlighting(json);
-            jsonPreview.setText(highlightedJson);
-            
+            jsonPreview.setText(json);
             String displayName = switch (flowType) {
                 case "NurseCalls" -> "NurseCall";
                 case "Clinicals" -> "Clinical";
                 case "Orders" -> "Orders";
                 default -> flowType;
             };
-            
-            setProgressVisible(false);
             statusLabel.setText("Generated " + displayName + " JSON");
             lastGeneratedJson = json;
             lastGeneratedWasNurseSide = "NurseCalls".equals(flowType); // Track the last generated type
         } catch (Exception ex) {
-            setProgressVisible(false);
             showError("Error generating JSON: " + ex.getMessage());
-            statusLabel.setText("Error generating JSON");
         }
-    }
-    
-    // ---------- Apply Syntax Highlighting to JSON ----------
-    private String applySyntaxHighlighting(String json) {
-        // Simple text-based highlighting using Unicode characters and formatting
-        // Note: JavaFX TextArea doesn't support HTML, so we use plain text markers
-        // This adds visual markers for different JSON elements
-        if (json == null || json.isEmpty()) return json;
-        
-        StringBuilder highlighted = new StringBuilder();
-        highlighted.append("═══ JSON Preview (Formatted) ═══\n\n");
-        highlighted.append(json);
-        highlighted.append("\n\n═══ End of JSON ═══");
-        
-        return highlighted.toString();
     }
 
     // ---------- Export JSON ----------
@@ -507,9 +459,6 @@ public class AppController {
                 showError("Please load an Excel file first.");
                 return;
             }
-
-            setProgressVisible(true);
-            statusLabel.setText("Exporting JSON...");
 
             syncEditsToParser();
             applyInterfaceReferences(); // Apply interface references
@@ -539,11 +488,7 @@ public class AppController {
             }
 
             File file = chooser.showSaveDialog(getStage());
-            if (file == null) {
-                setProgressVisible(false);
-                statusLabel.setText("Export cancelled");
-                return;
-            }
+            if (file == null) return;
 
             // Remember directory
             rememberDirectory(file, false);
@@ -557,8 +502,6 @@ public class AppController {
                 case "Orders" -> filteredParser.writeOrdersJson(file, useAdvanced);
             }
 
-            setProgressVisible(false);
-            
             if (useAdvanced) {
                 statusLabel.setText("Exported Merged JSON (Advanced Mode)");
             } else {
@@ -567,9 +510,7 @@ public class AppController {
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
-            setProgressVisible(false);
             showError("Error exporting JSON: " + ex.getMessage());
-            statusLabel.setText("Error exporting JSON");
         }
     }
 
@@ -685,20 +626,7 @@ public class AppController {
 
     // ---------- Table column setup ----------
     private void initializeUnitColumns() {
-        if (tableUnits != null) {
-            tableUnits.setEditable(true);
-            // Enable column sorting
-            tableUnits.setSortPolicy(tv -> {
-                java.util.Comparator<ExcelParserV5.UnitRow> comparator = (r1, r2) -> {
-                    if (tv.getSortOrder().isEmpty()) return 0;
-                    TableColumn<ExcelParserV5.UnitRow, ?> sortColumn = (TableColumn<ExcelParserV5.UnitRow, ?>) tv.getSortOrder().get(0);
-                    int dir = sortColumn.getSortType() == TableColumn.SortType.ASCENDING ? 1 : -1;
-                    return dir * compareUnitRows(r1, r2, sortColumn);
-                };
-                FXCollections.sort(tv.getItems(), comparator);
-                return true;
-            });
-        }
+        if (tableUnits != null) tableUnits.setEditable(true);
         setupEditable(unitFacilityCol, r -> r.facility, (r, v) -> r.facility = v);
         setupEditable(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
         setupEditable(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
@@ -707,27 +635,9 @@ public class AppController {
         setupEditable(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
         setupEditable(unitCommentsCol, r -> r.comments, (r, v) -> r.comments = v);
     }
-    
-    private int compareUnitRows(ExcelParserV5.UnitRow r1, ExcelParserV5.UnitRow r2, TableColumn<ExcelParserV5.UnitRow, ?> column) {
-        if (column == unitFacilityCol) return safe(r1.facility).compareTo(safe(r2.facility));
-        if (column == unitNamesCol) return safe(r1.unitNames).compareTo(safe(r2.unitNames));
-        if (column == unitNurseGroupCol) return safe(r1.nurseGroup).compareTo(safe(r2.nurseGroup));
-        if (column == unitClinicalGroupCol) return safe(r1.clinGroup).compareTo(safe(r2.clinGroup));
-        if (column == unitOrdersGroupCol) return safe(r1.ordersGroup).compareTo(safe(r2.ordersGroup));
-        if (column == unitNoCareGroupCol) return safe(r1.noCareGroup).compareTo(safe(r2.noCareGroup));
-        if (column == unitCommentsCol) return safe(r1.comments).compareTo(safe(r2.comments));
-        return 0;
-    }
 
     private void initializeNurseColumns() {
-        if (tableNurseCalls != null) {
-            tableNurseCalls.setEditable(true);
-            // Enable default sorting
-            tableNurseCalls.setSortPolicy(tv -> {
-                FXCollections.sort(tv.getItems(), createFlowComparator(tv));
-                return true;
-            });
-        }
+        if (tableNurseCalls != null) tableNurseCalls.setEditable(true);
         setupCheckBox(nurseInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
         setupEditable(nurseConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(nurseAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
@@ -754,13 +664,7 @@ public class AppController {
     }
 
     private void initializeClinicalColumns() {
-        if (tableClinicals != null) {
-            tableClinicals.setEditable(true);
-            tableClinicals.setSortPolicy(tv -> {
-                FXCollections.sort(tv.getItems(), createFlowComparator(tv));
-                return true;
-            });
-        }
+        if (tableClinicals != null) tableClinicals.setEditable(true);
         setupCheckBox(clinicalInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
         setupEditable(clinicalConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(clinicalAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
@@ -788,13 +692,7 @@ public class AppController {
     }
 
     private void initializeOrdersColumns() {
-        if (tableOrders != null) {
-            tableOrders.setEditable(true);
-            tableOrders.setSortPolicy(tv -> {
-                FXCollections.sort(tv.getItems(), createFlowComparator(tv));
-                return true;
-            });
-        }
+        if (tableOrders != null) tableOrders.setEditable(true);
         setupCheckBox(ordersInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
         setupEditable(ordersConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(ordersAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
@@ -1157,9 +1055,6 @@ public class AppController {
                 // Clear current file reference
                 currentExcelFile = null;
                 
-                // Reset window title
-                ExcelJsonApplication.updateWindowTitle(null);
-                
                 // Clear JSON preview
                 jsonPreview.setText("All data cleared. Load an Excel file to begin.");
                 lastGeneratedJson = "";
@@ -1257,29 +1152,6 @@ public class AppController {
     }
 
     private static String safe(String v) { return v == null ? "" : v; }
-    
-    // ---------- Create Flow Comparator for Sorting ----------
-    private java.util.Comparator<ExcelParserV5.FlowRow> createFlowComparator(TableView<ExcelParserV5.FlowRow> tv) {
-        return (r1, r2) -> {
-            if (tv.getSortOrder().isEmpty()) return 0;
-            TableColumn<ExcelParserV5.FlowRow, ?> sortColumn = (TableColumn<ExcelParserV5.FlowRow, ?>) tv.getSortOrder().get(0);
-            int dir = sortColumn.getSortType() == TableColumn.SortType.ASCENDING ? 1 : -1;
-            
-            String colText = sortColumn.getText();
-            if (colText == null) return 0;
-            
-            // Sort by different fields based on column
-            if (colText.contains("Config Group")) return dir * safe(r1.configGroup).compareTo(safe(r2.configGroup));
-            if (colText.contains("Alarm Name")) return dir * safe(r1.alarmName).compareTo(safe(r2.alarmName));
-            if (colText.contains("Sending Name")) return dir * safe(r1.sendingName).compareTo(safe(r2.sendingName));
-            if (colText.contains("Priority")) return dir * safe(r1.priorityRaw).compareTo(safe(r2.priorityRaw));
-            if (colText.contains("Device A")) return dir * safe(r1.deviceA).compareTo(safe(r2.deviceA));
-            if (colText.contains("Device B")) return dir * safe(r1.deviceB).compareTo(safe(r2.deviceB));
-            if (colText.contains("In Scope")) return dir * Boolean.compare(r1.inScope, r2.inScope);
-            
-            return 0;
-        };
-    }
 
     // ---------- Remember Directory ----------
     private void rememberDirectory(File file, boolean isExcel) {
@@ -1312,73 +1184,6 @@ public class AppController {
 
         } catch (Exception ex) {
             showError("Failed to reset paths: " + ex.getMessage());
-        }
-    }
-    
-    // ---------- Toggle Theme ----------
-    private void toggleTheme() {
-        try {
-            var scene = jsonPreview.getScene();
-            if (scene == null) return;
-            
-            isDarkMode = !isDarkMode;
-            
-            // Clear existing stylesheets
-            scene.getStylesheets().clear();
-            
-            // Load appropriate theme
-            if (isDarkMode) {
-                var darkCss = getClass().getResource("/css/vocera-theme-dark.css");
-                if (darkCss != null) {
-                    scene.getStylesheets().add(darkCss.toExternalForm());
-                    if (themeToggleButton != null) {
-                        themeToggleButton.setText("☀️ Light Mode");
-                    }
-                    statusLabel.setText("Switched to dark theme");
-                } else {
-                    showError("Dark theme CSS not found");
-                    isDarkMode = false;
-                }
-            } else {
-                var lightCss = getClass().getResource("/css/vocera-theme.css");
-                if (lightCss != null) {
-                    scene.getStylesheets().add(lightCss.toExternalForm());
-                    if (themeToggleButton != null) {
-                        themeToggleButton.setText("🌙 Dark Mode");
-                    }
-                    statusLabel.setText("Switched to light theme");
-                } else {
-                    showError("Light theme CSS not found");
-                }
-            }
-        } catch (Exception ex) {
-            showError("Failed to toggle theme: " + ex.getMessage());
-        }
-    }
-    
-    // ---------- Toggle Adapter Section ----------
-    private void toggleAdapterSection() {
-        if (adapterSettingsContent == null || adapterCollapseButton == null) return;
-        
-        isAdapterSectionCollapsed = !isAdapterSectionCollapsed;
-        
-        if (isAdapterSectionCollapsed) {
-            adapterSettingsContent.setVisible(false);
-            adapterSettingsContent.setManaged(false);
-            adapterCollapseButton.setText("▶");
-            statusLabel.setText("Adapter settings collapsed");
-        } else {
-            adapterSettingsContent.setVisible(true);
-            adapterSettingsContent.setManaged(true);
-            adapterCollapseButton.setText("▼");
-            statusLabel.setText("Adapter settings expanded");
-        }
-    }
-    
-    // ---------- Show/Hide Progress Indicator ----------
-    private void setProgressVisible(boolean visible) {
-        if (progressIndicator != null) {
-            progressIndicator.setVisible(visible);
         }
     }
 }
