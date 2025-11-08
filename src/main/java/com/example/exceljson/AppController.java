@@ -11,6 +11,9 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -22,6 +25,24 @@ import java.util.function.Function;
 import java.util.prefs.Preferences;
 
 public class AppController {
+
+    // ---------- New UI Elements for Redesigned Layout ----------
+    @FXML private Label currentFileLabel;
+    @FXML private Label jsonModeLabel;
+    @FXML private Button settingsButton;
+    @FXML private Button helpButton;
+    @FXML private Button closeSettingsButton;
+    @FXML private VBox settingsDrawer;
+    @FXML private StackPane contentStack;
+    @FXML private BorderPane unitsView;
+    @FXML private BorderPane nurseCallsView;
+    @FXML private BorderPane clinicalsView;
+    @FXML private BorderPane ordersView;
+    @FXML private ToggleButton navUnits;
+    @FXML private ToggleButton navNurseCalls;
+    @FXML private ToggleButton navClinicals;
+    @FXML private ToggleButton navOrders;
+    @FXML private ToggleGroup navigationGroup;
 
     // ---------- UI Elements ----------
     @FXML private Button loadButton;
@@ -51,13 +72,6 @@ public class AppController {
     @FXML private TextField roomFilterOrdersField;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
-
-    // ---------- Tabs ----------
-    @FXML private TabPane mainTabs;
-    @FXML private Tab tabUnits;
-    @FXML private Tab tabNurse;
-    @FXML private Tab tabClinicals;
-    @FXML private Tab tabOrders;
 
     // ---------- Config Group Filters ----------
     @FXML private ComboBox<String> unitConfigGroupFilter;
@@ -299,29 +313,111 @@ public class AppController {
             });
         }
         
-        // --- Smooth fade animation when tab changes ---
-        if (mainTabs != null) {
-            mainTabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-                if (newTab != null && newTab.getContent() != null) {
-                    Node content = newTab.getContent();
-                    
-                    // Stop any ongoing animation
-                    if (tabFadeTransition != null) {
-                        tabFadeTransition.stop();
-                    }
-                    
-                    // Create or reuse fade transition
-                    if (tabFadeTransition == null) {
-                        tabFadeTransition = new FadeTransition(Duration.millis(200));
-                    }
-                    
-                    // Configure and play
-                    tabFadeTransition.setNode(content);
-                    tabFadeTransition.setFromValue(0.0);
-                    tabFadeTransition.setToValue(1.0);
-                    tabFadeTransition.play();
-                }
+        // --- Navigation and Settings Drawer setup ---
+        setupNavigation();
+        setupSettingsDrawer();
+        
+        // --- Merge Flows checkbox listener ---
+        if (mergeFlowsCheckbox != null) {
+            mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                updateJsonModeLabel();
             });
+        }
+        
+        // Initialize labels
+        updateJsonModeLabel();
+        updateCurrentFileLabel();
+    }
+    
+    // ---------- Navigation Setup ----------
+    private void setupNavigation() {
+        if (navUnits != null) {
+            navUnits.setOnAction(e -> showView(unitsView));
+        }
+        if (navNurseCalls != null) {
+            navNurseCalls.setOnAction(e -> showView(nurseCallsView));
+        }
+        if (navClinicals != null) {
+            navClinicals.setOnAction(e -> showView(clinicalsView));
+        }
+        if (navOrders != null) {
+            navOrders.setOnAction(e -> showView(ordersView));
+        }
+        
+        // Default to Units view
+        showView(unitsView);
+    }
+    
+    // ---------- Show View ----------
+    private void showView(BorderPane viewToShow) {
+        if (unitsView != null) unitsView.setVisible(viewToShow == unitsView);
+        if (nurseCallsView != null) nurseCallsView.setVisible(viewToShow == nurseCallsView);
+        if (clinicalsView != null) clinicalsView.setVisible(viewToShow == clinicalsView);
+        if (ordersView != null) ordersView.setVisible(viewToShow == ordersView);
+        
+        // Apply fade transition
+        if (viewToShow != null) {
+            FadeTransition fade = new FadeTransition(Duration.millis(200), viewToShow);
+            fade.setFromValue(0.0);
+            fade.setToValue(1.0);
+            fade.play();
+        }
+    }
+    
+    // ---------- Settings Drawer Setup ----------
+    private void setupSettingsDrawer() {
+        if (settingsButton != null) {
+            settingsButton.setOnAction(e -> toggleSettingsDrawer());
+        }
+        if (closeSettingsButton != null) {
+            closeSettingsButton.setOnAction(e -> toggleSettingsDrawer());
+        }
+        if (helpButton != null) {
+            helpButton.setOnAction(e -> showHelp());
+        }
+    }
+    
+    // ---------- Toggle Settings Drawer ----------
+    private void toggleSettingsDrawer() {
+        if (settingsDrawer != null) {
+            boolean isVisible = settingsDrawer.isVisible();
+            settingsDrawer.setVisible(!isVisible);
+            settingsDrawer.setManaged(!isVisible);
+        }
+    }
+    
+    // ---------- Show Help ----------
+    private void showHelp() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("About Engage FlowForge 2.0");
+        alert.setHeaderText("Engage FlowForge 2.0");
+        alert.setContentText("Excel to JSON converter for Vocera Engage configurations.\n\n" +
+                "Features:\n" +
+                "• Load and edit Excel workbooks\n" +
+                "• Generate JSON rules for Nurse Calls, Clinicals, and Orders\n" +
+                "• Filter and manage configuration groups\n" +
+                "• Customize adapter references\n" +
+                "• Light/Dark theme support\n\n" +
+                "Version: 2.0");
+        alert.getDialogPane().setStyle("-fx-font-size: 13px;");
+        alert.showAndWait();
+    }
+    
+    // ---------- Update Labels ----------
+    private void updateJsonModeLabel() {
+        if (jsonModeLabel != null) {
+            boolean isMerged = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
+            jsonModeLabel.setText("JSON: " + (isMerged ? "Merged" : "Standard"));
+        }
+    }
+    
+    private void updateCurrentFileLabel() {
+        if (currentFileLabel != null) {
+            if (currentExcelFile != null) {
+                currentFileLabel.setText("📄 " + currentExcelFile.getName());
+            } else {
+                currentFileLabel.setText("No file loaded");
+            }
         }
     }
 
@@ -344,6 +440,8 @@ public class AppController {
 
             parser.load(file);
             currentExcelFile = file;
+            
+            updateCurrentFileLabel(); // Update file label
 
             jsonPreview.setText(parser.getLoadSummary());
 
@@ -1063,6 +1161,8 @@ public class AppController {
                 
                 // Clear current file reference
                 currentExcelFile = null;
+                
+                updateCurrentFileLabel(); // Update file label
                 
                 // Clear JSON preview
                 jsonPreview.setText("All data cleared. Load an Excel file to begin.");
