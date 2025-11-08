@@ -20,6 +20,11 @@
                         <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
                     </tooltip>
                 </CheckBox>
+                <Button fx:id="themeToggleButton" text="🌙 Dark Mode" styleClass="theme-toggle">
+                    <tooltip>
+                        <Tooltip text="Toggle between light and dark theme" />
+                    </tooltip>
+                </Button>
             </HBox>
             
             <!-- Main Controls Area -->
@@ -102,99 +107,111 @@
                     </HBox>
                 </VBox>
                 
-                <!-- Adapter Settings Section -->
+                <!-- Adapter Settings Section (Collapsible) -->
                 <VBox spacing="8" styleClass="control-section">
-                    <Label text="Adapter Settings" styleClass="section-header" />
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Adapter Settings" styleClass="section-header" />
+                        <Button fx:id="adapterCollapseButton" text="▼" styleClass="button-secondary" style="-fx-font-size: 10px; -fx-padding: 2 8;">
+                            <tooltip>
+                                <Tooltip text="Expand/Collapse adapter settings" />
+                            </tooltip>
+                        </Button>
+                    </HBox>
                     
-                    <!-- Adapter Reference Names -->
-                    <VBox spacing="6">
-                        <Label text="Adapter Reference Names" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
-                        <HBox spacing="12" alignment="CENTER_LEFT">
-                            <VBox spacing="3">
-                                <Label text="Edge Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" styleClass="adapter-field" />
-                            </VBox>
-                            <VBox spacing="3">
-                                <Label text="VMP Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" styleClass="adapter-field" />
-                            </VBox>
-                            <VBox spacing="3">
-                                <Label text="Vocera Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="100" styleClass="adapter-field" />
-                            </VBox>
-                            <VBox spacing="3">
-                                <Label text="XMPP Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="100" styleClass="adapter-field" />
-                            </VBox>
-                            <Button fx:id="resetDefaultsButton" text="Reset" styleClass="button-secondary" style="-fx-pref-height: 26; -fx-font-size: 11px;">
-                                <tooltip>
-                                    <Tooltip text="Reset adapter names to defaults" />
-                                </tooltip>
-                            </Button>
-                        </HBox>
-                    </VBox>
-                    
-                    <!-- Default Interfaces -->
-                    <VBox spacing="6">
-                        <Label text="Default Badge Alert Interfaces" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
-                        <HBox spacing="15" alignment="CENTER_LEFT">
-                            <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
-                                <tooltip>
-                                    <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
-                                </tooltip>
-                            </CheckBox>
-                            <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
-                                <tooltip>
-                                    <Tooltip text="Use VMP interface as default when Device A/B are blank" />
-                                </tooltip>
-                            </CheckBox>
-                            <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
-                                <tooltip>
-                                    <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
-                                </tooltip>
-                            </CheckBox>
-                            <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
-                                <tooltip>
-                                    <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
-                                </tooltip>
-                            </CheckBox>
-                        </HBox>
-                    </VBox>
-                    
-                    <!-- Room Filters -->
-                    <VBox spacing="6">
-                        <Label text="Room Filters" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
-                        <HBox spacing="12" alignment="CENTER_LEFT">
-                            <VBox spacing="3">
-                                <Label text="Nursecall" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                    <VBox fx:id="adapterSettingsContent" spacing="6">
+                        <!-- Adapter Reference Names -->
+                        <VBox spacing="6">
+                            <Label text="Adapter Reference Names" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
+                            <HBox spacing="12" alignment="CENTER_LEFT">
+                                <VBox spacing="3">
+                                    <Label text="Edge Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" styleClass="adapter-field" />
+                                </VBox>
+                                <VBox spacing="3">
+                                    <Label text="VMP Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" styleClass="adapter-field" />
+                                </VBox>
+                                <VBox spacing="3">
+                                    <Label text="Vocera Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="100" styleClass="adapter-field" />
+                                </VBox>
+                                <VBox spacing="3">
+                                    <Label text="XMPP Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="100" styleClass="adapter-field" />
+                                </VBox>
+                                <Button fx:id="resetDefaultsButton" text="Reset" styleClass="button-secondary" style="-fx-pref-height: 26; -fx-font-size: 11px;">
                                     <tooltip>
-                                        <Tooltip text="Filter Nursecall flows by room number" />
+                                        <Tooltip text="Reset adapter names to defaults" />
                                     </tooltip>
-                                </TextField>
-                            </VBox>
-                            <VBox spacing="3">
-                                <Label text="Clinical" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                </Button>
+                            </HBox>
+                        </VBox>
+                        
+                        <!-- Default Interfaces -->
+                        <VBox spacing="6">
+                            <Label text="Default Badge Alert Interfaces" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
+                            <HBox spacing="15" alignment="CENTER_LEFT">
+                                <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
                                     <tooltip>
-                                        <Tooltip text="Filter Clinical flows by room number" />
+                                        <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
                                     </tooltip>
-                                </TextField>
-                            </VBox>
-                            <VBox spacing="3">
-                                <Label text="Orders" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
-                                <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                </CheckBox>
+                                <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
                                     <tooltip>
-                                        <Tooltip text="Filter Orders flows by room number" />
+                                        <Tooltip text="Use VMP interface as default when Device A/B are blank" />
                                     </tooltip>
-                                </TextField>
-                            </VBox>
-                        </HBox>
+                                </CheckBox>
+                                <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                                    <tooltip>
+                                        <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
+                                    </tooltip>
+                                </CheckBox>
+                                <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                                    <tooltip>
+                                        <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
+                                    </tooltip>
+                                </CheckBox>
+                            </HBox>
+                        </VBox>
+                        
+                        <!-- Room Filters -->
+                        <VBox spacing="6">
+                            <Label text="Room Filters" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
+                            <HBox spacing="12" alignment="CENTER_LEFT">
+                                <VBox spacing="3">
+                                    <Label text="Nursecall" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                        <tooltip>
+                                            <Tooltip text="Filter Nursecall flows by room number" />
+                                        </tooltip>
+                                    </TextField>
+                                </VBox>
+                                <VBox spacing="3">
+                                    <Label text="Clinical" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                        <tooltip>
+                                            <Tooltip text="Filter Clinical flows by room number" />
+                                        </tooltip>
+                                    </TextField>
+                                </VBox>
+                                <VBox spacing="3">
+                                    <Label text="Orders" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                    <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                        <tooltip>
+                                            <Tooltip text="Filter Orders flows by room number" />
+                                        </tooltip>
+                                    </TextField>
+                                </VBox>
+                            </HBox>
+                        </VBox>
                     </VBox>
                 </VBox>
                 
                 <!-- Status Bar -->
-                <Label fx:id="statusLabel" text="Ready" styleClass="status-label" />
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label fx:id="statusLabel" text="Ready" styleClass="status-label" />
+                    <ProgressIndicator fx:id="progressIndicator" visible="false" prefHeight="20" prefWidth="20" style="-fx-progress-color: #00979D;" />
+                </HBox>
             </VBox>
         </VBox>
     </top>
