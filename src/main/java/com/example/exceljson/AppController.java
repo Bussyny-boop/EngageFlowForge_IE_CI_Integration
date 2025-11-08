@@ -29,6 +29,7 @@ public class AppController {
     // ---------- New UI Elements for Redesigned Layout ----------
     @FXML private Label currentFileLabel;
     @FXML private Label jsonModeLabel;
+    @FXML private ProgressBar statusProgressBar;
     @FXML private Button settingsButton;
     @FXML private Button helpButton;
     @FXML private Button closeSettingsButton;
@@ -75,6 +76,12 @@ public class AppController {
     @FXML private TextField roomFilterOrdersField;
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
+    
+    // ---------- Custom Tab Mappings ----------
+    @FXML private TextField customTabNameField;
+    @FXML private ComboBox<String> customTabFlowTypeCombo;
+    @FXML private Button addCustomTabButton;
+    @FXML private ListView<String> customTabMappingsList;
 
     // ---------- Config Group Filters ----------
     @FXML private ComboBox<String> unitConfigGroupFilter;
@@ -192,6 +199,10 @@ public class AppController {
     
     private ObservableList<ExcelParserV5.FlowRow> ordersFullList;
     private FilteredList<ExcelParserV5.FlowRow> ordersFilteredList;
+    
+    // ---------- Custom Tab Mappings Data ----------
+    private final Map<String, String> customTabMappings = new LinkedHashMap<>();
+    private final ObservableList<String> customTabMappingsDisplay = FXCollections.observableArrayList();
 
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
@@ -201,6 +212,7 @@ public class AppController {
     private static final String PREF_KEY_LAST_JSON_DIR = "lastJsonDir";
     private static final String PREF_KEY_DARK_MODE = "darkMode";
     private static final String PREF_KEY_SIDEBAR_COLLAPSED = "sidebarCollapsed";
+    private static final String PREF_KEY_CUSTOM_TAB_MAPPINGS = "customTabMappings";
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
@@ -328,6 +340,7 @@ public class AppController {
         // --- Navigation and Settings Drawer setup ---
         setupNavigation();
         setupSettingsDrawer();
+        setupCustomTabMappings();
         
         // --- Merge Flows checkbox listener ---
         if (mergeFlowsCheckbox != null) {
@@ -409,10 +422,162 @@ public class AppController {
                 "• Generate JSON rules for Nurse Calls, Clinicals, and Orders\n" +
                 "• Filter and manage configuration groups\n" +
                 "• Customize adapter references\n" +
-                "• Light/Dark theme support\n\n" +
+                "• Light/Dark theme support\n" +
+                "• Custom tab mappings for additional Excel sheets\n\n" +
                 "Version: 2.0");
         alert.getDialogPane().setStyle("-fx-font-size: 13px;");
         alert.showAndWait();
+    }
+    
+    // ---------- Custom Tab Mappings Setup ----------
+    private void setupCustomTabMappings() {
+        // Initialize ComboBox with flow types
+        if (customTabFlowTypeCombo != null) {
+            customTabFlowTypeCombo.setItems(FXCollections.observableArrayList(
+                "NurseCalls", "Clinicals", "Orders"
+            ));
+            customTabFlowTypeCombo.getSelectionModel().selectFirst();
+        }
+        
+        // Bind ListView to display list
+        if (customTabMappingsList != null) {
+            customTabMappingsList.setItems(customTabMappingsDisplay);
+            
+            // Allow double-click to remove mapping
+            customTabMappingsList.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2) {
+                    String selected = customTabMappingsList.getSelectionModel().getSelectedItem();
+                    if (selected != null) {
+                        removeCustomTabMapping(selected);
+                    }
+                }
+            });
+        }
+        
+        // Add button action
+        if (addCustomTabButton != null) {
+            addCustomTabButton.setOnAction(e -> addCustomTabMapping());
+        }
+        
+        // Load saved mappings from preferences
+        loadCustomTabMappings();
+    }
+    
+    // ---------- Add Custom Tab Mapping ----------
+    private void addCustomTabMapping() {
+        if (customTabNameField == null || customTabFlowTypeCombo == null) {
+            return;
+        }
+        
+        String tabName = customTabNameField.getText();
+        String flowType = customTabFlowTypeCombo.getValue();
+        
+        if (tabName == null || tabName.trim().isEmpty()) {
+            if (statusLabel != null) {
+                statusLabel.setText("⚠️ Please enter a custom tab name");
+            }
+            return;
+        }
+        
+        if (flowType == null) {
+            if (statusLabel != null) {
+                statusLabel.setText("⚠️ Please select a flow type");
+            }
+            return;
+        }
+        
+        tabName = tabName.trim();
+        
+        // Check if mapping already exists
+        if (customTabMappings.containsKey(tabName)) {
+            if (statusLabel != null) {
+                statusLabel.setText("⚠️ Mapping for '" + tabName + "' already exists");
+            }
+            return;
+        }
+        
+        // Add the mapping
+        customTabMappings.put(tabName, flowType);
+        updateCustomTabMappingsDisplay();
+        saveCustomTabMappings();
+        
+        // Update parser
+        parser.setCustomTabMappings(customTabMappings);
+        
+        // Clear input fields
+        customTabNameField.clear();
+        customTabFlowTypeCombo.getSelectionModel().selectFirst();
+        
+        if (statusLabel != null) {
+            statusLabel.setText("✅ Added custom tab mapping: " + tabName + " → " + flowType);
+        }
+    }
+    
+    // ---------- Remove Custom Tab Mapping ----------
+    private void removeCustomTabMapping(String displayText) {
+        // Parse the display text to get the tab name
+        // Format is "TabName → FlowType"
+        String[] parts = displayText.split(" → ");
+        if (parts.length < 1) return;
+        
+        String tabName = parts[0].trim();
+        customTabMappings.remove(tabName);
+        updateCustomTabMappingsDisplay();
+        saveCustomTabMappings();
+        
+        // Update parser
+        parser.setCustomTabMappings(customTabMappings);
+        
+        if (statusLabel != null) {
+            statusLabel.setText("✅ Removed custom tab mapping: " + tabName);
+        }
+    }
+    
+    // ---------- Update Custom Tab Mappings Display ----------
+    private void updateCustomTabMappingsDisplay() {
+        customTabMappingsDisplay.clear();
+        for (Map.Entry<String, String> entry : customTabMappings.entrySet()) {
+            customTabMappingsDisplay.add(entry.getKey() + " → " + entry.getValue());
+        }
+    }
+    
+    // ---------- Save Custom Tab Mappings ----------
+    private void saveCustomTabMappings() {
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        
+        // Serialize mappings as "tabName1:flowType1;tabName2:flowType2;..."
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : customTabMappings.entrySet()) {
+            if (sb.length() > 0) sb.append(";");
+            sb.append(entry.getKey()).append(":").append(entry.getValue());
+        }
+        
+        prefs.put(PREF_KEY_CUSTOM_TAB_MAPPINGS, sb.toString());
+    }
+    
+    // ---------- Load Custom Tab Mappings ----------
+    private void loadCustomTabMappings() {
+        Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+        String mappingsStr = prefs.get(PREF_KEY_CUSTOM_TAB_MAPPINGS, "");
+        
+        customTabMappings.clear();
+        
+        if (!mappingsStr.isEmpty()) {
+            String[] pairs = mappingsStr.split(";");
+            for (String pair : pairs) {
+                String[] parts = pair.split(":", 2);
+                if (parts.length == 2) {
+                    customTabMappings.put(parts[0], parts[1]);
+                }
+            }
+        }
+        
+        updateCustomTabMappingsDisplay();
+        
+        // Update parser with loaded mappings
+        if (parser != null) {
+            parser.setCustomTabMappings(customTabMappings);
+        }
     }
     
     // ---------- Update Labels ----------
@@ -430,6 +595,25 @@ public class AppController {
             } else {
                 currentFileLabel.setText("No file loaded");
             }
+        }
+    }
+    
+    // ---------- Progress Bar Helpers ----------
+    private void showProgressBar(String statusMessage) {
+        if (statusLabel != null) {
+            statusLabel.setText(statusMessage);
+        }
+        if (statusProgressBar != null) {
+            statusProgressBar.setProgress(-1); // Indeterminate progress
+            statusProgressBar.setVisible(true);
+            statusProgressBar.setManaged(true);
+        }
+    }
+    
+    private void hideProgressBar() {
+        if (statusProgressBar != null) {
+            statusProgressBar.setVisible(false);
+            statusProgressBar.setManaged(false);
         }
     }
 
@@ -450,6 +634,10 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, true);
 
+            // Show progress
+            showProgressBar("📥 Loading Excel file...");
+            
+            // Load file
             parser.load(file);
             currentExcelFile = file;
             
@@ -466,6 +654,8 @@ public class AppController {
             setJsonButtonsEnabled(true);
             setExcelButtonsEnabled(true);
             
+            // Hide progress and update status
+            hideProgressBar();
             updateStatusLabel(); // Update status with filter counts
             
             int movedCount = parser.getEmdanMovedCount();
@@ -475,6 +665,7 @@ public class AppController {
                 showInfo("✅ Excel loaded successfully");
             }
         } catch (Exception ex) {
+            hideProgressBar();
             showError("Failed to load Excel: " + ex.getMessage());
         }
     }
@@ -526,9 +717,19 @@ public class AppController {
                 if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
             }
 
+            // Show progress
+            showProgressBar("💾 Saving Excel file...");
+            
             parser.writeExcel(out);
+            
+            // Hide progress and show success
+            hideProgressBar();
+            if (statusLabel != null) {
+                statusLabel.setText("✅ Excel saved successfully");
+            }
             showInfo("💾 Excel generated successfully:\n" + out.getAbsolutePath());
         } catch (Exception ex) {
+            hideProgressBar();
             showError("Error saving Excel: " + ex.getMessage());
         }
     }
@@ -612,6 +813,15 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, false);
 
+            // Show progress
+            String displayName = switch (flowType) {
+                case "NurseCalls" -> "NurseCall";
+                case "Clinicals" -> "Clinical";
+                case "Orders" -> "Orders";
+                default -> "JSON";
+            };
+            showProgressBar("📤 Exporting " + displayName + " JSON...");
+            
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();
 
@@ -621,14 +831,17 @@ public class AppController {
                 case "Orders" -> filteredParser.writeOrdersJson(file, useAdvanced);
             }
 
+            // Hide progress and show success
+            hideProgressBar();
             if (useAdvanced) {
-                statusLabel.setText("Exported Merged JSON (Advanced Mode)");
+                statusLabel.setText("✅ Exported Merged JSON (Advanced Mode)");
             } else {
-                statusLabel.setText("Exported Standard JSON");
+                statusLabel.setText("✅ Exported Standard JSON");
             }
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
+            hideProgressBar();
             showError("Error exporting JSON: " + ex.getMessage());
         }
     }

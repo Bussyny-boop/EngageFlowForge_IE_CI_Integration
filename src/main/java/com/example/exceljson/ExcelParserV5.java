@@ -84,6 +84,9 @@ public class ExcelParserV5 {
   private String roomFilterNursecall = "";
   private String roomFilterClinical = "";
   private String roomFilterOrders = "";
+  
+  // Custom tab mappings: tab name -> flow type ("NurseCalls", "Clinicals", or "Orders")
+  private final Map<String, String> customTabMappings = new LinkedHashMap<>();
 
   public void setInterfaceReferences(String edgeRef, String vcsRef) {
     // Basic validation - ensure references are reasonable
@@ -147,6 +150,53 @@ public class ExcelParserV5 {
     this.roomFilterClinical = (clinical != null && !clinical.isBlank()) ? clinical.trim() : "";
     this.roomFilterOrders = (orders != null && !orders.isBlank()) ? orders.trim() : "";
   }
+  
+  /**
+   * Sets custom tab mappings for loading additional sheets as specific flow types.
+   * @param mappings Map of tab name -> flow type ("NurseCalls", "Clinicals", or "Orders")
+   */
+  public void setCustomTabMappings(Map<String, String> mappings) {
+    this.customTabMappings.clear();
+    if (mappings != null) {
+      // Validate and normalize flow type values
+      for (Map.Entry<String, String> entry : mappings.entrySet()) {
+        String tabName = entry.getKey();
+        String flowType = entry.getValue();
+        if (tabName != null && !tabName.isBlank() && flowType != null) {
+          // Normalize flow type to match expected values
+          String normalizedFlowType = normalizeFlowType(flowType);
+          if (normalizedFlowType != null) {
+            this.customTabMappings.put(tabName.trim(), normalizedFlowType);
+          }
+        }
+      }
+    }
+  }
+  
+  /**
+   * Gets a copy of the current custom tab mappings.
+   */
+  public Map<String, String> getCustomTabMappings() {
+    return new LinkedHashMap<>(this.customTabMappings);
+  }
+  
+  /**
+   * Normalizes flow type strings to standard values.
+   */
+  private String normalizeFlowType(String flowType) {
+    if (flowType == null) return null;
+    String normalized = flowType.trim();
+    if (normalized.equalsIgnoreCase("NurseCalls") || normalized.equalsIgnoreCase("Nursecall") || 
+        normalized.equalsIgnoreCase("Nurse Call") || normalized.equalsIgnoreCase("Nurse")) {
+      return "NurseCalls";
+    } else if (normalized.equalsIgnoreCase("Clinicals") || normalized.equalsIgnoreCase("Clinical") ||
+               normalized.equalsIgnoreCase("Patient Monitoring") || normalized.equalsIgnoreCase("PM")) {
+      return "Clinicals";
+    } else if (normalized.equalsIgnoreCase("Orders") || normalized.equalsIgnoreCase("Order")) {
+      return "Orders";
+    }
+    return null;
+  }
 
   private static final String SHEET_UNIT = "Unit Breakdown";
   private static final String SHEET_NURSE = "Nurse Call";
@@ -190,6 +240,33 @@ public class ExcelParserV5 {
       parseFlowSheet(wb, SHEET_NURSE, true, false);
       parseFlowSheet(wb, SHEET_CLINICAL, false, false);
       parseFlowSheet(wb, SHEET_ORDERS, false, true);
+      
+      // Process custom tab mappings
+      processCustomTabs(wb);
+    }
+  }
+  
+  /**
+   * Processes custom tabs defined in customTabMappings.
+   * Each custom tab is parsed and merged into the appropriate flow list.
+   */
+  private void processCustomTabs(Workbook wb) throws Exception {
+    for (Map.Entry<String, String> entry : customTabMappings.entrySet()) {
+      String tabName = entry.getKey();
+      String flowType = entry.getValue();
+      
+      // Try to find the custom tab in the workbook
+      Sheet customSheet = findSheetCaseInsensitive(wb, tabName);
+      if (customSheet == null) {
+        // Tab doesn't exist in this workbook, skip silently
+        continue;
+      }
+      
+      // Parse the custom tab based on its mapped flow type
+      boolean isNurseSide = flowType.equals("NurseCalls");
+      boolean isOrdersType = flowType.equals("Orders");
+      
+      parseFlowSheet(wb, tabName, isNurseSide, isOrdersType);
     }
   }
 
