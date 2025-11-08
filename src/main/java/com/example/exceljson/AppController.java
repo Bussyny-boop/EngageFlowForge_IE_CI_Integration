@@ -349,6 +349,9 @@ public class AppController {
             
             updateStatusLabel(); // Update status with filter counts
             
+            // Update window title with loaded file name
+            ExcelJsonApplication.updateWindowTitle(file.getName());
+            
             int movedCount = parser.getEmdanMovedCount();
             if (movedCount > 0) {
                 showInfo("✅ Excel loaded successfully\nMoved " + movedCount + " EMDAN rows to Clinicals");
@@ -1054,6 +1057,9 @@ public class AppController {
                 
                 // Clear current file reference
                 currentExcelFile = null;
+                
+                // Reset window title
+                ExcelJsonApplication.updateWindowTitle(null);
                 
                 // Clear JSON preview
                 jsonPreview.setText("All data cleared. Load an Excel file to begin.");

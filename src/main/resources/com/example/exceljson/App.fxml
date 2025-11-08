@@ -11,93 +11,190 @@
             styleClass="border-pane">
     <top>
         <VBox spacing="0" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header-bar">
-                <Label text="Engage FlowForge 2.0" style="-fx-font-size:18; -fx-font-weight:bold; -fx-text-fill:white;" />
+            <!-- Header Bar with Title and Main Settings -->
+            <HBox alignment="CENTER_LEFT" spacing="15" styleClass="header-bar">
+                <Label text="Engage FlowForge 2.0" style="-fx-font-size:20; -fx-font-weight:bold; -fx-text-fill:white;" />
                 <Region HBox.hgrow="ALWAYS"/>
-                <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true" style="-fx-text-fill:white;">
+                <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flows" selected="true" style="-fx-text-fill:white; -fx-font-size:13px;">
                     <tooltip>
                         <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
                     </tooltip>
                 </CheckBox>
-                <VBox spacing="2" alignment="CENTER_LEFT">
-                    <Label text="Adapter Reference name; enter any custom or site specific Adapter name" style="-fx-text-fill:white; -fx-font-size:10; -fx-font-weight:bold;" />
-                    <HBox spacing="5" alignment="CENTER_LEFT">
-                        <Label text="Edge" style="-fx-text-fill:white;" />
-                        <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" />
-                        <Label text="VMP" style="-fx-text-fill:white;" />
-                        <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" />
-                        <Label text="Vocera" style="-fx-text-fill:white;" />
-                        <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="100" />
-                        <Label text="XMPP" style="-fx-text-fill:white;" />
-                        <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="100" />
+            </HBox>
+            
+            <!-- Main Controls Area -->
+            <VBox spacing="12" styleClass="controls-container">
+                <!-- File Operations Section -->
+                <VBox spacing="8" styleClass="control-section">
+                    <Label text="Excel Import" styleClass="section-header" />
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Button fx:id="loadButton" text="📂 Load Excel">
+                            <tooltip>
+                                <Tooltip text="Load an Excel workbook with flow configurations" />
+                            </tooltip>
+                        </Button>
+                        <Button fx:id="saveExcelButton" text="💾 Save Changes" disable="true">
+                            <tooltip>
+                                <Tooltip text="Save modifications back to a new Excel file" />
+                            </tooltip>
+                        </Button>
+                        <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" styleClass="button-warning">
+                            <tooltip>
+                                <Tooltip text="Clear all loaded data from the application" />
+                            </tooltip>
+                        </Button>
+                        <Separator orientation="VERTICAL" />
+                        <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary">
+                            <tooltip>
+                                <Tooltip text="Reset file chooser directories to defaults" />
+                            </tooltip>
+                        </Button>
                     </HBox>
                 </VBox>
-                <Button fx:id="resetDefaultsButton" text="Reset Defaults" styleClass="button-secondary" />
-            </HBox>
-            <VBox spacing="10" style="-fx-padding: 10;">
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Button fx:id="loadButton" text="📂 Load Excel" />
-                    <Button fx:id="saveExcelButton" text="💾 Save Changes" disable="true" />
-                    <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" styleClass="button-warning" />
-                    <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
-                </HBox>
-                <Label fx:id="statusLabel" text="Ready" />
-                <HBox spacing="15" alignment="CENTER_LEFT">
-                    <Label text="Preview Json:" style="-fx-font-weight: bold;" />
-                    <Button fx:id="generateNurseJsonButton" text="Nursecall" />
-                    <Button fx:id="generateClinicalJsonButton" text="Clinical" />
-                    <Button fx:id="generateOrdersJsonButton" text="Orders" />
-                    <Separator orientation="VERTICAL" />
-                    <Label text="Export Json:" style="-fx-font-weight: bold;" />
-                    <Button fx:id="exportNurseJsonButton" text="Nursecall" />
-                    <Button fx:id="exportClinicalJsonButton" text="Clinical" />
-                    <Button fx:id="exportOrdersJsonButton" text="Orders" />
-                </HBox>
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label text="Vocera Badges Alert Interface:" />
-                    <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
-                        <tooltip>
-                            <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
-                        </tooltip>
-                    </CheckBox>
-                    <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
-                        <tooltip>
-                            <Tooltip text="Use VMP interface as default when Device A/B are blank" />
-                        </tooltip>
-                    </CheckBox>
-                    <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
-                        <tooltip>
-                            <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
-                        </tooltip>
-                    </CheckBox>
-                    <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
-                        <tooltip>
-                            <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
-                        </tooltip>
-                    </CheckBox>
-                </HBox>
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label text="Room Filter:" />
-                    <Label text="Nursecall:" />
-                    <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="100">
-                        <tooltip>
-                            <Tooltip text="Filter Nursecall flows by room number" />
-                        </tooltip>
-                    </TextField>
-                    <Label text="Clinical:" />
-                    <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="100">
-                        <tooltip>
-                            <Tooltip text="Filter Clinical flows by room number" />
-                        </tooltip>
-                    </TextField>
-                    <Label text="Orders:" />
-                    <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="100">
-                        <tooltip>
-                            <Tooltip text="Filter Orders flows by room number" />
-                        </tooltip>
-                    </TextField>
-                </HBox>
-                <Separator />
+                
+                <!-- JSON Controls Section -->
+                <VBox spacing="8" styleClass="control-section">
+                    <Label text="Flow Configuration" styleClass="section-header" />
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <VBox spacing="5">
+                            <Label text="Preview JSON:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                            <HBox spacing="8">
+                                <Button fx:id="generateNurseJsonButton" text="👨‍⚕️ Nursecall" styleClass="button-preview">
+                                    <tooltip>
+                                        <Tooltip text="Preview Nursecall JSON configuration" />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="generateClinicalJsonButton" text="🏥 Clinical" styleClass="button-preview">
+                                    <tooltip>
+                                        <Tooltip text="Preview Clinical JSON configuration" />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="generateOrdersJsonButton" text="📋 Orders" styleClass="button-preview">
+                                    <tooltip>
+                                        <Tooltip text="Preview Orders JSON configuration" />
+                                    </tooltip>
+                                </Button>
+                            </HBox>
+                        </VBox>
+                        
+                        <Separator orientation="VERTICAL" />
+                        
+                        <VBox spacing="5">
+                            <Label text="Export JSON:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                            <HBox spacing="8">
+                                <Button fx:id="exportNurseJsonButton" text="💾 Nursecall">
+                                    <tooltip>
+                                        <Tooltip text="Export Nursecall JSON to file" />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="exportClinicalJsonButton" text="💾 Clinical">
+                                    <tooltip>
+                                        <Tooltip text="Export Clinical JSON to file" />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="exportOrdersJsonButton" text="💾 Orders">
+                                    <tooltip>
+                                        <Tooltip text="Export Orders JSON to file" />
+                                    </tooltip>
+                                </Button>
+                            </HBox>
+                        </VBox>
+                    </HBox>
+                </VBox>
+                
+                <!-- Adapter Settings Section -->
+                <VBox spacing="8" styleClass="control-section">
+                    <Label text="Adapter Settings" styleClass="section-header" />
+                    
+                    <!-- Adapter Reference Names -->
+                    <VBox spacing="6">
+                        <Label text="Adapter Reference Names" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <VBox spacing="3">
+                                <Label text="Edge Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" styleClass="adapter-field" />
+                            </VBox>
+                            <VBox spacing="3">
+                                <Label text="VMP Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" styleClass="adapter-field" />
+                            </VBox>
+                            <VBox spacing="3">
+                                <Label text="Vocera Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="100" styleClass="adapter-field" />
+                            </VBox>
+                            <VBox spacing="3">
+                                <Label text="XMPP Adapter" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="100" styleClass="adapter-field" />
+                            </VBox>
+                            <Button fx:id="resetDefaultsButton" text="Reset" styleClass="button-secondary" style="-fx-pref-height: 26; -fx-font-size: 11px;">
+                                <tooltip>
+                                    <Tooltip text="Reset adapter names to defaults" />
+                                </tooltip>
+                            </Button>
+                        </HBox>
+                    </VBox>
+                    
+                    <!-- Default Interfaces -->
+                    <VBox spacing="6">
+                        <Label text="Default Badge Alert Interfaces" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
+                                <tooltip>
+                                    <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
+                                </tooltip>
+                            </CheckBox>
+                            <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
+                                <tooltip>
+                                    <Tooltip text="Use VMP interface as default when Device A/B are blank" />
+                                </tooltip>
+                            </CheckBox>
+                            <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                                <tooltip>
+                                    <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
+                                </tooltip>
+                            </CheckBox>
+                            <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                                <tooltip>
+                                    <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
+                                </tooltip>
+                            </CheckBox>
+                        </HBox>
+                    </VBox>
+                    
+                    <!-- Room Filters -->
+                    <VBox spacing="6">
+                        <Label text="Room Filters" style="-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;" />
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <VBox spacing="3">
+                                <Label text="Nursecall" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                    <tooltip>
+                                        <Tooltip text="Filter Nursecall flows by room number" />
+                                    </tooltip>
+                                </TextField>
+                            </VBox>
+                            <VBox spacing="3">
+                                <Label text="Clinical" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                    <tooltip>
+                                        <Tooltip text="Filter Clinical flows by room number" />
+                                    </tooltip>
+                                </TextField>
+                            </VBox>
+                            <VBox spacing="3">
+                                <Label text="Orders" style="-fx-font-size: 11px; -fx-text-fill: #666;" />
+                                <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="100" styleClass="adapter-field">
+                                    <tooltip>
+                                        <Tooltip text="Filter Orders flows by room number" />
+                                    </tooltip>
+                                </TextField>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </VBox>
+                
+                <!-- Status Bar -->
+                <Label fx:id="statusLabel" text="Ready" styleClass="status-label" />
             </VBox>
         </VBox>
     </top>
@@ -117,18 +214,18 @@
                                 </ImageView>
                             </graphic>
                             <content>
-                                <BorderPane>
+                                <BorderPane styleClass="tab-content">
                                     <top>
-                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="filter-bar" BorderPane.alignment="CENTER">
                                             <padding>
-                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                                <Insets top="8" right="10" bottom="8" left="10" />
                                             </padding>
-                                            <Label text="Filter by Config Group:" />
-                                            <ComboBox fx:id="unitConfigGroupFilter" prefWidth="200" />
+                                            <Label text="🔍 Filter by Config Group:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                                            <ComboBox fx:id="unitConfigGroupFilter" prefWidth="200" styleClass="filter-combo" />
                                         </HBox>
                                     </top>
                                     <center>
-                                        <TableView fx:id="tableUnits" editable="true">
+                                        <TableView fx:id="tableUnits" editable="true" styleClass="data-table">
                                             <columns>
                                                 <TableColumn fx:id="unitFacilityCol" prefWidth="120.0" text="Facility" />
                                                 <TableColumn fx:id="unitNamesCol" prefWidth="160.0" text="Unit Names" />
@@ -154,18 +251,18 @@
                                 </ImageView>
                             </graphic>
                             <content>
-                                <BorderPane>
+                                <BorderPane styleClass="tab-content">
                                     <top>
-                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="filter-bar" BorderPane.alignment="CENTER">
                                             <padding>
-                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                                <Insets top="8" right="10" bottom="8" left="10" />
                                             </padding>
-                                            <Label text="Filter by Config Group:" />
-                                            <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
+                                            <Label text="🔍 Filter by Config Group:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                                            <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" styleClass="filter-combo" />
                                         </HBox>
                                     </top>
                                     <center>
-                                        <TableView fx:id="tableNurseCalls" editable="true">
+                                        <TableView fx:id="tableNurseCalls" editable="true" styleClass="data-table">
                                             <columns>
                                                 <TableColumn fx:id="nurseInScopeCol" prefWidth="80.0" text="In Scope" />
                                                 <TableColumn fx:id="nurseConfigGroupCol" prefWidth="160.0" text="Config Group" />
@@ -207,18 +304,18 @@
                                 </ImageView>
                             </graphic>
                             <content>
-                                <BorderPane>
+                                <BorderPane styleClass="tab-content">
                                     <top>
-                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="filter-bar" BorderPane.alignment="CENTER">
                                             <padding>
-                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                                <Insets top="8" right="10" bottom="8" left="10" />
                                             </padding>
-                                            <Label text="Filter by Config Group:" />
-                                            <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
+                                            <Label text="🔍 Filter by Config Group:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                                            <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" styleClass="filter-combo" />
                                         </HBox>
                                     </top>
                                     <center>
-                                        <TableView fx:id="tableClinicals" editable="true">
+                                        <TableView fx:id="tableClinicals" editable="true" styleClass="data-table">
                                             <columns>
                                                 <TableColumn fx:id="clinicalInScopeCol" prefWidth="80.0" text="In Scope" />
                                                 <TableColumn fx:id="clinicalConfigGroupCol" prefWidth="160.0" text="Config Group" />
@@ -261,18 +358,18 @@
                                 </ImageView>
                             </graphic>
                             <content>
-                                <BorderPane>
+                                <BorderPane styleClass="tab-content">
                                     <top>
-                                        <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="filter-bar" BorderPane.alignment="CENTER">
                                             <padding>
-                                                <Insets top="5" right="5" bottom="5" left="5" />
+                                                <Insets top="8" right="10" bottom="8" left="10" />
                                             </padding>
-                                            <Label text="Filter by Config Group:" />
-                                            <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
+                                            <Label text="🔍 Filter by Config Group:" style="-fx-font-weight: bold; -fx-font-size: 12px;" />
+                                            <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" styleClass="filter-combo" />
                                         </HBox>
                                     </top>
                                     <center>
-                                        <TableView fx:id="tableOrders" editable="true">
+                                        <TableView fx:id="tableOrders" editable="true" styleClass="data-table">
                                             <columns>
                                                 <TableColumn fx:id="ordersInScopeCol" prefWidth="80.0" text="In Scope" />
                                                 <TableColumn fx:id="ordersConfigGroupCol" prefWidth="160.0" text="Config Group" />
@@ -287,7 +384,7 @@
                                                 <TableColumn fx:id="ordersEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
                                                 <TableColumn fx:id="ordersTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
                                                 <TableColumn fx:id="ordersEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
-                                                <TableColumn fx:id="ordersT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                <TableColumn fx:id="ordersT1Col" prefWidth="140.0" text="Time to 5th" />
                                                 <TableColumn fx:id="ordersR1Col" prefWidth="220.0" text="1st Recipient" />
                                                 <TableColumn fx:id="ordersT2Col" prefWidth="140.0" text="Time to 2nd" />
                                                 <TableColumn fx:id="ordersR2Col" prefWidth="220.0" text="2nd Recipient" />
@@ -306,9 +403,9 @@
                     </tabs>
                 </TabPane>
 
-                <VBox spacing="5">
-                    <Label text="📋 JSON Preview" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
-                    <TextArea fx:id="jsonPreview" wrapText="true" prefRowCount="10" />
+                <VBox spacing="8" styleClass="json-preview-container">
+                    <Label text="📋 JSON Preview" styleClass="section-header" style="-fx-font-size: 13px;" />
+                    <TextArea fx:id="jsonPreview" wrapText="true" prefRowCount="10" styleClass="json-preview-area" />
                 </VBox>
             </items>
         </SplitPane>
