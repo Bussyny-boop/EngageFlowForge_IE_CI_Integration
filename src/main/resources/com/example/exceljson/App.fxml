@@ -20,7 +20,7 @@
                     </tooltip>
                 </CheckBox>
                 <VBox spacing="2" alignment="CENTER_LEFT">
-                    <Label text="Adapter Reference name" style="-fx-text-fill:white; -fx-font-size:10; -fx-font-weight:bold;" />
+                    <Label text="Adapter Reference name; enter any custom or site specific Adapter name" style="-fx-text-fill:white; -fx-font-size:10; -fx-font-weight:bold;" />
                     <HBox spacing="5" alignment="CENTER_LEFT">
                         <Label text="Edge" style="-fx-text-fill:white;" />
                         <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" />

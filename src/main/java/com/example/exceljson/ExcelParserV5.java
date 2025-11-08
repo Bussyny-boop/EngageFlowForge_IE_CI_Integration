@@ -641,13 +641,13 @@ public class ExcelParserV5 {
       flow.put("conditions", flowConditions);
       
       flow.put("destinations", dac.destinations);
-      flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB));
+      flow.put("interfaces", buildInterfacesForDevice(r.deviceA, r.deviceB, r.ringtone));
       flow.put("name", buildFlowName(flowType, mappedPriority, r, unitRefs));
       
       // Use XMPP-specific parameter attributes if XMPP device is detected
       boolean isXmpp = containsXmpp(r.deviceA) || containsXmpp(r.deviceB);
       if (isXmpp) {
-        flow.put("parameterAttributes", buildXmppParamAttributes(r, flowType));
+        flow.put("parameterAttributes", buildXmppParamAttributes(r, flowType, mappedPriority));
       } else {
         flow.put("parameterAttributes", buildParamAttributesQuoted(r, flowType, mappedPriority));
       }
@@ -750,13 +750,13 @@ public class ExcelParserV5 {
         flow.put("conditions", flowConditions);
         
         flow.put("destinations", dac.destinations);
-        flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB));
+        flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB, template.ringtone));
         flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitsForNoCareGroup));
         
         // Use XMPP-specific parameter attributes if XMPP device is detected
         boolean isXmpp = containsXmpp(template.deviceA) || containsXmpp(template.deviceB);
         if (isXmpp) {
-          flow.put("parameterAttributes", buildXmppParamAttributes(template, flowType));
+          flow.put("parameterAttributes", buildXmppParamAttributes(template, flowType, mappedPriority));
         } else {
           flow.put("parameterAttributes", buildParamAttributesQuoted(template, flowType, mappedPriority));
         }
@@ -1008,8 +1008,13 @@ public class ExcelParserV5 {
    * Uses the editable reference names provided from the GUI.
    * If multiple device types are present, returns multiple interfaces.
    * If devices are blank/empty, uses default interface checkboxes if configured.
+   * 
+   * @param deviceA Device A column value
+   * @param deviceB Device B column value
+   * @param ringtone Ringtone value for Vocera dynamic parameters
+   * @return List of interface maps
    */
-  private List<Map<String, Object>> buildInterfacesForDevice(String deviceA, String deviceB) {
+  private List<Map<String, Object>> buildInterfacesForDevice(String deviceA, String deviceB, String ringtone) {
     boolean hasEdgeA = containsEdge(deviceA);
     boolean hasEdgeB = containsEdge(deviceB);
     boolean hasVcsA = containsVcs(deviceA);
@@ -1042,6 +1047,19 @@ public class ExcelParserV5 {
       Map<String, Object> voceraIface = new LinkedHashMap<>();
       voceraIface.put("componentName", "Vocera");
       voceraIface.put("referenceName", voceraReferenceName);
+      
+      // Add dynamicParameters with badgeAlertSound if ringtone is provided
+      if (!isBlank(ringtone)) {
+        List<Map<String, Object>> dynamicParams = new ArrayList<>();
+        Map<String, Object> badgeAlertSoundParam = new LinkedHashMap<>();
+        badgeAlertSoundParam.put("name", "badgeAlertSound");
+        // Ensure .wav extension and quote the value
+        String badgeAlertSoundValue = "\"" + ensureWavExtension(ringtone) + "\"";
+        badgeAlertSoundParam.put("value", badgeAlertSoundValue);
+        dynamicParams.add(badgeAlertSoundParam);
+        voceraIface.put("dynamicParameters", dynamicParams);
+      }
+      
       interfaces.add(voceraIface);
     }
     
@@ -1080,6 +1098,19 @@ public class ExcelParserV5 {
         Map<String, Object> voceraIface = new LinkedHashMap<>();
         voceraIface.put("componentName", "Vocera");
         voceraIface.put("referenceName", voceraReferenceName);
+        
+        // Add dynamicParameters with badgeAlertSound if ringtone is provided
+        if (!isBlank(ringtone)) {
+          List<Map<String, Object>> dynamicParams = new ArrayList<>();
+          Map<String, Object> badgeAlertSoundParam = new LinkedHashMap<>();
+          badgeAlertSoundParam.put("name", "badgeAlertSound");
+          // Ensure .wav extension and quote the value
+          String badgeAlertSoundValue = "\"" + ensureWavExtension(ringtone) + "\"";
+          badgeAlertSoundParam.put("value", badgeAlertSoundValue);
+          dynamicParams.add(badgeAlertSoundParam);
+          voceraIface.put("dynamicParameters", dynamicParams);
+        }
+        
         interfaces.add(voceraIface);
       }
       
@@ -1498,45 +1529,59 @@ public class ExcelParserV5 {
 
   /**
    * Build XMPP-specific parameter attributes.
-   * XMPP follows VMP logic with specific exceptions:
-   * - alertSound: Take ringtone value and append ".wav"
+   * XMPP uses all VMP/Edge parameters as base, with specific overrides:
+   * - alertSound: Take ringtone value and ensure ".wav" extension (avoid duplication)
    * - additionalContent: Static value (different for Nurse/Clinical vs Orders)
    * - audible: true
    * - realert: false
    * - multipleAccepts: Value from "Platform: Multi-User Accept" column
    * - delayedResponses: false
+   * - retractRules: Removed (not needed for XMPP)
    */
-  private List<Map<String,Object>> buildXmppParamAttributes(FlowRow r, String flowType) {
-    List<Map<String,Object>> params = new ArrayList<>();
+  private List<Map<String,Object>> buildXmppParamAttributes(FlowRow r, String flowType, String mappedPriority) {
+    // Start with all VMP/Edge parameters
+    List<Map<String,Object>> params = buildParamAttributesQuoted(r, flowType, mappedPriority);
+    
     boolean nurseSide = "NurseCalls".equals(flowType);
     boolean ordersType = "Orders".equals(flowType);
 
-    // 1. alertSound: Ringtone + ".wav"
+    // Override/add XMPP-specific parameters
+    // Remove existing alertSound if present, we'll add the XMPP version
+    params.removeIf(p -> "alertSound".equals(p.get("name")));
+    
+    // 1. alertSound: Ringtone + ".wav" (avoid double .wav)
     if (!isBlank(r.ringtone)) {
-      String alertSoundValue = r.ringtone.trim() + ".wav";
-      params.add(paQ("alertSound", alertSoundValue));
+      String alertSoundValue = ensureWavExtension(r.ringtone);
+      // Insert at the beginning to match previous behavior
+      params.add(0, paQ("alertSound", alertSoundValue));
     }
 
-    // 2. additionalContent: Different for Nurse/Clinical vs Orders
+    // 2. Override additionalContent: Different for Nurse/Clinical vs Orders
+    params.removeIf(p -> "additionalContent".equals(p.get("name")));
+    
+    // 3. Remove retractRules from XMPP (not needed for XMPP)
+    params.removeIf(p -> "retractRules".equals(p.get("name")));
+    
+    // 4. Add XMPP-specific additionalContent
     if (ordersType) {
-      params.add(paQ("additionalContent", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.room_number} - #{patient.current_place.bed_number}\\nProcedure: #{category} - #{description}\\nOrdered By: #{provider.last_name}, #{provider.first_name}\\nOrder Time: #{order_time.as_date} #{order_time.as_time}\\n\\nOrder Notes:\\n#{notes.as_list(notes_line_number, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10)}"));
+      params.add(1, paQ("additionalContent", "Patient: #{patient.last_name}, #{patient.first_name}\\nRoom/Bed: #{patient.current_place.room.room_number} - #{patient.current_place.bed_number}\\nProcedure: #{category} - #{description}\\nOrdered By: #{provider.last_name}, #{provider.first_name}\\nOrder Time: #{order_time.as_date} #{order_time.as_time}\\n\\nOrder Notes:\\n#{notes.as_list(notes_line_number, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10)}"));
     } else {
       // For both NurseCalls and Clinicals
-      params.add(paQ("additionalContent", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nMRN: #{bed.patient.mrn}\\nRoom/Bed: #{bed.room.room_number} - #{bed.bed_number}\\n\\nAdmitting Reason: #{bed.patient.reason}\\nReceived: #{created_at.as_date} #{created_at.as_time}"));
+      params.add(1, paQ("additionalContent", "Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\nMRN: #{bed.patient.mrn}\\nRoom/Bed: #{bed.room.room_number} - #{bed.bed_number}\\n\\nAdmitting Reason: #{bed.patient.reason}\\nReceived: #{created_at.as_date} #{created_at.as_time}"));
     }
 
-    // 3. audible: true
-    params.add(paLiteralBool("audible", true));
+    // 5. Add audible: true (XMPP-specific)
+    params.add(2, paLiteralBool("audible", true));
 
-    // 4. realert: false
-    params.add(paLiteralBool("realert", false));
+    // 6. Add realert: false (XMPP-specific)
+    params.add(3, paLiteralBool("realert", false));
 
-    // 5. multipleAccepts: Value from "Platform: Multi-User Accept" column
+    // 7. Add multipleAccepts: Value from "Platform: Multi-User Accept" column (XMPP-specific)
     boolean multipleAcceptsValue = parseBooleanValue(r.multiUserAccept);
-    params.add(paLiteralBool("multipleAccepts", multipleAcceptsValue));
+    params.add(4, paLiteralBool("multipleAccepts", multipleAcceptsValue));
 
-    // 6. delayedResponses: false
-    params.add(paLiteralBool("delayedResponses", false));
+    // 8. Add delayedResponses: false (XMPP-specific)
+    params.add(5, paLiteralBool("delayedResponses", false));
 
     return params;
   }
@@ -2646,6 +2691,24 @@ public class ExcelParserV5 {
     try { return Integer.parseInt(digits); } catch (Exception ignore) { return 0; }
   }
   
+  /**
+   * Ensures a ringtone value ends with ".wav" extension.
+   * If the value already ends with ".wav" (case-insensitive), returns it as-is.
+   * Otherwise, appends ".wav" to the value.
+   * 
+   * @param ringtone The ringtone value from Excel
+   * @return The ringtone value with guaranteed ".wav" extension
+   */
+  private static String ensureWavExtension(String ringtone) {
+    if (isBlank(ringtone)) return ringtone;
+    String trimmed = ringtone.trim();
+    // Check if it already ends with .wav (case-insensitive)
+    if (trimmed.toLowerCase(Locale.ROOT).endsWith(".wav")) {
+      return trimmed;
+    }
+    return trimmed + ".wav";
+  }
+
   /**
    * Filters unit references to remove internal fields that shouldn't appear in JSON output.
    * <p>
