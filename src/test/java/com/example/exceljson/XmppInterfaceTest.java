@@ -91,12 +91,12 @@ class XmppInterfaceTest {
         var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
-        // Verify alertSound = ringtone + ".wav"
+        // Verify alertSound = ringtone (no .wav extension)
         boolean foundAlertSound = false;
         for (Object paramObj : params) {
             var param = (Map<?, ?>) paramObj;
             if ("alertSound".equals(param.get("name"))) {
-                assertEquals("\"low_priority.wav\"", param.get("value"), "alertSound should be ringtone + .wav");
+                assertEquals("\"low_priority\"", param.get("value"), "alertSound should be ringtone without .wav");
                 foundAlertSound = true;
             }
         }
@@ -180,12 +180,12 @@ class XmppInterfaceTest {
         var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
-        // Verify alertSound = ringtone + ".wav"
+        // Verify alertSound = ringtone (no .wav extension)
         boolean foundAlertSound = false;
         for (Object paramObj : params) {
             var param = (Map<?, ?>) paramObj;
             if ("alertSound".equals(param.get("name"))) {
-                assertEquals("\"high_priority.wav\"", param.get("value"), "alertSound should be ringtone + .wav");
+                assertEquals("\"high_priority\"", param.get("value"), "alertSound should be ringtone without .wav");
                 foundAlertSound = true;
             }
         }

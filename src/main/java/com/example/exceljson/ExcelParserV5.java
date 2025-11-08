@@ -1549,9 +1549,9 @@ public class ExcelParserV5 {
     // Remove existing alertSound if present, we'll add the XMPP version
     params.removeIf(p -> "alertSound".equals(p.get("name")));
     
-    // 1. alertSound: Ringtone + ".wav" (avoid double .wav)
+    // 1. alertSound: Use ringtone as-is (no .wav extension)
     if (!isBlank(r.ringtone)) {
-      String alertSoundValue = ensureWavExtension(r.ringtone);
+      String alertSoundValue = r.ringtone.trim();
       // Insert at the beginning to match previous behavior
       params.add(0, paQ("alertSound", alertSoundValue));
     }

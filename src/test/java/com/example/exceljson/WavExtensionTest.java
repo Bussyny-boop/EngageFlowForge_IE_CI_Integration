@@ -15,12 +15,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for .wav extension handling to avoid duplication.
+ * Tests for .wav extension handling.
  * 
  * Requirements:
- * - If ringtone value already ends with ".wav", don't add another ".wav"
- * - If ringtone value doesn't end with ".wav", add it
- * - Apply this to both XMPP alertSound and Vocera badgeAlertSound
+ * - XMPP alertSound: Use ringtone as-is (no .wav extension added)
+ * - Vocera badgeAlertSound: Add .wav extension if not present
  */
 class WavExtensionTest {
 
@@ -44,8 +43,8 @@ class WavExtensionTest {
         for (Object paramObj : params) {
             var param = (Map<?, ?>) paramObj;
             if ("alertSound".equals(param.get("name"))) {
-                assertEquals("\"list_pagers.wav\"", param.get("value"), 
-                    "alertSound should have .wav appended");
+                assertEquals("\"list_pagers\"", param.get("value"), 
+                    "alertSound should use ringtone as-is without .wav");
                 foundAlertSound = true;
             }
         }
@@ -76,7 +75,7 @@ class WavExtensionTest {
             var param = (Map<?, ?>) paramObj;
             if ("alertSound".equals(param.get("name"))) {
                 assertEquals("\"list_pagers.wav\"", param.get("value"), 
-                    "alertSound should NOT have duplicate .wav");
+                    "alertSound should use ringtone as-is, preserving .wav");
                 foundAlertSound = true;
             }
         }
