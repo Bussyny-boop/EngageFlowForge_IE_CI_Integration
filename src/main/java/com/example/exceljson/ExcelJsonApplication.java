@@ -28,7 +28,6 @@ public class ExcelJsonApplication extends Application {
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
         Parent root = loader.load();
-        AppController controller = loader.getController();
 
         primaryStage.setTitle("Engage FlowForge 2.0");
         
@@ -63,9 +62,6 @@ public class ExcelJsonApplication extends Application {
         }
         
         primaryStage.setScene(scene);
-        if (controller != null) {
-            controller.onSceneReady(scene);
-        }
         primaryStage.show();
     }
 }

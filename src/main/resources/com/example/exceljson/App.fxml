@@ -10,151 +10,95 @@
             fx:controller="com.example.exceljson.AppController"
             styleClass="border-pane">
     <top>
-        <VBox spacing="12" BorderPane.alignment="CENTER">
-            <BorderPane styleClass="header-bar">
-                <padding>
-                    <Insets top="16" right="20" bottom="16" left="20" />
-                </padding>
-                <left>
-                    <VBox spacing="4">
-                        <Label text="Engage FlowForge 2.0" styleClass="app-title" />
-                        <Label text="Configure, preview, and export Engage workflow rules" styleClass="app-subtitle" />
-                    </VBox>
-                </left>
-                <right>
-                    <HBox alignment="CENTER_RIGHT" spacing="12">
-                        <CheckBox fx:id="mergeFlowsCheckbox" text="Merge identical flows" selected="true">
-                            <tooltip>
-                                <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
-                            </tooltip>
-                        </CheckBox>
-                        <ToggleButton fx:id="darkModeToggle" text="Dark mode" />
-                    </HBox>
-                </right>
-            </BorderPane>
-
-            <ToolBar styleClass="main-toolbar">
-                <Button fx:id="loadButton" text="Load Excel" />
-                <Button fx:id="saveExcelButton" text="Save Changes" disable="true" />
-                <Separator orientation="VERTICAL" />
-                <Button fx:id="clearAllButton" text="Clear All" disable="true" styleClass="button-warning" />
-                <Button fx:id="resetPathsButton" text="Reset Paths" />
-            </ToolBar>
-
-            <Label fx:id="statusLabel" text="Ready" />
-
-            <HBox spacing="20" alignment="CENTER_LEFT" styleClass="action-panels">
-                <VBox spacing="8" styleClass="action-panel">
-                    <Label text="Preview JSON" styleClass="panel-title" />
-                    <HBox spacing="10">
-                        <Button fx:id="generateNurseJsonButton" text="Nursecall" />
-                        <Button fx:id="generateClinicalJsonButton" text="Clinical" />
-                        <Button fx:id="generateOrdersJsonButton" text="Orders" />
+        <VBox spacing="0" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="header-bar">
+                <Label text="Engage FlowForge 2.0" style="-fx-font-size:18; -fx-font-weight:bold; -fx-text-fill:white;" />
+                <Region HBox.hgrow="ALWAYS"/>
+                <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true" style="-fx-text-fill:white;">
+                    <tooltip>
+                        <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
+                    </tooltip>
+                </CheckBox>
+                <VBox spacing="2" alignment="CENTER_LEFT">
+                    <Label text="Adapter Reference name; enter any custom or site specific Adapter name" style="-fx-text-fill:white; -fx-font-size:10; -fx-font-weight:bold;" />
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Label text="Edge" style="-fx-text-fill:white;" />
+                        <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="130" />
+                        <Label text="VMP" style="-fx-text-fill:white;" />
+                        <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="100" />
+                        <Label text="Vocera" style="-fx-text-fill:white;" />
+                        <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="100" />
+                        <Label text="XMPP" style="-fx-text-fill:white;" />
+                        <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="100" />
                     </HBox>
                 </VBox>
-                <VBox spacing="8" styleClass="action-panel">
-                    <Label text="Export JSON" styleClass="panel-title" />
-                    <HBox spacing="10">
-                        <Button fx:id="exportNurseJsonButton" text="Nursecall" />
-                        <Button fx:id="exportClinicalJsonButton" text="Clinical" />
-                        <Button fx:id="exportOrdersJsonButton" text="Orders" />
-                    </HBox>
-                </VBox>
+                <Button fx:id="resetDefaultsButton" text="Reset Defaults" styleClass="button-secondary" />
             </HBox>
-
-            <TitledPane text="Default interfaces" expanded="false">
-                <content>
-                    <FlowPane hgap="16" vgap="10">
-                        <padding>
-                            <Insets top="15" right="15" bottom="15" left="15" />
-                        </padding>
-                        <CheckBox fx:id="defaultEdgeCheckbox" text="Badge alerts via Edge">
-                            <tooltip>
-                                <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
-                            </tooltip>
-                        </CheckBox>
-                        <CheckBox fx:id="defaultVmpCheckbox" text="Badge alerts via VMP">
-                            <tooltip>
-                                <Tooltip text="Use VMP interface as default when Device A/B are blank" />
-                            </tooltip>
-                        </CheckBox>
-                        <CheckBox fx:id="defaultVoceraCheckbox" text="Badge alerts via Vocera">
-                            <tooltip>
-                                <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
-                            </tooltip>
-                        </CheckBox>
-                        <CheckBox fx:id="defaultXmppCheckbox" text="Badge alerts via XMPP">
-                            <tooltip>
-                                <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
-                            </tooltip>
-                        </CheckBox>
-                    </FlowPane>
-                </content>
-            </TitledPane>
-
-            <TitledPane text="Adapter defaults" expanded="false">
-                <content>
-                    <VBox spacing="12">
-                        <padding>
-                            <Insets top="15" right="15" bottom="15" left="15" />
-                        </padding>
-                        <Label text="Adapter reference names" styleClass="panel-title" />
-                        <GridPane hgap="14" vgap="12">
-                            <columnConstraints>
-                                <ColumnConstraints halignment="RIGHT" />
-                                <ColumnConstraints hgrow="ALWAYS" />
-                            </columnConstraints>
-                            <RowConstraints />
-                            <RowConstraints />
-                            <RowConstraints />
-                            <RowConstraints />
-                            <Label text="Edge" GridPane.rowIndex="0" GridPane.columnIndex="0" />
-                            <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="200" GridPane.rowIndex="0" GridPane.columnIndex="1" />
-                            <Label text="VMP" GridPane.rowIndex="1" GridPane.columnIndex="0" />
-                            <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="200" GridPane.rowIndex="1" GridPane.columnIndex="1" />
-                            <Label text="Vocera" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-                            <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="200" GridPane.rowIndex="2" GridPane.columnIndex="1" />
-                            <Label text="XMPP" GridPane.rowIndex="3" GridPane.columnIndex="0" />
-                            <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="200" GridPane.rowIndex="3" GridPane.columnIndex="1" />
-                        </GridPane>
-                        <HBox alignment="CENTER_RIGHT">
-                            <Button fx:id="resetDefaultsButton" text="Reset Defaults" styleClass="button-secondary" />
-                        </HBox>
-                    </VBox>
-                </content>
-            </TitledPane>
-
-            <TitledPane text="Room filters" expanded="true">
-                <content>
-                    <GridPane hgap="16" vgap="10">
-                        <padding>
-                            <Insets top="15" right="15" bottom="15" left="15" />
-                        </padding>
-                        <columnConstraints>
-                            <ColumnConstraints halignment="LEFT" />
-                            <ColumnConstraints hgrow="ALWAYS" />
-                        </columnConstraints>
-                        <Label text="Nursecall" styleClass="panel-title" GridPane.rowIndex="0" GridPane.columnIndex="0" />
-                        <TextField fx:id="roomFilterNursecallField" promptText="e.g., 2101, ICU-W" GridPane.rowIndex="0" GridPane.columnIndex="1">
-                            <tooltip>
-                                <Tooltip text="Filter Nursecall flows by room number" />
-                            </tooltip>
-                        </TextField>
-                        <Label text="Clinical" styleClass="panel-title" GridPane.rowIndex="1" GridPane.columnIndex="0" />
-                        <TextField fx:id="roomFilterClinicalField" promptText="e.g., 2101, ICU-W" GridPane.rowIndex="1" GridPane.columnIndex="1">
-                            <tooltip>
-                                <Tooltip text="Filter Clinical flows by room number" />
-                            </tooltip>
-                        </TextField>
-                        <Label text="Orders" styleClass="panel-title" GridPane.rowIndex="2" GridPane.columnIndex="0" />
-                        <TextField fx:id="roomFilterOrdersField" promptText="e.g., 2101, ICU-W" GridPane.rowIndex="2" GridPane.columnIndex="1">
-                            <tooltip>
-                                <Tooltip text="Filter Orders flows by room number" />
-                            </tooltip>
-                        </TextField>
-                    </GridPane>
-                </content>
-            </TitledPane>
+            <VBox spacing="10" style="-fx-padding: 10;">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button fx:id="loadButton" text="📂 Load Excel" />
+                    <Button fx:id="saveExcelButton" text="💾 Save Changes" disable="true" />
+                    <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" styleClass="button-warning" />
+                    <Button fx:id="resetPathsButton" text="🔄 Reset Paths" styleClass="button-secondary" />
+                </HBox>
+                <Label fx:id="statusLabel" text="Ready" />
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label text="Preview Json:" style="-fx-font-weight: bold;" />
+                    <Button fx:id="generateNurseJsonButton" text="Nursecall" />
+                    <Button fx:id="generateClinicalJsonButton" text="Clinical" />
+                    <Button fx:id="generateOrdersJsonButton" text="Orders" />
+                    <Separator orientation="VERTICAL" />
+                    <Label text="Export Json:" style="-fx-font-weight: bold;" />
+                    <Button fx:id="exportNurseJsonButton" text="Nursecall" />
+                    <Button fx:id="exportClinicalJsonButton" text="Clinical" />
+                    <Button fx:id="exportOrdersJsonButton" text="Orders" />
+                </HBox>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Vocera Badges Alert Interface:" />
+                    <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
+                        <tooltip>
+                            <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
+                        </tooltip>
+                    </CheckBox>
+                    <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
+                        <tooltip>
+                            <Tooltip text="Use VMP interface as default when Device A/B are blank" />
+                        </tooltip>
+                    </CheckBox>
+                    <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                        <tooltip>
+                            <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
+                        </tooltip>
+                    </CheckBox>
+                    <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                        <tooltip>
+                            <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
+                        </tooltip>
+                    </CheckBox>
+                </HBox>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Room Filter:" />
+                    <Label text="Nursecall:" />
+                    <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="100">
+                        <tooltip>
+                            <Tooltip text="Filter Nursecall flows by room number" />
+                        </tooltip>
+                    </TextField>
+                    <Label text="Clinical:" />
+                    <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="100">
+                        <tooltip>
+                            <Tooltip text="Filter Clinical flows by room number" />
+                        </tooltip>
+                    </TextField>
+                    <Label text="Orders:" />
+                    <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="100">
+                        <tooltip>
+                            <Tooltip text="Filter Orders flows by room number" />
+                        </tooltip>
+                    </TextField>
+                </HBox>
+                <Separator />
+            </VBox>
         </VBox>
     </top>
 
@@ -362,12 +306,8 @@
                     </tabs>
                 </TabPane>
 
-                <VBox spacing="10" styleClass="preview-card">
-                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="card-header">
-                        <Label text="JSON Preview" styleClass="card-title" />
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Button fx:id="copyJsonButton" text="Copy" disable="true" />
-                    </HBox>
+                <VBox spacing="5">
+                    <Label text="📋 JSON Preview" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
                     <TextArea fx:id="jsonPreview" wrapText="true" prefRowCount="10" />
                 </VBox>
             </items>
