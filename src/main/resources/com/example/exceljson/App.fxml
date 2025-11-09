@@ -192,7 +192,7 @@
                                     
                                     <Separator />
                                     
-                                    <!-- Adapter References and Vocera Badges Alert Interface (Side by Side) -->
+                                    <!-- Adapter References, Vocera Badges Alert Interface, and Room Filters (Side by Side) -->
                                     <HBox spacing="30" alignment="TOP_LEFT">
                                         <!-- Left: Adapter References -->
                                         <VBox spacing="8">
@@ -213,7 +213,7 @@
                                             <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" />
                                         </VBox>
                                         
-                                        <!-- Right: Vocera Badges Alert Interface -->
+                                        <!-- Center: Vocera Badges Alert Interface -->
                                         <VBox spacing="8">
                                             <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
                                             <VBox spacing="5">
@@ -239,34 +239,34 @@
                                                 </CheckBox>
                                             </VBox>
                                         </VBox>
+                                        
+                                        <!-- Right: Room Filters -->
+                                        <VBox spacing="8">
+                                            <Label text="Room Filters" style="-fx-font-weight:bold;" />
+                                            <GridPane hgap="10" vgap="8">
+                                                <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                                    <tooltip>
+                                                        <Tooltip text="Filter Nursecall flows by room number" />
+                                                    </tooltip>
+                                                </TextField>
+                                                
+                                                <Label text="Clinical:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                    <tooltip>
+                                                        <Tooltip text="Filter Clinical flows by room number" />
+                                                    </tooltip>
+                                                </TextField>
+                                                
+                                                <Label text="Orders:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                                    <tooltip>
+                                                        <Tooltip text="Filter Orders flows by room number" />
+                                                    </tooltip>
+                                                </TextField>
+                                            </GridPane>
+                                        </VBox>
                                     </HBox>
-                                    
-                                    <Separator />
-                                    
-                                    <!-- Room Filters -->
-                                    <Label text="Room Filters" style="-fx-font-weight:bold;" />
-                                    <GridPane hgap="10" vgap="8">
-                                        <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                        <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                            <tooltip>
-                                                <Tooltip text="Filter Nursecall flows by room number" />
-                                            </tooltip>
-                                        </TextField>
-                                        
-                                        <Label text="Clinical:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                        <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                            <tooltip>
-                                                <Tooltip text="Filter Clinical flows by room number" />
-                                            </tooltip>
-                                        </TextField>
-                                        
-                                        <Label text="Orders:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                        <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                            <tooltip>
-                                                <Tooltip text="Filter Orders flows by room number" />
-                                            </tooltip>
-                                        </TextField>
-                                    </GridPane>
                                     
                                     <Separator />
                                     

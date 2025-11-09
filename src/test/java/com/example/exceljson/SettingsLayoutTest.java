@@ -37,29 +37,33 @@ public class SettingsLayoutTest {
         try (var stream = fxmlResource.openStream()) {
             String fxmlContent = new String(stream.readAllBytes());
             
-            // Verify both sections exist
+            // Verify all three sections exist
             assertTrue(fxmlContent.contains("Adapter Reference Names"), 
                 "FXML should contain Adapter Reference Names label");
             assertTrue(fxmlContent.contains("Vocera Badges Alert Interface"), 
                 "FXML should contain Vocera Badges Alert Interface label");
+            assertTrue(fxmlContent.contains("Room Filters"), 
+                "FXML should contain Room Filters label");
             
-            // Find the positions of both sections
+            // Find the positions of all three sections
             int adapterPos = fxmlContent.indexOf("Adapter Reference Names");
             int voceraPos = fxmlContent.indexOf("Vocera Badges Alert Interface");
+            int roomFiltersPos = fxmlContent.indexOf("Room Filters");
             
             // Verify they are in an HBox layout (side by side)
-            // Find the HBox that contains both sections
+            // Find the HBox that contains all three sections
             int hboxStart = fxmlContent.lastIndexOf("<HBox", adapterPos);
-            int hboxEnd = fxmlContent.indexOf("</HBox>", voceraPos);
+            int hboxEnd = fxmlContent.indexOf("</HBox>", roomFiltersPos);
             
-            assertTrue(hboxStart > 0 && hboxEnd > voceraPos, 
-                "Adapter and Vocera sections should be in a horizontal layout (HBox)");
+            assertTrue(hboxStart > 0 && hboxEnd > roomFiltersPos, 
+                "Adapter, Vocera, and Room Filters sections should be in a horizontal layout (HBox)");
             
-            // Verify the HBox contains both sections
+            // Verify the HBox contains all three sections
             String hboxContent = fxmlContent.substring(hboxStart, hboxEnd);
             assertTrue(hboxContent.contains("Adapter Reference Names") && 
-                       hboxContent.contains("Vocera Badges Alert Interface"), 
-                "Both sections should be in the same HBox for side-by-side layout");
+                       hboxContent.contains("Vocera Badges Alert Interface") &&
+                       hboxContent.contains("Room Filters"), 
+                "All three sections should be in the same HBox for side-by-side layout");
             
         } catch (Exception e) {
             fail("Failed to read FXML file: " + e.getMessage());
