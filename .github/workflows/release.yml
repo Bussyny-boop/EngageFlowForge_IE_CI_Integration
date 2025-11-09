@@ -1,0 +1,92 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 2.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Liberica Full JDK (includes JavaFX)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'liberica'
+          java-version: '21'
+          java-package: 'jdk+fx'
+
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v4
+        with:
+          maven-version: 3.9.6
+
+      - name: Build with Maven
+        run: mvn -B clean package
+
+      - name: Create custom Java runtime (with JavaFX)
+        run: cmd /c "jlink --add-modules java.base,java.desktop,java.logging,java.sql,javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web --output runtime"
+
+      - name: Package as MSI using jpackage
+        run: |
+          & jpackage `
+            --type msi `
+            --name "EngageFlowForge" `
+            --input target `
+            --main-jar engage-rules-generator-2.0.0.jar `
+            --main-class com.example.exceljson.Main `
+            --runtime-image runtime `
+            --app-version 2.0 `
+            --win-menu `
+            --win-shortcut `
+            --icon src/main/resources/icon.ico `
+            --description "Engage FlowForge 2.0 - Engage rules generation" `
+            --vendor "Your Organization" `
+            --java-options "--add-modules javafx.controls,javafx.fxml"
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Read CHANGELOG
+        id: changelog
+        shell: bash
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          # Extract changelog entry for this version
+          sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.txt
+          cat release_notes.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name || format('v{0}', steps.version.outputs.VERSION) }}
+          name: Engage FlowForge ${{ steps.version.outputs.VERSION }}
+          body_path: release_notes.txt
+          files: |
+            EngageFlowForge-2.0.msi
+            target/engage-rules-generator-2.0.0.jar
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
