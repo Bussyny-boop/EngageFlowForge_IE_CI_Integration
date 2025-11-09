@@ -1383,8 +1383,8 @@ public class ExcelParserV5 {
    * - The cell is blank/empty, OR
    * - No valid recipient keywords are found
    * 
-   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
-   * Invalid keywords that trigger highlighting: Custom unit, Group, Assigned, CS, or any text without valid keywords
+   * Valid keywords (case-insensitive): Custom unit, Group, Assigned, CS
+   * Cells without these keywords will be highlighted
    */
   public boolean isValidFirstRecipient(String recipientText) {
     // Empty/blank cells should be highlighted for R1
@@ -1392,10 +1392,10 @@ public class ExcelParserV5 {
     
     // Check if it contains any valid keyword
     String lower = recipientText.toLowerCase(Locale.ROOT);
-    return lower.contains("vcs") || 
-           lower.contains("edge") || 
-           lower.contains("xmpp") || 
-           lower.contains("vocera");
+    return lower.contains("custom unit") || 
+           lower.contains("group") || 
+           lower.contains("assigned") || 
+           lower.matches(".*\\bcs\\b.*");  // Match CS as whole word only
   }
 
   /**
@@ -1404,8 +1404,8 @@ public class ExcelParserV5 {
    * - No valid recipient keywords are found
    * 
    * Blank/empty cells are considered valid (not highlighted) for R2-R5.
-   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
-   * Invalid keywords that trigger highlighting: Custom unit, Group, Assigned, CS, or any text without valid keywords
+   * Valid keywords (case-insensitive): Custom unit, Group, Assigned, CS
+   * Cells without these keywords will be highlighted
    */
   public boolean isValidOtherRecipient(String recipientText) {
     // Empty/blank cells are valid (not highlighted) for R2-R5
@@ -1413,10 +1413,10 @@ public class ExcelParserV5 {
     
     // Check if it contains any valid keyword
     String lower = recipientText.toLowerCase(Locale.ROOT);
-    return lower.contains("vcs") || 
-           lower.contains("edge") || 
-           lower.contains("xmpp") || 
-           lower.contains("vocera");
+    return lower.contains("custom unit") || 
+           lower.contains("group") || 
+           lower.contains("assigned") || 
+           lower.matches(".*\\bcs\\b.*");  // Match CS as whole word only
   }
 
   /**

@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * R1 (1st recipient): Should be highlighted when blank/empty OR no valid keywords found
  * R2-R5 (2nd-5th recipients): Should be highlighted ONLY when no valid keywords found (NOT when empty)
  * 
- * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
- * Invalid keywords that trigger highlighting: Custom unit, Group, Assigned, CS, or any text without valid keywords
+ * Valid keywords (case-insensitive): Custom unit, Group, Assigned, CS
+ * Cells without these keywords will be highlighted
  */
 class RecipientColumnValidationTest {
 
@@ -36,63 +36,63 @@ class RecipientColumnValidationTest {
     }
 
     @Test
-    void testR1_ValidKeyword_VCS() {
-        assertTrue(parser.isValidFirstRecipient("VCS"));
-        assertTrue(parser.isValidFirstRecipient("vcs"));
-        assertTrue(parser.isValidFirstRecipient("VcS"));
-        assertTrue(parser.isValidFirstRecipient("Using VCS interface"));
+    void testR1_ValidKeyword_CustomUnit() {
+        assertTrue(parser.isValidFirstRecipient("Custom unit"));
+        assertTrue(parser.isValidFirstRecipient("custom unit"));
+        assertTrue(parser.isValidFirstRecipient("CUSTOM UNIT"));
+        assertTrue(parser.isValidFirstRecipient("Using Custom unit here"));
     }
 
     @Test
-    void testR1_ValidKeyword_Edge() {
-        assertTrue(parser.isValidFirstRecipient("Edge"));
-        assertTrue(parser.isValidFirstRecipient("edge"));
-        assertTrue(parser.isValidFirstRecipient("EDGE"));
-        assertTrue(parser.isValidFirstRecipient("Send to Edge"));
+    void testR1_ValidKeyword_Group() {
+        assertTrue(parser.isValidFirstRecipient("Group"));
+        assertTrue(parser.isValidFirstRecipient("group"));
+        assertTrue(parser.isValidFirstRecipient("GROUP"));
+        assertTrue(parser.isValidFirstRecipient("Send to Group"));
     }
 
     @Test
-    void testR1_ValidKeyword_XMPP() {
-        assertTrue(parser.isValidFirstRecipient("XMPP"));
-        assertTrue(parser.isValidFirstRecipient("xmpp"));
-        assertTrue(parser.isValidFirstRecipient("XmPp"));
-        assertTrue(parser.isValidFirstRecipient("XMPP enabled"));
+    void testR1_ValidKeyword_Assigned() {
+        assertTrue(parser.isValidFirstRecipient("Assigned"));
+        assertTrue(parser.isValidFirstRecipient("assigned"));
+        assertTrue(parser.isValidFirstRecipient("ASSIGNED"));
+        assertTrue(parser.isValidFirstRecipient("Assigned to nurse"));
     }
 
     @Test
-    void testR1_ValidKeyword_Vocera() {
-        assertTrue(parser.isValidFirstRecipient("Vocera"));
-        assertTrue(parser.isValidFirstRecipient("vocera"));
-        assertTrue(parser.isValidFirstRecipient("VOCERA"));
-        assertTrue(parser.isValidFirstRecipient("Vocera system"));
+    void testR1_ValidKeyword_CS() {
+        assertTrue(parser.isValidFirstRecipient("CS"));
+        assertTrue(parser.isValidFirstRecipient("cs"));
+        assertTrue(parser.isValidFirstRecipient("Cs"));
+        assertTrue(parser.isValidFirstRecipient("CS enabled"));
     }
 
     @Test
-    void testR1_InvalidKeyword_CustomUnit() {
-        assertFalse(parser.isValidFirstRecipient("Custom unit"));
-        assertFalse(parser.isValidFirstRecipient("custom unit"));
-        assertFalse(parser.isValidFirstRecipient("CUSTOM UNIT"));
+    void testR1_InvalidKeyword_VCS() {
+        assertFalse(parser.isValidFirstRecipient("VCS"));
+        assertFalse(parser.isValidFirstRecipient("vcs"));
+        assertFalse(parser.isValidFirstRecipient("VcS"));
     }
 
     @Test
-    void testR1_InvalidKeyword_Group() {
-        assertFalse(parser.isValidFirstRecipient("Group"));
-        assertFalse(parser.isValidFirstRecipient("group"));
-        assertFalse(parser.isValidFirstRecipient("GROUP"));
+    void testR1_InvalidKeyword_Edge() {
+        assertFalse(parser.isValidFirstRecipient("Edge"));
+        assertFalse(parser.isValidFirstRecipient("edge"));
+        assertFalse(parser.isValidFirstRecipient("EDGE"));
     }
 
     @Test
-    void testR1_InvalidKeyword_Assigned() {
-        assertFalse(parser.isValidFirstRecipient("Assigned"));
-        assertFalse(parser.isValidFirstRecipient("assigned"));
-        assertFalse(parser.isValidFirstRecipient("ASSIGNED"));
+    void testR1_InvalidKeyword_XMPP() {
+        assertFalse(parser.isValidFirstRecipient("XMPP"));
+        assertFalse(parser.isValidFirstRecipient("xmpp"));
+        assertFalse(parser.isValidFirstRecipient("XmPp"));
     }
 
     @Test
-    void testR1_InvalidKeyword_CS() {
-        assertFalse(parser.isValidFirstRecipient("CS"));
-        assertFalse(parser.isValidFirstRecipient("cs"));
-        assertFalse(parser.isValidFirstRecipient("Cs"));
+    void testR1_InvalidKeyword_Vocera() {
+        assertFalse(parser.isValidFirstRecipient("Vocera"));
+        assertFalse(parser.isValidFirstRecipient("vocera"));
+        assertFalse(parser.isValidFirstRecipient("VOCERA"));
     }
 
     @Test
@@ -105,24 +105,24 @@ class RecipientColumnValidationTest {
     @Test
     void testR1_ValidAndInvalidCombination() {
         // If any valid keyword is present, should be valid
-        assertTrue(parser.isValidFirstRecipient("Group using VCS"));
-        assertTrue(parser.isValidFirstRecipient("Custom unit with Edge"));
-        assertTrue(parser.isValidFirstRecipient("Assigned to XMPP"));
-        assertTrue(parser.isValidFirstRecipient("CS group via Vocera"));
+        assertTrue(parser.isValidFirstRecipient("VCS using Group"));
+        assertTrue(parser.isValidFirstRecipient("Edge with Custom unit"));
+        assertTrue(parser.isValidFirstRecipient("XMPP to Assigned"));
+        assertTrue(parser.isValidFirstRecipient("Vocera group via CS"));
     }
 
     @Test
     void testR1_MultipleValidKeywords() {
-        assertTrue(parser.isValidFirstRecipient("VCS and Edge"));
-        assertTrue(parser.isValidFirstRecipient("XMPP or Vocera"));
-        assertTrue(parser.isValidFirstRecipient("Edge, VCS, XMPP"));
+        assertTrue(parser.isValidFirstRecipient("Group and Assigned"));
+        assertTrue(parser.isValidFirstRecipient("CS or Custom unit"));
+        assertTrue(parser.isValidFirstRecipient("Assigned, Group, CS"));
     }
 
     @Test
     void testR1_OnlyInvalidKeywords() {
         // Only invalid keywords - should be invalid
-        assertFalse(parser.isValidFirstRecipient("Group Assigned CS"));
-        assertFalse(parser.isValidFirstRecipient("Custom unit Group"));
+        assertFalse(parser.isValidFirstRecipient("VCS Edge XMPP"));
+        assertFalse(parser.isValidFirstRecipient("Vocera VCS"));
     }
 
     // ========== Tests for R2-R5 (2nd-5th recipients) ==========
@@ -138,63 +138,63 @@ class RecipientColumnValidationTest {
     }
 
     @Test
-    void testR2_R5_ValidKeyword_VCS() {
-        assertTrue(parser.isValidOtherRecipient("VCS"));
-        assertTrue(parser.isValidOtherRecipient("vcs"));
-        assertTrue(parser.isValidOtherRecipient("VcS"));
-        assertTrue(parser.isValidOtherRecipient("Using VCS interface"));
+    void testR2_R5_ValidKeyword_CustomUnit() {
+        assertTrue(parser.isValidOtherRecipient("Custom unit"));
+        assertTrue(parser.isValidOtherRecipient("custom unit"));
+        assertTrue(parser.isValidOtherRecipient("CUSTOM UNIT"));
+        assertTrue(parser.isValidOtherRecipient("Using Custom unit here"));
     }
 
     @Test
-    void testR2_R5_ValidKeyword_Edge() {
-        assertTrue(parser.isValidOtherRecipient("Edge"));
-        assertTrue(parser.isValidOtherRecipient("edge"));
-        assertTrue(parser.isValidOtherRecipient("EDGE"));
-        assertTrue(parser.isValidOtherRecipient("Send to Edge"));
+    void testR2_R5_ValidKeyword_Group() {
+        assertTrue(parser.isValidOtherRecipient("Group"));
+        assertTrue(parser.isValidOtherRecipient("group"));
+        assertTrue(parser.isValidOtherRecipient("GROUP"));
+        assertTrue(parser.isValidOtherRecipient("Send to Group"));
     }
 
     @Test
-    void testR2_R5_ValidKeyword_XMPP() {
-        assertTrue(parser.isValidOtherRecipient("XMPP"));
-        assertTrue(parser.isValidOtherRecipient("xmpp"));
-        assertTrue(parser.isValidOtherRecipient("XmPp"));
-        assertTrue(parser.isValidOtherRecipient("XMPP enabled"));
+    void testR2_R5_ValidKeyword_Assigned() {
+        assertTrue(parser.isValidOtherRecipient("Assigned"));
+        assertTrue(parser.isValidOtherRecipient("assigned"));
+        assertTrue(parser.isValidOtherRecipient("ASSIGNED"));
+        assertTrue(parser.isValidOtherRecipient("Assigned to nurse"));
     }
 
     @Test
-    void testR2_R5_ValidKeyword_Vocera() {
-        assertTrue(parser.isValidOtherRecipient("Vocera"));
-        assertTrue(parser.isValidOtherRecipient("vocera"));
-        assertTrue(parser.isValidOtherRecipient("VOCERA"));
-        assertTrue(parser.isValidOtherRecipient("Vocera system"));
+    void testR2_R5_ValidKeyword_CS() {
+        assertTrue(parser.isValidOtherRecipient("CS"));
+        assertTrue(parser.isValidOtherRecipient("cs"));
+        assertTrue(parser.isValidOtherRecipient("Cs"));
+        assertTrue(parser.isValidOtherRecipient("CS enabled"));
     }
 
     @Test
-    void testR2_R5_InvalidKeyword_CustomUnit() {
-        assertFalse(parser.isValidOtherRecipient("Custom unit"));
-        assertFalse(parser.isValidOtherRecipient("custom unit"));
-        assertFalse(parser.isValidOtherRecipient("CUSTOM UNIT"));
+    void testR2_R5_InvalidKeyword_VCS() {
+        assertFalse(parser.isValidOtherRecipient("VCS"));
+        assertFalse(parser.isValidOtherRecipient("vcs"));
+        assertFalse(parser.isValidOtherRecipient("VcS"));
     }
 
     @Test
-    void testR2_R5_InvalidKeyword_Group() {
-        assertFalse(parser.isValidOtherRecipient("Group"));
-        assertFalse(parser.isValidOtherRecipient("group"));
-        assertFalse(parser.isValidOtherRecipient("GROUP"));
+    void testR2_R5_InvalidKeyword_Edge() {
+        assertFalse(parser.isValidOtherRecipient("Edge"));
+        assertFalse(parser.isValidOtherRecipient("edge"));
+        assertFalse(parser.isValidOtherRecipient("EDGE"));
     }
 
     @Test
-    void testR2_R5_InvalidKeyword_Assigned() {
-        assertFalse(parser.isValidOtherRecipient("Assigned"));
-        assertFalse(parser.isValidOtherRecipient("assigned"));
-        assertFalse(parser.isValidOtherRecipient("ASSIGNED"));
+    void testR2_R5_InvalidKeyword_XMPP() {
+        assertFalse(parser.isValidOtherRecipient("XMPP"));
+        assertFalse(parser.isValidOtherRecipient("xmpp"));
+        assertFalse(parser.isValidOtherRecipient("XmPp"));
     }
 
     @Test
-    void testR2_R5_InvalidKeyword_CS() {
-        assertFalse(parser.isValidOtherRecipient("CS"));
-        assertFalse(parser.isValidOtherRecipient("cs"));
-        assertFalse(parser.isValidOtherRecipient("Cs"));
+    void testR2_R5_InvalidKeyword_Vocera() {
+        assertFalse(parser.isValidOtherRecipient("Vocera"));
+        assertFalse(parser.isValidOtherRecipient("vocera"));
+        assertFalse(parser.isValidOtherRecipient("VOCERA"));
     }
 
     @Test
@@ -207,24 +207,24 @@ class RecipientColumnValidationTest {
     @Test
     void testR2_R5_ValidAndInvalidCombination() {
         // If any valid keyword is present, should be valid
-        assertTrue(parser.isValidOtherRecipient("Group using VCS"));
-        assertTrue(parser.isValidOtherRecipient("Custom unit with Edge"));
-        assertTrue(parser.isValidOtherRecipient("Assigned to XMPP"));
-        assertTrue(parser.isValidOtherRecipient("CS group via Vocera"));
+        assertTrue(parser.isValidOtherRecipient("VCS using Group"));
+        assertTrue(parser.isValidOtherRecipient("Edge with Custom unit"));
+        assertTrue(parser.isValidOtherRecipient("XMPP to Assigned"));
+        assertTrue(parser.isValidOtherRecipient("Vocera group via CS"));
     }
 
     @Test
     void testR2_R5_MultipleValidKeywords() {
-        assertTrue(parser.isValidOtherRecipient("VCS and Edge"));
-        assertTrue(parser.isValidOtherRecipient("XMPP or Vocera"));
-        assertTrue(parser.isValidOtherRecipient("Edge, VCS, XMPP"));
+        assertTrue(parser.isValidOtherRecipient("Group and Assigned"));
+        assertTrue(parser.isValidOtherRecipient("CS or Custom unit"));
+        assertTrue(parser.isValidOtherRecipient("Assigned, Group, CS"));
     }
 
     @Test
     void testR2_R5_OnlyInvalidKeywords() {
         // Only invalid keywords - should be invalid
-        assertFalse(parser.isValidOtherRecipient("Group Assigned CS"));
-        assertFalse(parser.isValidOtherRecipient("Custom unit Group"));
+        assertFalse(parser.isValidOtherRecipient("VCS Edge XMPP"));
+        assertFalse(parser.isValidOtherRecipient("Vocera VCS"));
     }
 
     // ========== Comparison tests to verify different behavior ==========
@@ -244,8 +244,8 @@ class RecipientColumnValidationTest {
 
     @Test
     void testBothRejectInvalidKeywords() {
-        // Both R1 and R2-R5 should reject invalid keywords
-        String[] invalidTexts = {"Custom unit", "Group", "Assigned", "CS", "Random text"};
+        // Both R1 and R2-R5 should reject invalid keywords (ones without valid keywords)
+        String[] invalidTexts = {"VCS", "Edge", "XMPP", "Vocera", "Random text"};
         
         for (String text : invalidTexts) {
             assertFalse(parser.isValidFirstRecipient(text), 
@@ -258,7 +258,7 @@ class RecipientColumnValidationTest {
     @Test
     void testBothAcceptValidKeywords() {
         // Both R1 and R2-R5 should accept valid keywords
-        String[] validTexts = {"VCS", "Edge", "XMPP", "Vocera", "Using VCS"};
+        String[] validTexts = {"Custom unit", "Group", "Assigned", "CS", "Using Group"};
         
         for (String text : validTexts) {
             assertTrue(parser.isValidFirstRecipient(text), 

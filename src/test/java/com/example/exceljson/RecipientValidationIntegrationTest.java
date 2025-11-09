@@ -32,29 +32,31 @@ class RecipientValidationIntegrationTest {
     }
 
     @Test
-    void testProblemStatement_R1_InvalidKeywords() {
-        // R1 should be highlighted when these invalid keywords are found (no valid keywords present)
-        assertFalse(parser.isValidFirstRecipient("Custom unit"), 
-            "R1 with 'Custom unit' should be highlighted");
-        assertFalse(parser.isValidFirstRecipient("Group"), 
-            "R1 with 'Group' should be highlighted");
-        assertFalse(parser.isValidFirstRecipient("Assigned"), 
-            "R1 with 'Assigned' should be highlighted");
-        assertFalse(parser.isValidFirstRecipient("CS"), 
-            "R1 with 'CS' should be highlighted");
+    void testProblemStatement_R1_WithValidKeywords() {
+        // R1 should NOT be highlighted when these valid keywords ARE found
+        assertTrue(parser.isValidFirstRecipient("Custom unit"), 
+            "R1 with 'Custom unit' should NOT be highlighted");
+        assertTrue(parser.isValidFirstRecipient("Group"), 
+            "R1 with 'Group' should NOT be highlighted");
+        assertTrue(parser.isValidFirstRecipient("Assigned"), 
+            "R1 with 'Assigned' should NOT be highlighted");
+        assertTrue(parser.isValidFirstRecipient("CS"), 
+            "R1 with 'CS' should NOT be highlighted");
     }
 
     @Test
-    void testProblemStatement_R1_ValidKeywords() {
-        // R1 should NOT be highlighted when valid keywords are found
-        assertTrue(parser.isValidFirstRecipient("VCS"), 
-            "R1 with 'VCS' should NOT be highlighted");
-        assertTrue(parser.isValidFirstRecipient("Edge"), 
-            "R1 with 'Edge' should NOT be highlighted");
-        assertTrue(parser.isValidFirstRecipient("XMPP"), 
-            "R1 with 'XMPP' should NOT be highlighted");
-        assertTrue(parser.isValidFirstRecipient("Vocera"), 
-            "R1 with 'Vocera' should NOT be highlighted");
+    void testProblemStatement_R1_WithoutValidKeywords() {
+        // R1 should be highlighted when valid keywords are NOT found
+        assertFalse(parser.isValidFirstRecipient("VCS"), 
+            "R1 with 'VCS' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidFirstRecipient("Edge"), 
+            "R1 with 'Edge' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidFirstRecipient("XMPP"), 
+            "R1 with 'XMPP' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidFirstRecipient("Vocera"), 
+            "R1 with 'Vocera' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidFirstRecipient("Random text"), 
+            "R1 with random text (no valid keywords) should be highlighted");
     }
 
     @Test
@@ -67,29 +69,31 @@ class RecipientValidationIntegrationTest {
     }
 
     @Test
-    void testProblemStatement_R2_R5_InvalidKeywords() {
-        // R2-R5 should be highlighted when these invalid keywords are found (no valid keywords present)
-        assertFalse(parser.isValidOtherRecipient("Custom unit"), 
-            "R2-R5 with 'Custom unit' should be highlighted");
-        assertFalse(parser.isValidOtherRecipient("Group"), 
-            "R2-R5 with 'Group' should be highlighted");
-        assertFalse(parser.isValidOtherRecipient("Assigned"), 
-            "R2-R5 with 'Assigned' should be highlighted");
-        assertFalse(parser.isValidOtherRecipient("CS"), 
-            "R2-R5 with 'CS' should be highlighted");
+    void testProblemStatement_R2_R5_WithValidKeywords() {
+        // R2-R5 should NOT be highlighted when these valid keywords ARE found
+        assertTrue(parser.isValidOtherRecipient("Custom unit"), 
+            "R2-R5 with 'Custom unit' should NOT be highlighted");
+        assertTrue(parser.isValidOtherRecipient("Group"), 
+            "R2-R5 with 'Group' should NOT be highlighted");
+        assertTrue(parser.isValidOtherRecipient("Assigned"), 
+            "R2-R5 with 'Assigned' should NOT be highlighted");
+        assertTrue(parser.isValidOtherRecipient("CS"), 
+            "R2-R5 with 'CS' should NOT be highlighted");
     }
 
     @Test
-    void testProblemStatement_R2_R5_ValidKeywords() {
-        // R2-R5 should NOT be highlighted when valid keywords are found
-        assertTrue(parser.isValidOtherRecipient("VCS"), 
-            "R2-R5 with 'VCS' should NOT be highlighted");
-        assertTrue(parser.isValidOtherRecipient("Edge"), 
-            "R2-R5 with 'Edge' should NOT be highlighted");
-        assertTrue(parser.isValidOtherRecipient("XMPP"), 
-            "R2-R5 with 'XMPP' should NOT be highlighted");
-        assertTrue(parser.isValidOtherRecipient("Vocera"), 
-            "R2-R5 with 'Vocera' should NOT be highlighted");
+    void testProblemStatement_R2_R5_WithoutValidKeywords() {
+        // R2-R5 should be highlighted when valid keywords are NOT found
+        assertFalse(parser.isValidOtherRecipient("VCS"), 
+            "R2-R5 with 'VCS' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidOtherRecipient("Edge"), 
+            "R2-R5 with 'Edge' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidOtherRecipient("XMPP"), 
+            "R2-R5 with 'XMPP' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidOtherRecipient("Vocera"), 
+            "R2-R5 with 'Vocera' (no valid keywords) should be highlighted");
+        assertFalse(parser.isValidOtherRecipient("Random text"), 
+            "R2-R5 with random text (no valid keywords) should be highlighted");
     }
 
     @Test
@@ -104,23 +108,36 @@ class RecipientValidationIntegrationTest {
     }
 
     @Test
-    void testProblemStatement_BothRejectInvalidKeywords() {
-        // Both R1 and R2-R5 highlight when keywords like "Custom unit, Group, Assigned, CS" are found
-        String[] invalidCases = {"Custom unit", "Group", "Assigned", "CS"};
+    void testProblemStatement_BothRejectWhenKeywordsMissing() {
+        // Both R1 and R2-R5 highlight when keywords like "Custom unit, Group, Assigned, CS" are NOT found
+        String[] invalidCases = {"VCS", "Edge", "XMPP", "Vocera", "Random text"};
         
         for (String invalidCase : invalidCases) {
             assertFalse(parser.isValidFirstRecipient(invalidCase), 
-                "R1 should highlight for: " + invalidCase);
+                "R1 should highlight for (missing valid keywords): " + invalidCase);
             assertFalse(parser.isValidOtherRecipient(invalidCase), 
-                "R2-R5 should highlight for: " + invalidCase);
+                "R2-R5 should highlight for (missing valid keywords): " + invalidCase);
+        }
+    }
+
+    @Test
+    void testProblemStatement_BothAcceptWhenKeywordsPresent() {
+        // Both R1 and R2-R5 should NOT highlight when valid keywords are present
+        String[] validCases = {"Custom unit", "Group", "Assigned", "CS"};
+        
+        for (String validCase : validCases) {
+            assertTrue(parser.isValidFirstRecipient(validCase), 
+                "R1 should NOT highlight when valid keyword present: " + validCase);
+            assertTrue(parser.isValidOtherRecipient(validCase), 
+                "R2-R5 should NOT highlight when valid keyword present: " + validCase);
         }
     }
 
     @Test
     void testProblemStatement_MixedCaseWithValidKeyword() {
-        // If text contains a valid keyword (VCS, Edge, XMPP, Vocera), 
-        // it should NOT be highlighted even if it also contains "Custom unit" etc.
-        String mixedCase = "Custom unit using VCS";
+        // If text contains a valid keyword (Custom unit, Group, Assigned, CS), 
+        // it should NOT be highlighted even if it also contains other text
+        String mixedCase = "VCS using Group";
         
         assertTrue(parser.isValidFirstRecipient(mixedCase), 
             "R1 should NOT highlight when valid keyword is present");
