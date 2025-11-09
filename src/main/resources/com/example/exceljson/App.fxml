@@ -130,7 +130,8 @@
                 <BorderPane>
                     <!-- Settings Drawer (Collapsible) -->
                     <top>
-                        <VBox fx:id="settingsDrawer" managed="false" visible="false" spacing="10" styleClass="settings-drawer">
+                        <VBox fx:id="settingsDrawer" managed="false" visible="false" spacing="0" styleClass="settings-drawer">
+                            <!-- Fixed Header -->
                             <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
                                 <Label text="⚙️ SETTINGS" style="-fx-font-size:14; -fx-font-weight:bold;" />
                                 <Region HBox.hgrow="ALWAYS" />
@@ -139,133 +140,138 @@
                             
                             <Separator />
                             
-                            <VBox spacing="10" style="-fx-padding: 15;">
-                                <!-- Merge Flows Option -->
-                                <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true">
-                                    <tooltip>
-                                        <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
-                                    </tooltip>
-                                </CheckBox>
-                                
-                                <Separator />
-                                
-                                <!-- Custom Tab Mappings (MOVED UP) -->
-                                <Label text="Custom Tab Mappings" style="-fx-font-weight:bold;">
-                                    <tooltip>
-                                        <Tooltip text="Map custom Excel tab names to flow types (case-insensitive)" />
-                                    </tooltip>
-                                </Label>
-                                <GridPane hgap="10" vgap="8">
-                                    <Label text="Custom Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                    <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <!-- Scrollable Content -->
+                            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" 
+                                        style="-fx-background-color: transparent; -fx-background: transparent;"
+                                        VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" style="-fx-padding: 15;">
+                                    <!-- Merge Flows Option -->
+                                    <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true">
                                         <tooltip>
-                                            <Tooltip text="Enter the exact name of a custom Excel tab (case-insensitive)" />
-                                        </tooltip>
-                                    </TextField>
-                                    
-                                    <Label text="Maps To:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                    <ComboBox fx:id="customTabFlowTypeCombo" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                        <tooltip>
-                                            <Tooltip text="Select which flow type this custom tab should map to" />
-                                        </tooltip>
-                                    </ComboBox>
-                                    
-                                    <Button fx:id="addCustomTabButton" text="Add Mapping" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="button-secondary" />
-                                </GridPane>
-                                
-                                <Label text="Current Mappings:" style="-fx-font-size: 11; -fx-text-fill: gray;" />
-                                <ListView fx:id="customTabMappingsList" prefHeight="80" styleClass="custom-tab-list">
-                                    <tooltip>
-                                        <Tooltip text="Current custom tab mappings. Double-click to remove." />
-                                    </tooltip>
-                                </ListView>
-                                
-                                <!-- Custom Tab Statistics -->
-                                <Label fx:id="customTabStatsLabel" text="" style="-fx-font-size: 10; -fx-text-fill: #666;" wrapText="true">
-                                    <tooltip>
-                                        <Tooltip text="Statistics about custom tabs processed from Excel" />
-                                    </tooltip>
-                                </Label>
-                                
-                                <Separator />
-                                
-                                <!-- Adapter References -->
-                                <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
-                                <GridPane hgap="10" vgap="8">
-                                    <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                    <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                                    
-                                    <Label text="VMP:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                    <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    
-                                    <Label text="Vocera:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                    <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    
-                                    <Label text="XMPP:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                    <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                </GridPane>
-                                
-                                <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" />
-                                
-                                <Separator />
-                                
-                                <!-- Default Interfaces -->
-                                <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
-                                <VBox spacing="5">
-                                    <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
-                                        <tooltip>
-                                            <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
+                                            <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
                                         </tooltip>
                                     </CheckBox>
-                                    <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Custom Tab Mappings (MOVED UP) -->
+                                    <Label text="Custom Tab Mappings" style="-fx-font-weight:bold;">
                                         <tooltip>
-                                            <Tooltip text="Use VMP interface as default when Device A/B are blank" />
+                                            <Tooltip text="Map custom Excel tab names to flow types (case-insensitive)" />
                                         </tooltip>
-                                    </CheckBox>
-                                    <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                                    </Label>
+                                    <GridPane hgap="10" vgap="8">
+                                        <Label text="Custom Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                            <tooltip>
+                                                <Tooltip text="Enter the exact name of a custom Excel tab (case-insensitive)" />
+                                            </tooltip>
+                                        </TextField>
+                                        
+                                        <Label text="Maps To:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <ComboBox fx:id="customTabFlowTypeCombo" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                            <tooltip>
+                                                <Tooltip text="Select which flow type this custom tab should map to" />
+                                            </tooltip>
+                                        </ComboBox>
+                                        
+                                        <Button fx:id="addCustomTabButton" text="Add Mapping" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="button-secondary" />
+                                    </GridPane>
+                                    
+                                    <Label text="Current Mappings:" style="-fx-font-size: 11; -fx-text-fill: gray;" />
+                                    <ListView fx:id="customTabMappingsList" prefHeight="80" styleClass="custom-tab-list">
                                         <tooltip>
-                                            <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
+                                            <Tooltip text="Current custom tab mappings. Double-click to remove." />
                                         </tooltip>
-                                    </CheckBox>
-                                    <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                                    </ListView>
+                                    
+                                    <!-- Custom Tab Statistics -->
+                                    <Label fx:id="customTabStatsLabel" text="" style="-fx-font-size: 10; -fx-text-fill: #666;" wrapText="true">
                                         <tooltip>
-                                            <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
+                                            <Tooltip text="Statistics about custom tabs processed from Excel" />
                                         </tooltip>
-                                    </CheckBox>
+                                    </Label>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Adapter References -->
+                                    <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
+                                    <GridPane hgap="10" vgap="8">
+                                        <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        
+                                        <Label text="VMP:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        
+                                        <Label text="Vocera:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                        
+                                        <Label text="XMPP:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                        <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    </GridPane>
+                                    
+                                    <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" />
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Default Interfaces -->
+                                    <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
+                                    <VBox spacing="5">
+                                        <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
+                                            <tooltip>
+                                                <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
+                                            </tooltip>
+                                        </CheckBox>
+                                        <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
+                                            <tooltip>
+                                                <Tooltip text="Use VMP interface as default when Device A/B are blank" />
+                                            </tooltip>
+                                        </CheckBox>
+                                        <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                                            <tooltip>
+                                                <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
+                                            </tooltip>
+                                        </CheckBox>
+                                        <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                                            <tooltip>
+                                                <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
+                                            </tooltip>
+                                        </CheckBox>
+                                    </VBox>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Room Filters -->
+                                    <Label text="Room Filters" style="-fx-font-weight:bold;" />
+                                    <GridPane hgap="10" vgap="8">
+                                        <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                            <tooltip>
+                                                <Tooltip text="Filter Nursecall flows by room number" />
+                                            </tooltip>
+                                        </TextField>
+                                        
+                                        <Label text="Clinical:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                            <tooltip>
+                                                <Tooltip text="Filter Clinical flows by room number" />
+                                            </tooltip>
+                                        </TextField>
+                                        
+                                        <Label text="Orders:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                        <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                            <tooltip>
+                                                <Tooltip text="Filter Orders flows by room number" />
+                                            </tooltip>
+                                        </TextField>
+                                    </GridPane>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Other Settings -->
+                                    <Button fx:id="resetPathsButton" text="🔄 Reset File Paths" styleClass="button-secondary" />
                                 </VBox>
-                                
-                                <Separator />
-                                
-                                <!-- Room Filters -->
-                                <Label text="Room Filters" style="-fx-font-weight:bold;" />
-                                <GridPane hgap="10" vgap="8">
-                                    <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                    <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                        <tooltip>
-                                            <Tooltip text="Filter Nursecall flows by room number" />
-                                        </tooltip>
-                                    </TextField>
-                                    
-                                    <Label text="Clinical:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                    <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                        <tooltip>
-                                            <Tooltip text="Filter Clinical flows by room number" />
-                                        </tooltip>
-                                    </TextField>
-                                    
-                                    <Label text="Orders:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                    <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                        <tooltip>
-                                            <Tooltip text="Filter Orders flows by room number" />
-                                        </tooltip>
-                                    </TextField>
-                                </GridPane>
-                                
-                                <Separator />
-                                
-                                <!-- Other Settings -->
-                                <Button fx:id="resetPathsButton" text="🔄 Reset File Paths" styleClass="button-secondary" />
-                            </VBox>
+                            </ScrollPane>
                         </VBox>
                     </top>
                     
