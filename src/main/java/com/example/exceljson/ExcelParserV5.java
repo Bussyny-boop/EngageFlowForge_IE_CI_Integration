@@ -27,6 +27,8 @@ public class ExcelParserV5 {
     public String ordersGroup = "";
     public String noCareGroup = "";
     public String comments = "";
+    // Dynamic custom group columns (key = custom tab name, value = group name)
+    public final Map<String, String> customGroups = new LinkedHashMap<>();
   }
 
   public static final class FlowRow {
@@ -51,6 +53,7 @@ public class ExcelParserV5 {
     public String t3 = ""; public String r3 = "";
     public String t4 = ""; public String r4 = "";
     public String t5 = ""; public String r5 = "";
+    public String customTabSource = ""; // Name of the custom tab this flow came from (if any)
   }
 
   // ---------- Config / parsing helpers ----------
@@ -62,8 +65,11 @@ public class ExcelParserV5 {
   private final Map<String, List<Map<String, String>>> nurseGroupToUnits = new LinkedHashMap<>();
   private final Map<String, List<Map<String, String>>> clinicalGroupToUnits = new LinkedHashMap<>();
   private final Map<String, List<Map<String, String>>> ordersGroupToUnits = new LinkedHashMap<>();
+  // Map for custom tab groups: configGroup -> units (similar to above)
+  // This stores mappings for custom tabs. Key is the config group name, value is list of units.
+  private final Map<String, Map<String, List<Map<String, String>>>> customGroupToUnits = new LinkedHashMap<>();
   // Map from (facility, configGroup) -> No Caregiver Group value
-  // Key format: "facilityName|configGroupType|configGroup" where configGroupType is "nurse", "clinical", or "orders"
+  // Key format: "facilityName|configGroupType|configGroup" where configGroupType is "nurse", "clinical", "orders", or custom tab name
   private final Map<String, String> noCaregiverByFacilityAndGroup = new LinkedHashMap<>();
   
   private int emdanMovedCount = 0;
@@ -283,7 +289,7 @@ public class ExcelParserV5 {
       boolean isNurseSide = flowType.equals("NurseCalls");
       boolean isOrdersType = flowType.equals("Orders");
       
-      parseFlowSheet(wb, tabName, isNurseSide, isOrdersType);
+      parseFlowSheet(wb, tabName, isNurseSide, isOrdersType, tabName);
       
       // Calculate rows added from this custom tab
       int rowsAdded = 0;
@@ -355,6 +361,16 @@ public class ExcelParserV5 {
     int cNoCare     = getCol(hm, "No Caregiver Alert Number or Group", "No Caregiver Group");
     int cComments   = getCol(hm, "Comments");
 
+    // Find columns for custom tab mappings
+    // For each custom tab, look for a column with the tab name or tab name + " Group"
+    Map<String, Integer> customTabColumns = new LinkedHashMap<>();
+    for (String customTabName : customTabMappings.keySet()) {
+      int colIdx = getCol(hm, customTabName, customTabName + " Group");
+      if (colIdx >= 0) {
+        customTabColumns.put(customTabName, colIdx);
+      }
+    }
+
     for (int r = start; r <= sh.getLastRowNum(); r++) {
       Row row = sh.getRow(r);
       if (row == null) continue;
@@ -378,6 +394,15 @@ public class ExcelParserV5 {
       u.ordersGroup = ordersGroup;
       u.noCareGroup = noCare;
       u.comments = comments;
+      
+      // Read custom group columns
+      for (Map.Entry<String, Integer> entry : customTabColumns.entrySet()) {
+        String customTabName = entry.getKey();
+        int colIdx = entry.getValue();
+        String customGroupValue = getCell(row, colIdx);
+        u.customGroups.put(customTabName, customGroupValue);
+      }
+      
       units.add(u);
 
       List<String> list = splitUnits(unitNames);
@@ -414,6 +439,25 @@ public class ExcelParserV5 {
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
+      
+      // Handle custom group mappings
+      for (Map.Entry<String, String> customEntry : u.customGroups.entrySet()) {
+        String customTabName = customEntry.getKey();
+        String customGroup = customEntry.getValue();
+        if (!isBlank(customGroup)) {
+          Map<String, List<Map<String, String>>> groupMap = 
+            customGroupToUnits.computeIfAbsent(customTabName, k -> new LinkedHashMap<>());
+          for (String name : list) {
+            groupMap.computeIfAbsent(customGroup, k -> new ArrayList<>())
+              .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+          }
+          // Store No Caregiver Group for this (facility, customGroup) pair
+          if (!isBlank(facility) && !isBlank(noCare)) {
+            String key = buildNoCaregiverKey(facility, customTabName, customGroup);
+            noCaregiverByFacilityAndGroup.put(key, noCare);
+          }
+        }
+      }
     }
   }
 
@@ -422,6 +466,7 @@ public class ExcelParserV5 {
     nurseGroupToUnits.clear();
     clinicalGroupToUnits.clear();
     ordersGroupToUnits.clear();
+    customGroupToUnits.clear();
     noCaregiverByFacilityAndGroup.clear();
 
     for (UnitRow u : units) {
@@ -466,11 +511,34 @@ public class ExcelParserV5 {
           noCaregiverByFacilityAndGroup.put(key, noCare);
         }
       }
+      
+      // Handle custom groups
+      for (Map.Entry<String, String> customEntry : u.customGroups.entrySet()) {
+        String customTabName = customEntry.getKey();
+        String customGroup = customEntry.getValue();
+        if (!isBlank(customGroup)) {
+          Map<String, List<Map<String, String>>> groupMap = 
+            customGroupToUnits.computeIfAbsent(customTabName, k -> new LinkedHashMap<>());
+          for (String name : list) {
+            groupMap.computeIfAbsent(customGroup, k -> new ArrayList<>())
+              .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+          }
+          // Store No Caregiver Group for this (facility, customGroup) pair
+          if (!isBlank(facility) && !isBlank(noCare)) {
+            String key = buildNoCaregiverKey(facility, customTabName, customGroup);
+            noCaregiverByFacilityAndGroup.put(key, noCare);
+          }
+        }
+      }
     }
   }
 
   // ---------- Parse: Flow Sheets ----------
   private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide, boolean ordersType) throws Exception {
+    parseFlowSheet(wb, sheetName, nurseSide, ordersType, null);
+  }
+  
+  private void parseFlowSheet(Workbook wb, String sheetName, boolean nurseSide, boolean ordersType, String customTabSource) throws Exception {
     // For Orders sheets, try exact matches first, then any sheet containing "Order"
     Sheet sh = null;
     if (ordersType) {
@@ -550,6 +618,11 @@ public class ExcelParserV5 {
         f.type = "Orders";
       } else {
         f.type = nurseSide ? "NurseCalls" : "Clinicals";
+      }
+      
+      // Set custom tab source if this flow came from a custom tab
+      if (customTabSource != null) {
+        f.customTabSource = customTabSource;
       }
       
       // Parse "In scope" column - default to true if column not present or value is blank
@@ -666,17 +739,30 @@ public class ExcelParserV5 {
   /**
    * Resolve unit references for a configuration group.
    * For clinical flows, checks both clinical and nurse group maps to support EMDAN-moved alarms.
+   * For custom tab flows, checks the custom group map for that specific custom tab.
    * 
-   * @param configGroup The configuration group to look up
+   * @param flowRow The flow row to resolve units for
    * @param primaryMap The primary map to check (clinicalGroupToUnits or nurseGroupToUnits)
    * @param nurseSide true if building nurse calls, false if building clinicals
    * @return List of unit references with facility names and unit names, or empty list if the
    *         configuration group is blank or not found in any map
    */
-  private List<Map<String,String>> resolveUnitRefs(String configGroup,
+  private List<Map<String,String>> resolveUnitRefs(FlowRow flowRow,
                                                    Map<String,List<Map<String,String>>> primaryMap,
                                                    boolean nurseSide) {
+    String configGroup = flowRow.configGroup;
     if (isBlank(configGroup)) return List.of();
+    
+    // If this flow came from a custom tab, check the custom group map first
+    if (!isBlank(flowRow.customTabSource)) {
+      Map<String, List<Map<String, String>>> customMap = customGroupToUnits.get(flowRow.customTabSource);
+      if (customMap != null) {
+        List<Map<String,String>> units = customMap.getOrDefault(configGroup, List.of());
+        if (!units.isEmpty()) {
+          return units;
+        }
+      }
+    }
     
     // First check the primary map
     List<Map<String,String>> units = primaryMap.getOrDefault(configGroup, List.of());
@@ -703,7 +789,7 @@ public class ExcelParserV5 {
       // Skip rows that are not in scope
       if (!r.inScope) continue;
 
-      List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
+      List<Map<String,String>> unitRefs = resolveUnitRefs(r, groupToUnits, nurseSide);
       String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
       
       // Build destinations and conditions
@@ -793,7 +879,7 @@ public class ExcelParserV5 {
       
       // Use the first row as the template
       FlowRow template = group.get(0);
-      List<Map<String,String>> unitRefs = resolveUnitRefs(template.configGroup, groupToUnits, nurseSide);
+      List<Map<String,String>> unitRefs = resolveUnitRefs(template, groupToUnits, nurseSide);
       String mappedPriority = mapPrioritySafe(template.priorityRaw, template.deviceA);
 
       // Collect all alarm names from the group
@@ -880,7 +966,7 @@ public class ExcelParserV5 {
   // ---------- Build merge key for grouping flows with identical delivery parameters ----------
   private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, String flowType) {
     boolean nurseSide = "NurseCalls".equals(flowType);
-    List<Map<String,String>> unitRefs = resolveUnitRefs(r.configGroup, groupToUnits, nurseSide);
+    List<Map<String,String>> unitRefs = resolveUnitRefs(r, groupToUnits, nurseSide);
     String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
     
     // Determine the config group type for No Caregiver Group lookup

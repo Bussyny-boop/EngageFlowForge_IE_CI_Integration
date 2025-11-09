@@ -204,6 +204,9 @@ public class AppController {
     // ---------- Custom Tab Mappings Data ----------
     private final Map<String, String> customTabMappings = new LinkedHashMap<>();
     private final ObservableList<String> customTabMappingsDisplay = FXCollections.observableArrayList();
+    
+    // Map of custom tab name to its dynamic TableColumn in the Units table
+    private final Map<String, TableColumn<ExcelParserV5.UnitRow, String>> customUnitColumns = new LinkedHashMap<>();
 
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
@@ -502,6 +505,9 @@ public class AppController {
         updateCustomTabMappingsDisplay();
         saveCustomTabMappings();
         
+        // Create the dynamic column in Units table
+        addCustomUnitColumn(tabName);
+        
         // Update parser
         parser.setCustomTabMappings(customTabMappings);
         
@@ -525,6 +531,9 @@ public class AppController {
         customTabMappings.remove(tabName);
         updateCustomTabMappingsDisplay();
         saveCustomTabMappings();
+        
+        // Remove the dynamic column from Units table
+        removeCustomUnitColumn(tabName);
         
         // Update parser
         parser.setCustomTabMappings(customTabMappings);
@@ -574,6 +583,11 @@ public class AppController {
         }
         
         updateCustomTabMappingsDisplay();
+        
+        // Create dynamic columns for loaded custom tabs
+        for (String customTabName : customTabMappings.keySet()) {
+            addCustomUnitColumn(customTabName);
+        }
         
         // Update parser with loaded mappings
         if (parser != null) {
@@ -1094,6 +1108,72 @@ public class AppController {
         });
         col.setCellFactory(CheckBoxTableCell.forTableColumn(col));
         col.setEditable(true);
+    }
+    
+    // ---------- Dynamic Custom Unit Columns ----------
+    /**
+     * Creates a dynamic column for a custom tab mapping in the Units table.
+     * The column is inserted before the "No Caregiver Group" column.
+     */
+    private void addCustomUnitColumn(String customTabName) {
+        if (customUnitColumns.containsKey(customTabName)) {
+            return; // Column already exists
+        }
+        
+        if (tableUnits == null) return;
+        
+        // Create the new column
+        TableColumn<ExcelParserV5.UnitRow, String> newColumn = new TableColumn<>(customTabName + " Group");
+        newColumn.setPrefWidth(160.0);
+        
+        // Set up cell value factory to read/write from customGroups map
+        newColumn.setCellValueFactory(d -> {
+            ExcelParserV5.UnitRow row = d.getValue();
+            String value = row.customGroups.getOrDefault(customTabName, "");
+            return new SimpleStringProperty(value);
+        });
+        
+        // Make the column editable
+        newColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        newColumn.setOnEditCommit(ev -> {
+            ExcelParserV5.UnitRow row = ev.getRowValue();
+            row.customGroups.put(customTabName, ev.getNewValue());
+            if (parser != null) {
+                parser.rebuildUnitMaps();
+            }
+            tableUnits.refresh();
+        });
+        
+        // Find the index of the "No Caregiver Group" column
+        int noCareIndex = tableUnits.getColumns().indexOf(unitNoCareGroupCol);
+        if (noCareIndex >= 0) {
+            // Insert before "No Caregiver Group"
+            tableUnits.getColumns().add(noCareIndex, newColumn);
+        } else {
+            // Fallback: add at the end if No Caregiver column not found
+            tableUnits.getColumns().add(newColumn);
+        }
+        
+        // Track the column
+        customUnitColumns.put(customTabName, newColumn);
+    }
+    
+    /**
+     * Removes a dynamic column for a custom tab mapping from the Units table.
+     */
+    private void removeCustomUnitColumn(String customTabName) {
+        TableColumn<ExcelParserV5.UnitRow, String> column = customUnitColumns.remove(customTabName);
+        if (column != null && tableUnits != null) {
+            tableUnits.getColumns().remove(column);
+        }
+        
+        // Also remove the custom group data from all unit rows
+        if (parser != null) {
+            for (ExcelParserV5.UnitRow unitRow : parser.units) {
+                unitRow.customGroups.remove(customTabName);
+            }
+            parser.rebuildUnitMaps();
+        }
     }
 
     // ---------- Setup header checkbox for "In Scope" columns ----------
