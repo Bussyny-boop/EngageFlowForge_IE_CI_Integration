@@ -1,6 +1,8 @@
 package com.example.exceljson;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
+import javafx.animation.ParallelTransition;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -380,12 +382,21 @@ public class AppController {
         if (clinicalsView != null) clinicalsView.setVisible(viewToShow == clinicalsView);
         if (ordersView != null) ordersView.setVisible(viewToShow == ordersView);
         
-        // Apply fade transition
+        // Apply enhanced fade and slide transition
         if (viewToShow != null) {
-            FadeTransition fade = new FadeTransition(Duration.millis(200), viewToShow);
+            // Fade in animation
+            FadeTransition fade = new FadeTransition(Duration.millis(300), viewToShow);
             fade.setFromValue(0.0);
             fade.setToValue(1.0);
-            fade.play();
+            
+            // Slide in from the right animation
+            TranslateTransition slide = new TranslateTransition(Duration.millis(300), viewToShow);
+            slide.setFromX(30);
+            slide.setToX(0);
+            
+            // Combine both animations
+            ParallelTransition transition = new ParallelTransition(fade, slide);
+            transition.play();
         }
     }
     
@@ -406,8 +417,41 @@ public class AppController {
     private void toggleSettingsDrawer() {
         if (settingsDrawer != null) {
             boolean isVisible = settingsDrawer.isVisible();
-            settingsDrawer.setVisible(!isVisible);
-            settingsDrawer.setManaged(!isVisible);
+            
+            if (!isVisible) {
+                // Show with animation
+                settingsDrawer.setVisible(true);
+                settingsDrawer.setManaged(true);
+                
+                // Slide down animation
+                TranslateTransition slide = new TranslateTransition(Duration.millis(300), settingsDrawer);
+                slide.setFromY(-settingsDrawer.getHeight());
+                slide.setToY(0);
+                
+                // Fade in animation
+                FadeTransition fade = new FadeTransition(Duration.millis(300), settingsDrawer);
+                fade.setFromValue(0.0);
+                fade.setToValue(1.0);
+                
+                ParallelTransition transition = new ParallelTransition(slide, fade);
+                transition.play();
+            } else {
+                // Hide with animation
+                TranslateTransition slide = new TranslateTransition(Duration.millis(250), settingsDrawer);
+                slide.setFromY(0);
+                slide.setToY(-50);
+                
+                FadeTransition fade = new FadeTransition(Duration.millis(250), settingsDrawer);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+                
+                ParallelTransition transition = new ParallelTransition(slide, fade);
+                transition.setOnFinished(e -> {
+                    settingsDrawer.setVisible(false);
+                    settingsDrawer.setManaged(false);
+                });
+                transition.play();
+            }
         }
     }
     
