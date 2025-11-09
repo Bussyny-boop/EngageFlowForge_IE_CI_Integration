@@ -92,7 +92,7 @@ jobs:
         with:
           name: engage-rules-generator-msi
           path: |
-            EngageFlowForge-1.1.msi
+            EngageFlowForge-2.0.msi
           retention-days: 14
 
 
