@@ -1670,7 +1670,7 @@ public class AppController {
         if (defaultEdgeCheckbox != null && defaultVmpCheckbox != null) {
             boolean bothSelected = defaultEdgeCheckbox.isSelected() && defaultVmpCheckbox.isSelected();
             if (bothSelected) {
-                showWarning("Your Engage rules will be combined to send outgoing WCTP and VMP endpoints");
+                showWarning("Engage rules will merge the selected adapters into one combined rule.");
             }
         }
     }
