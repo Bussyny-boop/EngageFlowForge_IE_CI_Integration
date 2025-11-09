@@ -1423,7 +1423,10 @@ public class ExcelParserV5 {
    * Determines if default interfaces should be applied based on device values.
    * Defaults apply when:
    * 1. Both devices are blank/empty, OR
-   * 2. Neither device contains "Edge", "VCS", "Vocera", or "XMPP"
+   * 2. Device-B has content AND neither device contains "Edge", "VCS", "Vocera", or "XMPP"
+   * 
+   * Special case: When Device-B is empty, only apply defaults if Device-A is also empty.
+   * This prevents checkbox logic from applying when Device-B is not participating.
    */
   private boolean shouldApplyDefaultInterfaces(String deviceA, String deviceB,
                                                  boolean hasEdgeA, boolean hasEdgeB,
@@ -1433,6 +1436,12 @@ public class ExcelParserV5 {
     boolean deviceABlank = isBlank(deviceA);
     boolean deviceBBlank = isBlank(deviceB);
     
+    // If Device-B is blank, only apply defaults when Device-A is also blank
+    if (deviceBBlank) {
+      return deviceABlank;
+    }
+    
+    // Device-B has content - apply defaults when neither device has recognized keywords
     return (deviceABlank && deviceBBlank) || 
            (!hasEdgeA && !hasEdgeB && !hasVcsA && !hasVcsB && !hasVoceraA && !hasVoceraB && !hasXmppA && !hasXmppB);
   }

@@ -345,7 +345,9 @@ class DefaultInterfaceTest {
             nurseHeader.createCell(10).setCellValue("Time to 1st Recipient");
             nurseHeader.createCell(11).setCellValue("1st Recipient");
 
-            // Row with Smartphone device (no Edge/VCS) - should use default
+            // Row with Smartphone device in A, blank B (no Edge/VCS)
+            // NEW BEHAVIOR: Device-B is blank, so defaults only apply if Device-A is also blank
+            // Device-A has "Smartphone" (not blank), so NO defaults
             Row row1 = nurseSheet.createRow(3);
             row1.createCell(0).setCellValue("Nurse Group 1");
             row1.createCell(1).setCellValue("Smartphone");
@@ -354,7 +356,7 @@ class DefaultInterfaceTest {
             row1.createCell(10).setCellValue("0");
             row1.createCell(11).setCellValue("Team");
 
-            // Row with Badge device (no Edge/VCS) - should use default
+            // Row with Badge device in both A and B (no Edge/VCS) - should use default
             Row row2 = nurseSheet.createRow(4);
             row2.createCell(0).setCellValue("Nurse Group 1");
             row2.createCell(1).setCellValue("Badge");
@@ -385,15 +387,13 @@ class DefaultInterfaceTest {
         
         assertEquals(2, flows.size(), "Should have 2 flows");
 
-        // First flow (Smartphone device, no Edge/VCS) should use default Edge
+        // First flow (Smartphone in A, blank B) - NEW: Should NOT use defaults
         var smartphoneFlow = (Map<?, ?>) flows.get(0);
         var smartphoneInterfaces = (List<?>) smartphoneFlow.get("interfaces");
-        assertEquals(1, smartphoneInterfaces.size(), "Smartphone device should use default");
-        var smartphoneIface = (Map<?, ?>) smartphoneInterfaces.get(0);
-        assertEquals("OutgoingWCTP", smartphoneIface.get("componentName"), 
-            "Smartphone should use default Edge (OutgoingWCTP)");
+        assertEquals(0, smartphoneInterfaces.size(), 
+            "Smartphone device with blank Device-B should NOT use defaults");
 
-        // Second flow (Badge device, no Edge/VCS) should use default Edge
+        // Second flow (Badge device in both A and B, no Edge/VCS) should use default Edge
         var badgeFlow = (Map<?, ?>) flows.get(1);
         var badgeInterfaces = (List<?>) badgeFlow.get("interfaces");
         assertEquals(1, badgeInterfaces.size(), "Badge device should use default");
