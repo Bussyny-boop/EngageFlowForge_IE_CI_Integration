@@ -77,6 +77,9 @@ public class ExcelParserV5 {
   // Custom tab statistics
   private final Map<String, Integer> customTabRowCounts = new LinkedHashMap<>();
   
+  // Load warnings and errors (collected instead of throwing exceptions)
+  private final List<String> loadWarnings = new ArrayList<>();
+  
   // Default interface reference names (editable via GUI)
   private String edgeReferenceName = "OutgoingWCTP";
   private String vcsReferenceName = "VMP";
@@ -306,7 +309,18 @@ public class ExcelParserV5 {
   }
 
   public String getLoadSummary() {
-    return String.format(Locale.ROOT,
+    StringBuilder summary = new StringBuilder();
+    
+    // Add warnings first if any exist
+    if (!loadWarnings.isEmpty()) {
+      summary.append("⚠️ WARNINGS DURING LOAD ⚠️\n\n");
+      for (String warning : loadWarnings) {
+        summary.append(warning).append("\n\n");
+      }
+      summary.append("═══════════════════════════════════════\n\n");
+    }
+    
+    summary.append(String.format(Locale.ROOT,
       "✅ Excel Load Complete%n%n" +
       "Loaded:%n" +
       "  • %d Unit Breakdown rows%n" +
@@ -318,7 +332,13 @@ public class ExcelParserV5 {
       "  • %d Configuration Groups (Clinical)%n" +
       "  • %d Configuration Groups (Orders)",
       units.size(), nurseCalls.size(), clinicals.size(), orders.size(),
-      nurseGroupToUnits.size(), clinicalGroupToUnits.size(), ordersGroupToUnits.size());
+      nurseGroupToUnits.size(), clinicalGroupToUnits.size(), ordersGroupToUnits.size()));
+    
+    return summary.toString();
+  }
+  
+  public List<String> getLoadWarnings() {
+    return new ArrayList<>(loadWarnings);
   }
   
   public int getEmdanMovedCount() {
@@ -336,12 +356,16 @@ public class ExcelParserV5 {
     noCaregiverByFacilityAndGroup.clear();
     emdanMovedCount = 0;
     customTabRowCounts.clear();
+    loadWarnings.clear();
   }
 
   // ---------- Parse: Unit Breakdown ----------
   private void parseUnitBreakdown(Workbook wb) throws Exception {
     Sheet sh = findSheet(wb, SHEET_UNIT);
-    if (sh == null) return;
+    if (sh == null) {
+      loadWarnings.add("⚠️ Warning: '" + SHEET_UNIT + "' sheet not found in Excel file. Unit data will not be available.");
+      return;
+    }
 
     Row header = findHeaderRow(sh);
     Map<String,Integer> hm = headerMap(header);
@@ -551,7 +575,14 @@ public class ExcelParserV5 {
     } else {
       sh = findSheet(wb, sheetName);
     }
-    if (sh == null) return;
+    if (sh == null) {
+      // Only add warning if it's not a custom tab (custom tabs are already handled silently)
+      if (customTabSource == null) {
+        String displayName = ordersType ? "Orders" : sheetName;
+        loadWarnings.add("⚠️ Warning: '" + displayName + "' sheet not found in Excel file. " + displayName + " data will not be available.");
+      }
+      return;
+    }
 
     Row header = findHeaderRow(sh);
     Map<String,Integer> hm = headerMap(header);
@@ -2476,23 +2507,24 @@ public class ExcelParserV5 {
   
   /**
    * Validates that required headers are present in the sheet.
-   * Throws an exception with a descriptive message if any required headers are missing.
+   * Collects warnings instead of throwing exceptions, allowing the load to continue with available data.
    * 
    * @param sheetName the name of the sheet being validated (for error messages)
    * @param headerMap the map of normalized header names to column indices
    * @param displayNames the user-friendly header names for error messages
    * @param alternatives the alternative header names to search for (each array is a set of alternatives for one required header)
-   * @throws Exception if any required headers are missing
    */
-  private static void validateRequiredHeaders(String sheetName, Map<String,Integer> headerMap, 
-                                               String[] displayNames, String[][] alternatives) throws Exception {
+  private void validateRequiredHeaders(String sheetName, Map<String,Integer> headerMap, 
+                                               String[] displayNames, String[][] alternatives) {
     if (headerMap.isEmpty()) {
-      throw new Exception(String.format(
-        "❌ Invalid Excel file: No headers found in '%s' sheet.%n%n" +
+      String warning = String.format(
+        "⚠️ Warning: No headers found in '%s' sheet.%n%n" +
         "The sheet must contain a header row with the following required columns:%n%s",
         sheetName,
         formatRequiredHeaders(displayNames)
-      ));
+      );
+      loadWarnings.add(warning);
+      return;
     }
     
     List<String> missingHeaders = new ArrayList<>();
@@ -2504,14 +2536,15 @@ public class ExcelParserV5 {
     }
     
     if (!missingHeaders.isEmpty()) {
-      throw new Exception(String.format(
-        "❌ Invalid Excel file: Missing required header%s in '%s' sheet:%n%n%s%n%n" +
-        "Please ensure your Excel file contains all required columns.%n" +
+      String warning = String.format(
+        "⚠️ Warning: Missing required header%s in '%s' sheet:%n%n%s%n%n" +
+        "The file will be loaded with available data. Some features may not work correctly.%n" +
         "You can use 'Save Excel As' from a valid file to generate a properly formatted template.",
         missingHeaders.size() > 1 ? "s" : "",
         sheetName,
         formatMissingHeaders(missingHeaders)
-      ));
+      );
+      loadWarnings.add(warning);
     }
   }
   

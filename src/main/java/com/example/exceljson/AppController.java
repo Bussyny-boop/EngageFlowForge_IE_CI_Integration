@@ -53,9 +53,7 @@ public class AppController {
     @FXML private Button saveExcelButton;
     @FXML private Button saveExcelAsButton;
     @FXML private Button clearAllButton;
-    @FXML private Button generateNurseJsonButton;
-    @FXML private Button generateClinicalJsonButton;
-    @FXML private Button generateOrdersJsonButton;
+    @FXML private Button generateJsonButton;
     @FXML private Button exportNurseJsonButton;
     @FXML private Button exportClinicalJsonButton;
     @FXML private Button exportOrdersJsonButton;
@@ -259,9 +257,7 @@ public class AppController {
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
         if (clearAllButton != null) clearAllButton.setOnAction(e -> clearAllData());
-        generateNurseJsonButton.setOnAction(e -> generateJson("NurseCalls"));
-        generateClinicalJsonButton.setOnAction(e -> generateJson("Clinicals"));
-        if (generateOrdersJsonButton != null) generateOrdersJsonButton.setOnAction(e -> generateJson("Orders"));
+        generateJsonButton.setOnAction(e -> generateCombinedJson());
         exportNurseJsonButton.setOnAction(e -> exportJson("NurseCalls"));
         exportClinicalJsonButton.setOnAction(e -> exportJson("Clinicals"));
         if (exportOrdersJsonButton != null) exportOrdersJsonButton.setOnAction(e -> exportJson("Orders"));
@@ -806,6 +802,67 @@ public class AppController {
         }
     }
 
+    // ---------- Generate Combined JSON ----------
+    private void generateCombinedJson() {
+        try {
+            if (parser == null) {
+                showError("Please load an Excel file first.");
+                return;
+            }
+
+            syncEditsToParser(); // always sync before generating
+            applyInterfaceReferences(); // Apply interface references
+
+            boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+
+            // Create a temporary parser with only filtered data
+            ExcelParserV5 filteredParser = createFilteredParser();
+
+            // Build JSON for all three types
+            StringBuilder combinedJson = new StringBuilder();
+            
+            // Add NurseCalls JSON
+            try {
+                String nurseJson = ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(useAdvanced));
+                combinedJson.append("=== NurseCalls JSON ===\n\n");
+                combinedJson.append(nurseJson);
+                combinedJson.append("\n\n");
+            } catch (Exception ex) {
+                combinedJson.append("=== NurseCalls JSON ===\n\n");
+                combinedJson.append("Error generating NurseCalls JSON: ").append(ex.getMessage());
+                combinedJson.append("\n\n");
+            }
+            
+            // Add Clinicals JSON
+            try {
+                String clinicalJson = ExcelParserV5.pretty(filteredParser.buildClinicalsJson(useAdvanced));
+                combinedJson.append("=== Clinicals JSON ===\n\n");
+                combinedJson.append(clinicalJson);
+                combinedJson.append("\n\n");
+            } catch (Exception ex) {
+                combinedJson.append("=== Clinicals JSON ===\n\n");
+                combinedJson.append("Error generating Clinicals JSON: ").append(ex.getMessage());
+                combinedJson.append("\n\n");
+            }
+            
+            // Add Orders JSON
+            try {
+                String ordersJson = ExcelParserV5.pretty(filteredParser.buildOrdersJson(useAdvanced));
+                combinedJson.append("=== Orders JSON ===\n\n");
+                combinedJson.append(ordersJson);
+            } catch (Exception ex) {
+                combinedJson.append("=== Orders JSON ===\n\n");
+                combinedJson.append("Error generating Orders JSON: ").append(ex.getMessage());
+            }
+
+            jsonPreview.setText(combinedJson.toString());
+            lastGeneratedJson = combinedJson.toString();
+            statusLabel.setText("Generated combined JSON for all selected rows");
+        } catch (Exception ex) {
+            showError("Error generating combined JSON: " + ex.getMessage());
+        }
+    }
+
     // ---------- Export JSON ----------
     private void exportJson(String flowType) {
         try {
@@ -932,9 +989,7 @@ public class AppController {
     }
 
     private void setJsonButtonsEnabled(boolean enabled) {
-        generateNurseJsonButton.setDisable(!enabled);
-        generateClinicalJsonButton.setDisable(!enabled);
-        if (generateOrdersJsonButton != null) generateOrdersJsonButton.setDisable(!enabled);
+        generateJsonButton.setDisable(!enabled);
         exportNurseJsonButton.setDisable(!enabled);
         exportClinicalJsonButton.setDisable(!enabled);
         if (exportOrdersJsonButton != null) exportOrdersJsonButton.setDisable(!enabled);

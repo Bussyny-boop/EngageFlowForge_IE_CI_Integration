@@ -25,16 +25,18 @@ class HeaderValidationTest {
         createWorkbookWithoutAlarmName(excelFile);
         
         ExcelParserV5 parser = new ExcelParserV5();
-        Exception exception = assertThrows(Exception.class, () -> {
-            parser.load(excelFile);
-        });
+        // Should NOT throw exception anymore, but load with warnings
+        assertDoesNotThrow(() -> parser.load(excelFile));
         
-        // Verify error message mentions the missing header
-        String message = exception.getMessage();
-        assertTrue(message.contains("Common Alert or Alarm Name"), 
-            "Error message should mention 'Common Alert or Alarm Name' as it's a required header");
-        assertTrue(message.contains("Missing required header") || message.contains("Invalid Excel file"),
-            "Error message should indicate missing headers");
+        // Verify warnings were collected
+        var warnings = parser.getLoadWarnings();
+        assertFalse(warnings.isEmpty(), "Should have warnings about missing headers");
+        
+        String allWarnings = String.join("\n", warnings);
+        assertTrue(allWarnings.contains("Common Alert or Alarm Name"), 
+            "Warning message should mention 'Common Alert or Alarm Name' as it's a required header");
+        assertTrue(allWarnings.contains("Missing required header") || allWarnings.contains("Warning"),
+            "Warning message should indicate missing headers");
     }
 
     @Test
@@ -45,15 +47,18 @@ class HeaderValidationTest {
         createWorkbookWithIncompleteUnitHeaders(excelFile);
         
         ExcelParserV5 parser = new ExcelParserV5();
-        Exception exception = assertThrows(Exception.class, () -> {
-            parser.load(excelFile);
-        });
+        // Should NOT throw exception anymore, but load with warnings
+        assertDoesNotThrow(() -> parser.load(excelFile));
         
-        String message = exception.getMessage();
-        assertTrue(message.contains("Common Unit Name"), 
-            "Error message should mention the missing 'Common Unit Name' header");
-        assertTrue(message.contains("Unit Breakdown"),
-            "Error message should mention the sheet name");
+        // Verify warnings were collected
+        var warnings = parser.getLoadWarnings();
+        assertFalse(warnings.isEmpty(), "Should have warnings about missing headers");
+        
+        String allWarnings = String.join("\n", warnings);
+        assertTrue(allWarnings.contains("Common Unit Name"), 
+            "Warning message should mention the missing 'Common Unit Name' header");
+        assertTrue(allWarnings.contains("Unit Breakdown"),
+            "Warning message should mention the sheet name");
     }
 
     @Test
@@ -64,13 +69,16 @@ class HeaderValidationTest {
         createWorkbookWithoutConfigGroup(excelFile);
         
         ExcelParserV5 parser = new ExcelParserV5();
-        Exception exception = assertThrows(Exception.class, () -> {
-            parser.load(excelFile);
-        });
+        // Should NOT throw exception anymore, but load with warnings
+        assertDoesNotThrow(() -> parser.load(excelFile));
         
-        String message = exception.getMessage();
-        assertTrue(message.contains("Configuration Group"), 
-            "Error message should mention 'Configuration Group'");
+        // Verify warnings were collected
+        var warnings = parser.getLoadWarnings();
+        assertFalse(warnings.isEmpty(), "Should have warnings about missing headers");
+        
+        String allWarnings = String.join("\n", warnings);
+        assertTrue(allWarnings.contains("Configuration Group"), 
+            "Warning message should mention 'Configuration Group'");
     }
 
     @Test
@@ -109,13 +117,16 @@ class HeaderValidationTest {
         createWorkbookWithNoHeaders(excelFile);
         
         ExcelParserV5 parser = new ExcelParserV5();
-        Exception exception = assertThrows(Exception.class, () -> {
-            parser.load(excelFile);
-        });
+        // Should NOT throw exception anymore, but load with warnings
+        assertDoesNotThrow(() -> parser.load(excelFile));
         
-        String message = exception.getMessage();
-        assertTrue(message.contains("No headers found") || message.contains("Missing required header"),
-            "Error message should indicate no headers were found");
+        // Verify warnings were collected
+        var warnings = parser.getLoadWarnings();
+        assertFalse(warnings.isEmpty(), "Should have warnings about missing headers");
+        
+        String allWarnings = String.join("\n", warnings);
+        assertTrue(allWarnings.contains("No headers found") || allWarnings.contains("Missing required header"),
+            "Warning message should indicate no headers were found");
     }
 
     // Helper methods to create test workbooks
