@@ -1680,13 +1680,29 @@ public class ExcelParserV5 {
 
     // 1. Add ringtone FIRST if available
     if (!isBlank(r.ringtone)) {
-      params.add(paQ("alertSound", r.ringtone));
-      
-      // Add badgeAlertSound for Vocera devices
+      // Check if this is a VMP/VCS device
+      boolean isVcs = containsVcs(r.deviceA) || containsVcs(r.deviceB);
       boolean isVocera = containsVocera(r.deviceA) || containsVocera(r.deviceB);
-      if (isVocera) {
-        String badgeAlertSoundValue = "\"" + ensureWavExtension(r.ringtone) + "\"";
-        params.add(paLiteral("badgeAlertSound", badgeAlertSoundValue));
+      
+      // Check if ringtone is "Global Setting" (case-insensitive)
+      boolean isGlobalSetting = r.ringtone.trim().equalsIgnoreCase("Global Setting");
+      
+      if (isVcs) {
+        // VMP interface: use badgeAlertSound with .wav extension instead of alertSound
+        // Skip if ringtone is "Global Setting"
+        if (!isGlobalSetting) {
+          String badgeAlertSoundValue = "\"" + ensureWavExtension(r.ringtone) + "\"";
+          params.add(paLiteral("badgeAlertSound", badgeAlertSoundValue));
+        }
+      } else {
+        // For non-VMP devices: use alertSound
+        params.add(paQ("alertSound", r.ringtone));
+        
+        // Add badgeAlertSound for Vocera devices (in addition to alertSound)
+        if (isVocera) {
+          String badgeAlertSoundValue = "\"" + ensureWavExtension(r.ringtone) + "\"";
+          params.add(paLiteral("badgeAlertSound", badgeAlertSoundValue));
+        }
       }
     }
 
