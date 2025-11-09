@@ -58,7 +58,7 @@ When you search for "EngageFlowForge" or the application name:
 #### Verify Resources in JAR
 ```bash
 mvn clean package
-jar tf target/engage-rules-generator-1.1.0.jar | grep "^icon"
+jar tf target/engage-rules-generator-2.0.0.jar | grep "^icon"
 ```
 
 Expected output:
@@ -113,7 +113,7 @@ If the icon doesn't appear after this fix:
 
 3. **Verify it's in the JAR**:
    ```bash
-   jar tf target/engage-rules-generator-1.1.0.jar | grep icon.png
+   jar tf target/engage-rules-generator-2.0.0.jar | grep icon.png
    ```
 
 4. **Check for console errors** when running the app

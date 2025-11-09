@@ -177,7 +177,7 @@ To verify the Custom Unit feature is working correctly:
 
 3. **Manual Testing**:
    - Create an Excel file with Custom Unit recipients
-   - Run the parser: `java -cp target/engage-rules-generator-1.1.0.jar com.example.exceljson.jobs.JobRunner export-json input.xlsx output.json`
+   - Run the parser: `java -cp target/engage-rules-generator-2.0.0.jar com.example.exceljson.jobs.JobRunner export-json input.xlsx output.json`
    - Inspect the generated JSON
 
 ## Feature Status

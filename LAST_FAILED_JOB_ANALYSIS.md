@@ -26,7 +26,7 @@ mvn -B clean package
 ```
 - Build Time: 11 seconds
 - Result: SUCCESS
-- Artifact: `target/engage-rules-generator-1.1.0.jar` (31MB)
+- Artifact: `target/engage-rules-generator-2.0.0.jar` (31MB)
 
 ### 3. Unit Tests ✅
 - Tests Run: 33

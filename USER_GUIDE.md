@@ -67,7 +67,7 @@ OpenJDK Runtime Environment (build 17.0.x+x)
 4. The application will be installed with a desktop shortcut
 
 ### Option 2: Using the JAR File (All Platforms)
-1. Download the latest JAR file: `engage-rules-generator-1.1.0.jar`
+1. Download the latest JAR file: `engage-rules-generator-2.0.0.jar`
 2. Place the JAR file in a convenient location (e.g., `C:\FlowForge\` on Windows or `/opt/flowforge/` on Linux)
 3. Ensure Java 17+ is installed and accessible from the command line
 
@@ -79,7 +79,7 @@ cd NDW-To-Engage-Rules
 mvn clean package
 ```
 
-The built JAR will be available at: `target/engage-rules-generator-1.1.0.jar`
+The built JAR will be available at: `target/engage-rules-generator-2.0.0.jar`
 
 ---
 
@@ -91,7 +91,7 @@ The built JAR will be available at: `target/engage-rules-generator-1.1.0.jar`
    - **Windows MSI Install**: Double-click the desktop shortcut or Start Menu entry
    - **JAR File**: Open terminal and run:
      ```bash
-     java -jar engage-rules-generator-1.1.0.jar
+     java -jar engage-rules-generator-2.0.0.jar
      ```
 
 2. **Load an Excel workbook:**
@@ -114,11 +114,11 @@ For automated batch processing:
 
 ```bash
 # Export JSON from an Excel workbook
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner export-json input.xlsx output.json
 
 # Run diagnostic smoke test
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner fail
 ```
 
@@ -317,7 +317,7 @@ The CLI is ideal for automated workflows, batch processing, and integration with
 Use the `JobRunner` class to execute CLI commands:
 
 ```bash
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner <command> [arguments]
 ```
 
@@ -328,7 +328,7 @@ Generates Engage JSON from an Excel workbook.
 
 **Syntax:**
 ```bash
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner export-json <input.xlsx> <output.json>
 ```
 
@@ -338,7 +338,7 @@ java -cp engage-rules-generator-1.1.0.jar \
 
 **Example:**
 ```bash
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner export-json \
     /path/to/config.xlsx \
     /path/to/output.json
@@ -352,7 +352,7 @@ Runs a diagnostic smoke check to verify the application environment.
 
 **Syntax:**
 ```bash
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner fail [--expect-failure]
 ```
 
@@ -362,11 +362,11 @@ java -cp engage-rules-generator-1.1.0.jar \
 **Example:**
 ```bash
 # Successful smoke test (exits with 0)
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner fail
 
 # Forced failure (exits with non-zero)
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner fail --expect-failure
 ```
 
@@ -378,7 +378,7 @@ Fail job completed successfully. Use --expect-failure to force a failure exit co
 ### Getting Help
 
 ```bash
-java -cp engage-rules-generator-1.1.0.jar \
+java -cp engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner --help
 ```
 
@@ -407,7 +407,7 @@ for config in /configs/*.xlsx; do
     output="${config%.xlsx}.json"
     echo "Processing $config..."
     
-    java -cp engage-rules-generator-1.1.0.jar \
+    java -cp engage-rules-generator-2.0.0.jar \
         com.example.exceljson.jobs.JobRunner export-json \
         "$config" "$output"
     
@@ -703,7 +703,7 @@ Error: Could not find or load main class com.example.exceljson.Main
 2. Check for error messages in the console
 3. Try launching with verbose output:
    ```bash
-   java -jar engage-rules-generator-1.1.0.jar --verbose
+   java -jar engage-rules-generator-2.0.0.jar --verbose
    ```
 
 #### Issue: "File Not Found" Error
@@ -753,7 +753,7 @@ java.lang.OutOfMemoryError: Java heap space
 **Solutions:**
 1. Increase Java heap size:
    ```bash
-   java -Xmx1024m -jar engage-rules-generator-1.1.0.jar
+   java -Xmx1024m -jar engage-rules-generator-2.0.0.jar
    ```
 2. Split large Excel files into smaller workbooks
 3. Close other applications to free memory
@@ -773,7 +773,7 @@ java.lang.OutOfMemoryError: Java heap space
 To enable detailed logging for troubleshooting:
 
 ```bash
-java -Dlog4j.configurationFile=log4j2.xml -jar engage-rules-generator-1.1.0.jar
+java -Dlog4j.configurationFile=log4j2.xml -jar engage-rules-generator-2.0.0.jar
 ```
 
 Check the console output or log files for detailed error messages.
@@ -895,7 +895,7 @@ A: No formal API. Use the CLI or integrate with the Java classes directly if bui
 - **Double-Click**: Edit cell
 
 ### File Locations
-- **JAR File**: `engage-rules-generator-1.1.0.jar`
+- **JAR File**: `engage-rules-generator-2.0.0.jar`
 - **Generated JSON**: User-specified location
 - **Sample Files**: `sample.xlsx`, `sample.json` (git-ignored, local only)
 
@@ -936,7 +936,7 @@ A: No formal API. Use the CLI or integrate with the Java classes directly if bui
 ## Document Version
 
 - **Document Version**: 1.0
-- **Application Version**: 1.1.0
+- **Application Version**: 2.0.0
 - **Last Updated**: November 2025
 - **Compatibility**: Java 17+, Excel 2007+ (.xlsx)
 

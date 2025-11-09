@@ -118,7 +118,7 @@ mvn clean package
 
 ### Run Instructions
 ```bash
-java -jar target/engage-rules-generator-1.1.0.jar
+java -jar target/engage-rules-generator-2.0.0.jar
 ```
 
 ### Testing Instructions

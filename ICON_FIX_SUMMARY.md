@@ -52,7 +52,7 @@ Modified `RESOURCES_ADD_ICON.md` to explain:
 
 ### Icon Files in JAR
 ```bash
-$ jar tf target/engage-rules-generator-1.1.0.jar | grep "^icon"
+$ jar tf target/engage-rules-generator-2.0.0.jar | grep "^icon"
 icon.png
 icon.ico
 ```
