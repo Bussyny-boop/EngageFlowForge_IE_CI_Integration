@@ -754,7 +754,7 @@ public class ExcelParserV5 {
     boolean ordersType = "Orders".equals(flowType);
     
     Map<String,Object> root = new LinkedHashMap<>();
-    root.put("version", "2.0.0");
+    root.put("version", "1.1.0");
     root.put("alarmAlertDefinitions", buildAlarmDefs(rows, flowType));
 
     List<Map<String,Object>> flows;
@@ -1360,6 +1360,25 @@ public class ExcelParserV5 {
     if (isBlank(deviceName)) return false;
     String lower = deviceName.toLowerCase(Locale.ROOT);
     return lower.contains("xmpp");
+  }
+
+  /**
+   * Checks if the device name contains valid recipient keywords.
+   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, Custom unit, Group, Assigned, CS
+   * This is used to validate Device-A column values for GUI highlighting.
+   * Returns false for blank/empty values.
+   */
+  public boolean hasValidRecipientKeyword(String deviceName) {
+    if (isBlank(deviceName)) return false;
+    String lower = deviceName.toLowerCase(Locale.ROOT);
+    return lower.contains("vcs") || 
+           lower.contains("edge") || 
+           lower.contains("xmpp") || 
+           lower.contains("vocera") || 
+           lower.contains("custom unit") ||
+           lower.contains("group") ||
+           lower.contains("assigned") ||
+           lower.contains("cs");
   }
 
   /**
