@@ -1211,8 +1211,9 @@ public class AppController {
     
     /**
      * Sets up an editable column for Device-A with validation highlighting.
-     * Cells that don't contain valid recipient keywords OR are blank are highlighted with light orange.
-     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, Custom unit, Group, Assigned, CS
+     * Cells that don't contain valid recipient keywords are highlighted with light orange.
+     * Blank cells are NOT highlighted.
+     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
      */
     private void setupDeviceAColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
         if (col == null) return;
@@ -1235,8 +1236,7 @@ public class AppController {
                     setGraphic(null);
                     
                     // Apply light orange background if:
-                    // 1. The cell is blank/empty, OR
-                    // 2. No valid recipient keyword is found
+                    // The cell is NOT blank AND no valid recipient keyword is found
                     if (parser != null && !parser.hasValidRecipientKeyword(item)) {
                         setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
                     } else {
@@ -1254,6 +1254,11 @@ public class AppController {
                 setGraphic(textField);
                 textField.selectAll();
                 textField.requestFocus();
+                
+                // Add Enter key handler to commit edit
+                textField.setOnAction(event -> {
+                    commitEdit(textField.getText());
+                });
             }
             
             @Override

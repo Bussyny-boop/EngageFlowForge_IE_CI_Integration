@@ -1369,16 +1369,12 @@ public class ExcelParserV5 {
    * Returns false for blank/empty values.
    */
   public boolean hasValidRecipientKeyword(String deviceName) {
-    if (isBlank(deviceName)) return false;
+    if (isBlank(deviceName)) return true; // Blank cells are considered valid (not highlighted)
     String lower = deviceName.toLowerCase(Locale.ROOT);
     return lower.contains("vcs") || 
            lower.contains("edge") || 
            lower.contains("xmpp") || 
-           lower.contains("vocera") || 
-           lower.contains("custom unit") ||
-           lower.contains("group") ||
-           lower.contains("assigned") ||
-           lower.contains("cs");
+           lower.contains("vocera");
   }
 
   /**
