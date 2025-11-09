@@ -255,7 +255,7 @@ mvn test -Dtest=CustomUnitManualVerificationTest
 
 ## Version History
 
-- **v1.1.0**: Initial implementation of Custom Unit recipient feature
+- **v2.0.0**: Initial implementation of Custom Unit recipient feature
   - Support for case-insensitive keyword detection
   - "All" keyword filtering
   - Normal and urgent priority handling

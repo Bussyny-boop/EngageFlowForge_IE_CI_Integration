@@ -157,7 +157,7 @@ All existing features remain fully functional:
 **Note**: Screenshots cannot be captured in a headless CI environment. To view the new theme:
 
 1. Build the application: `mvn clean package`
-2. Run the GUI: `java -jar target/engage-rules-generator-1.1.0.jar`
+2. Run the GUI: `java -jar target/engage-rules-generator-2.0.0.jar`
 3. Observe the teal-themed interface with:
    - Teal header bar at the top
    - Teal buttons throughout

@@ -183,7 +183,7 @@ Possible improvements for future iterations:
 
 ### Manual Testing
 1. Build the application: `mvn clean package`
-2. Run the application: `java -jar target/engage-rules-generator-1.1.0.jar`
+2. Run the application: `java -jar target/engage-rules-generator-2.0.0.jar`
 3. Click the "⚙️ Settings" button to open settings drawer (observe animation)
 4. Verify "Adapter Reference Names" and "Vocera Badge Alert Interface" are side-by-side
 5. Navigate between Units, Nurse Calls, Clinicals, and Orders tabs (observe slide+fade transitions)

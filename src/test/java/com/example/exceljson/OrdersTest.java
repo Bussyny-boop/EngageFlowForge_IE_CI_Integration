@@ -132,7 +132,7 @@ class OrdersTest {
         Map<String, Object> ordersJson = parser.buildOrdersJson();
         
         assertNotNull(ordersJson);
-        assertEquals("1.1.0", ordersJson.get("version"));
+        assertEquals("2.0.0", ordersJson.get("version"));
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> alarmDefs = (List<Map<String, Object>>) ordersJson.get("alarmAlertDefinitions");

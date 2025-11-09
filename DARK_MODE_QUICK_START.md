@@ -12,7 +12,7 @@ Your Engage FlowForge application now supports **Dark Mode**! Switch between lig
 
 1. **Launch the application**
    ```bash
-   java -jar engage-rules-generator-1.1.0.jar
+   java -jar engage-rules-generator-2.0.0.jar
    ```
 
 2. **Look for the theme button**
@@ -130,6 +130,6 @@ We hope you enjoy the improved interface and the flexibility to choose the theme
 
 ---
 
-*Version: 1.1.0*
+*Version: 2.0.0*
 *Date: November 2025*
 *Feature: Dark Mode Support*

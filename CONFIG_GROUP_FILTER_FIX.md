@@ -51,7 +51,7 @@ if (tableNurseCalls != null) tableNurseCalls.refresh();
 1. Build and run the application:
    ```bash
    mvn clean package
-   java -jar target/engage-rules-generator-1.1.0.jar
+   java -jar target/engage-rules-generator-2.0.0.jar
    ```
 
 2. Load an Excel file with multiple config groups

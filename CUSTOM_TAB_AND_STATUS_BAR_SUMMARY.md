@@ -146,7 +146,7 @@ All existing functionality preserved and tested:
 6. `GUI_VISUAL_CHANGES.md` (NEW)
 
 ## Build Artifacts
-- **JAR File**: `target/engage-rules-generator-1.1.0.jar` (31 MB)
+- **JAR File**: `target/engage-rules-generator-2.0.0.jar` (31 MB)
 - **Contents Verified**: 
   - vocera-theme.css included
   - App.fxml updated

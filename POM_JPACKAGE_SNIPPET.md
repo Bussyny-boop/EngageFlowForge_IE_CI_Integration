@@ -26,7 +26,7 @@ Add or update the `javafx-maven-plugin` in your `pom.xml` to include JPackage op
             <option>FlowForge</option>
             
             <option>--app-version</option>
-            <option>1.1</option>
+            <option>2.0</option>
             
             <option>--icon</option>
             <option>${project.basedir}/src/main/resources/ICON.ico</option>

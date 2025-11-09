@@ -203,20 +203,20 @@ mainTabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, ne
 $ mvn clean package
 [INFO] BUILD SUCCESS
 [INFO] Total time: ~45s
-[INFO] JAR: target/engage-rules-generator-1.1.0.jar (31 MB)
+[INFO] JAR: target/engage-rules-generator-2.0.0.jar (31 MB)
 ```
 
 ## Deployment Information
 
 ### Build Artifact
-- **File**: `engage-rules-generator-1.1.0.jar`
+- **File**: `engage-rules-generator-2.0.0.jar`
 - **Size**: 31 MB
 - **Includes**: All theme resources, icons, animations
 
 ### Installation
 No special installation required. Simply replace existing JAR:
 ```bash
-java -jar target/engage-rules-generator-1.1.0.jar
+java -jar target/engage-rules-generator-2.0.0.jar
 ```
 
 ### Migration

@@ -754,7 +754,7 @@ public class ExcelParserV5 {
     boolean ordersType = "Orders".equals(flowType);
     
     Map<String,Object> root = new LinkedHashMap<>();
-    root.put("version", "1.1.0");
+    root.put("version", "2.0.0");
     root.put("alarmAlertDefinitions", buildAlarmDefs(rows, flowType));
 
     List<Map<String,Object>> flows;

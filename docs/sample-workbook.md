@@ -19,7 +19,7 @@ steps:
 Save the workbook as `sample.xlsx` in the project root and run:
 
 ```
-java -cp target/engage-rules-generator-1.1.0.jar \
+java -cp target/engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner export-json sample.xlsx sample.json
 ```
 
@@ -41,7 +41,7 @@ Then run the smoke check to confirm that dependencies and logging are wired
 correctly:
 
 ```
-java -cp target/engage-rules-generator-1.1.0.jar \
+java -cp target/engage-rules-generator-2.0.0.jar \
     com.example.exceljson.jobs.JobRunner fail
 ```
 

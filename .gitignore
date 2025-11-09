@@ -1,3 +1,67 @@
+# Build output
 target/
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Sample/test files
 sample.xlsx
 sample.json
+test-output/
+
+# Log files
+*.log
+logs/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IDE - Eclipse
+.project
+.classpath
+.settings/
+.metadata/
+bin/
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+
+# IDE - NetBeans
+nbproject/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib
+*.class
+
+# Package files (don't commit built installers to git)
+*.msi
+*.exe
+*.dmg
+*.pkg
+*.deb
+*.rpm
