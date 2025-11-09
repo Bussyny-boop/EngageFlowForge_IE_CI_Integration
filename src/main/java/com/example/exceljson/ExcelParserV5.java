@@ -1283,6 +1283,45 @@ public class ExcelParserV5 {
       interfaces.add(vcsIface);
     }
     
+    // NEW LOGIC: Check if Device-A has valid keyword but Device-B doesn't (and Device-B is not empty)
+    // In this case, we add default interfaces in addition to Device-A's interface
+    boolean deviceAHasValidKeyword = hasEdgeA || hasVcsA || hasVoceraA || hasXmppA;
+    boolean deviceBHasValidKeyword = hasEdgeB || hasVcsB || hasVoceraB || hasXmppB;
+    boolean deviceBIsNonEmpty = !isBlank(deviceB);
+    
+    if (deviceAHasValidKeyword && !deviceBHasValidKeyword && deviceBIsNonEmpty) {
+      // Add default checkbox interfaces that aren't already in the list
+      if (useDefaultEdge && !hasEdgeA && !hasEdgeB) {
+        Map<String, Object> edgeIface = new LinkedHashMap<>();
+        edgeIface.put("componentName", "OutgoingWCTP");
+        edgeIface.put("referenceName", edgeReferenceName);
+        interfaces.add(edgeIface);
+      }
+      
+      if (useDefaultXmpp && !hasXmppA && !hasXmppB) {
+        Map<String, Object> xmppIface = new LinkedHashMap<>();
+        xmppIface.put("componentName", "XMPP");
+        xmppIface.put("referenceName", xmppReferenceName);
+        interfaces.add(xmppIface);
+      }
+      
+      if (useDefaultVocera && !hasVoceraA && !hasVoceraB) {
+        Map<String, Object> voceraIface = new LinkedHashMap<>();
+        voceraIface.put("componentName", "Vocera");
+        voceraIface.put("referenceName", voceraReferenceName);
+        interfaces.add(voceraIface);
+      }
+      
+      if (useDefaultVmp && !hasVcsA && !hasVcsB) {
+        Map<String, Object> vcsIface = new LinkedHashMap<>();
+        vcsIface.put("componentName", "VMP");
+        vcsIface.put("referenceName", vcsReferenceName);
+        interfaces.add(vcsIface);
+      }
+      
+      return interfaces;
+    }
+    
     // If we found device-specific interfaces, return them
     if (!interfaces.isEmpty()) {
       return interfaces;

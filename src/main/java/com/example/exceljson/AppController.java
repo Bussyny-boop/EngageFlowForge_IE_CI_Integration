@@ -1109,7 +1109,7 @@ public class AppController {
         setupEditable(nurseSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(nursePriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupDeviceAColumn(nurseDeviceACol);
-        setupEditable(nurseDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
+        setupDeviceBColumn(nurseDeviceBCol);
         setupEditable(nurseRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(nurseResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(nurseBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
@@ -1136,7 +1136,7 @@ public class AppController {
         setupEditable(clinicalSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(clinicalPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupDeviceAColumn(clinicalDeviceACol);
-        setupEditable(clinicalDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
+        setupDeviceBColumn(clinicalDeviceBCol);
         setupEditable(clinicalRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(clinicalResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(clinicalBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
@@ -1164,7 +1164,7 @@ public class AppController {
         setupEditable(ordersSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(ordersPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
         setupDeviceAColumn(ordersDeviceACol);
-        setupEditable(ordersDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
+        setupDeviceBColumn(ordersDeviceBCol);
         setupEditable(ordersRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(ordersResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
         setupEditable(ordersBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
@@ -1282,6 +1282,83 @@ public class AppController {
         col.setOnEditCommit(ev -> {
             ExcelParserV5.FlowRow row = ev.getRowValue();
             row.deviceA = ev.getNewValue();
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
+    }
+    
+    /**
+     * Sets up an editable column for Device-B with validation highlighting.
+     * Cells that don't contain valid recipient keywords are highlighted with light orange.
+     * Blank cells are NOT highlighted.
+     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
+     */
+    private void setupDeviceBColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().deviceB)));
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
+            private final TextField textField = new TextField();
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Show empty string for null items
+                    String displayValue = (item == null) ? "" : item;
+                    setText(displayValue);
+                    setGraphic(null);
+                    
+                    // Apply light orange background if:
+                    // The cell is NOT blank AND no valid recipient keyword is found
+                    if (parser != null && !parser.hasValidRecipientKeyword(item)) {
+                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                String value = getItem();
+                textField.setText(value == null ? "" : value);
+                setText(null);
+                setGraphic(textField);
+                textField.selectAll();
+                textField.requestFocus();
+                
+                // Add Enter key handler to commit edit
+                textField.setOnAction(event -> {
+                    commitEdit(textField.getText());
+                });
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem());
+                setGraphic(null);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.FlowRow row = getTableRow().getItem();
+                if (row != null) {
+                    row.deviceB = newValue;
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        col.setEditable(true);
+        col.setOnEditCommit(ev -> {
+            ExcelParserV5.FlowRow row = ev.getRowValue();
+            row.deviceB = ev.getNewValue();
             if (col.getTableView() != null) col.getTableView().refresh();
         });
     }
