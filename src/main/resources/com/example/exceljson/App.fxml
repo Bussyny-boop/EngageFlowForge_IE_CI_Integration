@@ -192,50 +192,54 @@
                                     
                                     <Separator />
                                     
-                                    <!-- Adapter References -->
-                                    <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
-                                    <GridPane hgap="10" vgap="8">
-                                        <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                        <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                    <!-- Adapter References and Vocera Badges Alert Interface (Side by Side) -->
+                                    <HBox spacing="30" alignment="TOP_LEFT">
+                                        <!-- Left: Adapter References -->
+                                        <VBox spacing="8">
+                                            <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
+                                            <GridPane hgap="10" vgap="8">
+                                                <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                                
+                                                <Label text="VMP:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                
+                                                <Label text="Vocera:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                
+                                                <Label text="XMPP:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                                <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                            </GridPane>
+                                            <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" />
+                                        </VBox>
                                         
-                                        <Label text="VMP:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                        <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                        
-                                        <Label text="Vocera:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                        <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                        
-                                        <Label text="XMPP:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                        <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                    </GridPane>
-                                    
-                                    <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" />
-                                    
-                                    <Separator />
-                                    
-                                    <!-- Default Interfaces -->
-                                    <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
-                                    <VBox spacing="5">
-                                        <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
-                                            <tooltip>
-                                                <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
-                                            </tooltip>
-                                        </CheckBox>
-                                        <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
-                                            <tooltip>
-                                                <Tooltip text="Use VMP interface as default when Device A/B are blank" />
-                                            </tooltip>
-                                        </CheckBox>
-                                        <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
-                                            <tooltip>
-                                                <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
-                                            </tooltip>
-                                        </CheckBox>
-                                        <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
-                                            <tooltip>
-                                                <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
-                                            </tooltip>
-                                        </CheckBox>
-                                    </VBox>
+                                        <!-- Right: Vocera Badges Alert Interface -->
+                                        <VBox spacing="8">
+                                            <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
+                                            <VBox spacing="5">
+                                                <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
+                                                    <tooltip>
+                                                        <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
+                                                    </tooltip>
+                                                </CheckBox>
+                                                <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
+                                                    <tooltip>
+                                                        <Tooltip text="Use VMP interface as default when Device A/B are blank" />
+                                                    </tooltip>
+                                                </CheckBox>
+                                                <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                                                    <tooltip>
+                                                        <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
+                                                    </tooltip>
+                                                </CheckBox>
+                                                <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                                                    <tooltip>
+                                                        <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
+                                                    </tooltip>
+                                                </CheckBox>
+                                            </VBox>
+                                        </VBox>
+                                    </HBox>
                                     
                                     <Separator />
                                     
