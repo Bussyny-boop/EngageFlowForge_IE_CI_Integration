@@ -100,14 +100,12 @@
                             <!-- Separator between navigation and preview buttons -->
                             <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 8 0 8 0;" />
                             
-                            <!-- Preview Nursecall JSON -->
-                            <Button fx:id="generateNurseJsonButton" text="📋 Preview Nursecall" maxWidth="Infinity" styleClass="nav-button" />
-                            
-                            <!-- Preview Clinical JSON -->
-                            <Button fx:id="generateClinicalJsonButton" text="📋 Preview Clinical" maxWidth="Infinity" styleClass="nav-button" />
-                            
-                            <!-- Preview Orders JSON -->
-                            <Button fx:id="generateOrdersJsonButton" text="📋 Preview Orders" maxWidth="Infinity" styleClass="nav-button" />
+                            <!-- Preview JSON (Combined) -->
+                            <Button fx:id="generateJsonButton" text="📋 Preview JSON" maxWidth="Infinity" styleClass="nav-button">
+                                <tooltip>
+                                    <Tooltip text="Select this option to preview the JSON file for all selected rows in the dataset" />
+                                </tooltip>
+                            </Button>
                             
                             <!-- Separator between preview and export buttons -->
                             <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 8 0 8 0;" />
