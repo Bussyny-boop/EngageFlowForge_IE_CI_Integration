@@ -1108,7 +1108,7 @@ public class AppController {
         setupEditable(nurseAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(nurseSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(nursePriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
-        setupEditable(nurseDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupDeviceAColumn(nurseDeviceACol);
         setupEditable(nurseDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
         setupEditable(nurseRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(nurseResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
@@ -1135,7 +1135,7 @@ public class AppController {
         setupEditable(clinicalAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(clinicalSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(clinicalPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
-        setupEditable(clinicalDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupDeviceAColumn(clinicalDeviceACol);
         setupEditable(clinicalDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
         setupEditable(clinicalRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(clinicalResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
@@ -1163,7 +1163,7 @@ public class AppController {
         setupEditable(ordersAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(ordersSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
         setupEditable(ordersPriorityCol, f -> f.priorityRaw, (f, v) -> f.priorityRaw = v);
-        setupEditable(ordersDeviceACol, f -> f.deviceA, (f, v) -> f.deviceA = v);
+        setupDeviceAColumn(ordersDeviceACol);
         setupEditable(ordersDeviceBCol, f -> f.deviceB, (f, v) -> f.deviceB = v);
         setupEditable(ordersRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
         setupEditable(ordersResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
@@ -1207,6 +1207,78 @@ public class AppController {
         });
         col.setCellFactory(CheckBoxTableCell.forTableColumn(col));
         col.setEditable(true);
+    }
+    
+    /**
+     * Sets up an editable column for Device-A with validation highlighting.
+     * Cells that don't contain valid recipient keywords OR are blank are highlighted with light orange.
+     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, Custom unit, Group, Assigned, CS
+     */
+    private void setupDeviceAColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().deviceA)));
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
+            private final TextField textField = new TextField();
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Show empty string for null items
+                    String displayValue = (item == null) ? "" : item;
+                    setText(displayValue);
+                    setGraphic(null);
+                    
+                    // Apply light orange background if:
+                    // 1. The cell is blank/empty, OR
+                    // 2. No valid recipient keyword is found
+                    if (parser != null && !parser.hasValidRecipientKeyword(item)) {
+                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                String value = getItem();
+                textField.setText(value == null ? "" : value);
+                setText(null);
+                setGraphic(textField);
+                textField.selectAll();
+                textField.requestFocus();
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem());
+                setGraphic(null);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.FlowRow row = getTableRow().getItem();
+                if (row != null) {
+                    row.deviceA = newValue;
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        col.setEditable(true);
+        col.setOnEditCommit(ev -> {
+            ExcelParserV5.FlowRow row = ev.getRowValue();
+            row.deviceA = ev.getNewValue();
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
     }
     
     // ---------- Dynamic Custom Unit Columns ----------
