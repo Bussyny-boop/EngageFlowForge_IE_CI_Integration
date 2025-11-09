@@ -82,6 +82,7 @@ public class AppController {
     @FXML private ComboBox<String> customTabFlowTypeCombo;
     @FXML private Button addCustomTabButton;
     @FXML private ListView<String> customTabMappingsList;
+    @FXML private Label customTabStatsLabel;
 
     // ---------- Config Group Filters ----------
     @FXML private ComboBox<String> unitConfigGroupFilter;
@@ -657,13 +658,32 @@ public class AppController {
             // Hide progress and update status
             hideProgressBar();
             updateStatusLabel(); // Update status with filter counts
+            updateCustomTabStats(); // Update custom tab statistics
+            
+            // Build success message
+            StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
             
             int movedCount = parser.getEmdanMovedCount();
             if (movedCount > 0) {
-                showInfo("✅ Excel loaded successfully\nMoved " + movedCount + " EMDAN rows to Clinicals");
-            } else {
-                showInfo("✅ Excel loaded successfully");
+                successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
             }
+            
+            // Add custom tab information
+            Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
+            if (!customTabCounts.isEmpty()) {
+                int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
+                if (totalCustomRows > 0) {
+                    successMsg.append("\n\nCustom Tabs Processed:");
+                    for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
+                        String flowType = customTabMappings.get(entry.getKey());
+                        successMsg.append("\n  • ").append(entry.getKey())
+                                 .append(" → ").append(flowType)
+                                 .append(": ").append(entry.getValue()).append(" rows");
+                    }
+                }
+            }
+            
+            showInfo(successMsg.toString());
         } catch (Exception ex) {
             hideProgressBar();
             showError("Failed to load Excel: " + ex.getMessage());
@@ -1576,6 +1596,46 @@ public class AppController {
         applySidebarState();
         
         statusLabel.setText(isSidebarCollapsed ? "Sidebar collapsed" : "Sidebar expanded");
+    }
+    
+    // ---------- Update Custom Tab Stats ----------
+    private void updateCustomTabStats() {
+        if (customTabStatsLabel == null) return;
+        
+        if (parser == null) {
+            customTabStatsLabel.setText("");
+            return;
+        }
+        
+        Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
+        if (customTabCounts.isEmpty()) {
+            customTabStatsLabel.setText("");
+            return;
+        }
+        
+        int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
+        if (totalCustomRows == 0) {
+            customTabStatsLabel.setText("No rows found in custom tabs");
+            return;
+        }
+        
+        StringBuilder stats = new StringBuilder();
+        stats.append("Last load: ");
+        
+        int processedTabs = 0;
+        for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
+            if (entry.getValue() > 0) {
+                if (processedTabs > 0) stats.append(", ");
+                stats.append(entry.getKey()).append(" (").append(entry.getValue()).append(")");
+                processedTabs++;
+            }
+        }
+        
+        if (processedTabs == 0) {
+            stats.append("0 custom tab rows");
+        }
+        
+        customTabStatsLabel.setText(stats.toString());
     }
     
     private void applySidebarState() {

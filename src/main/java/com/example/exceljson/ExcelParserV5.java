@@ -68,6 +68,9 @@ public class ExcelParserV5 {
   
   private int emdanMovedCount = 0;
   
+  // Custom tab statistics
+  private final Map<String, Integer> customTabRowCounts = new LinkedHashMap<>();
+  
   // Default interface reference names (editable via GUI)
   private String edgeReferenceName = "OutgoingWCTP";
   private String vcsReferenceName = "VMP";
@@ -181,6 +184,14 @@ public class ExcelParserV5 {
   }
   
   /**
+   * Gets the custom tab row counts from the last load operation.
+   * Returns a map of tab name -> number of rows loaded from that custom tab.
+   */
+  public Map<String, Integer> getCustomTabRowCounts() {
+    return new LinkedHashMap<>(this.customTabRowCounts);
+  }
+  
+  /**
    * Normalizes flow type strings to standard values.
    */
   private String normalizeFlowType(String flowType) {
@@ -259,14 +270,32 @@ public class ExcelParserV5 {
       Sheet customSheet = findSheetCaseInsensitive(wb, tabName);
       if (customSheet == null) {
         // Tab doesn't exist in this workbook, skip silently
+        customTabRowCounts.put(tabName, 0);
         continue;
       }
+      
+      // Track row counts before parsing
+      int beforeNurse = nurseCalls.size();
+      int beforeClinical = clinicals.size();
+      int beforeOrders = orders.size();
       
       // Parse the custom tab based on its mapped flow type
       boolean isNurseSide = flowType.equals("NurseCalls");
       boolean isOrdersType = flowType.equals("Orders");
       
       parseFlowSheet(wb, tabName, isNurseSide, isOrdersType);
+      
+      // Calculate rows added from this custom tab
+      int rowsAdded = 0;
+      if (flowType.equals("NurseCalls")) {
+        rowsAdded = nurseCalls.size() - beforeNurse;
+      } else if (flowType.equals("Clinicals")) {
+        rowsAdded = clinicals.size() - beforeClinical;
+      } else if (flowType.equals("Orders")) {
+        rowsAdded = orders.size() - beforeOrders;
+      }
+      
+      customTabRowCounts.put(tabName, rowsAdded);
     }
   }
 
@@ -300,6 +329,7 @@ public class ExcelParserV5 {
     ordersGroupToUnits.clear();
     noCaregiverByFacilityAndGroup.clear();
     emdanMovedCount = 0;
+    customTabRowCounts.clear();
   }
 
   // ---------- Parse: Unit Breakdown ----------

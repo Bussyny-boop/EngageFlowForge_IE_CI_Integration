@@ -149,6 +149,46 @@
                                 
                                 <Separator />
                                 
+                                <!-- Custom Tab Mappings (MOVED UP) -->
+                                <Label text="Custom Tab Mappings" style="-fx-font-weight:bold;">
+                                    <tooltip>
+                                        <Tooltip text="Map custom Excel tab names to flow types (case-insensitive)" />
+                                    </tooltip>
+                                </Label>
+                                <GridPane hgap="10" vgap="8">
+                                    <Label text="Custom Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                        <tooltip>
+                                            <Tooltip text="Enter the exact name of a custom Excel tab (case-insensitive)" />
+                                        </tooltip>
+                                    </TextField>
+                                    
+                                    <Label text="Maps To:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                    <ComboBox fx:id="customTabFlowTypeCombo" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <tooltip>
+                                            <Tooltip text="Select which flow type this custom tab should map to" />
+                                        </tooltip>
+                                    </ComboBox>
+                                    
+                                    <Button fx:id="addCustomTabButton" text="Add Mapping" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="button-secondary" />
+                                </GridPane>
+                                
+                                <Label text="Current Mappings:" style="-fx-font-size: 11; -fx-text-fill: gray;" />
+                                <ListView fx:id="customTabMappingsList" prefHeight="80" styleClass="custom-tab-list">
+                                    <tooltip>
+                                        <Tooltip text="Current custom tab mappings. Double-click to remove." />
+                                    </tooltip>
+                                </ListView>
+                                
+                                <!-- Custom Tab Statistics -->
+                                <Label fx:id="customTabStatsLabel" text="" style="-fx-font-size: 10; -fx-text-fill: #666;" wrapText="true">
+                                    <tooltip>
+                                        <Tooltip text="Statistics about custom tabs processed from Excel" />
+                                    </tooltip>
+                                </Label>
+                                
+                                <Separator />
+                                
                                 <!-- Adapter References -->
                                 <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
                                 <GridPane hgap="10" vgap="8">
@@ -220,39 +260,6 @@
                                         </tooltip>
                                     </TextField>
                                 </GridPane>
-                                
-                                <Separator />
-                                
-                                <!-- Custom Tab Mappings -->
-                                <Label text="Custom Tab Mappings" style="-fx-font-weight:bold;">
-                                    <tooltip>
-                                        <Tooltip text="Map custom Excel tab names to flow types" />
-                                    </tooltip>
-                                </Label>
-                                <GridPane hgap="10" vgap="8">
-                                    <Label text="Custom Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                    <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                        <tooltip>
-                                            <Tooltip text="Enter the exact name of a custom Excel tab" />
-                                        </tooltip>
-                                    </TextField>
-                                    
-                                    <Label text="Flow Type:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                    <ComboBox fx:id="customTabFlowTypeCombo" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                        <tooltip>
-                                            <Tooltip text="Select the flow type for this custom tab" />
-                                        </tooltip>
-                                    </ComboBox>
-                                    
-                                    <Button fx:id="addCustomTabButton" text="Add Mapping" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="button-secondary" />
-                                </GridPane>
-                                
-                                <Label text="Current Mappings:" style="-fx-font-size: 11; -fx-text-fill: gray;" />
-                                <ListView fx:id="customTabMappingsList" prefHeight="80" styleClass="custom-tab-list">
-                                    <tooltip>
-                                        <Tooltip text="Current custom tab mappings. Double-click to remove." />
-                                    </tooltip>
-                                </ListView>
                                 
                                 <Separator />
                                 
