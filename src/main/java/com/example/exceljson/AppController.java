@@ -1117,15 +1117,15 @@ public class AppController {
         setupEditable(nurseTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
         setupEditable(nurseEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
         setupEditable(nurseT1Col, f -> f.t1, (f, v) -> f.t1 = v);
-        setupEditable(nurseR1Col, f -> f.r1, (f, v) -> f.r1 = v);
+        setupFirstRecipientColumn(nurseR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(nurseT2Col, f -> f.t2, (f, v) -> f.t2 = v);
-        setupEditable(nurseR2Col, f -> f.r2, (f, v) -> f.r2 = v);
+        setupOtherRecipientColumn(nurseR2Col, f -> f.r2, (f, v) -> f.r2 = v);
         setupEditable(nurseT3Col, f -> f.t3, (f, v) -> f.t3 = v);
-        setupEditable(nurseR3Col, f -> f.r3, (f, v) -> f.r3 = v);
+        setupOtherRecipientColumn(nurseR3Col, f -> f.r3, (f, v) -> f.r3 = v);
         setupEditable(nurseT4Col, f -> f.t4, (f, v) -> f.t4 = v);
-        setupEditable(nurseR4Col, f -> f.r4, (f, v) -> f.r4 = v);
+        setupOtherRecipientColumn(nurseR4Col, f -> f.r4, (f, v) -> f.r4 = v);
         setupEditable(nurseT5Col, f -> f.t5, (f, v) -> f.t5 = v);
-        setupEditable(nurseR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+        setupOtherRecipientColumn(nurseR5Col, f -> f.r5, (f, v) -> f.r5 = v);
     }
 
     private void initializeClinicalColumns() {
@@ -1145,15 +1145,15 @@ public class AppController {
         setupEditable(clinicalEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
         setupEditable(clinicalEmdanCol, f -> safe(f.emdan), (f, v) -> f.emdan = safe(v));
         setupEditable(clinicalT1Col, f -> f.t1, (f, v) -> f.t1 = v);
-        setupEditable(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
+        setupFirstRecipientColumn(clinicalR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(clinicalT2Col, f -> f.t2, (f, v) -> f.t2 = v);
-        setupEditable(clinicalR2Col, f -> f.r2, (f, v) -> f.r2 = v);
+        setupOtherRecipientColumn(clinicalR2Col, f -> f.r2, (f, v) -> f.r2 = v);
         setupEditable(clinicalT3Col, f -> f.t3, (f, v) -> f.t3 = v);
-        setupEditable(clinicalR3Col, f -> f.r3, (f, v) -> f.r3 = v);
+        setupOtherRecipientColumn(clinicalR3Col, f -> f.r3, (f, v) -> f.r3 = v);
         setupEditable(clinicalT4Col, f -> f.t4, (f, v) -> f.t4 = v);
-        setupEditable(clinicalR4Col, f -> f.r4, (f, v) -> f.r4 = v);
+        setupOtherRecipientColumn(clinicalR4Col, f -> f.r4, (f, v) -> f.r4 = v);
         setupEditable(clinicalT5Col, f -> f.t5, (f, v) -> f.t5 = v);
-        setupEditable(clinicalR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+        setupOtherRecipientColumn(clinicalR5Col, f -> f.r5, (f, v) -> f.r5 = v);
     }
 
     private void initializeOrdersColumns() {
@@ -1172,15 +1172,15 @@ public class AppController {
         setupEditable(ordersTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
         setupEditable(ordersEnunciateCol, f -> safe(f.enunciate), (f, v) -> f.enunciate = safe(v));
         setupEditable(ordersT1Col, f -> f.t1, (f, v) -> f.t1 = v);
-        setupEditable(ordersR1Col, f -> f.r1, (f, v) -> f.r1 = v);
+        setupFirstRecipientColumn(ordersR1Col, f -> f.r1, (f, v) -> f.r1 = v);
         setupEditable(ordersT2Col, f -> f.t2, (f, v) -> f.t2 = v);
-        setupEditable(ordersR2Col, f -> f.r2, (f, v) -> f.r2 = v);
+        setupOtherRecipientColumn(ordersR2Col, f -> f.r2, (f, v) -> f.r2 = v);
         setupEditable(ordersT3Col, f -> f.t3, (f, v) -> f.t3 = v);
-        setupEditable(ordersR3Col, f -> f.r3, (f, v) -> f.r3 = v);
+        setupOtherRecipientColumn(ordersR3Col, f -> f.r3, (f, v) -> f.r3 = v);
         setupEditable(ordersT4Col, f -> f.t4, (f, v) -> f.t4 = v);
-        setupEditable(ordersR4Col, f -> f.r4, (f, v) -> f.r4 = v);
+        setupOtherRecipientColumn(ordersR4Col, f -> f.r4, (f, v) -> f.r4 = v);
         setupEditable(ordersT5Col, f -> f.t5, (f, v) -> f.t5 = v);
-        setupEditable(ordersR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+        setupOtherRecipientColumn(ordersR5Col, f -> f.r5, (f, v) -> f.r5 = v);
     }
 
     private <R> void setupEditable(TableColumn<R, String> col, Function<R, String> getter, BiConsumer<R, String> setter) {
@@ -1282,6 +1282,168 @@ public class AppController {
         col.setOnEditCommit(ev -> {
             ExcelParserV5.FlowRow row = ev.getRowValue();
             row.deviceA = ev.getNewValue();
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
+    }
+    
+    /**
+     * Sets up an editable column for the 1st recipient (R1) with validation highlighting.
+     * Cells are highlighted with light orange when:
+     * - The cell is blank/empty, OR
+     * - No valid recipient keywords are found
+     * 
+     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
+     */
+    private void setupFirstRecipientColumn(TableColumn<ExcelParserV5.FlowRow, String> col, 
+                                           Function<ExcelParserV5.FlowRow, String> getter, 
+                                           BiConsumer<ExcelParserV5.FlowRow, String> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
+            private final TextField textField = new TextField();
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Show empty string for null items
+                    String displayValue = (item == null) ? "" : item;
+                    setText(displayValue);
+                    setGraphic(null);
+                    
+                    // Apply light orange background if:
+                    // The cell is blank OR no valid recipient keyword is found
+                    if (parser != null && !parser.isValidFirstRecipient(item)) {
+                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                String value = getItem();
+                textField.setText(value == null ? "" : value);
+                setText(null);
+                setGraphic(textField);
+                textField.selectAll();
+                textField.requestFocus();
+                
+                // Add Enter key handler to commit edit
+                textField.setOnAction(event -> {
+                    commitEdit(textField.getText());
+                });
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem() == null ? "" : getItem());
+                setGraphic(null);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.FlowRow row = getTableRow().getItem();
+                if (row != null) {
+                    setter.accept(row, newValue);
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        col.setEditable(true);
+        col.setOnEditCommit(ev -> {
+            ExcelParserV5.FlowRow row = ev.getRowValue();
+            setter.accept(row, ev.getNewValue());
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
+    }
+    
+    /**
+     * Sets up an editable column for recipients 2-5 (R2-R5) with validation highlighting.
+     * Cells are highlighted with light orange when:
+     * - No valid recipient keywords are found
+     * 
+     * Blank/empty cells are NOT highlighted for R2-R5.
+     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
+     */
+    private void setupOtherRecipientColumn(TableColumn<ExcelParserV5.FlowRow, String> col, 
+                                           Function<ExcelParserV5.FlowRow, String> getter, 
+                                           BiConsumer<ExcelParserV5.FlowRow, String> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
+            private final TextField textField = new TextField();
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Show empty string for null items
+                    String displayValue = (item == null) ? "" : item;
+                    setText(displayValue);
+                    setGraphic(null);
+                    
+                    // Apply light orange background if:
+                    // The cell is NOT blank AND no valid recipient keyword is found
+                    if (parser != null && !parser.isValidOtherRecipient(item)) {
+                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                String value = getItem();
+                textField.setText(value == null ? "" : value);
+                setText(null);
+                setGraphic(textField);
+                textField.selectAll();
+                textField.requestFocus();
+                
+                // Add Enter key handler to commit edit
+                textField.setOnAction(event -> {
+                    commitEdit(textField.getText());
+                });
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                setText(getItem() == null ? "" : getItem());
+                setGraphic(null);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.FlowRow row = getTableRow().getItem();
+                if (row != null) {
+                    setter.accept(row, newValue);
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        col.setEditable(true);
+        col.setOnEditCommit(ev -> {
+            ExcelParserV5.FlowRow row = ev.getRowValue();
+            setter.accept(row, ev.getNewValue());
             if (col.getTableView() != null) col.getTableView().refresh();
         });
     }

@@ -1378,6 +1378,48 @@ public class ExcelParserV5 {
   }
 
   /**
+   * Validates the 1st recipient field (R1).
+   * Returns false (should be highlighted) when:
+   * - The cell is blank/empty, OR
+   * - No valid recipient keywords are found
+   * 
+   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
+   * Invalid keywords that trigger highlighting: Custom unit, Group, Assigned, CS, or any text without valid keywords
+   */
+  public boolean isValidFirstRecipient(String recipientText) {
+    // Empty/blank cells should be highlighted for R1
+    if (isBlank(recipientText)) return false;
+    
+    // Check if it contains any valid keyword
+    String lower = recipientText.toLowerCase(Locale.ROOT);
+    return lower.contains("vcs") || 
+           lower.contains("edge") || 
+           lower.contains("xmpp") || 
+           lower.contains("vocera");
+  }
+
+  /**
+   * Validates recipient fields R2-R5 (2nd through 5th recipients).
+   * Returns false (should be highlighted) when:
+   * - No valid recipient keywords are found
+   * 
+   * Blank/empty cells are considered valid (not highlighted) for R2-R5.
+   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
+   * Invalid keywords that trigger highlighting: Custom unit, Group, Assigned, CS, or any text without valid keywords
+   */
+  public boolean isValidOtherRecipient(String recipientText) {
+    // Empty/blank cells are valid (not highlighted) for R2-R5
+    if (isBlank(recipientText)) return true;
+    
+    // Check if it contains any valid keyword
+    String lower = recipientText.toLowerCase(Locale.ROOT);
+    return lower.contains("vcs") || 
+           lower.contains("edge") || 
+           lower.contains("xmpp") || 
+           lower.contains("vocera");
+  }
+
+  /**
    * Determines if default interfaces should be applied based on device values.
    * Defaults apply when:
    * 1. Both devices are blank/empty, OR
