@@ -1383,7 +1383,7 @@ public class ExcelParserV5 {
    * - The cell is blank/empty, OR
    * - No valid recipient keywords are found
    * 
-   * Valid keywords (case-insensitive): Custom unit, Group, Assigned, CS
+   * Valid keywords (case-insensitive): Custom unit, Group, Assign, CS
    * Cells without these keywords will be highlighted
    */
   public boolean isValidFirstRecipient(String recipientText) {
@@ -1394,7 +1394,7 @@ public class ExcelParserV5 {
     String lower = recipientText.toLowerCase(Locale.ROOT);
     return lower.contains("custom unit") || 
            lower.contains("group") || 
-           lower.contains("assigned") || 
+           lower.contains("assign") || 
            lower.matches(".*\\bcs\\b.*");  // Match CS as whole word only
   }
 
@@ -1404,7 +1404,7 @@ public class ExcelParserV5 {
    * - No valid recipient keywords are found
    * 
    * Blank/empty cells are considered valid (not highlighted) for R2-R5.
-   * Valid keywords (case-insensitive): Custom unit, Group, Assigned, CS
+   * Valid keywords (case-insensitive): Custom unit, Group, Assign, CS
    * Cells without these keywords will be highlighted
    */
   public boolean isValidOtherRecipient(String recipientText) {
@@ -1415,7 +1415,7 @@ public class ExcelParserV5 {
     String lower = recipientText.toLowerCase(Locale.ROOT);
     return lower.contains("custom unit") || 
            lower.contains("group") || 
-           lower.contains("assigned") || 
+           lower.contains("assign") || 
            lower.matches(".*\\bcs\\b.*");  // Match CS as whole word only
   }
 

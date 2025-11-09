@@ -9,7 +9,7 @@ This feature implements light orange cell highlighting for recipient columns (R1
 Cells containing ANY of these keywords will **NOT** be highlighted:
 - **Custom unit**
 - **Group**
-- **Assigned**
+- **Assign** (matches both "Assign" and "Assigned")
 - **CS** (matched as whole word to avoid false positives like "VCS")
 
 ### Invalid Keywords/Text - WILL HIGHLIGHT
@@ -25,7 +25,7 @@ Cells containing text WITHOUT the valid keywords above will be highlighted:
 ### R1 (1st Recipients)
 **Highlighted (Light Orange) when:**
 - Cell is empty/blank, OR
-- No valid keywords found (Custom unit, Group, Assigned, CS)
+- No valid keywords found (Custom unit, Group, Assign, CS)
 
 **Examples:**
 | Cell Value | Highlighted? | Reason |
@@ -39,12 +39,13 @@ Cells containing text WITHOUT the valid keywords above will be highlighted:
 | "Custom unit" | ❌ No | Valid keyword present |
 | "Group" | ❌ No | Valid keyword present |
 | "Assigned" | ❌ No | Valid keyword present |
+| "Assign" | ❌ No | Valid keyword present |
 | "CS" | ❌ No | Valid keyword present |
 | "VCS using Group" | ❌ No | Contains valid keyword (Group) |
 
 ### R2-R5 (2nd-5th Recipients)
 **Highlighted (Light Orange) when:**
-- No valid keywords found (Custom unit, Group, Assigned, CS)
+- No valid keywords found (Custom unit, Group, Assign, CS)
 
 **NOT highlighted when:**
 - Cell is empty/blank
@@ -61,6 +62,7 @@ Cells containing text WITHOUT the valid keywords above will be highlighted:
 | "Custom unit" | ❌ No | Valid keyword present |
 | "Group" | ❌ No | Valid keyword present |
 | "Assigned" | ❌ No | Valid keyword present |
+| "Assign" | ❌ No | Valid keyword present |
 | "CS" | ❌ No | Valid keyword present |
 | "VCS using Group" | ❌ No | Contains valid keyword (Group) |
 
@@ -101,7 +103,7 @@ This is a subtle, non-intrusive color that indicates the cell needs attention.
 ```java
 return lower.contains("custom unit") || 
        lower.contains("group") || 
-       lower.contains("assigned") || 
+       lower.contains("assign") ||  // Matches both "Assign" and "Assigned"
        lower.matches(".*\\bcs\\b.*");  // CS as whole word
 ```
 

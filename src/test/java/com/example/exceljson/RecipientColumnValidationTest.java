@@ -60,6 +60,14 @@ class RecipientColumnValidationTest {
     }
 
     @Test
+    void testR1_ValidKeyword_Assign() {
+        assertTrue(parser.isValidFirstRecipient("Assign"));
+        assertTrue(parser.isValidFirstRecipient("assign"));
+        assertTrue(parser.isValidFirstRecipient("ASSIGN"));
+        assertTrue(parser.isValidFirstRecipient("Assign to nurse"));
+    }
+
+    @Test
     void testR1_ValidKeyword_CS() {
         assertTrue(parser.isValidFirstRecipient("CS"));
         assertTrue(parser.isValidFirstRecipient("cs"));
@@ -162,6 +170,14 @@ class RecipientColumnValidationTest {
     }
 
     @Test
+    void testR2_R5_ValidKeyword_Assign() {
+        assertTrue(parser.isValidOtherRecipient("Assign"));
+        assertTrue(parser.isValidOtherRecipient("assign"));
+        assertTrue(parser.isValidOtherRecipient("ASSIGN"));
+        assertTrue(parser.isValidOtherRecipient("Assign to nurse"));
+    }
+
+    @Test
     void testR2_R5_ValidKeyword_CS() {
         assertTrue(parser.isValidOtherRecipient("CS"));
         assertTrue(parser.isValidOtherRecipient("cs"));
@@ -258,7 +274,7 @@ class RecipientColumnValidationTest {
     @Test
     void testBothAcceptValidKeywords() {
         // Both R1 and R2-R5 should accept valid keywords
-        String[] validTexts = {"Custom unit", "Group", "Assigned", "CS", "Using Group"};
+        String[] validTexts = {"Custom unit", "Group", "Assigned", "Assign", "CS", "Using Group"};
         
         for (String text : validTexts) {
             assertTrue(parser.isValidFirstRecipient(text), 
