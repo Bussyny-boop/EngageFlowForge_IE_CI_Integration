@@ -23,12 +23,18 @@ This feature adds three mutually exclusive merge logic options to control how de
 
 #### 3. Merge Within Config Group - NEW
 - **Behavior**: Combines flows with identical delivery parameters ONLY within the same Config Group
-- **Merge Criteria**: Priority, Device, Ringtone, Recipients, Timing, Units, No Caregiver Group, AND Config Group
+- **Merge Criteria**: Priority, Device, Ringtone, Recipients, Timing, No Caregiver Group, AND Config Group
+  - **Note**: Units are NOT part of the merge criteria - flows will merge regardless of unit differences
+  - When flows merge, their units are combined into a single list
 - **Use Case**: When you want to keep Config Groups separate but merge within each group
 - **Example**:
   - ICU_Group: Code Blue, Rapid Response (identical params)
   - ER_Group: Trauma Alert, Stroke Alert (identical params to ICU but different group)
   - Result: **2 separate flows** (one for ICU_Group, one for ER_Group)
+- **Unit Combination Example**:
+  - Toilet Finished: Units 1-4, Normal priority, PCT/NA → Nurse
+  - Nurse: Units 1-6, Normal priority, PCT/NA → Nurse
+  - Result: **1 merged flow** with Units 1-6 combined
 
 ## UI Location
 **Settings Panel → Merge Logic Section**
