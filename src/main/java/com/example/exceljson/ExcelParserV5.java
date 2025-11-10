@@ -1065,26 +1065,36 @@ public class ExcelParserV5 {
     key.append("t5=").append(nvl(r.t5, "")).append("|");
     key.append("r5=").append(nvl(r.r5, "")).append("|");
     
-    // Add units to the key (both MERGE_ALL and MERGE_BY_CONFIG_GROUP include units)
-    String unitsKey = unitRefs.stream()
-      .map(u -> u.get("facilityName") + ":" + u.get("name"))
-      .sorted()
-      .collect(Collectors.joining(","));
-    key.append("units=").append(unitsKey).append("|");
-    
-    // Add No Caregiver Group to the key
-    // Use the No Caregiver Group from each unit reference
-    String noCareKey = unitRefs.stream()
-      .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
-      .sorted()
-      .collect(Collectors.joining(","));
-    key.append("noCareGroup=").append(noCareKey).append("|");
-    
     // Only include configGroup in the key if we're in MERGE_BY_CONFIG_GROUP mode
-    // MERGE_BY_CONFIG_GROUP uses the exact same logic as MERGE_ALL, but also includes configGroup
-    // This ensures flows only merge if they have the same config group AND same units/parameters
     if (mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
-      key.append("configGroup=").append(nvl(r.configGroup, ""));
+      key.append("configGroup=").append(nvl(r.configGroup, "")).append("|");
+      // When merging by config group, don't include units in the merge key
+      // This allows flows with the same delivery parameters but different units to merge
+      // Units will be combined from all flows in the merge group
+      
+      // Add No Caregiver Group to the key for MERGE_BY_CONFIG_GROUP mode
+      // Flows must have the same No Caregiver Group to merge
+      String noCareKey = unitRefs.stream()
+        .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("noCareGroup=").append(noCareKey);
+    } else {
+      // For MERGE_ALL and NONE modes, include units in the key
+      // Add units to the key
+      String unitsKey = unitRefs.stream()
+        .map(u -> u.get("facilityName") + ":" + u.get("name"))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("units=").append(unitsKey).append("|");
+      
+      // Add No Caregiver Group to the key
+      // Use the No Caregiver Group from each unit reference
+      String noCareKey = unitRefs.stream()
+        .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("noCareGroup=").append(noCareKey);
     }
 
     return key.toString();
