@@ -23,18 +23,18 @@ This feature adds three mutually exclusive merge logic options to control how de
 
 #### 3. Merge Within Config Group - NEW
 - **Behavior**: Combines flows with identical delivery parameters ONLY within the same Config Group
-- **Merge Criteria**: Priority, Device, Ringtone, Recipients, Timing, No Caregiver Group, AND Config Group
-  - **Note**: Units are NOT part of the merge criteria - flows will merge regardless of unit differences
-  - When flows merge, their units are combined into a single list
+- **Merge Criteria**: Uses the EXACT same criteria as "Merge All" (Priority, Device, Ringtone, Recipients, Timing, Units, No Caregiver Group), PLUS Config Group must also match
+  - **Important**: Units ARE part of the merge criteria - flows will only merge if they have identical units AND identical config groups
+  - This ensures predictable merging behavior identical to "Merge All" but restricted to the same config group
 - **Use Case**: When you want to keep Config Groups separate but merge within each group
 - **Example**:
-  - ICU_Group: Code Blue, Rapid Response (identical params)
-  - ER_Group: Trauma Alert, Stroke Alert (identical params to ICU but different group)
-  - Result: **2 separate flows** (one for ICU_Group, one for ER_Group)
-- **Unit Combination Example**:
-  - Toilet Finished: Units 1-4, Normal priority, PCT/NA → Nurse
-  - Nurse: Units 1-6, Normal priority, PCT/NA → Nurse
-  - Result: **1 merged flow** with Units 1-6 combined
+  - ICU_Group: Code Blue (Units 1-2), Rapid Response (Units 1-2) - identical params
+  - ER_Group: Trauma Alert (Units 3-4), Stroke Alert (Units 3-4) - identical params to ICU but different group
+  - Result: **2 separate flows** (one for ICU_Group covering Units 1-2, one for ER_Group covering Units 3-4)
+- **Same Config Group, Same Units Example**:
+  - Config Group A: Toilet Finished (Units 1-4), Normal priority, PCT/NA → Nurse
+  - Config Group A: Nurse Call (Units 1-4), Normal priority, PCT/NA → Nurse  
+  - Result: **1 merged flow** with both alarms (because same config group, same units, same delivery params)
 
 ## UI Location
 **Settings Panel → Merge Logic Section**
