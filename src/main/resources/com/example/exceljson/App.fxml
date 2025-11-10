@@ -143,10 +143,28 @@
                                         style="-fx-background-color: transparent; -fx-background: transparent;"
                                         VBox.vgrow="ALWAYS">
                                 <VBox spacing="10" style="-fx-padding: 15;">
-                                    <!-- Merge Flows Option -->
-                                    <CheckBox fx:id="mergeFlowsCheckbox" text="Merge Identical Flow" selected="true">
+                                    <!-- Merge Logic Options (Mutually Exclusive) -->
+                                    <Label text="Merge Logic" style="-fx-font-weight:bold;">
                                         <tooltip>
-                                            <Tooltip text="Combine flows with identical Priority, Device, Ringtone, Recipients, and Timing" />
+                                            <Tooltip text="Choose how to merge flows with identical delivery parameters. Only one option can be selected at a time." />
+                                        </tooltip>
+                                    </Label>
+                                    
+                                    <CheckBox fx:id="noMergeCheckbox" text="Standard (No Merge)" selected="true">
+                                        <tooltip>
+                                            <Tooltip text="Standard Mode: Each alarm/alert gets its own separate delivery flow. This is the default behavior and creates the most granular output." />
+                                        </tooltip>
+                                    </CheckBox>
+                                    
+                                    <CheckBox fx:id="mergeFlowsCheckbox" text="Merge All (Ignore Config Group)">
+                                        <tooltip>
+                                            <Tooltip text="Merge All: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across ALL Config Groups. Multiple alarms will share the same delivery flow if their delivery parameters match, even if they're in different Config Groups." />
+                                        </tooltip>
+                                    </CheckBox>
+                                    
+                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Within Config Group">
+                                        <tooltip>
+                                            <Tooltip text="Merge Within Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
                                         </tooltip>
                                     </CheckBox>
                                     
