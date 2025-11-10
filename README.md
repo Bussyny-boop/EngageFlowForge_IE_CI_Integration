@@ -15,11 +15,18 @@
 
 ### Download & Run
 
-#### Option 1: Download Pre-built MSI Installer (Windows)
+#### Option 1: Download Pre-built Installer
+**Windows:**
 1. Go to the [Actions](../../actions) tab
 2. Find the latest successful build
 3. Download `engage-rules-generator-msi` artifact
 4. Extract and run `EngageFlowForge-2.0.msi`
+
+**macOS:**
+1. Go to the [Actions](../../actions) tab
+2. Find the latest successful build
+3. Download `engage-rules-generator-dmg` artifact
+4. Extract and run `EngageFlowForge-2.0.dmg`
 
 #### Option 2: Run JAR File
 ```bash
