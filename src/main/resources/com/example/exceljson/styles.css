@@ -376,9 +376,15 @@
     -fx-background-color: -fx-light-gray;
     -fx-border-color: -fx-primary-orange;
     -fx-border-width: 0 2 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 3, 0, 1, 0);
 }
 
 /* Ensure sticky column stays on top during scrolling */
 .table-view .sticky-column {
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 3, 0, 1, 0);
+}
+
+/* Make cells in sticky columns have higher visual priority */
+.table-row-cell .sticky-column {
+    -fx-background-color: -fx-light-gray;
 }
