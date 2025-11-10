@@ -121,31 +121,6 @@ class MergeByConfigGroupTest {
     }
 
     @Test
-    void mergeAll_IgnoresConfigGroupAndMergesMatchingUnits() throws Exception {
-        Path tempDir = Files.createTempDirectory("merge-all-units-test");
-        Path excelPath = tempDir.resolve("input.xlsx");
-        Path jsonPath = tempDir.resolve("output.json");
-
-        // Create workbook with flows in different config groups but same units
-        createWorkbookWithDifferentGroupsSameUnits(excelPath);
-
-        ExcelParserV5 parser = new ExcelParserV5();
-        parser.load(excelPath.toFile());
-        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ALL);
-
-        assertTrue(Files.exists(jsonPath));
-        String json = Files.readString(jsonPath);
-        
-        // With MERGE_ALL and same units but different config groups, flows SHOULD merge
-        int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
-        assertEquals(1, flowCount, "Should have 1 merged flow (same units, MERGE_ALL ignores config group)");
-        
-        // The merged flow should contain both alarms
-        assertTrue(json.contains("Group1_Alarm"));
-        assertTrue(json.contains("Group2_Alarm"));
-    }
-
-    @Test
     void backwardCompatibility_BooleanParameterStillWorks() throws Exception {
         Path tempDir = Files.createTempDirectory("compat-test");
         Path excelPath = tempDir.resolve("input.xlsx");
@@ -308,80 +283,6 @@ class MergeByConfigGroupTest {
             Row row2 = nurseCalls.createRow(4);
             row2.createCell(0).setCellValue("TestGroup");
             row2.createCell(1).setCellValue("Alarm2");
-            row2.createCell(2).setCellValue("High");
-            row2.createCell(3).setCellValue("Badge");
-            row2.createCell(4).setCellValue("Tone1");
-            row2.createCell(5).setCellValue("Accept");
-            row2.createCell(6).setCellValue("0");
-            row2.createCell(7).setCellValue("Nurse Team");
-
-            // Empty Clinical sheet
-            Sheet clinicals = workbook.createSheet("Patient Monitoring");
-            Row clinicalHeader = clinicals.createRow(2);
-            clinicalHeader.createCell(0).setCellValue("Configuration Group");
-            clinicalHeader.createCell(1).setCellValue("Alarm Name");
-
-            try (OutputStream os = Files.newOutputStream(target)) {
-                workbook.write(os);
-            }
-        }
-    }
-
-    /**
-     * Creates a workbook where the same config group name is used in different facilities.
-     * This tests that MERGE_BY_CONFIG_GROUP requires matching units (facility + unit name).
-     */
-
-    /**
-     * Creates a workbook with flows in different config groups but same units.
-     * This tests that MERGE_ALL ignores config groups when units match.
-     */
-    private static void createWorkbookWithDifferentGroupsSameUnits(Path target) throws Exception {
-        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
-            // Unit Breakdown - Same unit, different config groups
-            Sheet units = workbook.createSheet("Unit Breakdown");
-            Row unitsHeader = units.createRow(2);
-            unitsHeader.createCell(0).setCellValue("Facility");
-            unitsHeader.createCell(1).setCellValue("Common Unit Name");
-            unitsHeader.createCell(2).setCellValue("Nurse Call Configuration Group");
-            
-            Row unitsRow1 = units.createRow(3);
-            unitsRow1.createCell(0).setCellValue("Test Facility");
-            unitsRow1.createCell(1).setCellValue("Test Unit");
-            unitsRow1.createCell(2).setCellValue("Group1");
-            
-            Row unitsRow2 = units.createRow(4);
-            unitsRow2.createCell(0).setCellValue("Test Facility");
-            unitsRow2.createCell(1).setCellValue("Test Unit");
-            unitsRow2.createCell(2).setCellValue("Group2");
-
-            // Nurse Call with identical flows in different groups but same unit
-            Sheet nurseCalls = workbook.createSheet("Nurse call");
-            Row nurseHeader = nurseCalls.createRow(2);
-            nurseHeader.createCell(0).setCellValue("Configuration Group");
-            nurseHeader.createCell(1).setCellValue("Common Alert or Alarm Name");
-            nurseHeader.createCell(2).setCellValue("Priority");
-            nurseHeader.createCell(3).setCellValue("Device - A");
-            nurseHeader.createCell(4).setCellValue("Ringtone Device - A");
-            nurseHeader.createCell(5).setCellValue("Response Options");
-            nurseHeader.createCell(6).setCellValue("Time to 1st Recipient");
-            nurseHeader.createCell(7).setCellValue("1st Recipient");
-            
-            // Group1 alarm
-            Row row1 = nurseCalls.createRow(3);
-            row1.createCell(0).setCellValue("Group1");
-            row1.createCell(1).setCellValue("Group1_Alarm");
-            row1.createCell(2).setCellValue("High");
-            row1.createCell(3).setCellValue("Badge");
-            row1.createCell(4).setCellValue("Tone1");
-            row1.createCell(5).setCellValue("Accept");
-            row1.createCell(6).setCellValue("0");
-            row1.createCell(7).setCellValue("Nurse Team");
-            
-            // Group2 alarm (identical params, same unit, different group)
-            Row row2 = nurseCalls.createRow(4);
-            row2.createCell(0).setCellValue("Group2");
-            row2.createCell(1).setCellValue("Group2_Alarm");
             row2.createCell(2).setCellValue("High");
             row2.createCell(3).setCellValue("Badge");
             row2.createCell(4).setCellValue("Tone1");

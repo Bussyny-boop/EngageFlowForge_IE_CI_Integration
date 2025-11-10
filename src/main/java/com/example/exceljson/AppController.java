@@ -2289,136 +2289,93 @@ public class AppController {
     }
     
     /**
-     * Makes the "In Scope" column frozen (always visible) when scrolling horizontally.
-     * This implementation hooks into the TableView's horizontal scrollbar and translates
-     * the first column to compensate for scrolling, creating a "frozen" effect.
+     * Makes a table column "sticky" (frozen) by preventing it from being reordered
+     * and keeping it visible during horizontal scrolling.
+     * This implementation uses CSS transforms to keep the column fixed in place.
      */
     private <T> void makeStickyColumn(TableView<T> table, TableColumn<T, ?> column) {
         if (table == null || column == null) return;
         
-        // Prevent the column from being reordered
+        // Prevent the column from being moved
         column.setReorderable(false);
         
-        // Set a fixed width for consistency
-        column.setMinWidth(100);
-        column.setPrefWidth(100);
-        column.setMaxWidth(100);
-        column.setResizable(false);
-        
-        // Add a style class for visual distinction
+        // Add a style class to visually indicate the sticky column
         column.getStyleClass().add("sticky-column");
         
-        // Ensure the column is first in the column order
-        javafx.application.Platform.runLater(() -> {
-            if (table.getColumns().contains(column)) {
-                table.getColumns().remove(column);
-                table.getColumns().add(0, column);
+        // Make the column frozen during horizontal scrolling
+        // We need to wait for the table to be fully rendered before accessing the scroll bar
+        table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (newSkin != null) {
+                freezeColumn(table, column);
             }
-            
-            // Apply the freeze effect by compensating for horizontal scrolling
-            freezeColumnWithScrollCompensation(table, column);
         });
-    }
-    
-    /**
-     * Implements column freezing by detecting horizontal scroll and translating the column cells.
-     */
-    private <T> void freezeColumnWithScrollCompensation(TableView<T> table, TableColumn<T, ?> column) {
-        // Wait for the table's skin to be initialized
-        if (table.getSkin() == null) {
-            table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-                if (newSkin != null) {
-                    applyScrollCompensation(table, column);
-                }
-            });
-        } else {
-            applyScrollCompensation(table, column);
+        
+        // If skin already exists, apply freezing immediately
+        if (table.getSkin() != null) {
+            freezeColumn(table, column);
         }
     }
     
     /**
-     * Applies the actual scroll compensation by finding the horizontal scrollbar
-     * and adjusting column cell positions.
+     * Applies the freeze effect to a column by listening to horizontal scroll events
+     * and translating the column to compensate for scrolling.
      */
-    private <T> void applyScrollCompensation(TableView<T> table, TableColumn<T, ?> column) {
+    private <T> void freezeColumn(TableView<T> table, TableColumn<T, ?> column) {
+        // Wait for the table to be fully rendered before accessing scroll bar
         javafx.application.Platform.runLater(() -> {
-            // Find the horizontal scrollbar in the table
-            java.util.Set<javafx.scene.Node> scrollBars = table.lookupAll(".scroll-bar");
-            for (javafx.scene.Node node : scrollBars) {
+            // Find the horizontal scroll bar
+            javafx.scene.control.ScrollBar horizontalScrollBar = null;
+            for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
                 if (node instanceof javafx.scene.control.ScrollBar) {
-                    javafx.scene.control.ScrollBar scrollBar = (javafx.scene.control.ScrollBar) node;
-                    if (scrollBar.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
-                        // Listen to scroll events
-                        scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
-                            compensateColumnPosition(table, column, scrollBar);
-                        });
+                    javafx.scene.control.ScrollBar sb = (javafx.scene.control.ScrollBar) node;
+                    if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
+                        horizontalScrollBar = sb;
                         break;
                     }
                 }
             }
-        });
-    }
-    
-    /**
-     * Compensates the column position based on scroll offset.
-     */
-    private <T> void compensateColumnPosition(TableView<T> table, TableColumn<T, ?> column, javafx.scene.control.ScrollBar scrollBar) {
-        javafx.application.Platform.runLater(() -> {
-            // Calculate scroll offset
-            double scrollValue = scrollBar.getValue();
-            double scrollRange = scrollBar.getMax() - scrollBar.getMin();
-            double scrollOffset = scrollValue * scrollRange;
             
-            // Find and translate column header
-            java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
-            for (javafx.scene.Node header : headers) {
-                // Match the header to our column by checking if it contains our column's label
-                if (isHeaderForColumn(header, column)) {
-                    header.setTranslateX(scrollOffset);
-                    // Set z-index to keep it on top
-                    header.setStyle(header.getStyle() + "; -fx-view-order: -1;");
-                }
-            }
-            
-            // Find and translate column cells
-            java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
-            for (javafx.scene.Node cell : cells) {
-                if (cell instanceof javafx.scene.control.TableCell) {
-                    javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
-                    if (tableCell.getTableColumn() == column) {
-                        cell.setTranslateX(scrollOffset);
-                        // Set z-index to keep it on top
-                        cell.setStyle(cell.getStyle() + "; -fx-view-order: -1;");
-                    }
-                }
+            if (horizontalScrollBar != null) {
+                final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
+                final int columnIndex = table.getColumns().indexOf(column);
+                
+                // Listen to scroll position changes
+                scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    javafx.application.Platform.runLater(() -> {
+                        // Calculate the scroll offset based on the actual scroll position
+                        double scrollOffset = scrollBar.getValue() * (scrollBar.getMax() - scrollBar.getMin());
+                        
+                        // Find and translate the column header
+                        java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
+                        for (javafx.scene.Node header : headers) {
+                            // Try to match by column text
+                            if (header instanceof javafx.scene.layout.Region) {
+                                javafx.scene.layout.Region region = (javafx.scene.layout.Region) header;
+                                for (javafx.scene.Node child : region.getChildrenUnmodifiable()) {
+                                    if (child instanceof javafx.scene.control.Label) {
+                                        javafx.scene.control.Label label = (javafx.scene.control.Label) child;
+                                        if (column.getText() != null && column.getText().equals(label.getText())) {
+                                            header.setTranslateX(scrollOffset);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Find and translate the column cells
+                        java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
+                        for (javafx.scene.Node cell : cells) {
+                            if (cell instanceof javafx.scene.control.TableCell) {
+                                javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
+                                if (tableCell.getTableColumn() == column) {
+                                    cell.setTranslateX(scrollOffset);
+                                }
+                            }
+                        }
+                    });
+                });
             }
         });
-    }
-    
-    /**
-     * Checks if a header node corresponds to the given column.
-     */
-    private <T> boolean isHeaderForColumn(javafx.scene.Node header, TableColumn<T, ?> column) {
-        if (!(header instanceof javafx.scene.layout.Region)) {
-            return false;
-        }
-        
-        javafx.scene.layout.Region region = (javafx.scene.layout.Region) header;
-        for (javafx.scene.Node child : region.getChildrenUnmodifiable()) {
-            if (child instanceof javafx.scene.control.Label) {
-                javafx.scene.control.Label label = (javafx.scene.control.Label) child;
-                String columnText = column.getText();
-                if (columnText != null && columnText.equals(label.getText())) {
-                    return true;
-                }
-                // Also check if this is a CheckBox column (In Scope uses a checkbox in header)
-                if (column.getGraphic() instanceof javafx.scene.control.CheckBox) {
-                    return true;
-                }
-            } else if (child instanceof javafx.scene.control.CheckBox && column.getGraphic() instanceof javafx.scene.control.CheckBox) {
-                return true;
-            }
-        }
-        return false;
     }
 }
