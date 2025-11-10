@@ -984,7 +984,7 @@ public class AppController {
             syncEditsToParser(); // always sync before generating
             applyInterfaceReferences(); // Apply interface references
 
-            boolean useAdvanced = (mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected());
+            ExcelParserV5.MergeMode mergeMode = getCurrentMergeMode();
 
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();
@@ -994,7 +994,7 @@ public class AppController {
             
             // Add NurseCalls JSON
             try {
-                String nurseJson = ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(useAdvanced));
+                String nurseJson = ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(mergeMode));
                 combinedJson.append("=== NurseCalls JSON ===\n\n");
                 combinedJson.append(nurseJson);
                 combinedJson.append("\n\n");
@@ -1006,7 +1006,7 @@ public class AppController {
             
             // Add Clinicals JSON
             try {
-                String clinicalJson = ExcelParserV5.pretty(filteredParser.buildClinicalsJson(useAdvanced));
+                String clinicalJson = ExcelParserV5.pretty(filteredParser.buildClinicalsJson(mergeMode));
                 combinedJson.append("=== Clinicals JSON ===\n\n");
                 combinedJson.append(clinicalJson);
                 combinedJson.append("\n\n");
@@ -1018,7 +1018,7 @@ public class AppController {
             
             // Add Orders JSON
             try {
-                String ordersJson = ExcelParserV5.pretty(filteredParser.buildOrdersJson(useAdvanced));
+                String ordersJson = ExcelParserV5.pretty(filteredParser.buildOrdersJson(mergeMode));
                 combinedJson.append("=== Orders JSON ===\n\n");
                 combinedJson.append(ordersJson);
             } catch (Exception ex) {
