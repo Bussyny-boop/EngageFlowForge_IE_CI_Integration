@@ -19,9 +19,9 @@ class MergeModeUILogicTest {
             boolean mergeByConfigGroupSelected) {
         
         if (mergeFlowsSelected) {
-            return ExcelParserV5.MergeMode.MERGE_ALL;
-        } else if (mergeByConfigGroupSelected) {
             return ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP;
+        } else if (mergeByConfigGroupSelected) {
+            return ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP;
         } else {
             // Default to NONE if noMergeSelected is true or nothing is selected
             return ExcelParserV5.MergeMode.NONE;
@@ -37,13 +37,13 @@ class MergeModeUILogicTest {
     @Test
     void mergeAllSelected_ReturnsMergeAll() {
         ExcelParserV5.MergeMode mode = getCurrentMergeMode(false, true, false);
-        assertEquals(ExcelParserV5.MergeMode.MERGE_ALL, mode);
+        assertEquals(ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP, mode);
     }
 
     @Test
     void mergeByConfigGroupSelected_ReturnsMergeByConfigGroup() {
         ExcelParserV5.MergeMode mode = getCurrentMergeMode(false, false, true);
-        assertEquals(ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP, mode);
+        assertEquals(ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP, mode);
     }
 
     @Test
@@ -56,16 +56,16 @@ class MergeModeUILogicTest {
 
     @Test
     void mergeAllTakesPrecedence_WhenMultipleSelected() {
-        // This shouldn't happen in the UI, but mergeAll should take precedence
+        // This shouldn't happen in the UI, but mergeFlows should take precedence
         ExcelParserV5.MergeMode mode = getCurrentMergeMode(true, true, true);
-        assertEquals(ExcelParserV5.MergeMode.MERGE_ALL, mode);
+        assertEquals(ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP, mode);
     }
 
     @Test
     void mergeByConfigGroupSecondPrecedence() {
-        // If mergeAll is not selected but mergeByConfigGroup is
+        // If mergeFlows is not selected but mergeByConfigGroup is
         ExcelParserV5.MergeMode mode = getCurrentMergeMode(true, false, true);
-        assertEquals(ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP, mode);
+        assertEquals(ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP, mode);
     }
 
     @Test
@@ -74,15 +74,15 @@ class MergeModeUILogicTest {
         ExcelParserV5.MergeMode[] modes = ExcelParserV5.MergeMode.values();
         assertEquals(3, modes.length);
         assertEquals(ExcelParserV5.MergeMode.NONE, modes[0]);
-        assertEquals(ExcelParserV5.MergeMode.MERGE_ALL, modes[1]);
-        assertEquals(ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP, modes[2]);
+        assertEquals(ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP, modes[1]);
+        assertEquals(ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP, modes[2]);
     }
 
     @Test
     void enumNamingConventions() {
         // Verify enum names are correctly formatted
         assertEquals("NONE", ExcelParserV5.MergeMode.NONE.name());
-        assertEquals("MERGE_ALL", ExcelParserV5.MergeMode.MERGE_ALL.name());
         assertEquals("MERGE_BY_CONFIG_GROUP", ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP.name());
+        assertEquals("MERGE_ACROSS_CONFIG_GROUP", ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP.name());
     }
 }
