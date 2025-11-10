@@ -1063,6 +1063,14 @@ public class ExcelParserV5 {
       // When merging by config group, don't include units in the merge key
       // This allows flows with the same delivery parameters but different units to merge
       // Units will be combined from all flows in the merge group
+      
+      // Add No Caregiver Group to the key for MERGE_BY_CONFIG_GROUP mode
+      // Flows must have the same No Caregiver Group to merge
+      String noCareKey = unitRefs.stream()
+        .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("noCareGroup=").append(noCareKey);
     } else {
       // For MERGE_ALL and NONE modes, include units in the key
       // Add units to the key
