@@ -457,38 +457,57 @@ public class AppController {
             helpButton.setOnAction(e -> showHelp());
         }
         
-        // Add click event filter to auto-close settings drawer when clicking outside of it
+        // Add click event filter to auto-close settings drawer when clicking anywhere in the app
+        // We'll attach this to the scene once it's available
         if (contentStack != null && settingsDrawer != null) {
-            contentStack.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, event -> {
-                // Only close if settings drawer is visible
-                if (settingsDrawer.isVisible()) {
-                    // Check if the click was outside the settings drawer
-                    Node target = event.getPickResult().getIntersectedNode();
-                    
-                    // Walk up the scene graph to see if the target is inside the settings drawer or settings button
-                    boolean clickedInsideDrawer = false;
-                    boolean clickedSettingsButton = false;
-                    Node current = target;
-                    
-                    while (current != null) {
-                        if (current == settingsDrawer) {
-                            clickedInsideDrawer = true;
-                            break;
-                        }
-                        if (current == settingsButton) {
-                            clickedSettingsButton = true;
-                            break;
-                        }
-                        current = current.getParent();
-                    }
-                    
-                    // Close drawer if clicked outside and not on settings button (button has its own toggle)
-                    if (!clickedInsideDrawer && !clickedSettingsButton) {
-                        toggleSettingsDrawer();
-                    }
+            // Setup auto-close when scene becomes available
+            contentStack.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null) {
+                    setupSettingsAutoClose(newScene);
                 }
             });
+            
+            // If scene already exists, setup immediately
+            if (contentStack.getScene() != null) {
+                setupSettingsAutoClose(contentStack.getScene());
+            }
         }
+    }
+    
+    /**
+     * Sets up auto-close functionality for the settings drawer.
+     * When user clicks anywhere outside the settings drawer, it automatically closes.
+     */
+    private void setupSettingsAutoClose(javafx.scene.Scene scene) {
+        scene.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, event -> {
+            // Only process if settings drawer is visible
+            if (settingsDrawer != null && settingsDrawer.isVisible()) {
+                // Check if the click was outside the settings drawer
+                Node target = event.getPickResult().getIntersectedNode();
+                
+                // Walk up the scene graph to see if the target is inside the settings drawer or settings button
+                boolean clickedInsideDrawer = false;
+                boolean clickedSettingsButton = false;
+                Node current = target;
+                
+                while (current != null) {
+                    if (current == settingsDrawer) {
+                        clickedInsideDrawer = true;
+                        break;
+                    }
+                    if (current == settingsButton) {
+                        clickedSettingsButton = true;
+                        break;
+                    }
+                    current = current.getParent();
+                }
+                
+                // Close drawer if clicked outside and not on settings button (button has its own toggle)
+                if (!clickedInsideDrawer && !clickedSettingsButton) {
+                    toggleSettingsDrawer();
+                }
+            }
+        });
     }
     
     // ---------- Toggle Settings Drawer ----------
@@ -2270,10 +2289,9 @@ public class AppController {
     }
     
     /**
-     * Makes a table column "sticky" by preventing it from being reordered
-     * and applying visual styling to indicate it's fixed.
-     * Note: JavaFX TableView doesn't support true frozen columns, but we can
-     * prevent reordering to keep the column on the left.
+     * Makes a table column "sticky" (frozen) by preventing it from being reordered
+     * and keeping it visible during horizontal scrolling.
+     * This implementation uses CSS transforms to keep the column fixed in place.
      */
     private <T> void makeStickyColumn(TableView<T> table, TableColumn<T, ?> column) {
         if (table == null || column == null) return;
@@ -2283,5 +2301,74 @@ public class AppController {
         
         // Add a style class to visually indicate the sticky column
         column.getStyleClass().add("sticky-column");
+        
+        // Make the column frozen during horizontal scrolling
+        // We need to wait for the table to be fully rendered before accessing the scroll bar
+        table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (newSkin != null) {
+                freezeColumn(table, column);
+            }
+        });
+        
+        // If skin already exists, apply freezing immediately
+        if (table.getSkin() != null) {
+            freezeColumn(table, column);
+        }
+    }
+    
+    /**
+     * Applies the freeze effect to a column by listening to horizontal scroll events
+     * and translating the column to compensate for scrolling.
+     */
+    private <T> void freezeColumn(TableView<T> table, TableColumn<T, ?> column) {
+        // Find the horizontal scroll bar
+        javafx.scene.control.ScrollBar horizontalScrollBar = null;
+        for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
+            if (node instanceof javafx.scene.control.ScrollBar) {
+                javafx.scene.control.ScrollBar sb = (javafx.scene.control.ScrollBar) node;
+                if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
+                    horizontalScrollBar = sb;
+                    break;
+                }
+            }
+        }
+        
+        if (horizontalScrollBar != null) {
+            final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
+            
+            // Listen to scroll position changes
+            scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
+                // Find the column header and cells
+                java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
+                java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
+                
+                // Calculate the scroll offset
+                double scrollOffset = newVal.doubleValue() * (scrollBar.getMax() - scrollBar.getMin());
+                
+                // Apply translation to the column header
+                for (javafx.scene.Node header : headers) {
+                    if (header.getUserData() != null && header.getUserData().equals(column)) {
+                        header.setTranslateX(scrollOffset);
+                    }
+                }
+                
+                // Apply translation to the column cells
+                for (javafx.scene.Node cell : cells) {
+                    if (cell instanceof javafx.scene.control.TableCell) {
+                        javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
+                        if (tableCell.getTableColumn() == column) {
+                            cell.setTranslateX(scrollOffset);
+                        }
+                    }
+                }
+            });
+            
+            // Mark the header with userData for identification
+            table.lookupAll(".column-header").forEach(header -> {
+                if (header.toString().contains(column.getText())) {
+                    header.setUserData(column);
+                }
+            });
+        }
     }
 }
