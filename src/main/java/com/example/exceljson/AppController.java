@@ -61,8 +61,8 @@ public class AppController {
     @FXML private Button exportOrdersJsonButton;
     @FXML private Button themeToggleButton;
     @FXML private CheckBox noMergeCheckbox;
-    @FXML private CheckBox mergeFlowsCheckbox;
-    @FXML private CheckBox mergeByConfigGroupCheckbox;
+    @FXML private CheckBox mergeByConfigGroupCheckbox;  // "Merge by Config Group" checkbox
+    @FXML private CheckBox mergeAcrossConfigGroupCheckbox;  // "Merge Across Config Group" checkbox
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private TextField voceraRefNameField;
@@ -347,21 +347,12 @@ public class AppController {
         setupCustomTabMappings();
         
         // --- Merge Flows checkbox mutual exclusion logic (three-way) ---
-        if (noMergeCheckbox != null && mergeFlowsCheckbox != null && mergeByConfigGroupCheckbox != null) {
+        if (noMergeCheckbox != null && mergeByConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox != null) {
             // When noMergeCheckbox is selected, deselect the other two
             noMergeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 if (newV) {
-                    mergeFlowsCheckbox.setSelected(false);
                     mergeByConfigGroupCheckbox.setSelected(false);
-                }
-                updateJsonModeLabel();
-            });
-            
-            // When mergeFlowsCheckbox is selected, deselect the other two
-            mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
-                if (newV) {
-                    noMergeCheckbox.setSelected(false);
-                    mergeByConfigGroupCheckbox.setSelected(false);
+                    mergeAcrossConfigGroupCheckbox.setSelected(false);
                 }
                 updateJsonModeLabel();
             });
@@ -370,28 +361,37 @@ public class AppController {
             mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 if (newV) {
                     noMergeCheckbox.setSelected(false);
-                    mergeFlowsCheckbox.setSelected(false);
+                    mergeAcrossConfigGroupCheckbox.setSelected(false);
                 }
                 updateJsonModeLabel();
             });
-        } else if (mergeFlowsCheckbox != null && mergeByConfigGroupCheckbox != null) {
+            
+            // When mergeAcrossConfigGroupCheckbox is selected, deselect the other two
+            mergeAcrossConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) {
+                    noMergeCheckbox.setSelected(false);
+                    mergeByConfigGroupCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+        } else if (mergeByConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox != null) {
             // Fallback for backward compatibility if noMergeCheckbox doesn't exist
-            mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+            mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV && mergeAcrossConfigGroupCheckbox.isSelected()) {
+                    mergeAcrossConfigGroupCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+            
+            mergeAcrossConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 if (newV && mergeByConfigGroupCheckbox.isSelected()) {
                     mergeByConfigGroupCheckbox.setSelected(false);
                 }
                 updateJsonModeLabel();
             });
-            
-            mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
-                if (newV && mergeFlowsCheckbox.isSelected()) {
-                    mergeFlowsCheckbox.setSelected(false);
-                }
-                updateJsonModeLabel();
-            });
-        } else if (mergeFlowsCheckbox != null) {
+        } else if (mergeByConfigGroupCheckbox != null) {
             // Fallback for backward compatibility if only one checkbox exists
-            mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+            mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 updateJsonModeLabel();
             });
         }
@@ -736,8 +736,8 @@ public class AppController {
     private void updateJsonModeLabel() {
         if (jsonModeLabel != null) {
             boolean isNoMerge = noMergeCheckbox != null && noMergeCheckbox.isSelected();
-            boolean isMergedByConfigGroup = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
-            boolean isMergedAcrossConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+            boolean isMergedByConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+            boolean isMergedAcrossConfigGroup = mergeAcrossConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox.isSelected();
             
             String mode = "Standard";
             if (isMergedByConfigGroup) {
@@ -767,8 +767,8 @@ public class AppController {
      */
     private ExcelParserV5.MergeMode getCurrentMergeMode() {
         boolean isNoMerge = noMergeCheckbox != null && noMergeCheckbox.isSelected();
-        boolean isMergeByConfigGroup = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
-        boolean isMergeAcrossConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+        boolean isMergeByConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+        boolean isMergeAcrossConfigGroup = mergeAcrossConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox.isSelected();
         
         if (isMergeByConfigGroup) {
             return ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP;
@@ -984,7 +984,7 @@ public class AppController {
             syncEditsToParser(); // always sync before generating
             applyInterfaceReferences(); // Apply interface references
 
-            boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+            boolean useAdvanced = (mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected());
 
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();

@@ -1083,8 +1083,10 @@ public class ExcelParserV5 {
       // For MERGE_ACROSS_CONFIG_GROUP mode, don't include configGroup or units
       // This allows flows to merge across config groups and different units
       // but flows with different No Caregiver Groups remain separate
+      // Use DISTINCT facility:noCareGroup combinations to avoid duplicates from multiple units
       String noCareKey = unitRefs.stream()
         .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
+        .distinct()  // Remove duplicates - same No Caregiver Group from multiple units
         .sorted()
         .collect(Collectors.joining(","));
       key.append("noCareGroup=").append(noCareKey);
