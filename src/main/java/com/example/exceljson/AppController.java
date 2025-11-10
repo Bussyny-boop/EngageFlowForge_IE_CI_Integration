@@ -60,7 +60,9 @@ public class AppController {
     @FXML private Button exportClinicalJsonButton;
     @FXML private Button exportOrdersJsonButton;
     @FXML private Button themeToggleButton;
+    @FXML private CheckBox noMergeCheckbox;
     @FXML private CheckBox mergeFlowsCheckbox;
+    @FXML private CheckBox mergeByConfigGroupCheckbox;
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private TextField voceraRefNameField;
@@ -344,8 +346,51 @@ public class AppController {
         setupSettingsDrawer();
         setupCustomTabMappings();
         
-        // --- Merge Flows checkbox listener ---
-        if (mergeFlowsCheckbox != null) {
+        // --- Merge Flows checkbox mutual exclusion logic (three-way) ---
+        if (noMergeCheckbox != null && mergeFlowsCheckbox != null && mergeByConfigGroupCheckbox != null) {
+            // When noMergeCheckbox is selected, deselect the other two
+            noMergeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) {
+                    mergeFlowsCheckbox.setSelected(false);
+                    mergeByConfigGroupCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+            
+            // When mergeFlowsCheckbox is selected, deselect the other two
+            mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) {
+                    noMergeCheckbox.setSelected(false);
+                    mergeByConfigGroupCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+            
+            // When mergeByConfigGroupCheckbox is selected, deselect the other two
+            mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) {
+                    noMergeCheckbox.setSelected(false);
+                    mergeFlowsCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+        } else if (mergeFlowsCheckbox != null && mergeByConfigGroupCheckbox != null) {
+            // Fallback for backward compatibility if noMergeCheckbox doesn't exist
+            mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV && mergeByConfigGroupCheckbox.isSelected()) {
+                    mergeByConfigGroupCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+            
+            mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV && mergeFlowsCheckbox.isSelected()) {
+                    mergeFlowsCheckbox.setSelected(false);
+                }
+                updateJsonModeLabel();
+            });
+        } else if (mergeFlowsCheckbox != null) {
+            // Fallback for backward compatibility if only one checkbox exists
             mergeFlowsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
                 updateJsonModeLabel();
             });
@@ -638,8 +683,20 @@ public class AppController {
     // ---------- Update Labels ----------
     private void updateJsonModeLabel() {
         if (jsonModeLabel != null) {
+            boolean isNoMerge = noMergeCheckbox != null && noMergeCheckbox.isSelected();
             boolean isMerged = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
-            jsonModeLabel.setText("JSON: " + (isMerged ? "Merged" : "Standard"));
+            boolean isMergedByConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+            
+            String mode = "Standard";
+            if (isMerged) {
+                mode = "Merge All";
+            } else if (isMergedByConfigGroup) {
+                mode = "Merge Within Config Group";
+            } else if (isNoMerge) {
+                mode = "Standard";
+            }
+            
+            jsonModeLabel.setText("JSON: " + mode);
         }
     }
     
@@ -650,6 +707,24 @@ public class AppController {
             } else {
                 currentFileLabel.setText("No file loaded");
             }
+        }
+    }
+    
+    /**
+     * Determines the current merge mode based on checkbox selections.
+     */
+    private ExcelParserV5.MergeMode getCurrentMergeMode() {
+        boolean isNoMerge = noMergeCheckbox != null && noMergeCheckbox.isSelected();
+        boolean isMerged = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
+        boolean isMergedByConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+        
+        if (isMerged) {
+            return ExcelParserV5.MergeMode.MERGE_ALL;
+        } else if (isMergedByConfigGroup) {
+            return ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP;
+        } else {
+            // Default to NONE if noMergeCheckbox is selected or nothing is selected
+            return ExcelParserV5.MergeMode.NONE;
         }
     }
     
@@ -819,15 +894,15 @@ public class AppController {
             syncEditsToParser(); // always sync before generating
             applyInterfaceReferences(); // Apply interface references
 
-            boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+            ExcelParserV5.MergeMode mergeMode = getCurrentMergeMode();
 
             // Create a temporary parser with only filtered data
             ExcelParserV5 filteredParser = createFilteredParser();
 
             String json = switch (flowType) {
-                case "NurseCalls" -> ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(useAdvanced));
-                case "Clinicals" -> ExcelParserV5.pretty(filteredParser.buildClinicalsJson(useAdvanced));
-                case "Orders" -> ExcelParserV5.pretty(filteredParser.buildOrdersJson(useAdvanced));
+                case "NurseCalls" -> ExcelParserV5.pretty(filteredParser.buildNurseCallsJson(mergeMode));
+                case "Clinicals" -> ExcelParserV5.pretty(filteredParser.buildClinicalsJson(mergeMode));
+                case "Orders" -> ExcelParserV5.pretty(filteredParser.buildOrdersJson(mergeMode));
                 default -> "";
             };
 
@@ -918,7 +993,7 @@ public class AppController {
             syncEditsToParser();
             applyInterfaceReferences(); // Apply interface references
 
-            boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+            ExcelParserV5.MergeMode mergeMode = getCurrentMergeMode();
 
             String title = switch (flowType) {
                 case "NurseCalls" -> "Export NurseCall JSON";
@@ -961,18 +1036,19 @@ public class AppController {
             ExcelParserV5 filteredParser = createFilteredParser();
 
             switch (flowType) {
-                case "NurseCalls" -> filteredParser.writeNurseCallsJson(file, useAdvanced);
-                case "Clinicals" -> filteredParser.writeClinicalsJson(file, useAdvanced);
-                case "Orders" -> filteredParser.writeOrdersJson(file, useAdvanced);
+                case "NurseCalls" -> filteredParser.writeNurseCallsJson(file, mergeMode);
+                case "Clinicals" -> filteredParser.writeClinicalsJson(file, mergeMode);
+                case "Orders" -> filteredParser.writeOrdersJson(file, mergeMode);
             }
 
             // Hide progress and show success
             hideProgressBar();
-            if (useAdvanced) {
-                statusLabel.setText("✅ Exported Merged JSON (Advanced Mode)");
-            } else {
-                statusLabel.setText("✅ Exported Standard JSON");
-            }
+            String modeText = switch (mergeMode) {
+                case MERGE_ALL -> "Merged (All Config Groups)";
+                case MERGE_BY_CONFIG_GROUP -> "Merged by Config Group";
+                case NONE -> "Standard (No Merge)";
+            };
+            statusLabel.setText("✅ Exported " + modeText + " JSON");
 
             showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
@@ -1967,10 +2043,10 @@ public class AppController {
         if (!lastGeneratedJson.isEmpty()) {
             try {
                 // Rebuild the JSON based on the last generated type using filtered data
-                boolean useAdvanced = (mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected());
+                ExcelParserV5.MergeMode mergeMode = getCurrentMergeMode();
                 ExcelParserV5 filteredParser = createFilteredParser();
                 var json = ExcelParserV5.pretty(
-                    lastGeneratedWasNurseSide ? filteredParser.buildNurseCallsJson(useAdvanced) : filteredParser.buildClinicalsJson(useAdvanced)
+                    lastGeneratedWasNurseSide ? filteredParser.buildNurseCallsJson(mergeMode) : filteredParser.buildClinicalsJson(mergeMode)
                 );
                 jsonPreview.setText(json);
                 lastGeneratedJson = json;

@@ -18,6 +18,13 @@ import java.util.stream.Collectors;
  */
 public class ExcelParserV5 {
 
+  // ---------- Merge Mode Enum ----------
+  public enum MergeMode {
+    NONE,                    // No merging - each alarm gets its own flow
+    MERGE_ALL,              // Merge identical flows across all config groups
+    MERGE_BY_CONFIG_GROUP   // Merge identical flows within the same config group
+  }
+
   // ---------- Row DTOs ----------
   public static final class UnitRow {
     public String facility = "";
@@ -727,29 +734,40 @@ public class ExcelParserV5 {
 
   // ---------- Public JSON builders ----------
   public Map<String,Object> buildNurseCallsJson() {
-    return buildNurseCallsJson(false);
+    return buildNurseCallsJson(MergeMode.NONE);
   }
   public Map<String,Object> buildNurseCallsJson(boolean mergeIdenticalFlows) {
-    return buildJson(nurseCalls, nurseGroupToUnits, "NurseCalls", mergeIdenticalFlows);
+    return buildNurseCallsJson(mergeIdenticalFlows ? MergeMode.MERGE_ALL : MergeMode.NONE);
   }
+  public Map<String,Object> buildNurseCallsJson(MergeMode mergeMode) {
+    return buildJson(nurseCalls, nurseGroupToUnits, "NurseCalls", mergeMode);
+  }
+  
   public Map<String,Object> buildClinicalsJson() {
-    return buildClinicalsJson(false);
+    return buildClinicalsJson(MergeMode.NONE);
   }
   public Map<String,Object> buildClinicalsJson(boolean mergeIdenticalFlows) {
-    return buildJson(clinicals, clinicalGroupToUnits, "Clinicals", mergeIdenticalFlows);
+    return buildClinicalsJson(mergeIdenticalFlows ? MergeMode.MERGE_ALL : MergeMode.NONE);
   }
+  public Map<String,Object> buildClinicalsJson(MergeMode mergeMode) {
+    return buildJson(clinicals, clinicalGroupToUnits, "Clinicals", mergeMode);
+  }
+  
   public Map<String,Object> buildOrdersJson() {
-    return buildOrdersJson(false);
+    return buildOrdersJson(MergeMode.NONE);
   }
   public Map<String,Object> buildOrdersJson(boolean mergeIdenticalFlows) {
-    return buildJson(orders, ordersGroupToUnits, "Orders", mergeIdenticalFlows);
+    return buildOrdersJson(mergeIdenticalFlows ? MergeMode.MERGE_ALL : MergeMode.NONE);
+  }
+  public Map<String,Object> buildOrdersJson(MergeMode mergeMode) {
+    return buildJson(orders, ordersGroupToUnits, "Orders", mergeMode);
   }
 
   // ---------- Build JSON core ----------
   private Map<String,Object> buildJson(List<FlowRow> rows,
                                        Map<String,List<Map<String,String>>> groupToUnits,
                                        String flowType,
-                                       boolean mergeIdenticalFlows) {
+                                       MergeMode mergeMode) {
     boolean nurseSide = "NurseCalls".equals(flowType);
     boolean ordersType = "Orders".equals(flowType);
     
@@ -758,8 +776,8 @@ public class ExcelParserV5 {
     root.put("alarmAlertDefinitions", buildAlarmDefs(rows, flowType));
 
     List<Map<String,Object>> flows;
-    if (mergeIdenticalFlows) {
-      flows = buildFlowsMerged(rows, groupToUnits, flowType);
+    if (mergeMode == MergeMode.MERGE_ALL || mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
+      flows = buildFlowsMerged(rows, groupToUnits, flowType, mergeMode);
     } else {
       flows = buildFlowsNormal(rows, groupToUnits, flowType);
     }
@@ -887,7 +905,8 @@ public class ExcelParserV5 {
   // ---------- Build flows (merge mode) - merge flows with identical delivery parameters ----------
   private List<Map<String,Object>> buildFlowsMerged(List<FlowRow> rows,
                                                      Map<String,List<Map<String,String>>> groupToUnits,
-                                                     String flowType) {
+                                                     String flowType,
+                                                     MergeMode mergeMode) {
     boolean nurseSide = "NurseCalls".equals(flowType);
     
     // Group rows by their "merge key" (identical delivery parameters)
@@ -899,7 +918,7 @@ public class ExcelParserV5 {
       // Skip rows that are not in scope
       if (!r.inScope) continue;
       
-      String mergeKey = buildMergeKey(r, groupToUnits, flowType);
+      String mergeKey = buildMergeKey(r, groupToUnits, flowType, mergeMode);
       groupedByMergeKey.computeIfAbsent(mergeKey, k -> new ArrayList<>()).add(r);
     }
 
@@ -995,7 +1014,7 @@ public class ExcelParserV5 {
   }
 
   // ---------- Build merge key for grouping flows with identical delivery parameters ----------
-  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, String flowType) {
+  private String buildMergeKey(FlowRow r, Map<String,List<Map<String,String>>> groupToUnits, String flowType, MergeMode mergeMode) {
     boolean nurseSide = "NurseCalls".equals(flowType);
     List<Map<String,String>> unitRefs = resolveUnitRefs(r, groupToUnits, nurseSide);
     String mappedPriority = mapPrioritySafe(r.priorityRaw, r.deviceA);
@@ -1004,6 +1023,7 @@ public class ExcelParserV5 {
     String configGroupType = getConfigGroupType(flowType);
     
     // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units, noCareGroup
+    // For MERGE_BY_CONFIG_GROUP mode, also include configGroup in the key
     StringBuilder key = new StringBuilder();
     key.append("priority=").append(mappedPriority).append("|");
     key.append("device=").append(nvl(r.deviceA, "")).append("|");
@@ -1019,7 +1039,11 @@ public class ExcelParserV5 {
     key.append("r4=").append(nvl(r.r4, "")).append("|");
     key.append("t5=").append(nvl(r.t5, "")).append("|");
     key.append("r5=").append(nvl(r.r5, "")).append("|");
-    key.append("configGroup=").append(nvl(r.configGroup, "")).append("|");
+    
+    // Only include configGroup in the key if we're in MERGE_BY_CONFIG_GROUP mode
+    if (mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
+      key.append("configGroup=").append(nvl(r.configGroup, "")).append("|");
+    }
     
     // Add units to the key
     String unitsKey = unitRefs.stream()
@@ -1035,7 +1059,7 @@ public class ExcelParserV5 {
       .sorted()
       .collect(Collectors.joining(","));
     key.append("noCareGroup=").append(noCareKey);
-    
+
     return key.toString();
   }
 
@@ -2034,30 +2058,41 @@ public class ExcelParserV5 {
 
   // ---------- File writers (JSON) ----------
   public void writeNurseCallsJson(File nurseFile) throws Exception {
-    writeNurseCallsJson(nurseFile, false);
+    writeNurseCallsJson(nurseFile, MergeMode.NONE);
   }
   public void writeNurseCallsJson(File nurseFile, boolean useAdvancedMerge) throws Exception {
+    writeNurseCallsJson(nurseFile, useAdvancedMerge ? MergeMode.MERGE_ALL : MergeMode.NONE);
+  }
+  public void writeNurseCallsJson(File nurseFile, MergeMode mergeMode) throws Exception {
     ensureParent(nurseFile);
     try (FileWriter out = new FileWriter(nurseFile, false)) {
-      out.write(pretty(buildNurseCallsJson(useAdvancedMerge)));
+      out.write(pretty(buildNurseCallsJson(mergeMode)));
     }
   }
+  
   public void writeClinicalsJson(File clinicalFile) throws Exception {
-    writeClinicalsJson(clinicalFile, false);
+    writeClinicalsJson(clinicalFile, MergeMode.NONE);
   }
   public void writeClinicalsJson(File clinicalFile, boolean useAdvancedMerge) throws Exception {
+    writeClinicalsJson(clinicalFile, useAdvancedMerge ? MergeMode.MERGE_ALL : MergeMode.NONE);
+  }
+  public void writeClinicalsJson(File clinicalFile, MergeMode mergeMode) throws Exception {
     ensureParent(clinicalFile);
     try (FileWriter out = new FileWriter(clinicalFile, false)) {
-      out.write(pretty(buildClinicalsJson(useAdvancedMerge)));
+      out.write(pretty(buildClinicalsJson(mergeMode)));
     }
   }
+  
   public void writeOrdersJson(File ordersFile) throws Exception {
-    writeOrdersJson(ordersFile, false);
+    writeOrdersJson(ordersFile, MergeMode.NONE);
   }
   public void writeOrdersJson(File ordersFile, boolean useAdvancedMerge) throws Exception {
+    writeOrdersJson(ordersFile, useAdvancedMerge ? MergeMode.MERGE_ALL : MergeMode.NONE);
+  }
+  public void writeOrdersJson(File ordersFile, MergeMode mergeMode) throws Exception {
     ensureParent(ordersFile);
     try (FileWriter out = new FileWriter(ordersFile, false)) {
-      out.write(pretty(buildOrdersJson(useAdvancedMerge)));
+      out.write(pretty(buildOrdersJson(mergeMode)));
     }
   }
   public void writeJson(File summaryFile) throws Exception {
