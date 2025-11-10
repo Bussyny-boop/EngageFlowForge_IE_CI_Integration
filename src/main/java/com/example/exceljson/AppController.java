@@ -736,14 +736,14 @@ public class AppController {
     private void updateJsonModeLabel() {
         if (jsonModeLabel != null) {
             boolean isNoMerge = noMergeCheckbox != null && noMergeCheckbox.isSelected();
-            boolean isMerged = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
-            boolean isMergedByConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+            boolean isMergedByConfigGroup = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
+            boolean isMergedAcrossConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
             
             String mode = "Standard";
-            if (isMerged) {
-                mode = "Merge All";
-            } else if (isMergedByConfigGroup) {
-                mode = "Merge Within Config Group";
+            if (isMergedByConfigGroup) {
+                mode = "Merge by Config Group";
+            } else if (isMergedAcrossConfigGroup) {
+                mode = "Merge Across Config Group";
             } else if (isNoMerge) {
                 mode = "Standard";
             }
@@ -767,13 +767,13 @@ public class AppController {
      */
     private ExcelParserV5.MergeMode getCurrentMergeMode() {
         boolean isNoMerge = noMergeCheckbox != null && noMergeCheckbox.isSelected();
-        boolean isMerged = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
-        boolean isMergedByConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
+        boolean isMergeByConfigGroup = mergeFlowsCheckbox != null && mergeFlowsCheckbox.isSelected();
+        boolean isMergeAcrossConfigGroup = mergeByConfigGroupCheckbox != null && mergeByConfigGroupCheckbox.isSelected();
         
-        if (isMerged) {
-            return ExcelParserV5.MergeMode.MERGE_ALL;
-        } else if (isMergedByConfigGroup) {
+        if (isMergeByConfigGroup) {
             return ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP;
+        } else if (isMergeAcrossConfigGroup) {
+            return ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP;
         } else {
             // Default to NONE if noMergeCheckbox is selected or nothing is selected
             return ExcelParserV5.MergeMode.NONE;
@@ -1096,8 +1096,8 @@ public class AppController {
             // Hide progress and show success
             hideProgressBar();
             String modeText = switch (mergeMode) {
-                case MERGE_ALL -> "Merged (All Config Groups)";
                 case MERGE_BY_CONFIG_GROUP -> "Merged by Config Group";
+                case MERGE_ACROSS_CONFIG_GROUP -> "Merged Across Config Groups";
                 case NONE -> "Standard (No Merge)";
             };
             statusLabel.setText("✅ Exported " + modeText + " JSON");

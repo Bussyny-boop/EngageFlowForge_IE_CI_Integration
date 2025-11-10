@@ -54,7 +54,7 @@ class MergeSendingNameExclusionTest {
 
         ExcelParserV5 parser = new ExcelParserV5();
         parser.load(excelPath.toFile());
-        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ALL);
+        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP);
 
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);

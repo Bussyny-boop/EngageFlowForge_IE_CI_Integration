@@ -13,9 +13,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for the "Merge by Config Group" feature.
- * This feature merges flows with identical delivery parameters ONLY within the same config group,
- * keeping flows from different config groups separate.
+ * Tests for the merge features.
+ * - MERGE_BY_CONFIG_GROUP: Merges flows with identical delivery parameters ONLY within the same config group
+ * - MERGE_ACROSS_CONFIG_GROUP: Merges flows across config groups if No Caregiver Group matches
  */
 class MergeByConfigGroupTest {
 
@@ -73,8 +73,8 @@ class MergeByConfigGroupTest {
     }
 
     @Test
-    void mergeAll_MergesAcrossConfigGroups() throws Exception {
-        Path tempDir = Files.createTempDirectory("merge-all-test");
+    void mergeAcrossConfigGroup_MergesAcrossConfigGroups() throws Exception {
+        Path tempDir = Files.createTempDirectory("merge-across-test");
         Path excelPath = tempDir.resolve("input.xlsx");
         Path jsonPath = tempDir.resolve("output.json");
 
@@ -83,12 +83,12 @@ class MergeByConfigGroupTest {
 
         ExcelParserV5 parser = new ExcelParserV5();
         parser.load(excelPath.toFile());
-        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ALL);
+        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP);
 
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_ALL, flows should merge across config groups
+        // With MERGE_ACROSS_CONFIG_GROUP, flows should merge across config groups
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
         assertEquals(1, flowCount, "Should have 1 merged flow across all config groups");
         
@@ -139,9 +139,9 @@ class MergeByConfigGroupTest {
         String jsonTrue = Files.readString(jsonPathTrue);
         String jsonFalse = Files.readString(jsonPathFalse);
         
-        // true should merge all (MERGE_ALL mode)
+        // true should merge across config groups (MERGE_ACROSS_CONFIG_GROUP mode)
         assertEquals(1, countOccurrences(jsonTrue, "\"alarmsAlerts\":"), 
-            "Boolean true should behave like MERGE_ALL");
+            "Boolean true should behave like MERGE_ACROSS_CONFIG_GROUP");
         
         // false should not merge (NONE mode)
         assertEquals(4, countOccurrences(jsonFalse, "\"alarmsAlerts\":"), 

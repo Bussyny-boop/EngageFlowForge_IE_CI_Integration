@@ -156,15 +156,15 @@
                                         </tooltip>
                                     </CheckBox>
                                     
-                                    <CheckBox fx:id="mergeFlowsCheckbox" text="Merge All (Ignore Config Group)">
+                                    <CheckBox fx:id="mergeFlowsCheckbox" text="Merge by Config Group">
                                         <tooltip>
-                                            <Tooltip text="Merge All: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across ALL Config Groups. Multiple alarms will share the same delivery flow if their delivery parameters match, even if they're in different Config Groups." />
+                                            <Tooltip text="Merge by Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
                                         </tooltip>
                                     </CheckBox>
                                     
-                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Within Config Group" selected="true">
+                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Across Config Group" selected="true">
                                         <tooltip>
-                                            <Tooltip text="Merge Within Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Units with different values will be combined. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
+                                            <Tooltip text="Merge Across Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across ALL Config Groups, combining units. Flows with different No Caregiver Groups will remain separate. Alarm/Alert names are excluded from matching criteria." />
                                         </tooltip>
                                     </CheckBox>
                                     
