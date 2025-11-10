@@ -150,7 +150,7 @@
                                         </tooltip>
                                     </Label>
                                     
-                                    <CheckBox fx:id="noMergeCheckbox" text="Standard (No Merge)" selected="true">
+                                    <CheckBox fx:id="noMergeCheckbox" text="Standard (No Merge)">
                                         <tooltip>
                                             <Tooltip text="Standard Mode: Each alarm/alert gets its own separate delivery flow. This is the default behavior and creates the most granular output." />
                                         </tooltip>
@@ -162,7 +162,7 @@
                                         </tooltip>
                                     </CheckBox>
                                     
-                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Within Config Group">
+                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Within Config Group" selected="true">
                                         <tooltip>
                                             <Tooltip text="Merge Within Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
                                         </tooltip>

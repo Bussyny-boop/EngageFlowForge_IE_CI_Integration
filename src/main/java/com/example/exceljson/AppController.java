@@ -456,6 +456,39 @@ public class AppController {
         if (helpButton != null) {
             helpButton.setOnAction(e -> showHelp());
         }
+        
+        // Add click event filter to auto-close settings drawer when clicking outside of it
+        if (contentStack != null && settingsDrawer != null) {
+            contentStack.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, event -> {
+                // Only close if settings drawer is visible
+                if (settingsDrawer.isVisible()) {
+                    // Check if the click was outside the settings drawer
+                    Node target = event.getPickResult().getIntersectedNode();
+                    
+                    // Walk up the scene graph to see if the target is inside the settings drawer or settings button
+                    boolean clickedInsideDrawer = false;
+                    boolean clickedSettingsButton = false;
+                    Node current = target;
+                    
+                    while (current != null) {
+                        if (current == settingsDrawer) {
+                            clickedInsideDrawer = true;
+                            break;
+                        }
+                        if (current == settingsButton) {
+                            clickedSettingsButton = true;
+                            break;
+                        }
+                        current = current.getParent();
+                    }
+                    
+                    // Close drawer if clicked outside and not on settings button (button has its own toggle)
+                    if (!clickedInsideDrawer && !clickedSettingsButton) {
+                        toggleSettingsDrawer();
+                    }
+                }
+            });
+        }
     }
     
     // ---------- Toggle Settings Drawer ----------
@@ -1202,6 +1235,9 @@ public class AppController {
         setupOtherRecipientColumn(nurseR4Col, f -> f.r4, (f, v) -> f.r4 = v);
         setupEditable(nurseT5Col, f -> f.t5, (f, v) -> f.t5 = v);
         setupOtherRecipientColumn(nurseR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+        
+        // Make "In Scope" column sticky (always visible on left)
+        makeStickyColumn(tableNurseCalls, nurseInScopeCol);
     }
 
     private void initializeClinicalColumns() {
@@ -1230,6 +1266,9 @@ public class AppController {
         setupOtherRecipientColumn(clinicalR4Col, f -> f.r4, (f, v) -> f.r4 = v);
         setupEditable(clinicalT5Col, f -> f.t5, (f, v) -> f.t5 = v);
         setupOtherRecipientColumn(clinicalR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+        
+        // Make "In Scope" column sticky (always visible on left)
+        makeStickyColumn(tableClinicals, clinicalInScopeCol);
     }
 
     private void initializeOrdersColumns() {
@@ -1257,6 +1296,9 @@ public class AppController {
         setupOtherRecipientColumn(ordersR4Col, f -> f.r4, (f, v) -> f.r4 = v);
         setupEditable(ordersT5Col, f -> f.t5, (f, v) -> f.t5 = v);
         setupOtherRecipientColumn(ordersR5Col, f -> f.r5, (f, v) -> f.r5 = v);
+        
+        // Make "In Scope" column sticky (always visible on left)
+        makeStickyColumn(tableOrders, ordersInScopeCol);
     }
 
     private <R> void setupEditable(TableColumn<R, String> col, Function<R, String> getter, BiConsumer<R, String> setter) {
@@ -2225,5 +2267,21 @@ public class AppController {
                 sidebarToggleButton.setText("◀"); // Arrow pointing left
             }
         }
+    }
+    
+    /**
+     * Makes a table column "sticky" by preventing it from being reordered
+     * and applying visual styling to indicate it's fixed.
+     * Note: JavaFX TableView doesn't support true frozen columns, but we can
+     * prevent reordering to keep the column on the left.
+     */
+    private <T> void makeStickyColumn(TableView<T> table, TableColumn<T, ?> column) {
+        if (table == null || column == null) return;
+        
+        // Prevent the column from being moved
+        column.setReorderable(false);
+        
+        // Add a style class to visually indicate the sticky column
+        column.getStyleClass().add("sticky-column");
     }
 }

@@ -543,3 +543,15 @@
     -fx-background-color: linear-gradient(to bottom, #00A8B0, #00979D);
     -fx-text-fill: white;
 }
+
+/* --- Sticky Column --- */
+.table-column.sticky-column {
+    -fx-background-color: #E8F5F6;
+    -fx-border-color: #00979D;
+    -fx-border-width: 0 1 0 0;
+}
+
+.table-column.sticky-column .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #00979D;
+}
