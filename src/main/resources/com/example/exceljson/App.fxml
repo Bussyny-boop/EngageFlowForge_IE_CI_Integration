@@ -156,15 +156,15 @@
                                         </tooltip>
                                     </CheckBox>
                                     
-                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge by Config Group">
+                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Multiple Config Groups">
                                         <tooltip>
-                                            <Tooltip text="Merge by Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
+                                            <Tooltip text="Merge Multiple Config Groups: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across MULTIPLE Config Groups. All involved Config Group names are listed in the flow name. Flows with different No Caregiver Groups will remain separate." />
                                         </tooltip>
                                     </CheckBox>
                                     
-                                    <CheckBox fx:id="mergeAcrossConfigGroupCheckbox" text="Merge Across Config Group" selected="true">
+                                    <CheckBox fx:id="mergeAcrossConfigGroupCheckbox" text="Merge by Single Config Group" selected="true">
                                         <tooltip>
-                                            <Tooltip text="Merge Across Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across ALL Config Groups, combining units. Flows with different No Caregiver Groups will remain separate. Alarm/Alert names are excluded from matching criteria." />
+                                            <Tooltip text="Merge by Single Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
                                         </tooltip>
                                     </CheckBox>
                                     

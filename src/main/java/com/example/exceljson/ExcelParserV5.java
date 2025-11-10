@@ -21,8 +21,8 @@ public class ExcelParserV5 {
   // ---------- Merge Mode Enum ----------
   public enum MergeMode {
     NONE,                          // No merging - each alarm gets its own flow
-    MERGE_BY_CONFIG_GROUP,         // Merge identical flows within the same config group
-    MERGE_ACROSS_CONFIG_GROUP      // Merge identical flows across all config groups (No Caregiver Group must match)
+    MERGE_BY_CONFIG_GROUP,         // Merge identical flows across multiple config groups (include all config group names in flow name)
+    MERGE_ACROSS_CONFIG_GROUP      // Merge identical flows within a single config group (No Caregiver Group must match)
   }
 
   // ---------- Row DTOs ----------
@@ -955,6 +955,13 @@ public class ExcelParserV5 {
         .distinct()
         .collect(Collectors.toList());
       
+      // Collect all config groups from the group (for MERGE_BY_CONFIG_GROUP mode)
+      List<String> configGroups = group.stream()
+        .map(r -> r.configGroup)
+        .filter(g -> !isBlank(g))
+        .distinct()
+        .collect(Collectors.toList());
+      
       // Determine the config group type for No Caregiver Group lookup
       String configGroupType = getConfigGroupType(flowType);
       
@@ -1011,7 +1018,7 @@ public class ExcelParserV5 {
         
         flow.put("destinations", dac.destinations);
         flow.put("interfaces", buildInterfacesForDevice(template.deviceA, template.deviceB, template.ringtone));
-        flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, template, unitsForNoCareGroup));
+        flow.put("name", buildFlowNameMerged(flowType, mappedPriority, alarmNames, configGroups, unitsForNoCareGroup, mergeMode));
         
         // Use XMPP-specific parameter attributes if XMPP device is detected
         boolean isXmpp = containsXmpp(template.deviceA) || containsXmpp(template.deviceB);
@@ -1065,23 +1072,23 @@ public class ExcelParserV5 {
     key.append("t5=").append(nvl(r.t5, "")).append("|");
     key.append("r5=").append(nvl(r.r5, "")).append("|");
     
-    // Only include configGroup in the key if we're in MERGE_BY_CONFIG_GROUP mode
-    if (mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
+    // Only include configGroup in the key if we're in MERGE_ACROSS_CONFIG_GROUP mode
+    if (mergeMode == MergeMode.MERGE_ACROSS_CONFIG_GROUP) {
       key.append("configGroup=").append(nvl(r.configGroup, "")).append("|");
-      // When merging by config group, don't include units in the merge key
+      // When merging within a single config group, don't include units in the merge key
       // This allows flows with the same delivery parameters but different units to merge
       // Units will be combined from all flows in the merge group
       
-      // Add No Caregiver Group to the key for MERGE_BY_CONFIG_GROUP mode
+      // Add No Caregiver Group to the key for MERGE_ACROSS_CONFIG_GROUP mode
       // Flows must have the same No Caregiver Group to merge
       String noCareKey = unitRefs.stream()
         .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
         .sorted()
         .collect(Collectors.joining(","));
       key.append("noCareGroup=").append(noCareKey);
-    } else if (mergeMode == MergeMode.MERGE_ACROSS_CONFIG_GROUP) {
-      // For MERGE_ACROSS_CONFIG_GROUP mode, don't include configGroup or units
-      // This allows flows to merge across config groups and different units
+    } else if (mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
+      // For MERGE_BY_CONFIG_GROUP mode, don't include configGroup or units
+      // This allows flows to merge across multiple config groups and different units
       // but flows with different No Caregiver Groups remain separate
       // Use DISTINCT facility:noCareGroup combinations to avoid duplicates from multiple units
       String noCareKey = unitRefs.stream()
@@ -1115,9 +1122,22 @@ public class ExcelParserV5 {
   private String buildFlowNameMerged(String flowType,
                                      String mappedPriority,
                                      List<String> alarmNames,
-                                     FlowRow template,
-                                     List<Map<String,String>> unitRefs) {
-    String group = template.configGroup == null ? "" : template.configGroup.trim();
+                                     List<String> configGroups,
+                                     List<Map<String,String>> unitRefs,
+                                     MergeMode mergeMode) {
+    // For MERGE_BY_CONFIG_GROUP mode (Merge Multiple Config Groups), include all config groups
+    // For MERGE_ACROSS_CONFIG_GROUP mode (Merge by Single Config Group), use only the first config group
+    String groupText = "";
+    if (!configGroups.isEmpty()) {
+      if (mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
+        // Merge Multiple Config Groups: list all config groups separated by " / "
+        groupText = String.join(" / ", configGroups);
+      } else {
+        // Merge by Single Config Group or No Merge: use the first config group
+        groupText = configGroups.get(0).trim();
+      }
+    }
+    
     String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
     List<String> unitNames = unitRefs.stream()
       .map(u -> u.getOrDefault("name",""))
@@ -1139,7 +1159,7 @@ public class ExcelParserV5 {
       parts.add(String.join(" / ", alarmNames));
     }
     
-    if (!isBlank(group)) parts.add(group);
+    if (!isBlank(groupText)) parts.add(groupText);
     if (!unitNames.isEmpty()) parts.add(String.join(" / ", unitNames));
     else if (!isBlank(facility)) parts.add(facility);
     return String.join(" | ", parts);

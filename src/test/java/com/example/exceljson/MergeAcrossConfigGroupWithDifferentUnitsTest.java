@@ -12,7 +12,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for MERGE_ACROSS_CONFIG_GROUP with different units.
+ * Tests for merge modes with different units.
  * 
  * This reproduces the issue from the problem statement:
  * - Two config groups: "OB NC" and "Acute Care NC"
@@ -20,49 +20,14 @@ import org.junit.jupiter.api.Test;
  * - Same No Caregiver Group
  * - Identical delivery parameters
  * 
- * Expected behavior: When MERGE_ACROSS_CONFIG_GROUP is selected,
- * flows should merge into one because they have:
- * - Same delivery parameters (priority, device, ringtone, recipients, etc.)
- * - Same No Caregiver Group (House Supervisor)
- * 
- * The config group and units should not prevent merging.
+ * Expected behavior:
+ * - MERGE_BY_CONFIG_GROUP: Merges flows across multiple config groups when delivery params match
+ * - MERGE_ACROSS_CONFIG_GROUP: Keeps flows separate by config group
  */
 class MergeAcrossConfigGroupWithDifferentUnitsTest {
 
     @Test
-    void mergeAcrossConfigGroup_ShouldMergeDespiteDifferentUnits() throws Exception {
-        Path tempDir = Files.createTempDirectory("merge-across-different-units");
-        Path excelPath = tempDir.resolve("input.xlsx");
-        Path jsonPath = tempDir.resolve("output.json");
-
-        // Create workbook matching the user's scenario
-        createWorkbookMatchingUserScenario(excelPath);
-
-        ExcelParserV5 parser = new ExcelParserV5();
-        parser.load(excelPath.toFile());
-        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP);
-
-        assertTrue(Files.exists(jsonPath));
-        String json = Files.readString(jsonPath);
-        
-        // Debug output
-        System.out.println("=== MERGE ACROSS CONFIG GROUP TEST ===");
-        System.out.println(json);
-        System.out.println("======================================");
-        
-        // With MERGE_ACROSS_CONFIG_GROUP, flows should merge into ONE
-        // even though they're in different config groups with different units
-        int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
-        assertEquals(1, flowCount, 
-            "Should have 1 merged flow across all config groups when delivery params match");
-        
-        // The merged flow should contain alarms from both config groups
-        assertTrue(json.contains("Normal Call"));
-        assertTrue(json.contains("Pain Meds"));
-    }
-
-    @Test
-    void mergeByConfigGroup_ShouldNotMergeDifferentConfigGroups() throws Exception {
+    void mergeByConfigGroup_ShouldMergeDespiteDifferentUnits() throws Exception {
         Path tempDir = Files.createTempDirectory("merge-by-config-different-units");
         Path excelPath = tempDir.resolve("input.xlsx");
         Path jsonPath = tempDir.resolve("output.json");
@@ -77,10 +42,42 @@ class MergeAcrossConfigGroupWithDifferentUnitsTest {
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_BY_CONFIG_GROUP, flows should stay separate (one per config group)
+        // Debug output
+        System.out.println("=== MERGE BY CONFIG GROUP TEST ===");
+        System.out.println(json);
+        System.out.println("======================================");
+        
+        // With MERGE_BY_CONFIG_GROUP, flows should merge into ONE
+        // even though they're in different config groups with different units
+        int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
+        assertEquals(1, flowCount, 
+            "Should have 1 merged flow across all config groups when delivery params match");
+        
+        // The merged flow should contain alarms from both config groups
+        assertTrue(json.contains("Normal Call"));
+        assertTrue(json.contains("Pain Meds"));
+    }
+
+    @Test
+    void mergeAcrossConfigGroup_ShouldNotMergeDifferentConfigGroups() throws Exception {
+        Path tempDir = Files.createTempDirectory("merge-across-different-units");
+        Path excelPath = tempDir.resolve("input.xlsx");
+        Path jsonPath = tempDir.resolve("output.json");
+
+        // Create workbook matching the user's scenario
+        createWorkbookMatchingUserScenario(excelPath);
+
+        ExcelParserV5 parser = new ExcelParserV5();
+        parser.load(excelPath.toFile());
+        parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_ACROSS_CONFIG_GROUP);
+
+        assertTrue(Files.exists(jsonPath));
+        String json = Files.readString(jsonPath);
+        
+        // With MERGE_ACROSS_CONFIG_GROUP, flows should stay separate (one per config group)
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
         assertEquals(2, flowCount, 
-            "Should have 2 separate flows (one per config group) with MERGE_BY_CONFIG_GROUP");
+            "Should have 2 separate flows (one per config group) with MERGE_ACROSS_CONFIG_GROUP");
         
         // Both alarms should be present
         assertTrue(json.contains("Normal Call"));

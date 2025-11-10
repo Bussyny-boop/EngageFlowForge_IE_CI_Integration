@@ -14,13 +14,13 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests for the merge features.
- * - MERGE_BY_CONFIG_GROUP: Merges flows with identical delivery parameters ONLY within the same config group
- * - MERGE_ACROSS_CONFIG_GROUP: Merges flows across config groups if No Caregiver Group matches
+ * - MERGE_BY_CONFIG_GROUP: Merges flows with identical delivery parameters across MULTIPLE config groups (include all config group names in flow name)
+ * - MERGE_ACROSS_CONFIG_GROUP: Merges flows within a single config group if No Caregiver Group matches
  */
 class MergeByConfigGroupTest {
 
     @Test
-    void mergeByConfigGroup_SeparatesFlowsByConfigGroup() throws Exception {
+    void mergeByConfigGroup_MergesAcrossConfigGroups() throws Exception {
         Path tempDir = Files.createTempDirectory("merge-by-config-test");
         Path excelPath = tempDir.resolve("input.xlsx");
         Path jsonPath = tempDir.resolve("output.json");
@@ -35,12 +35,11 @@ class MergeByConfigGroupTest {
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_BY_CONFIG_GROUP, we should have 2 separate flows (one per config group)
-        // even though the delivery parameters are identical
+        // With MERGE_BY_CONFIG_GROUP, flows should merge across config groups
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
-        assertEquals(2, flowCount, "Should have 2 separate flows (one per config group)");
+        assertEquals(1, flowCount, "Should have 1 merged flow across all config groups");
         
-        // Each flow should contain only alarms from its config group
+        // The flow should contain all alarms from both groups
         assertTrue(json.contains("Group1_Alarm1"));
         assertTrue(json.contains("Group1_Alarm2"));
         assertTrue(json.contains("Group2_Alarm1"));
@@ -63,7 +62,7 @@ class MergeByConfigGroupTest {
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_BY_CONFIG_GROUP, identical flows in the same config group should merge
+        // With MERGE_BY_CONFIG_GROUP, identical flows in the same config group should also merge
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
         assertEquals(1, flowCount, "Should have 1 merged flow within the same config group");
         
@@ -73,7 +72,7 @@ class MergeByConfigGroupTest {
     }
 
     @Test
-    void mergeAcrossConfigGroup_MergesAcrossConfigGroups() throws Exception {
+    void mergeAcrossConfigGroup_SeparatesFlowsByConfigGroup() throws Exception {
         Path tempDir = Files.createTempDirectory("merge-across-test");
         Path excelPath = tempDir.resolve("input.xlsx");
         Path jsonPath = tempDir.resolve("output.json");
@@ -88,11 +87,12 @@ class MergeByConfigGroupTest {
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_ACROSS_CONFIG_GROUP, flows should merge across config groups
+        // With MERGE_ACROSS_CONFIG_GROUP, we should have 2 separate flows (one per config group)
+        // even though the delivery parameters are identical
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
-        assertEquals(1, flowCount, "Should have 1 merged flow across all config groups");
+        assertEquals(2, flowCount, "Should have 2 separate flows (one per config group)");
         
-        // The flow should contain all alarms from both groups
+        // Each flow should contain only alarms from its config group
         assertTrue(json.contains("Group1_Alarm1"));
         assertTrue(json.contains("Group1_Alarm2"));
         assertTrue(json.contains("Group2_Alarm1"));
@@ -139,9 +139,10 @@ class MergeByConfigGroupTest {
         String jsonTrue = Files.readString(jsonPathTrue);
         String jsonFalse = Files.readString(jsonPathFalse);
         
-        // true should merge across config groups (MERGE_ACROSS_CONFIG_GROUP mode)
-        assertEquals(1, countOccurrences(jsonTrue, "\"alarmsAlerts\":"), 
-            "Boolean true should behave like MERGE_ACROSS_CONFIG_GROUP");
+        // true should merge within single config group (MERGE_ACROSS_CONFIG_GROUP mode)
+        // With identical flows in different groups, should get 2 flows (one per group)
+        assertEquals(2, countOccurrences(jsonTrue, "\"alarmsAlerts\":"), 
+            "Boolean true should behave like MERGE_ACROSS_CONFIG_GROUP (merge within single config group)");
         
         // false should not merge (NONE mode)
         assertEquals(4, countOccurrences(jsonFalse, "\"alarmsAlerts\":"), 
