@@ -1039,13 +1039,21 @@ public class ExcelParserV5 {
     // Determine the config group type for No Caregiver Group lookup
     String configGroupType = getConfigGroupType(flowType);
     
-    // Build a key from: priority, device, ringtone, recipients (r1-r5), timing (t1-t5), units, noCareGroup
+    // Build a key from ALL columns except: inScope, type, alarmName, sendingName, configGroup (conditional), units (conditional), customTabSource
+    // sendingName is explicitly excluded as flows with different sending names should merge
     // For MERGE_BY_CONFIG_GROUP mode, also include configGroup in the key
     StringBuilder key = new StringBuilder();
     key.append("priority=").append(mappedPriority).append("|");
-    key.append("device=").append(nvl(r.deviceA, "")).append("|");
+    key.append("deviceA=").append(nvl(r.deviceA, "")).append("|");
+    key.append("deviceB=").append(nvl(r.deviceB, "")).append("|");
     key.append("ringtone=").append(nvl(r.ringtone, "")).append("|");
     key.append("responseOptions=").append(nvl(r.responseOptions, "")).append("|");
+    key.append("breakThroughDND=").append(nvl(r.breakThroughDND, "")).append("|");
+    key.append("multiUserAccept=").append(nvl(r.multiUserAccept, "")).append("|");
+    key.append("escalateAfter=").append(nvl(r.escalateAfter, "")).append("|");
+    key.append("ttlValue=").append(nvl(r.ttlValue, "")).append("|");
+    key.append("enunciate=").append(nvl(r.enunciate, "")).append("|");
+    key.append("emdan=").append(nvl(r.emdan, "")).append("|");
     key.append("t1=").append(nvl(r.t1, "")).append("|");
     key.append("r1=").append(nvl(r.r1, "")).append("|");
     key.append("t2=").append(nvl(r.t2, "")).append("|");
@@ -1063,6 +1071,14 @@ public class ExcelParserV5 {
       // When merging by config group, don't include units in the merge key
       // This allows flows with the same delivery parameters but different units to merge
       // Units will be combined from all flows in the merge group
+      
+      // Add No Caregiver Group to the key for MERGE_BY_CONFIG_GROUP mode
+      // Flows must have the same No Caregiver Group to merge
+      String noCareKey = unitRefs.stream()
+        .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("noCareGroup=").append(noCareKey);
     } else {
       // For MERGE_ALL and NONE modes, include units in the key
       // Add units to the key

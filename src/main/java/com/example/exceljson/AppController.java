@@ -2321,54 +2321,61 @@ public class AppController {
      * and translating the column to compensate for scrolling.
      */
     private <T> void freezeColumn(TableView<T> table, TableColumn<T, ?> column) {
-        // Find the horizontal scroll bar
-        javafx.scene.control.ScrollBar horizontalScrollBar = null;
-        for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
-            if (node instanceof javafx.scene.control.ScrollBar) {
-                javafx.scene.control.ScrollBar sb = (javafx.scene.control.ScrollBar) node;
-                if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
-                    horizontalScrollBar = sb;
-                    break;
+        // Wait for the table to be fully rendered before accessing scroll bar
+        javafx.application.Platform.runLater(() -> {
+            // Find the horizontal scroll bar
+            javafx.scene.control.ScrollBar horizontalScrollBar = null;
+            for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
+                if (node instanceof javafx.scene.control.ScrollBar) {
+                    javafx.scene.control.ScrollBar sb = (javafx.scene.control.ScrollBar) node;
+                    if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
+                        horizontalScrollBar = sb;
+                        break;
+                    }
                 }
             }
-        }
-        
-        if (horizontalScrollBar != null) {
-            final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
             
-            // Listen to scroll position changes
-            scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
-                // Find the column header and cells
-                java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
-                java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
+            if (horizontalScrollBar != null) {
+                final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
+                final int columnIndex = table.getColumns().indexOf(column);
                 
-                // Calculate the scroll offset
-                double scrollOffset = newVal.doubleValue() * (scrollBar.getMax() - scrollBar.getMin());
-                
-                // Apply translation to the column header
-                for (javafx.scene.Node header : headers) {
-                    if (header.getUserData() != null && header.getUserData().equals(column)) {
-                        header.setTranslateX(scrollOffset);
-                    }
-                }
-                
-                // Apply translation to the column cells
-                for (javafx.scene.Node cell : cells) {
-                    if (cell instanceof javafx.scene.control.TableCell) {
-                        javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
-                        if (tableCell.getTableColumn() == column) {
-                            cell.setTranslateX(scrollOffset);
+                // Listen to scroll position changes
+                scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    javafx.application.Platform.runLater(() -> {
+                        // Calculate the scroll offset based on the actual scroll position
+                        double scrollOffset = scrollBar.getValue() * (scrollBar.getMax() - scrollBar.getMin());
+                        
+                        // Find and translate the column header
+                        java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
+                        for (javafx.scene.Node header : headers) {
+                            // Try to match by column text
+                            if (header instanceof javafx.scene.layout.Region) {
+                                javafx.scene.layout.Region region = (javafx.scene.layout.Region) header;
+                                for (javafx.scene.Node child : region.getChildrenUnmodifiable()) {
+                                    if (child instanceof javafx.scene.control.Label) {
+                                        javafx.scene.control.Label label = (javafx.scene.control.Label) child;
+                                        if (column.getText() != null && column.getText().equals(label.getText())) {
+                                            header.setTranslateX(scrollOffset);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
-                }
-            });
-            
-            // Mark the header with userData for identification
-            table.lookupAll(".column-header").forEach(header -> {
-                if (header.toString().contains(column.getText())) {
-                    header.setUserData(column);
-                }
-            });
-        }
+                        
+                        // Find and translate the column cells
+                        java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
+                        for (javafx.scene.Node cell : cells) {
+                            if (cell instanceof javafx.scene.control.TableCell) {
+                                javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
+                                if (tableCell.getTableColumn() == column) {
+                                    cell.setTranslateX(scrollOffset);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        });
     }
 }
