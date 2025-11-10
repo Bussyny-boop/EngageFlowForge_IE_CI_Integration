@@ -357,3 +357,28 @@
     -fx-text-fill: -fx-text-dark;
     -fx-font-size: 13px;
 }
+
+/* ========================================
+   Sticky/Frozen Column Styling
+   ======================================== */
+.sticky-column {
+    -fx-background-color: -fx-light-gray;
+    -fx-border-color: -fx-primary-orange;
+    -fx-border-width: 0 2 0 0;
+}
+
+.sticky-column .column-header {
+    -fx-background-color: -fx-light-gray;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 2, 0);
+}
+
+.sticky-column .table-cell {
+    -fx-background-color: -fx-light-gray;
+    -fx-border-color: -fx-primary-orange;
+    -fx-border-width: 0 2 0 0;
+}
+
+/* Ensure sticky column stays on top during scrolling */
+.table-view .sticky-column {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 3, 0, 1, 0);
+}
