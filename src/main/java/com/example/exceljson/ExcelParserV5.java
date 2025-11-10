@@ -929,7 +929,24 @@ public class ExcelParserV5 {
       
       // Use the first row as the template
       FlowRow template = group.get(0);
-      List<Map<String,String>> unitRefs = resolveUnitRefs(template, groupToUnits, nurseSide);
+      
+      // Collect units from ALL flows in the group (not just the template)
+      // This ensures that when merging by config group, we combine units from all merged flows
+      List<Map<String,String>> unitRefs = new ArrayList<>();
+      for (FlowRow r : group) {
+        List<Map<String,String>> flowUnits = resolveUnitRefs(r, groupToUnits, nurseSide);
+        for (Map<String,String> unit : flowUnits) {
+          // Add unit if not already present (avoid duplicates)
+          boolean alreadyExists = unitRefs.stream().anyMatch(existing ->
+            existing.get("facilityName").equals(unit.get("facilityName")) &&
+            existing.get("name").equals(unit.get("name"))
+          );
+          if (!alreadyExists) {
+            unitRefs.add(unit);
+          }
+        }
+      }
+      
       String mappedPriority = mapPrioritySafe(template.priorityRaw, template.deviceA);
 
       // Collect all alarm names from the group
@@ -1043,22 +1060,26 @@ public class ExcelParserV5 {
     // Only include configGroup in the key if we're in MERGE_BY_CONFIG_GROUP mode
     if (mergeMode == MergeMode.MERGE_BY_CONFIG_GROUP) {
       key.append("configGroup=").append(nvl(r.configGroup, "")).append("|");
+      // When merging by config group, don't include units in the merge key
+      // This allows flows with the same delivery parameters but different units to merge
+      // Units will be combined from all flows in the merge group
+    } else {
+      // For MERGE_ALL and NONE modes, include units in the key
+      // Add units to the key
+      String unitsKey = unitRefs.stream()
+        .map(u -> u.get("facilityName") + ":" + u.get("name"))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("units=").append(unitsKey).append("|");
+      
+      // Add No Caregiver Group to the key
+      // Use the No Caregiver Group from each unit reference
+      String noCareKey = unitRefs.stream()
+        .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
+        .sorted()
+        .collect(Collectors.joining(","));
+      key.append("noCareGroup=").append(noCareKey);
     }
-    
-    // Add units to the key
-    String unitsKey = unitRefs.stream()
-      .map(u -> u.get("facilityName") + ":" + u.get("name"))
-      .sorted()
-      .collect(Collectors.joining(","));
-    key.append("units=").append(unitsKey).append("|");
-    
-    // Add No Caregiver Group to the key
-    // Use the No Caregiver Group from each unit reference
-    String noCareKey = unitRefs.stream()
-      .map(u -> u.get(UNIT_FIELD_FACILITY) + ":" + u.getOrDefault(UNIT_FIELD_NO_CAREGIVER, ""))
-      .sorted()
-      .collect(Collectors.joining(","));
-    key.append("noCareGroup=").append(noCareKey);
 
     return key.toString();
   }
