@@ -741,9 +741,9 @@ public class AppController {
             
             String mode = "Standard";
             if (isMergedByConfigGroup) {
-                mode = "Merge by Config Group";
+                mode = "Merge Multiple Config Groups";
             } else if (isMergedAcrossConfigGroup) {
-                mode = "Merge Across Config Group";
+                mode = "Merge by Single Config Group";
             } else if (isNoMerge) {
                 mode = "Standard";
             }
@@ -1096,8 +1096,8 @@ public class AppController {
             // Hide progress and show success
             hideProgressBar();
             String modeText = switch (mergeMode) {
-                case MERGE_BY_CONFIG_GROUP -> "Merged by Config Group";
-                case MERGE_ACROSS_CONFIG_GROUP -> "Merged Across Config Groups";
+                case MERGE_BY_CONFIG_GROUP -> "Merged Multiple Config Groups";
+                case MERGE_ACROSS_CONFIG_GROUP -> "Merged by Single Config Group";
                 case NONE -> "Standard (No Merge)";
             };
             statusLabel.setText("✅ Exported " + modeText + " JSON");

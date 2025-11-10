@@ -13,13 +13,13 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test to verify that MERGE_BY_CONFIG_GROUP is the expected default behavior.
- * This test ensures the merge logic works correctly when set as default.
+ * Test to verify that MERGE_BY_CONFIG_GROUP merges flows across multiple config groups.
+ * This test ensures the merge logic works correctly with the new semantics.
  */
 class DefaultMergeConfigTest {
 
     @Test
-    void defaultBehavior_MergesByConfigGroup() throws Exception {
+    void defaultBehavior_MergesAcrossConfigGroups() throws Exception {
         Path tempDir = Files.createTempDirectory("default-merge-test");
         Path excelPath = tempDir.resolve("input.xlsx");
         Path jsonPath = tempDir.resolve("output.json");
@@ -30,17 +30,17 @@ class DefaultMergeConfigTest {
         ExcelParserV5 parser = new ExcelParserV5();
         parser.load(excelPath.toFile());
         
-        // Use MERGE_BY_CONFIG_GROUP mode (the new default)
+        // Use MERGE_BY_CONFIG_GROUP mode (merges across multiple config groups)
         parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP);
 
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_BY_CONFIG_GROUP, identical flows in different groups should NOT merge
+        // With MERGE_BY_CONFIG_GROUP, identical flows in different groups SHOULD merge
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
-        assertEquals(2, flowCount, "Should have 2 separate flows (one per config group)");
+        assertEquals(1, flowCount, "Should have 1 merged flow across config groups");
         
-        // Verify each group's alarms are present
+        // Verify each group's alarms are present in the merged flow
         assertTrue(json.contains("GroupA_Alarm"));
         assertTrue(json.contains("GroupB_Alarm"));
     }
@@ -57,13 +57,13 @@ class DefaultMergeConfigTest {
         ExcelParserV5 parser = new ExcelParserV5();
         parser.load(excelPath.toFile());
         
-        // Use MERGE_BY_CONFIG_GROUP mode (the new default)
+        // Use MERGE_BY_CONFIG_GROUP mode
         parser.writeNurseCallsJson(jsonPath.toFile(), ExcelParserV5.MergeMode.MERGE_BY_CONFIG_GROUP);
 
         assertTrue(Files.exists(jsonPath));
         String json = Files.readString(jsonPath);
         
-        // With MERGE_BY_CONFIG_GROUP, identical flows in same group SHOULD merge
+        // With MERGE_BY_CONFIG_GROUP, identical flows in same group SHOULD also merge
         int flowCount = countOccurrences(json, "\"alarmsAlerts\":");
         assertEquals(1, flowCount, "Should have 1 merged flow within the same config group");
         
