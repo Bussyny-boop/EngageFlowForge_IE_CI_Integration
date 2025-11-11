@@ -2321,25 +2321,29 @@ public class AppController {
      * and translating the column to compensate for scrolling.
      */
     private <T> void freezeColumn(TableView<T> table, TableColumn<T, ?> column) {
-        // Multiple attempts to find and attach to the scrollbar
-        // This ensures we catch it even if the table is rendered later
-        for (int i = 0; i < 3; i++) {
-            final int delay = i * 500; // 0ms, 500ms, 1000ms
-            javafx.application.Platform.runLater(() -> {
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    // Ignore
-                }
-                attachScrollListener(table, column);
-            });
-        }
+        // Use a Timer to retry attaching the scroll listener with proper delays
+        // This ensures we catch the scrollbar even if the table is rendered later
+        java.util.Timer timer = new java.util.Timer(true);
+        java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger(0);
+        
+        timer.schedule(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                javafx.application.Platform.runLater(() -> {
+                    boolean success = attachScrollListener(table, column);
+                    if (success || attempts.incrementAndGet() >= 5) {
+                        timer.cancel();
+                    }
+                });
+            }
+        }, 0, 500); // Try every 500ms, up to 5 times
     }
     
     /**
      * Helper method to attach scroll listener to freeze a column
+     * @return true if successfully attached, false otherwise
      */
-    private <T> void attachScrollListener(TableView<T> table, TableColumn<T, ?> column) {
+    private <T> boolean attachScrollListener(TableView<T> table, TableColumn<T, ?> column) {
         // Find the horizontal scroll bar
         javafx.scene.control.ScrollBar horizontalScrollBar = null;
         for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
@@ -2355,9 +2359,6 @@ public class AppController {
         if (horizontalScrollBar != null) {
             final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
             
-            // Remove any existing listeners to avoid duplicates
-            scrollBar.valueProperty().removeListener((obs, oldVal, newVal) -> {});
-            
             // Listen to scroll position changes
             scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
                 updateColumnPosition(table, column, scrollBar);
@@ -2365,43 +2366,42 @@ public class AppController {
             
             // Initial position update
             updateColumnPosition(table, column, scrollBar);
+            return true;
         }
+        return false;
     }
     
     /**
      * Updates the position of a frozen column based on scroll position
      */
     private <T> void updateColumnPosition(TableView<T> table, TableColumn<T, ?> column, javafx.scene.control.ScrollBar scrollBar) {
-        javafx.application.Platform.runLater(() -> {
-            // Calculate the scroll offset
-            double scrollValue = scrollBar.getValue();
-            double scrollRange = scrollBar.getMax() - scrollBar.getMin();
-            double scrollOffset = scrollValue * scrollRange;
-            
-            // More robust column index lookup
-            int columnIndex = table.getColumns().indexOf(column);
-            if (columnIndex < 0) return;
-            
-            // Find and translate the column header - use style class matching
-            java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
-            for (javafx.scene.Node header : headers) {
-                if (header.getStyleClass().contains("sticky-column") || 
-                    isHeaderForColumn(header, column)) {
-                    header.setTranslateX(scrollOffset);
+        // No need for Platform.runLater here since we're already on the JavaFX thread
+        // (called from a listener on the scrollBar)
+        
+        // The scroll bar value in JavaFX TableView represents the horizontal pixel offset
+        // To keep the column fixed, we translate it by the same amount the table scrolled
+        double hScrollValue = scrollBar.getValue();
+        
+        // Find and translate the column header
+        java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
+        for (javafx.scene.Node header : headers) {
+            // Check if this header belongs to our sticky column
+            if (header.getStyleClass().contains("sticky-column") || 
+                isHeaderForColumn(header, column)) {
+                header.setTranslateX(hScrollValue);
+            }
+        }
+        
+        // Find and translate the column cells
+        java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
+        for (javafx.scene.Node cell : cells) {
+            if (cell instanceof javafx.scene.control.TableCell) {
+                javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
+                if (tableCell.getTableColumn() == column) {
+                    cell.setTranslateX(hScrollValue);
                 }
             }
-            
-            // Find and translate the column cells
-            java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
-            for (javafx.scene.Node cell : cells) {
-                if (cell instanceof javafx.scene.control.TableCell) {
-                    javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
-                    if (tableCell.getTableColumn() == column) {
-                        cell.setTranslateX(scrollOffset);
-                    }
-                }
-            }
-        });
+        }
     }
     
     /**
