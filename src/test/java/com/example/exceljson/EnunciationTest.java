@@ -207,7 +207,7 @@ class EnunciationTest {
     }
 
     @Test
-    void testEnunciateBlankDefaultsToTrue() throws Exception {
+    void testEnunciateBlankDefaultsToFalse() throws Exception {
         Path tempDir = Files.createTempDirectory("enunciate-blank-test");
         File excelFile = tempDir.resolve("test.xlsx").toFile();
 
@@ -221,7 +221,7 @@ class EnunciationTest {
         var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
-        assertEnunciateValue(params, "true", "Enunciate should default to true when blank");
+        assertEnunciateValue(params, "false", "Enunciate should default to false when blank");
 
         Files.deleteIfExists(excelFile.toPath());
         Files.deleteIfExists(tempDir);
@@ -529,7 +529,7 @@ class EnunciationTest {
         var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
-        assertEnunciateValue(params, "true", "Enunciate should default to true when both empty");
+        assertEnunciateValue(params, "false", "Enunciate should default to false when both empty");
 
         Files.deleteIfExists(excelFile.toPath());
         Files.deleteIfExists(tempDir);

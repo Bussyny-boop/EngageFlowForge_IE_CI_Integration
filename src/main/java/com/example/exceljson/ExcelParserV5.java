@@ -1858,8 +1858,8 @@ public class ExcelParserV5 {
     }
     params.add(paQ("breakThrough", breakThroughValue));
     
-    // Use parsed enunciate value if available, otherwise default to true
-    boolean enunciateValue = isBlank(r.enunciate) ? true : parseEnunciateToBoolean(r.enunciate);
+    // Use parsed enunciate value if available, otherwise default to false
+    boolean enunciateValue = isBlank(r.enunciate) ? false : parseEnunciateToBoolean(r.enunciate);
     params.add(paLiteralBool("enunciate", enunciateValue));
     
     // Message differs between NurseCall, Clinical, and Orders
