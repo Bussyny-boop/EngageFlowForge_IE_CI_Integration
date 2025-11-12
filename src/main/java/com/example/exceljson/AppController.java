@@ -13,6 +13,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -1325,7 +1326,7 @@ public class AppController {
     private <R> void setupEditable(TableColumn<R, String> col, Function<R, String> getter, BiConsumer<R, String> setter) {
         if (col == null) return;
         col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
-        col.setCellFactory(TextFieldTableCell.forTableColumn());
+        col.setCellFactory(TextAreaTableCell.forTableColumn());
         col.setOnEditCommit(ev -> {
             R row = ev.getRowValue();
             setter.accept(row, ev.getNewValue());
@@ -1688,7 +1689,7 @@ public class AppController {
         });
         
         // Make the column editable
-        newColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        newColumn.setCellFactory(TextAreaTableCell.forTableColumn());
         newColumn.setOnEditCommit(ev -> {
             ExcelParserV5.UnitRow row = ev.getRowValue();
             row.customGroups.put(customTabName, ev.getNewValue());
