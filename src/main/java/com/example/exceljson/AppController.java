@@ -1517,7 +1517,7 @@ public class AppController {
         if (col == null) return;
         col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
         col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
-            private final TextField textField = new TextField();
+            private TextArea textArea;
             
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -1546,17 +1546,15 @@ public class AppController {
             @Override
             public void startEdit() {
                 super.startEdit();
+                if (textArea == null) {
+                    createTextArea();
+                }
                 String value = getItem();
-                textField.setText(value == null ? "" : value);
+                textArea.setText(value == null ? "" : value);
                 setText(null);
-                setGraphic(textField);
-                textField.selectAll();
-                textField.requestFocus();
-                
-                // Add Enter key handler to commit edit
-                textField.setOnAction(event -> {
-                    commitEdit(textField.getText());
-                });
+                setGraphic(textArea);
+                textArea.selectAll();
+                textArea.requestFocus();
             }
             
             @Override
@@ -1574,6 +1572,46 @@ public class AppController {
                     setter.accept(row, newValue);
                     if (getTableView() != null) getTableView().refresh();
                 }
+            }
+            
+            private void createTextArea() {
+                textArea = new TextArea();
+                textArea.setMinHeight(60);
+                textArea.setPrefRowCount(3);
+                textArea.setWrapText(true);
+                
+                // Handle key events for Shift+Enter support
+                textArea.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, event -> {
+                    if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                        if (event.isShiftDown()) {
+                            // Shift+Enter: Insert newline
+                            event.consume();
+                            int caretPosition = textArea.getCaretPosition();
+                            textArea.insertText(caretPosition, "\n");
+                        } else {
+                            // Plain Enter: Commit the edit
+                            event.consume();
+                            commitEdit(textArea.getText());
+                        }
+                    } else if (event.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                        // Escape: Cancel the edit
+                        event.consume();
+                        cancelEdit();
+                    } else if (event.getCode() == javafx.scene.input.KeyCode.TAB) {
+                        // Tab: Commit and move to next cell
+                        event.consume();
+                        commitEdit(textArea.getText());
+                    }
+                });
+                
+                // Auto-commit when focus is lost
+                textArea.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                    if (wasFocused && !isNowFocused) {
+                        if (isEditing()) {
+                            commitEdit(textArea.getText());
+                        }
+                    }
+                });
             }
         });
         col.setEditable(true);
@@ -1598,7 +1636,7 @@ public class AppController {
         if (col == null) return;
         col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
         col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
-            private final TextField textField = new TextField();
+            private TextArea textArea;
             
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -1627,17 +1665,15 @@ public class AppController {
             @Override
             public void startEdit() {
                 super.startEdit();
+                if (textArea == null) {
+                    createTextArea();
+                }
                 String value = getItem();
-                textField.setText(value == null ? "" : value);
+                textArea.setText(value == null ? "" : value);
                 setText(null);
-                setGraphic(textField);
-                textField.selectAll();
-                textField.requestFocus();
-                
-                // Add Enter key handler to commit edit
-                textField.setOnAction(event -> {
-                    commitEdit(textField.getText());
-                });
+                setGraphic(textArea);
+                textArea.selectAll();
+                textArea.requestFocus();
             }
             
             @Override
@@ -1655,6 +1691,46 @@ public class AppController {
                     setter.accept(row, newValue);
                     if (getTableView() != null) getTableView().refresh();
                 }
+            }
+            
+            private void createTextArea() {
+                textArea = new TextArea();
+                textArea.setMinHeight(60);
+                textArea.setPrefRowCount(3);
+                textArea.setWrapText(true);
+                
+                // Handle key events for Shift+Enter support
+                textArea.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, event -> {
+                    if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                        if (event.isShiftDown()) {
+                            // Shift+Enter: Insert newline
+                            event.consume();
+                            int caretPosition = textArea.getCaretPosition();
+                            textArea.insertText(caretPosition, "\n");
+                        } else {
+                            // Plain Enter: Commit the edit
+                            event.consume();
+                            commitEdit(textArea.getText());
+                        }
+                    } else if (event.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                        // Escape: Cancel the edit
+                        event.consume();
+                        cancelEdit();
+                    } else if (event.getCode() == javafx.scene.input.KeyCode.TAB) {
+                        // Tab: Commit and move to next cell
+                        event.consume();
+                        commitEdit(textArea.getText());
+                    }
+                });
+                
+                // Auto-commit when focus is lost
+                textArea.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+                    if (wasFocused && !isNowFocused) {
+                        if (isEditing()) {
+                            commitEdit(textArea.getText());
+                        }
+                    }
+                });
             }
         });
         col.setEditable(true);
