@@ -67,9 +67,9 @@ Instead of being limited to a single line.
 
 This feature is available in all editable text columns across all tabs:
 - Units tab (all text columns)
-- Nurse Calls tab (all text columns)
-- Clinicals tab (all text columns)
-- Orders tab (all text columns)
+- Nurse Calls tab (all text columns, including recipient columns R1-R5)
+- Clinicals tab (all text columns, including recipient columns R1-R5)
+- Orders tab (all text columns, including recipient columns R1-R5)
 - Custom tab columns (dynamically added columns)
 
 ## Notes
