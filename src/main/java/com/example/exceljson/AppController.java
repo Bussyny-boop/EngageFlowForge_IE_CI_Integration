@@ -96,6 +96,7 @@ public class AppController {
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitFacilityCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNamesCol;
+    @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitPodRoomFilterCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitNurseGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitClinicalGroupCol;
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitOrdersGroupCol;
@@ -1222,6 +1223,7 @@ public class AppController {
         if (tableUnits != null) tableUnits.setEditable(true);
         setupEditable(unitFacilityCol, r -> r.facility, (r, v) -> r.facility = v);
         setupEditable(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
+        setupEditable(unitPodRoomFilterCol, r -> r.podRoomFilter, (r, v) -> r.podRoomFilter = v);
         setupEditable(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
         setupEditable(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
         setupEditable(unitOrdersGroupCol, r -> r.ordersGroup, (r, v) -> r.ordersGroup = v);

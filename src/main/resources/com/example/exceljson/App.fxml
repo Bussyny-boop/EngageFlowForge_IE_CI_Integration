@@ -317,6 +317,7 @@
                                                 <columns>
                                                     <TableColumn fx:id="unitFacilityCol" prefWidth="120.0" text="Facility" />
                                                     <TableColumn fx:id="unitNamesCol" prefWidth="160.0" text="Unit Names" />
+                                                    <TableColumn fx:id="unitPodRoomFilterCol" prefWidth="180.0" text="Filter for POD Rooms (Optional)" />
                                                     <TableColumn fx:id="unitNurseGroupCol" prefWidth="160.0" text="Nurse Group" />
                                                     <TableColumn fx:id="unitClinicalGroupCol" prefWidth="160.0" text="Clinical Group" />
                                                     <TableColumn fx:id="unitOrdersGroupCol" prefWidth="160.0" text="Orders Group" />
