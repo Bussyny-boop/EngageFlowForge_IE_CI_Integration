@@ -29,6 +29,7 @@ public class ExcelParserV5 {
   public static final class UnitRow {
     public String facility = "";
     public String unitNames = "";
+    public String podRoomFilter = ""; // Filter for POD Rooms (Optional)
     public String nurseGroup = "";
     public String clinGroup = "";
     public String ordersGroup = "";
@@ -380,6 +381,7 @@ public class ExcelParserV5 {
     int start = firstDataRow(sh, header);
     int cFacility   = getCol(hm, "Facility");
     int cUnitName   = getCol(hm, "Common Unit Name");
+    int cPodRoomFilter = getCol(hm, "Filter for POD Rooms (Optional)", "Filter for POD Rooms");
     
     // Validate required headers for Unit Breakdown sheet
     validateRequiredHeaders(SHEET_UNIT, hm,
@@ -408,6 +410,7 @@ public class ExcelParserV5 {
 
       String facility   = getCell(row, cFacility);
       String unitNames  = getCell(row, cUnitName);
+      String podRoomFilter = getCell(row, cPodRoomFilter);
       String nurseGroup = getCell(row, cNurseGroup);
       String clinGroup  = getCell(row, cClinGroup);
       String ordersGroup = getCell(row, cOrdersGroup);
@@ -419,6 +422,7 @@ public class ExcelParserV5 {
       UnitRow u = new UnitRow();
       u.facility = facility;
       u.unitNames = unitNames;
+      u.podRoomFilter = podRoomFilter;
       u.nurseGroup = nurseGroup;
       u.clinGroup = clinGroup;
       u.ordersGroup = ordersGroup;
@@ -440,7 +444,7 @@ public class ExcelParserV5 {
       if (!isBlank(nurseGroup)) {
         for (String name : list) {
           nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
-            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
         }
         // Store No Caregiver Group for this (facility, nurseGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
@@ -451,7 +455,7 @@ public class ExcelParserV5 {
       if (!isBlank(clinGroup)) {
         for (String name : list) {
           clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
-            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
         }
         // Store No Caregiver Group for this (facility, clinGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
@@ -462,7 +466,7 @@ public class ExcelParserV5 {
       if (!isBlank(ordersGroup)) {
         for (String name : list) {
           ordersGroupToUnits.computeIfAbsent(ordersGroup, k -> new ArrayList<>())
-            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
         }
         // Store No Caregiver Group for this (facility, ordersGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
@@ -480,7 +484,7 @@ public class ExcelParserV5 {
             customGroupToUnits.computeIfAbsent(customTabName, k -> new LinkedHashMap<>());
           for (String name : list) {
             groupMap.computeIfAbsent(customGroup, k -> new ArrayList<>())
-              .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+              .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
           }
           // Store No Caregiver Group for this (facility, customGroup) pair
           if (!isBlank(facility) && !isBlank(noCare)) {
@@ -503,6 +507,7 @@ public class ExcelParserV5 {
     for (UnitRow u : units) {
       String facility = u.facility;
       String unitNames = u.unitNames;
+      String podRoomFilter = u.podRoomFilter;
       String nurseGroup = u.nurseGroup;
       String clinGroup = u.clinGroup;
       String ordersGroup = u.ordersGroup;
@@ -512,7 +517,7 @@ public class ExcelParserV5 {
       if (!isBlank(nurseGroup)) {
         for (String name : list) {
           nurseGroupToUnits.computeIfAbsent(nurseGroup, k -> new ArrayList<>())
-            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
         }
         // Store No Caregiver Group for this (facility, nurseGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
@@ -523,7 +528,7 @@ public class ExcelParserV5 {
       if (!isBlank(clinGroup)) {
         for (String name : list) {
           clinicalGroupToUnits.computeIfAbsent(clinGroup, k -> new ArrayList<>())
-            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
         }
         // Store No Caregiver Group for this (facility, clinGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
@@ -534,7 +539,7 @@ public class ExcelParserV5 {
       if (!isBlank(ordersGroup)) {
         for (String name : list) {
           ordersGroupToUnits.computeIfAbsent(ordersGroup, k -> new ArrayList<>())
-            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+            .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
         }
         // Store No Caregiver Group for this (facility, ordersGroup) pair
         if (!isBlank(facility) && !isBlank(noCare)) {
@@ -552,7 +557,7 @@ public class ExcelParserV5 {
             customGroupToUnits.computeIfAbsent(customTabName, k -> new LinkedHashMap<>());
           for (String name : list) {
             groupMap.computeIfAbsent(customGroup, k -> new ArrayList<>())
-              .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare));
+              .add(Map.of("facilityName", facility, "name", name, "noCaregiverGroup", noCare, "podRoomFilter", nvl(podRoomFilter, "")));
           }
           // Store No Caregiver Group for this (facility, customGroup) pair
           if (!isBlank(facility) && !isBlank(noCare)) {
@@ -880,6 +885,16 @@ public class ExcelParserV5 {
         flowConditions.add(roomFilterCond);
       }
       
+      // Add POD room filter condition if unit has one defined
+      // Only for NurseCalls and Clinicals flows
+      if ((nurseSide || "Clinicals".equals(flowType)) && !unitRefs.isEmpty()) {
+        String podRoomFilter = unitRefs.get(0).getOrDefault("podRoomFilter", "");
+        Map<String,Object> podRoomFilterCond = buildPodRoomFilterCondition(podRoomFilter);
+        if (podRoomFilterCond != null) {
+          flowConditions.add(podRoomFilterCond);
+        }
+      }
+      
       flow.put("conditions", flowConditions);
       
       flow.put("destinations", dac.destinations);
@@ -1012,6 +1027,16 @@ public class ExcelParserV5 {
         
         if (roomFilterCond != null) {
           flowConditions.add(roomFilterCond);
+        }
+        
+        // Add POD room filter condition if unit has one defined
+        // Only for NurseCalls and Clinicals flows
+        if ((nurseSide || "Clinicals".equals(flowType)) && !unitsForNoCareGroup.isEmpty()) {
+          String podRoomFilter = unitsForNoCareGroup.get(0).getOrDefault("podRoomFilter", "");
+          Map<String,Object> podRoomFilterCond = buildPodRoomFilterCondition(podRoomFilter);
+          if (podRoomFilterCond != null) {
+            flowConditions.add(podRoomFilterCond);
+          }
         }
         
         flow.put("conditions", flowConditions);
@@ -2091,6 +2116,33 @@ public class ExcelParserV5 {
     Map<String, Object> condition = new LinkedHashMap<>();
     condition.put("filters", List.of(filter));
     condition.put("name", "Room Filter for TT");
+    
+    return condition;
+  }
+
+  /**
+   * Build POD room filter condition for units.
+   * Only adds the condition if podRoomFilter is not blank.
+   * Uses "in" operator and strips special characters from the value.
+   * 
+   * @param podRoomFilter Comma-separated room values from the unit configuration
+   * @return Map representing the POD room filter condition, or null if no filter
+   */
+  private Map<String,Object> buildPodRoomFilterCondition(String podRoomFilter) {
+    if (isBlank(podRoomFilter)) return null;
+    
+    // Strip special characters, keeping only alphanumeric, spaces, and commas
+    String cleanedValue = podRoomFilter.replaceAll("[^a-zA-Z0-9,\\s]", "").trim();
+    if (cleanedValue.isEmpty()) return null;
+    
+    Map<String, Object> filter = new LinkedHashMap<>();
+    filter.put("attributePath", "bed.room.room_number");
+    filter.put("operator", "in");
+    filter.put("value", cleanedValue);
+    
+    Map<String, Object> condition = new LinkedHashMap<>();
+    condition.put("filters", List.of(filter));
+    condition.put("name", "POD rooms filter");
     
     return condition;
   }
