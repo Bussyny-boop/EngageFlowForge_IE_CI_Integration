@@ -100,13 +100,10 @@ public class TextAreaTableCell<S> extends TableCell<S, String> {
         textArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 if (event.isShiftDown()) {
-                    // Shift+Enter: Insert newline manually
+                    // Shift+Enter: Insert newline
                     event.consume();
                     int caretPosition = textArea.getCaretPosition();
-                    String currentText = textArea.getText();
-                    String newText = currentText.substring(0, caretPosition) + "\n" + currentText.substring(caretPosition);
-                    textArea.setText(newText);
-                    textArea.positionCaret(caretPosition + 1);
+                    textArea.insertText(caretPosition, "\n");
                 } else {
                     // Plain Enter: Commit the edit
                     event.consume();
