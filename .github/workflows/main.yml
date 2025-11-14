@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-msi:
-    name: Build Engage FlowForge 2.0 (MSI)
+    name: Build Engage FlowForge 2.5 (MSI)
     runs-on: windows-latest
     permissions:
       actions: write
@@ -47,14 +47,14 @@ jobs:
             --type msi `
             --name "EngageFlowForge" `
             --input target `
-            --main-jar engage-rules-generator-2.0.0.jar `
+            --main-jar engage-rules-generator-2.5.0.jar `
             --main-class com.example.exceljson.Main `
             --runtime-image runtime `
-            --app-version 2.0 `
+            --app-version 2.5 `
             --win-menu `
             --win-shortcut `
             --icon src/main/resources/icon.ico `
-            --description "Engage FlowForge 2.0 - Engage rules generation" `
+            --description "Engage FlowForge 2.5 - Engage rules generation" `
             --vendor "Your Organization" `
             --java-options "--add-modules javafx.controls,javafx.fxml"
 
@@ -92,5 +92,5 @@ jobs:
         with:
           name: engage-rules-generator-msi
           path: |
-            EngageFlowForge-2.0.msi
+            EngageFlowForge-2.5.msi
           retention-days: 14

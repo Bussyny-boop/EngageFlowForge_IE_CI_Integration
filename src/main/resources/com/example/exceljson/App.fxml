@@ -15,7 +15,7 @@
             <!-- Left: App Title and Version -->
             <VBox spacing="2" alignment="CENTER_LEFT">
                 <Label text="Engage FlowForge" style="-fx-font-size:18; -fx-font-weight:bold; -fx-text-fill:white;" />
-                <Label text="Version 2.0" style="-fx-font-size:10; -fx-text-fill:rgba(255,255,255,0.8);" />
+                <Label text="Version 2.5" style="-fx-font-size:10; -fx-text-fill:rgba(255,255,255,0.8);" />
             </VBox>
             
             <Separator orientation="VERTICAL" />

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 2.0.0)'
+        description: 'Version number (e.g., 2.5.0)'
         required: true
         type: string
 
@@ -47,14 +47,14 @@ jobs:
             --type msi `
             --name "EngageFlowForge" `
             --input target `
-            --main-jar engage-rules-generator-2.0.0.jar `
+            --main-jar engage-rules-generator-2.5.0.jar `
             --main-class com.example.exceljson.Main `
             --runtime-image runtime `
-            --app-version 2.0 `
+            --app-version 2.5 `
             --win-menu `
             --win-shortcut `
             --icon src/main/resources/icon.ico `
-            --description "Engage FlowForge 2.0 - Engage rules generation" `
+            --description "Engage FlowForge 2.5 - Engage rules generation" `
             --vendor "Your Organization" `
             --java-options "--add-modules javafx.controls,javafx.fxml"
 
@@ -62,14 +62,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-msi
-          path: EngageFlowForge-2.0.msi
+          path: EngageFlowForge-2.5.msi
           retention-days: 1
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: jar-file
-          path: target/engage-rules-generator-2.0.0.jar
+          path: target/engage-rules-generator-2.5.0.jar
           retention-days: 1
 
   create-release:
@@ -120,8 +120,8 @@ jobs:
           name: Engage FlowForge ${{ steps.version.outputs.VERSION }}
           body_path: release_notes.txt
           files: |
-            EngageFlowForge-2.0.msi
-            engage-rules-generator-2.0.0.jar
+            EngageFlowForge-2.5.msi
+            engage-rules-generator-2.5.0.jar
           draft: false
           prerelease: false
         env:
