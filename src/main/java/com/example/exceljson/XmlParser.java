@@ -210,7 +210,7 @@ public class XmlParser {
         
         // Create flow rows for each alert type and unit combination
         createFlowRows(dataset, purpose, component, alertTypes, facilities, units, 
-                      deferDeliveryBy, isCreate, isUpdate, settings);
+                      deferDeliveryBy, isCreate, isUpdate, settings, role);
     }
     
     /**
@@ -280,6 +280,9 @@ public class XmlParser {
             if (root.has("overrideDND")) {
                 result.put("overrideDND", root.get("overrideDND").asBoolean() ? "TRUE" : "FALSE");
             }
+            if (root.has("destination")) {
+                result.put("destination", root.get("destination").asText());
+            }
             if (root.has("displayValues")) {
                 JsonNode displayValues = root.get("displayValues");
                 if (displayValues.isArray()) {
@@ -313,7 +316,7 @@ public class XmlParser {
     private void createFlowRows(String dataset, String purpose, String component,
                                 Set<String> alertTypes, Set<String> facilities, Set<String> units,
                                 String deferDeliveryBy, boolean isCreate, boolean isUpdate,
-                                Map<String, Object> settings) {
+                                Map<String, Object> settings, String role) {
         
         // Track facility/unit combinations
         for (String facility : facilities) {
@@ -328,6 +331,26 @@ public class XmlParser {
         // If no units found, use empty string
         if (units.isEmpty()) {
             units.add("");
+        }
+        
+        // Determine recipient from destination or role
+        String recipient = "";
+        if (settings.containsKey("destination")) {
+            String destination = (String) settings.get("destination");
+            if (destination != null && !destination.isEmpty()) {
+                // If destination starts with "g-", use it as the recipient
+                if (destination.startsWith("g-")) {
+                    recipient = destination;
+                } else {
+                    // Otherwise use the role name (functional role)
+                    if (role != null && !role.isEmpty()) {
+                        recipient = role;
+                    }
+                }
+            }
+        } else if (role != null && !role.isEmpty()) {
+            // If no destination, just use role
+            recipient = role;
         }
         
         // Create a flow row for each alert type
@@ -374,6 +397,11 @@ public class XmlParser {
                 
                 if (isUpdate && deferDeliveryBy != null && !deferDeliveryBy.isEmpty()) {
                     flow.escalateAfter = deferDeliveryBy;
+                }
+                
+                // Set recipient
+                if (!recipient.isEmpty()) {
+                    flow.r1 = recipient;
                 }
                 
                 // Apply settings

@@ -31,6 +31,14 @@
             <value>CVICU</value>
           </filter>
         </view>
+        <view>
+          <name>Role_caregiver_NURSE</name>
+          <description>Role caregiver NURSE</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Nurse</value>
+          </filter>
+        </view>
       </dataset>
     </datasets>
     <workflows>
@@ -46,8 +54,9 @@
             <view>Alarm_included_in_LowHR_HighHR_APNEA</view>
             <view>Facility_name_is_East_Bank</view>
             <view>Unit_CVICU</view>
+            <view>Role_caregiver_NURSE</view>
           </condition>
-          <settings>{"priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT","overrideDND":false,"displayValues":["Acknowledge","Escalate"],"storedValues":["Accepted","Decline Primary"]}</settings>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT","overrideDND":false,"displayValues":["Acknowledge","Escalate"],"storedValues":["Accepted","Decline Primary"]}</settings>
         </rule>
       </interface>
     </interfaces>

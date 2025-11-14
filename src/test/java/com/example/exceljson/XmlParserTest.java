@@ -41,12 +41,15 @@ public class XmlParserTest {
                 assertEquals("30", flow.t1, "T1 should be 30");
                 assertEquals("2", flow.priorityRaw, "Priority should be 2");
                 assertEquals("10", flow.ttlValue, "TTL should be 10");
+                assertEquals("Nurse", flow.r1, "Recipient should be Nurse (from role)");
             }
             if (flow.alarmName.contains("High Heart Rate")) {
                 foundHighHR = true;
+                assertEquals("Nurse", flow.r1, "Recipient should be Nurse");
             }
             if (flow.alarmName.contains("APNEA")) {
                 foundAPNEA = true;
+                assertEquals("Nurse", flow.r1, "Recipient should be Nurse");
             }
         }
         
@@ -118,5 +121,47 @@ public class XmlParserTest {
             }
         }
         assertTrue(foundTestHospital, "Should find Test Hospital facility");
+    }
+    
+    @Test
+    public void testGroupDestination() throws Exception {
+        XmlParser parser = new XmlParser();
+        
+        // Load XML file with group destination (g- prefix)
+        File xmlFile = new File("src/test/resources/sample-engage-group-dest.xml");
+        assertTrue(xmlFile.exists(), "Sample XML file with group destination should exist");
+        
+        parser.load(xmlFile);
+        
+        // Verify clinicals were created
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        assertFalse(clinicals.isEmpty(), "Should have clinical flows");
+        
+        // Verify group destination handling
+        boolean foundCodeBlue = false;
+        for (ExcelParserV5.FlowRow flow : clinicals) {
+            if (flow.alarmName.contains("Code Blue")) {
+                foundCodeBlue = true;
+                assertEquals("VMP", flow.deviceA, "Device should be VMP");
+                assertEquals("5", flow.t1, "T1 should be 5");
+                assertEquals("3", flow.priorityRaw, "Priority should be 3");
+                assertEquals("15", flow.ttlValue, "TTL should be 15");
+                assertEquals("TRUE", flow.breakThroughDND, "Break through DND should be TRUE");
+                // Recipient should be the group name (destination with g- prefix)
+                assertEquals("g-CodeBlueTeam", flow.r1, "Recipient should be g-CodeBlueTeam (group destination)");
+            }
+        }
+        assertTrue(foundCodeBlue, "Should find Code Blue alert");
+        
+        // Verify facility and unit
+        List<ExcelParserV5.UnitRow> units = parser.getUnits();
+        boolean foundMemorialHospital = false;
+        for (ExcelParserV5.UnitRow unit : units) {
+            if (unit.facility.equals("Memorial Hospital")) {
+                foundMemorialHospital = true;
+                assertTrue(unit.unitNames.contains("ER"), "Should have ER unit");
+            }
+        }
+        assertTrue(foundMemorialHospital, "Should find Memorial Hospital facility");
     }
 }
