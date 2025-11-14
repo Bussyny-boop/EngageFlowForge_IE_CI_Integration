@@ -77,4 +77,46 @@ public class XmlParserTest {
         assertTrue(summary.contains("Unit rows"), "Summary should mention units");
         assertTrue(summary.contains("Clinical rows"), "Summary should mention clinicals");
     }
+    
+    @Test
+    public void testDifferentVersionNumbers() throws Exception {
+        XmlParser parser = new XmlParser();
+        
+        // Load XML file with different version-major and version-minor (5.12)
+        File xmlFile = new File("src/test/resources/sample-engage-v5-12.xml");
+        assertTrue(xmlFile.exists(), "Sample XML file with different version should exist");
+        
+        // Should parse successfully regardless of version numbers
+        parser.load(xmlFile);
+        
+        // Verify data was parsed
+        List<ExcelParserV5.UnitRow> units = parser.getUnits();
+        assertFalse(units.isEmpty(), "Should have at least one unit");
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        assertFalse(clinicals.isEmpty(), "Should have clinical flows");
+        
+        // Verify the test alert was parsed
+        boolean foundTestAlert = false;
+        for (ExcelParserV5.FlowRow flow : clinicals) {
+            if (flow.alarmName.contains("Test Alert")) {
+                foundTestAlert = true;
+                assertEquals("VMP", flow.deviceA, "Device should be VMP");
+                assertEquals("15", flow.t1, "T1 should be 15");
+                assertEquals("1", flow.priorityRaw, "Priority should be 1");
+                assertEquals("5", flow.ttlValue, "TTL should be 5");
+            }
+        }
+        assertTrue(foundTestAlert, "Should find Test Alert");
+        
+        // Verify facility and unit
+        boolean foundTestHospital = false;
+        for (ExcelParserV5.UnitRow unit : units) {
+            if (unit.facility.equals("Test Hospital")) {
+                foundTestHospital = true;
+                assertTrue(unit.unitNames.contains("ICU"), "Should have ICU unit");
+            }
+        }
+        assertTrue(foundTestHospital, "Should find Test Hospital facility");
+    }
 }
