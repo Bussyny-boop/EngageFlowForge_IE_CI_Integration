@@ -805,8 +805,12 @@ public class AppController {
     private void loadExcel() {
         try {
             FileChooser chooser = new FileChooser();
-            chooser.setTitle("Select Excel Workbook");
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+            chooser.setTitle("Select Excel Workbook or XML File");
+            chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel and XML Files", "*.xlsx", "*.xml"),
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"),
+                new FileChooser.ExtensionFilter("XML Files", "*.xml")
+            );
 
             if (lastExcelDir != null && lastExcelDir.exists()) {
                 chooser.setInitialDirectory(lastExcelDir);
@@ -818,16 +822,42 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, true);
 
+            // Determine file type and load accordingly
+            String fileName = file.getName().toLowerCase();
+            boolean isXml = fileName.endsWith(".xml");
+            
             // Show progress
-            showProgressBar("📥 Loading Excel file...");
+            showProgressBar(isXml ? "📥 Loading XML file..." : "📥 Loading Excel file...");
             
-            // Load file
-            parser.load(file);
+            String loadSummary;
+            if (isXml) {
+                // Load XML file
+                XmlParser xmlParser = new XmlParser();
+                xmlParser.load(file);
+                
+                // Transfer data from XML parser to main parser lists
+                parser.units.clear();
+                parser.units.addAll(xmlParser.getUnits());
+                
+                parser.nurseCalls.clear();
+                parser.nurseCalls.addAll(xmlParser.getNurseCalls());
+                
+                parser.clinicals.clear();
+                parser.clinicals.addAll(xmlParser.getClinicals());
+                
+                parser.orders.clear();
+                parser.orders.addAll(xmlParser.getOrders());
+                
+                loadSummary = xmlParser.getLoadSummary();
+            } else {
+                // Load Excel file
+                parser.load(file);
+                loadSummary = parser.getLoadSummary();
+            }
+            
             currentExcelFile = file;
-            
             updateCurrentFileLabel(); // Update file label
-
-            jsonPreview.setText(parser.getLoadSummary());
+            jsonPreview.setText(loadSummary);
 
             refreshTables();
             tableUnits.refresh();
@@ -844,24 +874,26 @@ public class AppController {
             updateCustomTabStats(); // Update custom tab statistics
             
             // Build success message
-            StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
+            StringBuilder successMsg = new StringBuilder(isXml ? "✅ XML loaded successfully" : "✅ Excel loaded successfully");
             
-            int movedCount = parser.getEmdanMovedCount();
-            if (movedCount > 0) {
-                successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
-            }
-            
-            // Add custom tab information
-            Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
-            if (!customTabCounts.isEmpty()) {
-                int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
-                if (totalCustomRows > 0) {
-                    successMsg.append("\n\nCustom Tabs Processed:");
-                    for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
-                        String flowType = customTabMappings.get(entry.getKey());
-                        successMsg.append("\n  • ").append(entry.getKey())
-                                 .append(" → ").append(flowType)
-                                 .append(": ").append(entry.getValue()).append(" rows");
+            if (!isXml) {
+                int movedCount = parser.getEmdanMovedCount();
+                if (movedCount > 0) {
+                    successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
+                }
+                
+                // Add custom tab information
+                Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
+                if (!customTabCounts.isEmpty()) {
+                    int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
+                    if (totalCustomRows > 0) {
+                        successMsg.append("\n\nCustom Tabs Processed:");
+                        for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
+                            String flowType = customTabMappings.get(entry.getKey());
+                            successMsg.append("\n  • ").append(entry.getKey())
+                                     .append(" → ").append(flowType)
+                                     .append(": ").append(entry.getValue()).append(" rows");
+                        }
                     }
                 }
             }
@@ -869,7 +901,7 @@ public class AppController {
             showInfo(successMsg.toString());
         } catch (Exception ex) {
             hideProgressBar();
-            showError("Failed to load Excel: " + ex.getMessage());
+            showError("Failed to load file: " + ex.getMessage());
         }
     }
 

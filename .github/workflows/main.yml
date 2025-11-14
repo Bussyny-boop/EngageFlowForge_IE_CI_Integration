@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-msi:
-    name: Build Engage FlowForge 2.0 (MSI)
+    name: Build Engage FlowForge 2.5 (MSI)
     runs-on: windows-latest
     permissions:
       actions: write
@@ -47,14 +47,14 @@ jobs:
             --type msi `
             --name "EngageFlowForge" `
             --input target `
-            --main-jar engage-rules-generator-2.0.0.jar `
+            --main-jar engage-rules-generator-2.5.0.jar `
             --main-class com.example.exceljson.Main `
             --runtime-image runtime `
-            --app-version 2.0 `
+            --app-version 2.5 `
             --win-menu `
             --win-shortcut `
             --icon src/main/resources/icon.ico `
-            --description "Engage FlowForge 2.0 - Engage rules generation" `
+            --description "Engage FlowForge 2.5 - Engage rules generation" `
             --vendor "Your Organization" `
             --java-options "--add-modules javafx.controls,javafx.fxml"
 
@@ -92,94 +92,5 @@ jobs:
         with:
           name: engage-rules-generator-msi
           path: |
-            EngageFlowForge-2.0.msi
+            EngageFlowForge-2.5.msi
           retention-days: 14
-
-  build-dmg:
-    name: Build Engage FlowForge 2.0 (DMG)
-    runs-on: macos-latest
-    permissions:
-      actions: write
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # ✅ Use Liberica JDK 21 with JavaFX built in
-      - name: Set up Liberica Full JDK (includes JavaFX)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'liberica'
-          java-version: '21'
-          java-package: 'jdk+fx'
-
-      - name: Verify Java
-        run: java -version
-
-      - name: Set up Maven
-        uses: stCarolas/setup-maven@v4
-        with:
-          maven-version: 3.9.6
-
-      - name: Build with Maven
-        run: mvn -B clean package
-
-      # ✅ Create a custom runtime image including JavaFX modules
-      - name: Create custom Java runtime (with JavaFX)
-        run: jlink --add-modules java.base,java.desktop,java.logging,java.sql,javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.web --output runtime
-
-      # ✅ Package as DMG with bundled runtime
-      - name: Package as DMG using jpackage
-        run: |
-          jpackage \
-            --type dmg \
-            --name "EngageFlowForge" \
-            --input target \
-            --main-jar engage-rules-generator-2.0.0.jar \
-            --main-class com.example.exceljson.Main \
-            --runtime-image runtime \
-            --app-version 2.0 \
-            --icon src/main/resources/icon.icns \
-            --description "Engage FlowForge 2.0 - Engage rules generation" \
-            --vendor "Your Organization" \
-            --java-options "--add-modules javafx.controls,javafx.fxml"
-
-      - name: Remove older DMG artifacts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const maxArtifactsToKeep = 1;
-            const artifacts = await github.paginate(
-              github.rest.actions.listArtifactsForRepo,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-              }
-            );
-
-            const dmgArtifacts = artifacts
-              .filter((artifact) => artifact.name === 'engage-rules-generator-dmg')
-              .sort(
-                (a, b) => new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf(),
-              );
-
-            for (const artifact of dmgArtifacts.slice(maxArtifactsToKeep)) {
-              core.info(`Deleting old artifact ${artifact.name} (#${artifact.id}) created at ${artifact.created_at}`);
-              await github.rest.actions.deleteArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id,
-              });
-            }
-
-      - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: engage-rules-generator-dmg
-          path: |
-            EngageFlowForge-2.0.dmg
-          retention-days: 14
-
-

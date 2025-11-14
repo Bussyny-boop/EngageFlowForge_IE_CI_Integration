@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="5" version-minor="12">
+  <meta-data>
+    <name>Test Different Version Numbers</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        <view>
+          <name>Test_Alert</name>
+          <description>Test alert type</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Test Alert</value>
+          </filter>
+        </view>
+        <view>
+          <name>Test_Facility</name>
+          <description>Test facility</description>
+          <filter relation="equal">
+            <path>patient.current_place.room.facility.name</path>
+            <value>Test Hospital</value>
+          </filter>
+        </view>
+        <view>
+          <name>Test_Unit</name>
+          <description>Test unit</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ICU</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    <workflows>
+    </workflows>
+    <interfaces>
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>TEST RULE</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>15</defer-delivery-by>
+          <condition>
+            <view>Test_Alert</view>
+            <view>Test_Facility</view>
+            <view>Test_Unit</view>
+          </condition>
+          <settings>{"priority":"1","ttl":5}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

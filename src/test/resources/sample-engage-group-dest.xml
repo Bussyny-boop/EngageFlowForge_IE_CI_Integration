@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="2" version-minor="3">
+  <meta-data>
+    <name>Test Group Destination</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        <view>
+          <name>Test_Alert_Group</name>
+          <description>Test alert for group destination</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Code Blue</value>
+          </filter>
+        </view>
+        <view>
+          <name>Test_Facility_Group</name>
+          <description>Test facility</description>
+          <filter relation="equal">
+            <path>patient.current_place.room.facility.name</path>
+            <value>Memorial Hospital</value>
+          </filter>
+        </view>
+        <view>
+          <name>Test_Unit_Group</name>
+          <description>Test unit</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ER</value>
+          </filter>
+        </view>
+        <view>
+          <name>Role_caregiver_PHYSICIAN</name>
+          <description>Role caregiver PHYSICIAN</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Physician</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    <workflows>
+    </workflows>
+    <interfaces>
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>CODE BLUE - GROUP NOTIFICATION</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>5</defer-delivery-by>
+          <condition>
+            <view>Test_Alert_Group</view>
+            <view>Test_Facility_Group</view>
+            <view>Test_Unit_Group</view>
+            <view>Role_caregiver_PHYSICIAN</view>
+          </condition>
+          <settings>{"destination":"g-CodeBlueTeam","priority":"3","ttl":15,"enunciate":"SYSTEM_DEFAULT","overrideDND":true}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
