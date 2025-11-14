@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test DataUpdate Interface</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for alarm types -->
+        <view>
+          <name>Alarm_included_in_LowHR_HighHR_APNEA_ECGAlarms_ETCO2_Probe_Disconnect</name>
+          <description>Alarms included in LowHR, HighHR, APNEA, ECG alarms, ETCO2, Probe Disconnect</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>LHR,HHR,APNEA,AFIB,ST CHANGES,PAUSE,PSVT,ETCO2 HI,ETCO2 LO,ETCO2 LOW,ETCO2 HIGH,PROBE DISCONNECT,MAP HIGH,MAP LOW,SPO2 NO SENSOR,SPO2 SENSOR OFF,NORMAL</value>
+          </filter>
+        </view>
+        
+        <!-- Views for states -->
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_secondary_state</name>
+          <description>Alarm is at secondary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Secondary</value>
+          </filter>
+        </view>
+        
+        <!-- Views for roles -->
+        <view>
+          <name>Role_caregiver_NURSE_is_online_with_a_VMP_phone</name>
+          <description>Role caregiver NURSE is online with a VMP phone</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Role_caregiver_NURSE_BUDDY_is_online_with_a_VMP_phone</name>
+          <description>Role caregiver NURSE BUDDY is online with a VMP phone</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE BUDDY</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alarm_has_not_been_responded_to</name>
+          <description>Alarm has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>State_at_delivery_not_SECONDARY</name>
+          <description>State at delivery not SECONDARY</description>
+          <filter relation="not_equal">
+            <path>state_at_delivery</path>
+            <value>Secondary</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- VMP Interface for sending messages -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND PRIMARY -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND PRIMARY | LHR | HHR | APNEA | AFIB | ST CHANGES | PAUSE | PSVT | ETCO2 HI | ETCO2 LO | ETCO2 LOW | ETCO2 HIGH | PROBE DISCONNECT | MAP HIGH | MAP LOW | SPO2 NO SENSOR | SPO2 SENSOR OFF | NORMAL | VMP | NURSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>1</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_included_in_LowHR_HighHR_APNEA_ECGAlarms_ETCO2_Probe_Disconnect</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE_is_online_with_a_VMP_phone</view>
+          </condition>
+          <settings>{"callbackNumber":"","callbackResponse":"","destination":"#{bed.locs.assignments.usr.devices.lines.number}","displayValues":["Acknowledge","Escalate"],"enunciate":"SYSTEM_DEFAULT","escalationLevel":"#{state}","eventID":"Clinicals:#{id}","message":"Bed: #{bed.room.room_number} - #{bed.bed_number}\nText: #{alert_type}\nDetails: #{clinical_details.detail_type}\nPriority: #{priority}\nSite: #{bed.room.facility.name}\nUnit: #{bed.room.unit.name}","overrideDND":false,"parameters":[],"participationStatus":true,"patientMRN":"#{clinical_patient.mrn}","priority":"2","responseAction":"responses.action","ruleAction":"SEND_MESSAGE","shortMessage":"#{bed.room.room_number} Bed #{bed.bed_number} #{alert_type}","storedValues":["Accepted","Decline Primary"],"subject":"#{alert_type} - Room #{bed.room.room_number}-#{bed.bed_number}","ttl":10,"username":"responses.usr.login"}</settings>
+        </rule>
+        
+        <!-- SEND SECONDARY -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND SECONDARY | LHR | HHR | APNEA | AFIB | ST CHANGES | PAUSE | PSVT | ETCO2 HI | ETCO2 LO | ETCO2 LOW | ETCO2 HIGH | PROBE DISCONNECT | MAP HIGH | MAP LOW | SPO2 NO SENSOR | SPO2 SENSOR OFF | NORMAL | VMP | NURSE BUDDY | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>1</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_included_in_LowHR_HighHR_APNEA_ECGAlarms_ETCO2_Probe_Disconnect</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_secondary_state</view>
+            <view>Role_caregiver_NURSE_BUDDY_is_online_with_a_VMP_phone</view>
+            <view>State_at_delivery_not_SECONDARY</view>
+          </condition>
+          <settings>{"callbackNumber":"","callbackResponse":"","destination":"#{bed.locs.assignments.usr.devices.lines.number}","displayValues":["Acknowledge","Escalate"],"enunciate":"SYSTEM_DEFAULT","escalationLevel":"#{state}","eventID":"Clinicals:#{id}","message":"Bed: #{bed.room.room_number} - #{bed.bed_number}\nText: #{alert_type}\nDetails: #{clinical_details.detail_type}\nPriority: #{priority}\nSite: #{bed.room.facility.name}\nUnit: #{bed.room.unit.name}","overrideDND":false,"parameters":[],"participationStatus":true,"patientMRN":"#{clinical_patient.mrn}","priority":"2","responseAction":"responses.action","ruleAction":"SEND_MESSAGE","shortMessage":"#{bed.room.room_number} Bed #{bed.bed_number} #{alert_type}","storedValues":["Accepted","Decline Secondary"],"subject":"#{alert_type} - Room #{bed.room.room_number}-#{bed.bed_number}","ttl":10,"username":"responses.usr.login"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate Interface for escalation timing -->
+      <interface component="DataUpdate">
+        <name>DataUpdate for Alerts</name>
+        
+        <!-- ESCALATE TO SECONDARY: After 30-60 seconds with no primary response -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO SECONDARY | 30-60 | ALL ALARMS | NO PRIMARY RESPONSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"},{"path":"history.previous_state","value":"#{state}"},{"path":"history.state","value":"Secondary"},{"path":"history.reason","value":"No Response"}]}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
