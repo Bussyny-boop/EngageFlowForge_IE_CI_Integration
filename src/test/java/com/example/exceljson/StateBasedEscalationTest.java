@@ -18,37 +18,58 @@ public class StateBasedEscalationTest {
 
     @Test
     public void testStateBasedEscalationParsing() throws Exception {
-        // Create test XML file
-        File xmlFile = new File("/tmp/test-state-escalation.xml");
+        // Create test XML file from resources
+        File xmlFile = new File("src/test/resources/test-state-escalation.xml");
         
         XmlParser parser = new XmlParser();
         parser.load(xmlFile);
         
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         
-        // Debug: print all flows
-        System.out.println("Total flows parsed: " + clinicals.size());
-        for (int i = 0; i < clinicals.size(); i++) {
-            ExcelParserV5.FlowRow flow = clinicals.get(i);
-            System.out.println("\nFlow " + (i+1) + ":");
-            System.out.println("  Purpose/Name: " + flow.alarmName);
-            System.out.println("  T1: " + flow.t1);
-            System.out.println("  R1: " + flow.r1);
-            System.out.println("  T2: " + flow.t2);
-            System.out.println("  R2: " + flow.r2);
-            System.out.println("  T3: " + flow.t3);
-            System.out.println("  R3: " + flow.r3);
-            System.out.println("  T4: " + flow.t4);
-            System.out.println("  R4: " + flow.r4);
-        }
+        // We should have 2 flows (APNEA and ASYSTOLE), merged with escalation
+        assertEquals(2, clinicals.size(), "Should have 2 merged clinical flows");
         
-        // We should have flows, but need to verify they are properly merged
-        assertTrue(clinicals.size() > 0, "Should have parsed some clinical flows");
+        // Check first flow (APNEA)
+        ExcelParserV5.FlowRow apneaFlow = clinicals.stream()
+            .filter(f -> "APNEA".equals(f.alarmName))
+            .findFirst()
+            .orElse(null);
+        
+        assertNotNull(apneaFlow, "APNEA flow should exist");
+        
+        // Verify the complete escalation chain
+        assertEquals("Immediate", apneaFlow.t1, "T1 should be Immediate for Primary state");
+        assertEquals("Primary Caregiver", apneaFlow.r1, "R1 should be Primary Caregiver");
+        
+        assertEquals("30", apneaFlow.t2, "T2 should be 30 (time to 2nd recipient, from Primary state escalation)");
+        assertEquals("Secondary Caregiver", apneaFlow.r2, "R2 should be Secondary Caregiver");
+        
+        assertEquals("60", apneaFlow.t3, "T3 should be 60 (time to 3rd recipient, from Secondary state escalation)");
+        assertEquals("Tertiary Caregiver", apneaFlow.r3, "R3 should be Tertiary Caregiver");
+        
+        assertEquals("90", apneaFlow.t4, "T4 should be 90 (time to 4th recipient, from Tertiary state escalation)");
+        assertEquals("Quaternary Caregiver", apneaFlow.r4, "R4 should be Quaternary Caregiver");
+        
+        // Check second flow (ASYSTOLE) has same structure
+        ExcelParserV5.FlowRow asystoleFlow = clinicals.stream()
+            .filter(f -> "ASYSTOLE".equals(f.alarmName))
+            .findFirst()
+            .orElse(null);
+        
+        assertNotNull(asystoleFlow, "ASYSTOLE flow should exist");
+        assertEquals("Immediate", asystoleFlow.t1);
+        assertEquals("Primary Caregiver", asystoleFlow.r1);
+        assertEquals("30", asystoleFlow.t2);
+        assertEquals("Secondary Caregiver", asystoleFlow.r2);
+        assertEquals("60", asystoleFlow.t3);
+        assertEquals("Tertiary Caregiver", asystoleFlow.r3);
+        assertEquals("90", asystoleFlow.t4);
+        assertEquals("Quaternary Caregiver", asystoleFlow.r4);
     }
     
     @Test
     public void testInactiveRulesAreSkipped() throws Exception {
-        File xmlFile = new File("/tmp/test-state-escalation.xml");
+        File xmlFile = new File("src/test/resources/test-state-escalation.xml");
         
         XmlParser parser = new XmlParser();
         parser.load(xmlFile);

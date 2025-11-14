@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test State-Based Escalation</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- Views for alarm state -->
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_secondary_state</name>
+          <description>Alarm is at secondary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Secondary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_tertiary_state</name>
+          <description>Alarm is at tertiary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Tertiary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_quaternary_state</name>
+          <description>Alarm is at quaternary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Quaternary</value>
+          </filter>
+        </view>
+        
+        <!-- Views for role recipients -->
+        <view>
+          <name>Primary_role_caregiver_is_online</name>
+          <description>Primary role caregiver is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Primary Caregiver</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Secondary_role_caregiver_is_online_with_a_VMP_phone</name>
+          <description>Secondary role caregiver is online with a VMP phone</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Secondary Caregiver</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Tertiary_role_caregiver_is_online</name>
+          <description>Tertiary role caregiver is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Tertiary Caregiver</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Quaternary_role_caregiver_is_online</name>
+          <description>Quaternary role caregiver is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Quaternary Caregiver</value>
+          </filter>
+        </view>
+        
+        <!-- Other common views -->
+        <view>
+          <name>Alarm_has_not_been_responded_to</name>
+          <description>Alarm has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_an_Apnea_or_Asystole</name>
+          <description>Alarm is Apnea or Asystole</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>APNEA,ASYSTOLE</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- PRIMARY SEND: Create new alarm, send to primary caregiver immediately -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND PRIMARY | APNEA, ASYSTOLE | PRIMARY | VMP | ROLE | ALL UNITS</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_an_Apnea_or_Asystole</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Primary_role_caregiver_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"0","ttl":10}</settings>
+        </rule>
+        
+        <!-- ESCALATE TO SECONDARY: After 30 seconds with no response, escalate to secondary -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO SECONDARY | ALL ALARMS | 0-30 | NO PRIMARY RESPONSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>30</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"}]}</settings>
+        </rule>
+        
+        <!-- SEND SECONDARY: Send to secondary caregiver when state is secondary -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND SECONDARY | APNEA, ASYSTOLE | SECONDARY | VMP | ROLE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_an_Apnea_or_Asystole</view>
+            <view>Alarm_is_at_secondary_state</view>
+            <view>Secondary_role_caregiver_is_online_with_a_VMP_phone</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"0","ttl":10}</settings>
+        </rule>
+        
+        <!-- ESCALATE TO TERTIARY: After 60 seconds at secondary, escalate to tertiary -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO TERTIARY | ALL ALARMS | 30-60 | NO SECONDARY RESPONSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_secondary_state</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Tertiary"}]}</settings>
+        </rule>
+        
+        <!-- SEND TERTIARY: Send to tertiary caregiver when state is tertiary -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND TERTIARY | APNEA, ASYSTOLE | TERTIARY | VMP | ROLE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_an_Apnea_or_Asystole</view>
+            <view>Alarm_is_at_tertiary_state</view>
+            <view>Tertiary_role_caregiver_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"0","ttl":10}</settings>
+        </rule>
+        
+        <!-- ESCALATE TO QUATERNARY: After 90 seconds at tertiary, escalate to quaternary -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO QUATERNARY | ALL ALARMS | 60-90 | NO TERTIARY RESPONSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>90</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_tertiary_state</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Quaternary"}]}</settings>
+        </rule>
+        
+        <!-- SEND QUATERNARY: Send to quaternary caregiver when state is quaternary -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND QUATERNARY | APNEA, ASYSTOLE | QUATERNARY | VMP | ROLE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_an_Apnea_or_Asystole</view>
+            <view>Alarm_is_at_quaternary_state</view>
+            <view>Quaternary_role_caregiver_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"0","ttl":10}</settings>
+        </rule>
+        
+        <!-- INACTIVE RULE: Should be skipped -->
+        <rule active="false" dataset="Clinicals">
+          <purpose>THIS SHOULD BE SKIPPED</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+          </condition>
+          <settings>{}</settings>
+        </rule>
+        
+      </interface>
+    </interfaces>
+  </contents>
+</package>
