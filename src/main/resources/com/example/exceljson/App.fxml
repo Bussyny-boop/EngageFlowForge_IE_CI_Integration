@@ -75,8 +75,8 @@
                     </top>
                     <center>
                         <VBox fx:id="sidebarContent" spacing="8" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 10; -fx-spacing: 8;">
-                            <!-- Load Excel -->
-                            <Button fx:id="loadButton" text="📂 Load Excel" maxWidth="Infinity" styleClass="nav-button" />
+                            <!-- Load Excel or XML -->
+                            <Button fx:id="loadButton" text="📂 Load File" maxWidth="Infinity" styleClass="nav-button" />
                             
                             <!-- Clear All -->
                             <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" maxWidth="Infinity" styleClass="nav-button" />

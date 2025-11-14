@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Engage Configuration</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        <view>
+          <name>Alarm_included_in_LowHR_HighHR_APNEA</name>
+          <description>Alarm included in LowHR, HighHR, APNEA</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Low Heart Rate,High Heart Rate,APNEA</value>
+          </filter>
+        </view>
+        <view>
+          <name>Facility_name_is_East_Bank</name>
+          <description>Facility name is East Bank</description>
+          <filter relation="equal">
+            <path>patient.current_place.room.facility.name</path>
+            <value>East Bank</value>
+          </filter>
+        </view>
+        <view>
+          <name>Unit_CVICU</name>
+          <description>CVICU Unit</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>CVICU</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    <workflows>
+    </workflows>
+    <interfaces>
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND PRIMARY | LHR | HHR | APNEA | VMP | NURSE | CVICU</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>30</defer-delivery-by>
+          <condition>
+            <view>Alarm_included_in_LowHR_HighHR_APNEA</view>
+            <view>Facility_name_is_East_Bank</view>
+            <view>Unit_CVICU</view>
+          </condition>
+          <settings>{"priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT","overrideDND":false,"displayValues":["Acknowledge","Escalate"],"storedValues":["Accepted","Decline Primary"]}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
