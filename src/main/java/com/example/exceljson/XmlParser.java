@@ -25,6 +25,9 @@ public class XmlParser {
     // Track facilities and units found
     private final Map<String, Set<String>> facilityToUnits = new LinkedHashMap<>();
     
+    // Temporary storage for rules before merging
+    private final List<RuleData> collectedRules = new ArrayList<>();
+    
     private static class ViewDefinition {
         String name;
         String description;
@@ -35,6 +38,22 @@ public class XmlParser {
         String relation;  // "equal", "in", "not_in"
         String path;
         String value;
+    }
+    
+    private static class RuleData {
+        String dataset;
+        String purpose;
+        String component;
+        String deferDeliveryBy;
+        boolean isCreate;
+        boolean isUpdate;
+        List<String> viewNames;
+        Map<String, Object> settings;
+        Set<String> alertTypes;
+        Set<String> facilities;
+        Set<String> units;
+        String role;
+        String state; // Primary, Secondary, Tertiary, Quaternary
     }
     
     /**
@@ -51,8 +70,11 @@ public class XmlParser {
         // Parse datasets first (to build view definitions)
         parseDatasets(doc);
         
-        // Parse interfaces (to create flow rows)
+        // Parse interfaces (to collect rules)
         parseInterfaces(doc);
+        
+        // Merge rules based on state escalation patterns
+        mergeStateBasedRules();
         
         // Create unit rows from collected facility/unit combinations
         createUnitRows();
@@ -149,7 +171,7 @@ public class XmlParser {
     }
     
     /**
-     * Parse a single <rule> element and create flow rows.
+     * Parse a single <rule> element and collect rule data.
      */
     private void parseRule(Element ruleElement, String component) {
         // Get basic rule attributes
@@ -184,11 +206,12 @@ public class XmlParser {
             }
         }
         
-        // Extract alert types, facilities, and units from views
+        // Extract alert types, facilities, units, role, and state from views
         Set<String> alertTypes = new HashSet<>();
         Set<String> facilities = new HashSet<>();
         Set<String> units = new HashSet<>();
         String role = null;
+        String state = null;
         
         if (datasetViews.containsKey(dataset)) {
             Map<String, ViewDefinition> views = datasetViews.get(dataset);
@@ -200,6 +223,10 @@ public class XmlParser {
                         if (filter.path != null && filter.path.contains("role.name")) {
                             role = filter.value;
                         }
+                        // Extract state value
+                        if (filter.path != null && filter.path.equals("state")) {
+                            state = filter.value;
+                        }
                     }
                 }
             }
@@ -208,9 +235,23 @@ public class XmlParser {
         // Parse settings JSON to extract additional fields
         Map<String, Object> settings = parseSettingsJson(settingsJson);
         
-        // Create flow rows for each alert type and unit combination
-        createFlowRows(dataset, purpose, component, alertTypes, facilities, units, 
-                      deferDeliveryBy, isCreate, isUpdate, settings, role);
+        // Create RuleData and add to collection
+        RuleData ruleData = new RuleData();
+        ruleData.dataset = dataset;
+        ruleData.purpose = purpose;
+        ruleData.component = component;
+        ruleData.deferDeliveryBy = deferDeliveryBy;
+        ruleData.isCreate = isCreate;
+        ruleData.isUpdate = isUpdate;
+        ruleData.viewNames = viewNames;
+        ruleData.settings = settings;
+        ruleData.alertTypes = alertTypes;
+        ruleData.facilities = facilities;
+        ruleData.units = units;
+        ruleData.role = role;
+        ruleData.state = state;
+        
+        collectedRules.add(ruleData);
     }
     
     /**
@@ -308,6 +349,337 @@ public class XmlParser {
         }
         
         return result;
+    }
+    
+    /**
+     * Merge rules based on state escalation patterns.
+     * Groups rules by dataset and alert types, then merges escalation states.
+     */
+    private void mergeStateBasedRules() {
+        // Group rules by dataset and alert types
+        Map<String, List<RuleData>> groupedRules = new LinkedHashMap<>();
+        
+        for (RuleData rule : collectedRules) {
+            // Create a key based on dataset + alert types + units
+            String key = createRuleGroupKey(rule);
+            groupedRules.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+        }
+        
+        // Process each group
+        for (Map.Entry<String, List<RuleData>> entry : groupedRules.entrySet()) {
+            List<RuleData> rules = entry.getValue();
+            
+            // Check if this group has state-based escalation
+            if (hasStateBasedEscalation(rules)) {
+                mergeEscalationGroup(rules);
+            } else {
+                // No state escalation, create flows normally
+                for (RuleData rule : rules) {
+                    createFlowRowsFromRule(rule);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Create a grouping key for rules based on dataset and units.
+     * Alert types are excluded because escalation rules don't have them.
+     */
+    private String createRuleGroupKey(RuleData rule) {
+        StringBuilder key = new StringBuilder();
+        key.append(rule.dataset != null ? rule.dataset : "");
+        key.append("|");
+        
+        // Add units
+        List<String> sortedUnits = new ArrayList<>(rule.units);
+        Collections.sort(sortedUnits);
+        key.append(String.join(",", sortedUnits));
+        
+        return key.toString();
+    }
+    
+    /**
+     * Check if a group of rules has state-based escalation pattern.
+     */
+    private boolean hasStateBasedEscalation(List<RuleData> rules) {
+        for (RuleData rule : rules) {
+            if (rule.state != null && !rule.state.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Merge an escalation group into consolidated flow rows.
+     */
+    private void mergeEscalationGroup(List<RuleData> rules) {
+        // Separate rules by whether they send messages or just escalate
+        Map<String, Map<String, RuleData>> sendRulesByStateAndAlertType = new LinkedHashMap<>();
+        // Map from SOURCE state (the state being checked in condition) to escalation rule
+        Map<String, RuleData> escalateRulesBySourceState = new LinkedHashMap<>();
+        
+        for (RuleData rule : rules) {
+            if (rule.state != null && !rule.state.isEmpty()) {
+                // Check if this is a SEND rule (has destination/role) or ESCALATE rule
+                if (rule.role != null && !rule.role.isEmpty() || 
+                    (rule.settings.containsKey("destination") && 
+                     rule.settings.get("destination") != null && 
+                     !((String)rule.settings.get("destination")).isEmpty())) {
+                    // SEND rule - group by state and alert type
+                    for (String alertType : rule.alertTypes) {
+                        String key = rule.state + "|" + alertType;
+                        sendRulesByStateAndAlertType.computeIfAbsent(key, k -> new LinkedHashMap<>())
+                            .put(rule.state, rule);
+                    }
+                } else {
+                    // ESCALATE rule - the state value indicates the SOURCE state (in the condition)
+                    // This rule transitions FROM this state TO another state
+                    escalateRulesBySourceState.put(rule.state, rule);
+                }
+            }
+        }
+        
+        // Find all unique alert types across the group (only from SEND rules)
+        Set<String> allAlertTypes = new HashSet<>();
+        for (RuleData rule : rules) {
+            // Only include alert types from rules that actually send messages
+            if (rule.role != null && !rule.role.isEmpty() || 
+                (rule.settings.containsKey("destination") && 
+                 rule.settings.get("destination") != null && 
+                 !((String)rule.settings.get("destination")).isEmpty())) {
+                allAlertTypes.addAll(rule.alertTypes);
+            }
+        }
+        
+        // Skip if no alert types found (only escalation rules without send rules)
+        if (allAlertTypes.isEmpty()) {
+            return;
+        }
+        
+        // Create merged flow rows for each alert type
+        for (String alertType : allAlertTypes) {
+            createMergedEscalationFlow(alertType, rules, sendRulesByStateAndAlertType, escalateRulesBySourceState);
+        }
+    }
+    
+    /**
+     * Create a merged flow row for a specific alert type with escalation.
+     */
+    private void createMergedEscalationFlow(String alertType, List<RuleData> allRules,
+                                           Map<String, Map<String, RuleData>> sendRulesByStateAndAlertType,
+                                           Map<String, RuleData> escalateRulesBySourceState) {
+        // Get a reference rule for common properties
+        RuleData refRule = allRules.get(0);
+        
+        ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+        flow.inScope = true;
+        flow.alarmName = alertType;
+        flow.sendingName = alertType;
+        
+        // Determine flow type from dataset
+        if (refRule.dataset != null) {
+            if (refRule.dataset.equalsIgnoreCase("NurseCalls") || refRule.dataset.contains("Nurse")) {
+                flow.type = "NurseCalls";
+            } else if (refRule.dataset.equalsIgnoreCase("Orders") || refRule.dataset.contains("Order")) {
+                flow.type = "Orders";
+            } else {
+                flow.type = "Clinicals";
+            }
+        }
+        
+        // Set config group
+        String unit = refRule.units.isEmpty() ? "" : refRule.units.iterator().next();
+        if (refRule.dataset != null && !unit.isEmpty()) {
+            flow.configGroup = refRule.dataset + "_" + unit;
+        } else if (refRule.dataset != null) {
+            flow.configGroup = refRule.dataset;
+        }
+        
+        // Track facility/unit combinations
+        for (String facility : refRule.facilities) {
+            facilityToUnits.computeIfAbsent(facility, k -> new LinkedHashSet<>()).addAll(refRule.units);
+        }
+        
+        // Map component to device
+        if (refRule.component != null) {
+            flow.deviceA = mapComponentToDevice(refRule.component);
+        }
+        
+        // Process escalation states in order: Primary -> Secondary -> Tertiary -> Quaternary
+        // According to requirements:
+        // - state=Primary determines time to 2nd recipient (T2/R2)
+        // - state=Secondary determines time to 3rd recipient (T3/R3)
+        // - state=Tertiary determines time to 4th recipient (T4/R4)
+        // - state=Quaternary determines time to 5th recipient (T5/R5)
+        String[] states = {"Primary", "Secondary", "Tertiary", "Quaternary"};
+        
+        for (int i = 0; i < states.length; i++) {
+            String state = states[i];
+            
+            // Find SEND rule for this state and alert type
+            String sendKey = state + "|" + alertType;
+            Map<String, RuleData> sendRulesForAlert = sendRulesByStateAndAlertType.get(sendKey);
+            RuleData sendRule = (sendRulesForAlert != null) ? sendRulesForAlert.get(state) : null;
+            
+            // Find ESCALATE rule that has this state in its CONDITION (source state)
+            RuleData escalateRule = escalateRulesBySourceState.get(state);
+            
+            // Recipient index based on state:
+            // Primary state -> 1st recipient (R1)
+            // Secondary state -> 2nd recipient (R2)
+            // Tertiary state -> 3rd recipient (R3)
+            // Quaternary state -> 4th recipient (R4)
+            int recipientIndex = i + 1;
+            
+            if (sendRule != null) {
+                // Extract recipient from send rule
+                String recipient = extractRecipient(sendRule);
+                setRecipient(flow, recipientIndex, recipient);
+                
+                // Set timing based on whether this is create or update
+                if (sendRule.isCreate) {
+                    // Primary state (create) uses T1 = Immediate
+                    if (i == 0) {
+                        flow.t1 = "Immediate";
+                    }
+                }
+                
+                // Apply settings from the send rule (only for the first matching state)
+                if (flow.priorityRaw == null || flow.priorityRaw.isEmpty()) {
+                    applySettings(flow, sendRule.settings);
+                }
+            }
+            
+            // Set timing from escalation rule
+            // The escalate rule checks state=X and transitions to next state
+            // According to requirements, state=X determines time to NEXT recipient
+            // So: state=Primary (i=0) determines T2 (i+2)
+            //     state=Secondary (i=1) determines T3 (i+2)
+            //     state=Tertiary (i=2) determines T4 (i+2)
+            //     state=Quaternary (i=3) determines T5 (i+2)
+            if (escalateRule != null && escalateRule.deferDeliveryBy != null && !escalateRule.deferDeliveryBy.isEmpty()) {
+                int timeIndex = i + 2; // Next recipient after current state
+                setTime(flow, timeIndex, escalateRule.deferDeliveryBy);
+            }
+        }
+        
+        // Add to appropriate list
+        if ("NurseCalls".equals(flow.type)) {
+            nurseCalls.add(flow);
+        } else if ("Orders".equals(flow.type)) {
+            orders.add(flow);
+        } else {
+            clinicals.add(flow);
+        }
+    }
+    
+    /**
+     * Extract recipient from a rule.
+     */
+    private String extractRecipient(RuleData rule) {
+        String recipient = "";
+        
+        if (rule.settings.containsKey("destination")) {
+            String destination = (String) rule.settings.get("destination");
+            if (destination != null && !destination.isEmpty()) {
+                if (destination.startsWith("g-")) {
+                    recipient = destination;
+                } else if (rule.role != null && !rule.role.isEmpty()) {
+                    recipient = rule.role;
+                }
+            }
+        } else if (rule.role != null && !rule.role.isEmpty()) {
+            recipient = rule.role;
+        }
+        
+        return recipient;
+    }
+    
+    /**
+     * Set recipient at the specified index (1-5).
+     */
+    private void setRecipient(ExcelParserV5.FlowRow flow, int index, String recipient) {
+        if (recipient == null || recipient.isEmpty()) {
+            return;
+        }
+        
+        switch (index) {
+            case 1:
+                flow.r1 = recipient;
+                break;
+            case 2:
+                flow.r2 = recipient;
+                break;
+            case 3:
+                flow.r3 = recipient;
+                break;
+            case 4:
+                flow.r4 = recipient;
+                break;
+            case 5:
+                flow.r5 = recipient;
+                break;
+        }
+    }
+    
+    /**
+     * Set time at the specified index (1-5).
+     */
+    private void setTime(ExcelParserV5.FlowRow flow, int index, String time) {
+        if (time == null || time.isEmpty()) {
+            return;
+        }
+        
+        switch (index) {
+            case 1:
+                if (flow.t1 == null || flow.t1.isEmpty()) {
+                    flow.t1 = time;
+                }
+                break;
+            case 2:
+                flow.t2 = time;
+                break;
+            case 3:
+                flow.t3 = time;
+                break;
+            case 4:
+                flow.t4 = time;
+                break;
+            case 5:
+                flow.t5 = time;
+                break;
+        }
+    }
+    
+    /**
+     * Apply settings to a flow row.
+     */
+    private void applySettings(ExcelParserV5.FlowRow flow, Map<String, Object> settings) {
+        if (settings.containsKey("priority")) {
+            flow.priorityRaw = (String) settings.get("priority");
+        }
+        if (settings.containsKey("ttl")) {
+            flow.ttlValue = (String) settings.get("ttl");
+        }
+        if (settings.containsKey("enunciate")) {
+            flow.enunciate = (String) settings.get("enunciate");
+        }
+        if (settings.containsKey("overrideDND")) {
+            flow.breakThroughDND = (String) settings.get("overrideDND");
+        }
+        if (settings.containsKey("displayValues")) {
+            flow.responseOptions = (String) settings.get("displayValues");
+        }
+    }
+    
+    /**
+     * Create flow rows from a single rule (non-escalation case).
+     */
+    private void createFlowRowsFromRule(RuleData rule) {
+        createFlowRows(rule.dataset, rule.purpose, rule.component, rule.alertTypes,
+                      rule.facilities, rule.units, rule.deferDeliveryBy, rule.isCreate,
+                      rule.isUpdate, rule.settings, rule.role);
     }
     
     /**
@@ -537,6 +909,7 @@ public class XmlParser {
         orders.clear();
         datasetViews.clear();
         facilityToUnits.clear();
+        collectedRules.clear();
     }
     
     // Getters
