@@ -9,10 +9,17 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for state-based escalation parsing from XML.
  * According to the requirements:
- * - state=Primary determines time to 2nd recipient
- * - state=Secondary determines time to 3rd recipient  
- * - state=Tertiary determines time to 4th recipient
- * - state=Quaternary determines time to 5th recipient
+ * - state=Primary determines time to 2nd recipient (T2)
+ * - state=Secondary determines time to 3rd recipient (T3)
+ * - state=Tertiary determines time to 4th recipient (T4)
+ * - state=Quaternary determines time to 5th recipient (T5)
+ * 
+ * The parser cross-references views in rules with views in datasets:
+ * - Looks for views with path="state" to determine escalation state
+ * - Looks for views with path ending in "role.name" to determine recipients
+ * - SEND rules (with role/destination) provide recipient information
+ * - ESCALATE rules (with defer-delivery-by) provide timing information
+ * - Rules are merged when they share the same dataset, units, and alert types
  */
 public class StateBasedEscalationTest {
 
@@ -38,15 +45,19 @@ public class StateBasedEscalationTest {
         assertNotNull(apneaFlow, "APNEA flow should exist");
         
         // Verify the complete escalation chain
+        // T1/R1: Primary state (immediate send on create)
         assertEquals("Immediate", apneaFlow.t1, "T1 should be Immediate for Primary state");
         assertEquals("Primary Caregiver", apneaFlow.r1, "R1 should be Primary Caregiver");
         
+        // T2/R2: Determined by Primary state escalation rule (defer-delivery-by=30)
         assertEquals("30", apneaFlow.t2, "T2 should be 30 (time to 2nd recipient, from Primary state escalation)");
         assertEquals("Secondary Caregiver", apneaFlow.r2, "R2 should be Secondary Caregiver");
         
+        // T3/R3: Determined by Secondary state escalation rule (defer-delivery-by=60)
         assertEquals("60", apneaFlow.t3, "T3 should be 60 (time to 3rd recipient, from Secondary state escalation)");
         assertEquals("Tertiary Caregiver", apneaFlow.r3, "R3 should be Tertiary Caregiver");
         
+        // T4/R4: Determined by Tertiary state escalation rule (defer-delivery-by=90)
         assertEquals("90", apneaFlow.t4, "T4 should be 90 (time to 4th recipient, from Tertiary state escalation)");
         assertEquals("Quaternary Caregiver", apneaFlow.r4, "R4 should be Quaternary Caregiver");
         
@@ -77,9 +88,32 @@ public class StateBasedEscalationTest {
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         
         // Verify that no flow has "THIS SHOULD BE SKIPPED" in its name
+        // The test XML has an inactive rule that should not be parsed
         for (ExcelParserV5.FlowRow flow : clinicals) {
             assertFalse(flow.alarmName.contains("THIS SHOULD BE SKIPPED"),
-                "Inactive rules should not be parsed");
+                "Inactive rules (active=\"false\") should not be parsed");
         }
+    }
+    
+    @Test
+    public void testViewCrossReferencing() throws Exception {
+        // This test verifies that views are cross-referenced correctly
+        File xmlFile = new File("src/test/resources/test-state-escalation.xml");
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        
+        // Verify that all flows have the correct type
+        for (ExcelParserV5.FlowRow flow : clinicals) {
+            assertEquals("Clinicals", flow.type, "All flows should be Clinicals type");
+        }
+        
+        // Verify that settings from SEND rules are applied
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
+        assertEquals("VMP", flow.deviceA, "Device should be set from component attribute");
+        assertNotNull(flow.ttlValue, "TTL should be set from settings");
+        assertNotNull(flow.priorityRaw, "Priority should be set from settings");
     }
 }
