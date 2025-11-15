@@ -942,6 +942,14 @@ public class AppController {
             loadSummary.append(String.format("  • %d Nurse Call flows\n", parser.nurseCalls.size()));
             loadSummary.append(String.format("  • %d Clinical flows\n", parser.clinicals.size()));
             loadSummary.append(String.format("  • %d Orders flows\n", parser.orders.size()));
+            loadSummary.append(String.format("  • %d Units\n", parser.getUnitsCount()));
+            loadSummary.append(String.format(
+                "  • Config Groups: %d (Nurse), %d (Clinical), %d (Orders) — Total %d\n",
+                parser.getNurseConfigGroupCount(),
+                parser.getClinicalConfigGroupCount(),
+                parser.getOrdersConfigGroupCount(),
+                parser.getTotalConfigGroupCount()
+            ));
             loadSummary.append("\n⚠️ Note: Units data may be incomplete when loading from JSON.\n");
             loadSummary.append("Some fields may not be fully populated.\n");
             loadSummary.append("Consider loading the original Excel file for complete data.");
@@ -961,10 +969,15 @@ public class AppController {
             hideProgressBar();
             updateStatusLabel(); // Update status with filter counts
 
-            showInfo("✅ JSON loaded successfully\n\n" +
+                showInfo("✅ JSON loaded successfully\n\n" +
                     "Loaded " + parser.nurseCalls.size() + " Nurse Calls, " +
                     parser.clinicals.size() + " Clinicals, and " +
-                    parser.orders.size() + " Orders flows.\n\n" +
+                    parser.orders.size() + " Orders flows.\n" +
+                    "Units: " + parser.getUnitsCount() + "\n" +
+                    "Config Groups — Nurse: " + parser.getNurseConfigGroupCount() +
+                    ", Clinical: " + parser.getClinicalConfigGroupCount() +
+                    ", Orders: " + parser.getOrdersConfigGroupCount() +
+                    " (Total: " + parser.getTotalConfigGroupCount() + ")\n\n" +
                     "⚠️ Note: Some data may be incomplete when loading from JSON.");
         } catch (Exception ex) {
             hideProgressBar();

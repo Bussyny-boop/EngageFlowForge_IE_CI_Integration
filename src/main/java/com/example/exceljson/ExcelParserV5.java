@@ -353,6 +353,42 @@ public class ExcelParserV5 {
     return emdanMovedCount;
   }
 
+  // ---------- Public counters for UI summaries ----------
+  /**
+   * Returns the number of unique units loaded (by facility + unit).
+   */
+  public int getUnitsCount() {
+    return units.size();
+  }
+
+  /**
+   * Returns the number of Nurse Call configuration groups discovered during load.
+   */
+  public int getNurseConfigGroupCount() {
+    return nurseGroupToUnits.size();
+  }
+
+  /**
+   * Returns the number of Clinical configuration groups discovered during load.
+   */
+  public int getClinicalConfigGroupCount() {
+    return clinicalGroupToUnits.size();
+  }
+
+  /**
+   * Returns the number of Orders configuration groups discovered during load.
+   */
+  public int getOrdersConfigGroupCount() {
+    return ordersGroupToUnits.size();
+  }
+
+  /**
+   * Returns the total count of configuration groups across Nurse, Clinical, and Orders.
+   */
+  public int getTotalConfigGroupCount() {
+    return getNurseConfigGroupCount() + getClinicalConfigGroupCount() + getOrdersConfigGroupCount();
+  }
+
   private void clear() {
     units.clear();
     nurseCalls.clear();
