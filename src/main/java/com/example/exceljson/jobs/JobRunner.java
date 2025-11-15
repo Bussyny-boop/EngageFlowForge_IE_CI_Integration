@@ -37,6 +37,9 @@ public final class JobRunner {
         definitions.put("export-json", new JobHandler(
                 "Generate Engage JSON from an Excel workbook.",
                 this::runExportJsonJob));
+        definitions.put("roundtrip-json", new JobHandler(
+            "Load a JSON file and immediately re-export NurseCalls and Clinicals JSON to a directory.",
+            this::runRoundtripJsonJob));
         this.jobs = Collections.unmodifiableMap(definitions);
     }
 
@@ -210,6 +213,54 @@ public final class JobRunner {
             return 0;
         } catch (Exception e) {
             err.printf("❌ Failed to export JSON: %s%n", e.getMessage());
+            e.printStackTrace(err);
+            return 1;
+        }
+    }
+
+    private int runRoundtripJsonJob(String[] args) {
+        if (args.length < 2) {
+            err.println("Usage: JobRunner roundtrip-json <input.json> <outputDir>");
+            return 1;
+        }
+
+        File input = new File(args[0]).getAbsoluteFile();
+        if (!input.isFile()) {
+            err.printf("❌ Input JSON file \"%s\" was not found.%n", input);
+            return 1;
+        }
+
+        File outputDir = new File(args[1]).getAbsoluteFile();
+        if (outputDir.exists() && !outputDir.isDirectory()) {
+            err.printf("❌ Output path exists but is not a directory: %s%n", outputDir);
+            return 1;
+        }
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            err.printf("❌ Unable to create output directory: %s%n", outputDir);
+            return 1;
+        }
+
+        try {
+            out.printf("📥 Loading JSON: %s%n", input.getAbsolutePath());
+            ExcelParserV5 parser = new ExcelParserV5();
+            parser.loadJson(input);
+
+            File nurseOut = new File(outputDir, "NurseCalls.roundtrip.json");
+            File clinicalOut = new File(outputDir, "Clinicals.roundtrip.json");
+
+            out.printf("📤 Re-exporting to:%n  %s%n  %s%n", nurseOut.getAbsolutePath(), clinicalOut.getAbsolutePath());
+            parser.writeNurseCallsJson(nurseOut);
+            parser.writeClinicalsJson(clinicalOut);
+
+            boolean ok = nurseOut.isFile() && nurseOut.length() > 0 && clinicalOut.isFile() && clinicalOut.length() > 0;
+            if (!ok) {
+                throw new RuntimeException("One or more output files are missing or empty.");
+            }
+
+            out.println("✅ Round-trip complete.");
+            return 0;
+        } catch (Exception e) {
+            err.printf("❌ Failed round-trip: %s%n", e.getMessage());
             e.printStackTrace(err);
             return 1;
         }

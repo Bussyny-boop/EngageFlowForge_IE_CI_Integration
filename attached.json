@@ -1,0 +1,5878 @@
+{
+  "version": "1.1.0",
+  "alarmAlertDefinitions": [
+    {
+      "name": "Aux 1 Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Aux 1 Call"
+        }
+      ]
+    },
+    {
+      "name": "Aux 1 Disconnect Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Aux 1 Disconnect Call"
+        }
+      ]
+    },
+    {
+      "name": "Bath Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Bath Call"
+        }
+      ]
+    },
+    {
+      "name": "Bathroom Request Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Bathroom Request Call"
+        }
+      ]
+    },
+    {
+      "name": "Bed Disconnect Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Bed Disconnect Call"
+        }
+      ]
+    },
+    {
+      "name": "Code Blue Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Code Blue Call"
+        }
+      ]
+    },
+    {
+      "name": "Duress Alert",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Duress Alert"
+        }
+      ]
+    },
+    {
+      "name": "Normal Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Normal Call"
+        }
+      ]
+    },
+    {
+      "name": "Pain Meds",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Pain Meds"
+        }
+      ]
+    },
+    {
+      "name": "Shower Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Shower Call"
+        }
+      ]
+    },
+    {
+      "name": "Staff Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Staff Call"
+        }
+      ]
+    },
+    {
+      "name": "Staff Emergency Call",
+      "type": "NurseCalls",
+      "values": [
+        {
+          "category": "",
+          "value": "Staff Emergency Call"
+        }
+      ]
+    }
+  ],
+  "deliveryFlows": [
+    {
+      "alarmsAlerts": [
+        "Aux 1 Call",
+        "Bathroom Request Call",
+        "Normal Call",
+        "Pain Meds"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "CNA",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        },
+        {
+          "order": 1,
+          "delayTime": 60,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Aux 1 Call / Bathroom Request Call / Normal Call / Pain Meds | Acute Care NC | MedSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "callbackNumber",
+          "value": "\"#{bed.pillow_number}\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "acceptAndCall",
+          "value": "\"Call Back\""
+        },
+        {
+          "name": "decline",
+          "value": "\"Decline Primary\""
+        },
+        {
+          "name": "declineBadgePhrases",
+          "value": "[\"Escalate\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"CNA\"",
+          "destinationOrder": 0
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Nurse\"",
+          "destinationOrder": 1
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MedSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Aux 1 Disconnect Call",
+        "Bed Disconnect Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "CNA",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        },
+        {
+          "order": 1,
+          "delayTime": 60,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | NORMAL | Aux 1 Disconnect Call / Bed Disconnect Call | Acute Care NC | MedSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"single-kerplunk\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "decline",
+          "value": "\"Decline Primary\""
+        },
+        {
+          "name": "declineBadgePhrases",
+          "value": "[\"Escalate\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"CNA\"",
+          "destinationOrder": 0
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Nurse\"",
+          "destinationOrder": 1
+        }
+      ],
+      "priority": "normal",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MedSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Shower Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "CNA",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        },
+        {
+          "order": 1,
+          "delayTime": 60,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Shower Call | Acute Care NC | MedSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "decline",
+          "value": "\"Decline Primary\""
+        },
+        {
+          "name": "declineBadgePhrases",
+          "value": "[\"Escalate\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"CNA\"",
+          "destinationOrder": 0
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Nurse\"",
+          "destinationOrder": 1
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MedSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Acute Care",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "OB Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | Acute Care NC | MedSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MedSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Duress Alert",
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Acute Care",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Duress Alert / Staff Emergency Call | Acute Care NC | MedSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MedSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Acute Care Nurse",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Acute Care CNA",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Staff Call | Acute Care NC | MedSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MedSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Normal Call",
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "BFIM Pod 1 Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Normal Call / Staff Call | BFIM POD 1 NC | MOB Unit",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MOB Unit"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Panic BFIM",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | BFIM POD 1 NC | MOB Unit",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MOB Unit"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Normal Call",
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "BFIM Pod 2 Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Normal Call / Staff Call | BFIM POD 2 NC | MOB Unit",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MOB Unit"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Panic BFIM",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | BFIM POD 2 NC | MOB Unit",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MOB Unit"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Normal Call",
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "BFIM Pod 3 Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Normal Call / Staff Call | BFIM POD 3 NC | MOB Unit",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MOB Unit"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Panic BFIM",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | BFIM POD 3 NC | MOB Unit",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "MOB Unit"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Cardiopulmonary",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | CardioPulm NC | Cardiopulmonary",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Cardiopulmonary"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Normal Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Cardiopulmonary",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Normal Call | CardioPulm NC | Cardiopulmonary",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Cardiopulmonary"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Imaging",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "ED",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | ED NC | Emergency Dept",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Emergency Dept"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Normal Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Imaging",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Normal Call | Imaging NC | Diagnostic Imaging",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Diagnostic Imaging"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Imaging",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | Imaging NC | Diagnostic Imaging",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Diagnostic Imaging"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Infusion Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | Infusion NC | Clinics",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinics"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Normal Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Infusion Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Normal Call | Infusion NC | Clinics",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinics"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Acute Care",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Infusion Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | Infusion NC | Clinics",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinics"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Normal Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Lab Assistant",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Normal Call | Lab NC | Laboratory",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Laboratory"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Aux 1 Call",
+        "Bathroom Request Call",
+        "Normal Call",
+        "Pain Meds"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Aux 1 Call / Bathroom Request Call / Normal Call / Pain Meds | OB NC | LDR",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Nurse\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "LDR"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Aux 1 Disconnect Call",
+        "Bed Disconnect Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | NORMAL | Aux 1 Disconnect Call / Bed Disconnect Call | OB NC | LDR",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"single-kerplunk\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Nurse\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "normal",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "LDR"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Shower Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Shower Call | OB NC | LDR",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Nurse\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "LDR"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Acute Care",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "OB Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | OB NC | LDR",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "LDR"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Duress Alert",
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "OB Nurse",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Duress Alert / Staff Emergency Call | OB NC | LDR",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "LDR"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "OB Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Staff Call | OB NC | LDR",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "LDR"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | Rehab NC | Rehabilitation",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Rehabilitation"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+      ],
+      "name": "SEND NURSECALL | Staff Emergency Call | Rehab NC | Rehabilitation",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Urgent(Voice)\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "false"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "normal",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Rehabilitation"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "OR",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Same Day Surgery",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | SDS-OR NC | OPSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "OPSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "OR",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Same Day Surgery",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | SDS-OR NC | OPSurg",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "OPSurg"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Pain Clinic",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Specialty Clinic",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call | Specialty NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Pain Clinic",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Specialty Clinic",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | Specialty NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Pain Clinic",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Staff Call | Specialty NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Pain Clinic",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Specialty Clinic",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | Specialty NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Childrens Clinic Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+            {
+              "name": "Wound Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call | W&C NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Womens and Childrens Clinic",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | W&C NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Pain Clinic",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Staff Call | W&C NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+            {
+              "name": "Childrens Clinic Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "groups": [
+            {
+              "name": "Wound Nurse",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "functional_role"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | W&C NC | Clinic Expansion",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinic Expansion"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Bath Call",
+        "Staff Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Wound Nurse",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "user_and_device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | HIGH | Bath Call / Staff Call | Wound NC | Clinics",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Vocera Tone 3 Doubled\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"Accept/Decline\""
+        },
+        {
+          "name": "accept",
+          "value": "\"Accepted\""
+        },
+        {
+          "name": "acceptBadgePhrases",
+          "value": "[\"Accept\"]"
+        },
+        {
+          "name": "respondingLine",
+          "value": "\"responses.line.number\""
+        },
+        {
+          "name": "responsePath",
+          "value": "\"responses.action\""
+        },
+        {
+          "name": "respondingUser",
+          "value": "\"responses.usr.login\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"none\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "high",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinics"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Code Blue Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Code Blue",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Wound Clinic",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Code Blue Call | Wound NC | Clinics",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Code_Blue\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinics"
+        }
+      ]
+    },
+    {
+      "alarmsAlerts": [
+        "Staff Emergency Call"
+      ],
+      "conditions": [
+        {
+          "filters": [
+            {
+              "attributePath": "bed",
+              "operator": "not_null"
+            },
+            {
+              "attributePath": "to.type",
+              "operator": "not_equal",
+              "value": "TargetGroups"
+            }
+          ],
+          "name": "NurseCallsCondition"
+        }
+      ],
+      "destinations": [
+        {
+          "order": 0,
+          "delayTime": 0,
+          "destinationType": "Normal",
+          "users": [
+          ],
+          "functionalRoles": [
+          ],
+          "groups": [
+            {
+              "name": "Wound Nurse",
+              "facilityName": "BCH"
+            },
+            {
+              "name": "Security",
+              "facilityName": "BCH"
+            }
+          ],
+          "presenceConfig": "device",
+          "recipientType": "group"
+        }
+      ],
+      "interfaces": [
+        {
+          "componentName": "OutgoingWCTP",
+          "referenceName": "OutgoingWCTP"
+        }
+      ],
+      "name": "SEND NURSECALL | URGENT | Staff Emergency Call | Wound NC | Clinics",
+      "parameterAttributes": [
+        {
+          "name": "alertSound",
+          "value": "\"Long_Urgent_Staff_Emergency\""
+        },
+        {
+          "name": "responseType",
+          "value": "\"None\""
+        },
+        {
+          "name": "breakThrough",
+          "value": "\"voceraAndDevice\""
+        },
+        {
+          "name": "enunciate",
+          "value": "true"
+        },
+        {
+          "name": "message",
+          "value": "\"Patient: #{bed.patient.last_name}, #{bed.patient.first_name}\\\\nRoom/Bed: #{bed.room.name} - #{bed.bed_number}\""
+        },
+        {
+          "name": "patientMRN",
+          "value": "\"#{bed.patient.mrn}:#{bed.patient.visit_number}\""
+        },
+        {
+          "name": "patientName",
+          "value": "\"#{bed.patient.first_name} #{bed.patient.middle_name} #{bed.patient.last_name}\""
+        },
+        {
+          "name": "placeUid",
+          "value": "\"#{bed.uid}\""
+        },
+        {
+          "name": "popup",
+          "value": "true"
+        },
+        {
+          "name": "eventIdentification",
+          "value": "\"NurseCalls:#{id}\""
+        },
+        {
+          "name": "shortMessage",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "subject",
+          "value": "\"#{alert_type} #{bed.room.name} Bed #{bed.bed_number}\""
+        },
+        {
+          "name": "ttl",
+          "value": "10"
+        },
+        {
+          "name": "retractRules",
+          "value": "[\"ttlHasElapsed\"]"
+        },
+        {
+          "name": "vibrate",
+          "value": "\"short\""
+        },
+        {
+          "name": "destinationName",
+          "value": "\"Group\"",
+          "destinationOrder": 0
+        }
+      ],
+      "priority": "urgent",
+      "status": "Active",
+      "units": [
+        {
+          "facilityName": "BCH",
+          "name": "Clinics"
+        }
+      ]
+    }
+  ]
+}

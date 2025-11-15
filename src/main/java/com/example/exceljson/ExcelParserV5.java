@@ -625,6 +625,11 @@ public class ExcelParserV5 {
       // Parse parameter attributes to extract configuration details
       List<Map<String, Object>> paramAttrs = (List<Map<String, Object>>) flow.get("parameterAttributes");
       if (paramAttrs != null) {
+        // Track presence of response options and declineCount to set escalateAfter properly
+        boolean hasResponseAcceptDecline = false;
+        boolean hasDeclineCount = false;
+        String declineCountValue = null;
+
         for (Map<String, Object> attr : paramAttrs) {
           String name = (String) attr.get("name");
           Object value = attr.get("value");
@@ -679,8 +684,17 @@ public class ExcelParserV5 {
                 // Map response type back to our format
                 if ("Accept/Decline".equals(valueUnquoted)) {
                   row.responseOptions = "Accept";
+                  hasResponseAcceptDecline = true;
                 } else if ("None".equals(valueUnquoted)) {
                   row.responseOptions = "No Response";
+                }
+                break;
+              case "declineCount":
+                // When declineCount is present and equals "All Recipients", set escalateAfter accordingly
+                hasDeclineCount = true;
+                declineCountValue = valueUnquoted.trim();
+                if (declineCountValue.equalsIgnoreCase("All Recipients")) {
+                  row.escalateAfter = "All declines";
                 }
                 break;
               case "ttl":
@@ -688,6 +702,11 @@ public class ExcelParserV5 {
                 break;
             }
           }
+        }
+
+        // If response options are present but declineCount is missing, default escalateAfter to "1 decline"
+        if (hasResponseAcceptDecline && !hasDeclineCount && isBlank(row.escalateAfter)) {
+          row.escalateAfter = "1 decline";
         }
       }
       
