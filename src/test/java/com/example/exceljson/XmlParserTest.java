@@ -41,15 +41,15 @@ public class XmlParserTest {
                 assertEquals("30", flow.t1, "T1 should be 30");
                 assertEquals("Normal", flow.priorityRaw, "Priority should be Normal");
                 assertEquals("10", flow.ttlValue, "TTL should be 10");
-                assertEquals("VAssign:Nurse", flow.r1, "Recipient should be VAssign:Nurse (from role)");
+                assertEquals("VAssign:[Room] Nurse", flow.r1, "Recipient should be VAssign:[Room] Nurse (from role)");
             }
             if (flow.alarmName.contains("High Heart Rate")) {
                 foundHighHR = true;
-                assertEquals("VAssign:Nurse", flow.r1, "Recipient should be VAssign:Nurse");
+                assertEquals("VAssign:[Room] Nurse", flow.r1, "Recipient should be VAssign:[Room] Nurse");
             }
             if (flow.alarmName.contains("APNEA")) {
                 foundAPNEA = true;
-                assertEquals("VAssign:Nurse", flow.r1, "Recipient should be VAssign:Nurse");
+                assertEquals("VAssign:[Room] Nurse", flow.r1, "Recipient should be VAssign:[Room] Nurse");
             }
         }
         
@@ -148,7 +148,7 @@ public class XmlParserTest {
                 assertEquals("15", flow.ttlValue, "TTL should be 15");
                 assertEquals("TRUE", flow.breakThroughDND, "Break through DND should be TRUE");
                 // Recipient should be the group name (destination with g- prefix) with VAssign prefix
-                assertEquals("VAssign:g-CodeBlueTeam", flow.r1, "Recipient should be VAssign:g-CodeBlueTeam (group destination)");
+                assertEquals("VAssign:[Room] g-CodeBlueTeam", flow.r1, "Recipient should be VAssign:[Room] g-CodeBlueTeam (group destination)");
             }
         }
         assertTrue(foundCodeBlue, "Should find Code Blue alert");
@@ -188,9 +188,9 @@ public class XmlParserTest {
                 assertEquals("Immediate", flow.t1, "T1 should be Immediate");
                 assertEquals("Normal", flow.priorityRaw, "Priority should be Normal");
                 assertEquals("10", flow.ttlValue, "TTL should be 10");
-                // Recipient should be the exact destination value when no role is found
-                assertEquals("#{bed.room.unit.first.users.devices.lines.number}", flow.r1, 
-                    "Recipient should be exact destination value from settings when no role is found");
+                // Recipient should have VGroup prefix when no role is found
+                assertEquals("VGroup #{bed.room.unit.first.users.devices.lines.number}", flow.r1, 
+                    "Recipient should have VGroup prefix when no role is found");
             }
         }
         assertTrue(foundBedExit, "Should find Bed Exit alert");

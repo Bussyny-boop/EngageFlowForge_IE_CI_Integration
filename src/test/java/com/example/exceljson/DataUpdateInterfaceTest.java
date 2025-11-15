@@ -43,22 +43,22 @@ public class DataUpdateInterfaceTest {
         // Verify we have flows with NURSE recipient (with VAssign prefix)
         boolean foundNurseRecipient = false;
         for (ExcelParserV5.FlowRow flow : clinicals) {
-            if ("VAssign:NURSE".equals(flow.r1)) {
+            if ("VAssign:[Room] NURSE".equals(flow.r1)) {
                 foundNurseRecipient = true;
                 assertEquals("VMP", flow.deviceA, "NURSE recipient flow should have Device-A = VMP");
             }
         }
-        assertTrue(foundNurseRecipient, "Should find flows with VAssign:NURSE recipient");
+        assertTrue(foundNurseRecipient, "Should find flows with VAssign:[Room] NURSE recipient");
         
         // Verify we have flows with NURSE BUDDY recipient (with VAssign prefix)
         boolean foundNurseBuddyRecipient = false;
         for (ExcelParserV5.FlowRow flow : clinicals) {
-            if ("VAssign:NURSE BUDDY".equals(flow.r2)) {
+            if ("VAssign:[Room] NURSE BUDDY".equals(flow.r2)) {
                 foundNurseBuddyRecipient = true;
                 assertEquals("VMP", flow.deviceA, "NURSE BUDDY recipient flow should have Device-A = VMP");
             }
         }
-        assertTrue(foundNurseBuddyRecipient, "Should find flows with VAssign:NURSE BUDDY as second recipient");
+        assertTrue(foundNurseBuddyRecipient, "Should find flows with VAssign:[Room] NURSE BUDDY as second recipient");
     }
     
     @Test

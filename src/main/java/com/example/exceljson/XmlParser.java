@@ -309,9 +309,14 @@ public class XmlParser {
             // Skip other rules without alert types
             if (rule.alertTypes.isEmpty()) continue;
             
-            // Group by dataset + alert types
+            // Group by dataset + alert types + facility + units (for config group separation)
             for (String alertType : rule.alertTypes) {
-                String key = rule.dataset + "|" + alertType;
+                // Sort units for consistent grouping
+                String unitsKey = rule.units.stream().sorted().collect(java.util.stream.Collectors.joining(","));
+                // Sort facilities for consistent grouping
+                String facilitiesKey = rule.facilities.stream().sorted().collect(java.util.stream.Collectors.joining(","));
+                
+                String key = rule.dataset + "|" + alertType + "|" + facilitiesKey + "|" + unitsKey;
                 grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
             }
         }
@@ -319,17 +324,28 @@ public class XmlParser {
         // Add global escalation rules to each alert type group in the same dataset
         for (Rule globalRule : globalEscalationRules) {
             for (Map.Entry<String, List<Rule>> entry : grouped.entrySet()) {
-                String[] parts = entry.getKey().split("\\|", 2);
+                String[] parts = entry.getKey().split("\\|", 4);
                 String dataset = parts[0];
+                String facilitiesKey = parts.length > 2 ? parts[2] : "";
+                String unitsKey = parts.length > 3 ? parts[3] : "";
+                
+                // Match dataset and check if facilities/units overlap
                 if (dataset.equals(globalRule.dataset)) {
-                    entry.getValue().add(globalRule);
+                    boolean facilitiesMatch = facilitiesKey.isEmpty() || globalRule.facilities.isEmpty() ||
+                        globalRule.facilities.stream().anyMatch(f -> facilitiesKey.contains(f));
+                    boolean unitsMatch = unitsKey.isEmpty() || globalRule.units.isEmpty() ||
+                        globalRule.units.stream().anyMatch(u -> unitsKey.contains(u));
+                    
+                    if (facilitiesMatch && unitsMatch) {
+                        entry.getValue().add(globalRule);
+                    }
                 }
             }
         }
         
         // Process each group
         for (Map.Entry<String, List<Rule>> entry : grouped.entrySet()) {
-            String[] parts = entry.getKey().split("\\|", 2);
+            String[] parts = entry.getKey().split("\\|", 4);
             String dataset = parts[0];
             String alertType = parts[1];
             List<Rule> rules = entry.getValue();
@@ -540,11 +556,30 @@ public class XmlParser {
     private String formatRecipient(String recipient, boolean isFromRole) {
         if (recipient == null || recipient.isEmpty()) return "";
         
-        // Add VAssign: prefix only if recipient was determined from role.name filter
-        if (isFromRole) {
-            return "VAssign:" + recipient;
+        // Check if recipient contains comma-separated values
+        if (recipient.contains(",")) {
+            String[] parts = recipient.split(",");
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < parts.length; i++) {
+                String part = parts[i].trim();
+                if (i > 0) {
+                    result.append("\n");
+                }
+                if (isFromRole) {
+                    result.append("VAssign:[Room] ").append(part);
+                } else {
+                    result.append("VGroup ").append(part);
+                }
+            }
+            return result.toString();
         }
-        return recipient;
+        
+        // Single recipient
+        if (isFromRole) {
+            return "VAssign:[Room] " + recipient;
+        } else {
+            return "VGroup " + recipient;
+        }
     }
     
     private void setRecipient(ExcelParserV5.FlowRow flow, int index, String recipient, boolean isFromRole) {
