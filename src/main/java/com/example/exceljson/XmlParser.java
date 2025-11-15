@@ -570,6 +570,8 @@ public class XmlParser {
         facilities.addAll(nurseCfgByFacUnit.keySet());
         facilities.addAll(clinicalCfgByFacUnit.keySet());
         facilities.addAll(ordersCfgByFacUnit.keySet());
+        // Focus on facility.name: exclude generic entries with no facility
+        facilities.remove("");
 
         for (String facility : facilities) {
             // Union of units for this facility across all types
