@@ -628,31 +628,62 @@ public class ExcelParserV5 {
           String name = (String) attr.get("name");
           Object value = attr.get("value");
           String valueStr = value != null ? value.toString() : "";
+          // Many values are stored quoted in JSON (e.g., "\"voceraAndDevice\""); normalize
+          String valueUnquoted = valueStr.replace("\"", "");
           
           if (name != null) {
             switch (name) {
               case "breakThrough":
-                row.breakThroughDND = valueStr;
+                // Reverse-map API values back to GUI-friendly Yes/No
+                // Our exporter writes "voceraAndDevice" when breakthrough is enabled; "none" when disabled
+                {
+                  String v = valueUnquoted.trim().toLowerCase(Locale.ROOT);
+                  if ("none".equals(v)) {
+                    row.breakThroughDND = "No";
+                  } else {
+                    // Any non-"none" value indicates breakthrough is enabled
+                    // This includes values like "voceraAndDevice", "device", "voceraOnly", etc.
+                    row.breakThroughDND = "Yes";
+                  }
+                }
                 break;
               case "enunciate":
-                row.enunciate = valueStr;
+                // Export uses a boolean literal; map back to Yes/No for GUI
+                {
+                  String v = valueStr.trim().toLowerCase(Locale.ROOT);
+                  if ("true".equals(v)) {
+                    row.enunciate = "Yes";
+                  } else if ("false".equals(v)) {
+                    row.enunciate = "No";
+                  } else {
+                    // If stored quoted as a string for some reason, normalize common variants
+                    String vu = valueUnquoted.trim().toLowerCase(Locale.ROOT);
+                    if ("yes".equals(vu) || "y".equals(vu) || "enunciate".equals(vu) || "enunciation".equals(vu)) {
+                      row.enunciate = "Yes";
+                    } else if ("no".equals(vu) || "n".equals(vu)) {
+                      row.enunciate = "No";
+                    } else {
+                      row.enunciate = valueUnquoted; // last resort
+                    }
+                  }
+                }
                 break;
               case "alertSound":
               case "badgeAlertSound":
                 if (row.ringtone.isEmpty()) {
-                  row.ringtone = valueStr.replace("\"", "").replace(".wav", "");
+                  row.ringtone = valueUnquoted.replace(".wav", "");
                 }
                 break;
               case "responseType":
                 // Map response type back to our format
-                if ("Accept/Decline".equals(valueStr)) {
+                if ("Accept/Decline".equals(valueUnquoted)) {
                   row.responseOptions = "Accept";
-                } else if ("None".equals(valueStr)) {
+                } else if ("None".equals(valueUnquoted)) {
                   row.responseOptions = "No Response";
                 }
                 break;
               case "ttl":
-                row.ttlValue = valueStr;
+                row.ttlValue = valueUnquoted;
                 break;
             }
           }

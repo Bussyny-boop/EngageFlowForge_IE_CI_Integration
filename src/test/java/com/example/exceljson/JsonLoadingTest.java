@@ -169,8 +169,9 @@ class JsonLoadingTest {
         assertEquals(1, parser.nurseCalls.size());
         ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
         
-        assertEquals("voceraOnly", flow.breakThroughDND);
-        assertEquals("true", flow.enunciate);
+        // Reverse-mapped values from JSON to GUI-friendly forms
+        assertEquals("Yes", flow.breakThroughDND);
+        assertEquals("Yes", flow.enunciate);
         assertEquals("Chime", flow.ringtone);
         assertEquals("Accept", flow.responseOptions);
         assertEquals("300", flow.ttlValue);

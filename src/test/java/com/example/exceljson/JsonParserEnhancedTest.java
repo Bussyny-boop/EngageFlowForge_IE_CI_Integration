@@ -191,8 +191,9 @@ public class JsonParserEnhancedTest {
         assertFalse(parser.nurseCalls.isEmpty());
         ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
-        assertEquals("voceraAndDevice", flow.breakThroughDND);
-        assertEquals("true", flow.enunciate);
+        // Reverse-mapped values should reflect GUI inputs
+        assertEquals("Yes", flow.breakThroughDND);
+        assertEquals("Yes", flow.enunciate);
         assertEquals("Alert", flow.ringtone, "Ringtone should have .wav extension removed");
         assertEquals("300", flow.ttlValue);
     }
@@ -283,7 +284,7 @@ public class JsonParserEnhancedTest {
         assertEquals("VAssign:[Room] Nurse", flow.r1);
         assertEquals("", flow.t1);
         assertEquals("West_3North_TestConfig", flow.configGroup);
-        assertEquals("true", flow.enunciate);
+        assertEquals("Yes", flow.enunciate);
         assertEquals("Vocera", flow.deviceA);
     }
 }
