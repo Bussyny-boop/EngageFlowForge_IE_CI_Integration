@@ -240,7 +240,7 @@ public class AppController {
     private boolean isSidebarCollapsed = false;
     private double loadedTimeoutSeconds = 10.0;
     private double loadedTimeoutMin = 3.0;
-    private double loadedTimeoutMax = 120.0;
+    private double loadedTimeoutMax = 600.0; // 600 = 10 minutes, acts as "persistent"
 
     // ---------- Initialization ----------
     @FXML
@@ -255,7 +255,7 @@ public class AppController {
         isSidebarCollapsed = prefs.getBoolean(PREF_KEY_SIDEBAR_COLLAPSED, false);
         // Load min/max and current timeout, with validation
         loadedTimeoutMin = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MIN, "3"), 3.0), 1.0, 600.0);
-        loadedTimeoutMax = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MAX, "120"), 120.0), 2.0, 600.0);
+        loadedTimeoutMax = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MAX, "600"), 600.0), 2.0, 600.0);
         if (loadedTimeoutMax <= loadedTimeoutMin) {
             loadedTimeoutMax = Math.min(loadedTimeoutMin + 1, 600.0);
         }
@@ -497,7 +497,11 @@ public class AppController {
     private void updateLoadedTimeoutLabel(double value) {
         if (loadedTimeoutValueLabel != null) {
             int iv = (int) Math.round(value);
-            loadedTimeoutValueLabel.setText(iv + "s");
+            if (iv >= 600) {
+                loadedTimeoutValueLabel.setText(iv + "s (persistent)");
+            } else {
+                loadedTimeoutValueLabel.setText(iv + "s");
+            }
         }
     }
 
@@ -1000,6 +1004,10 @@ public class AppController {
 
     private void autoClearLoaded(Button button, double seconds) {
         if (button == null) return;
+        // If timeout >= 600 seconds (10 minutes), keep loaded state persistent (don't auto-clear)
+        if (seconds >= 600.0) {
+            return; // Skip auto-clear, button stays loaded indefinitely
+        }
         PauseTransition pause = new PauseTransition(Duration.seconds(seconds));
         pause.setOnFinished(e -> {
             // Only clear if still showing as loaded and not currently loading
