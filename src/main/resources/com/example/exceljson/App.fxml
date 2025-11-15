@@ -190,6 +190,18 @@
                                     
                                     <Separator />
                                     
+                                    <!-- Combine Config Group Toggle -->
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <Label text="Combine Config Group" style="-fx-font-weight:bold;" />
+                                        <CheckBox fx:id="combineConfigGroupCheckbox">
+                                            <tooltip>
+                                                <Tooltip text="When enabled, rows with identical columns (except Config Group) will be merged into one, with unique Config Group values combined. Toggle off to revert the merge." />
+                                            </tooltip>
+                                        </CheckBox>
+                                    </HBox>
+                                    
+                                    <Separator />
+                                    
                                     <!-- Custom Tab Mappings (MOVED UP) -->
                                     <Label text="Custom Tab Mappings" style="-fx-font-weight:bold;">
                                         <tooltip>

@@ -70,6 +70,7 @@ public class AppController {
     @FXML private CheckBox noMergeCheckbox;
     @FXML private CheckBox mergeByConfigGroupCheckbox;  // "Merge by Config Group" checkbox
     @FXML private CheckBox mergeAcrossConfigGroupCheckbox;  // "Merge Across Config Group" checkbox
+    @FXML private CheckBox combineConfigGroupCheckbox;  // "Combine Config Group" toggle
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private TextField voceraRefNameField;
@@ -235,12 +236,18 @@ public class AppController {
     private static final String PREF_KEY_LOADED_TIMEOUT_SECONDS = "loadedTimeoutSeconds";
     private static final String PREF_KEY_LOADED_TIMEOUT_MIN = "loadedTimeoutMin";
     private static final String PREF_KEY_LOADED_TIMEOUT_MAX = "loadedTimeoutMax";
+    private static final String PREF_KEY_COMBINE_CONFIG_GROUP = "combineConfigGroup";
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
     private double loadedTimeoutSeconds = 10.0;
     private double loadedTimeoutMin = 3.0;
     private double loadedTimeoutMax = 600.0; // 600 = 10 minutes, acts as "persistent"
+    
+    // ---------- Combine Config Group Backup Storage ----------
+    private List<ExcelParserV5.FlowRow> originalNurseCalls = null;
+    private List<ExcelParserV5.FlowRow> originalClinicals = null;
+    private List<ExcelParserV5.FlowRow> originalOrders = null;
 
     // ---------- Initialization ----------
     @FXML
@@ -253,6 +260,7 @@ public class AppController {
         String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
         isDarkMode = prefs.getBoolean(PREF_KEY_DARK_MODE, false);
         isSidebarCollapsed = prefs.getBoolean(PREF_KEY_SIDEBAR_COLLAPSED, false);
+        boolean combineConfigGroup = prefs.getBoolean(PREF_KEY_COMBINE_CONFIG_GROUP, false);
         // Load min/max and current timeout, with validation
         loadedTimeoutMin = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MIN, "3"), 3.0), 1.0, 600.0);
         loadedTimeoutMax = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MAX, "600"), 600.0), 2.0, 600.0);
@@ -375,6 +383,11 @@ public class AppController {
         setupCustomTabMappings();
         setupLoadedTimeoutControl();
         
+        // Set combine config group checkbox state from preferences
+        if (combineConfigGroupCheckbox != null) {
+            combineConfigGroupCheckbox.setSelected(prefs.getBoolean(PREF_KEY_COMBINE_CONFIG_GROUP, false));
+        }
+        
         // --- Merge Flows checkbox mutual exclusion logic (three-way) ---
         if (noMergeCheckbox != null && mergeByConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox != null) {
             // When noMergeCheckbox is selected, deselect the other two
@@ -428,6 +441,27 @@ public class AppController {
         // Initialize labels
         updateJsonModeLabel();
         updateCurrentFileLabel();
+        
+        // --- Combine Config Group toggle logic ---
+        if (combineConfigGroupCheckbox != null) {
+            combineConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                Preferences preferences = Preferences.userNodeForPackage(AppController.class);
+                preferences.putBoolean(PREF_KEY_COMBINE_CONFIG_GROUP, newV);
+                
+                if (newV) {
+                    // Toggle on - combine rows with identical columns but different config groups
+                    combineConfigGroupRows();
+                } else {
+                    // Toggle off - revert to original data
+                    revertCombinedConfigGroupRows();
+                }
+            });
+            
+            // Apply initial state if enabled
+            if (combineConfigGroupCheckbox.isSelected()) {
+                combineConfigGroupRows();
+            }
+        }
     }
 
     // ---------- Loaded Timeout Control Setup ----------
@@ -3051,5 +3085,196 @@ public class AppController {
             }
         }
         return false;
+    }
+    
+    // ---------- Combine Config Group Methods ----------
+    
+    /**
+     * Combine rows with identical columns (except config group) into single rows
+     * with merged unique config group values
+     */
+    private void combineConfigGroupRows() {
+        // Backup original data before combining
+        originalNurseCalls = new ArrayList<>(parser.nurseCalls);
+        originalClinicals = new ArrayList<>(parser.clinicals);
+        originalOrders = new ArrayList<>(parser.orders);
+        
+        // Combine each table (modify in place)
+        List<ExcelParserV5.FlowRow> combinedNurse = combineFlowRows(parser.nurseCalls);
+        parser.nurseCalls.clear();
+        parser.nurseCalls.addAll(combinedNurse);
+        
+        List<ExcelParserV5.FlowRow> combinedClinicals = combineFlowRows(parser.clinicals);
+        parser.clinicals.clear();
+        parser.clinicals.addAll(combinedClinicals);
+        
+        List<ExcelParserV5.FlowRow> combinedOrders = combineFlowRows(parser.orders);
+        parser.orders.clear();
+        parser.orders.addAll(combinedOrders);
+        
+        // Refresh tables
+        refreshAllTables();
+    }
+    
+    /**
+     * Revert to original uncombined data
+     */
+    private void revertCombinedConfigGroupRows() {
+        if (originalNurseCalls != null) {
+            parser.nurseCalls.clear();
+            parser.nurseCalls.addAll(originalNurseCalls);
+            originalNurseCalls = null;
+        }
+        if (originalClinicals != null) {
+            parser.clinicals.clear();
+            parser.clinicals.addAll(originalClinicals);
+            originalClinicals = null;
+        }
+        if (originalOrders != null) {
+            parser.orders.clear();
+            parser.orders.addAll(originalOrders);
+            originalOrders = null;
+        }
+        
+        // Refresh tables
+        refreshAllTables();
+    }
+    
+    /**
+     * Combine flow rows with identical fields (except configGroup)
+     * Returns a new list with combined rows
+     */
+    private List<ExcelParserV5.FlowRow> combineFlowRows(List<ExcelParserV5.FlowRow> rows) {
+        if (rows == null || rows.isEmpty()) return rows;
+        
+        Map<String, List<ExcelParserV5.FlowRow>> groupedRows = new LinkedHashMap<>();
+        
+        for (ExcelParserV5.FlowRow row : rows) {
+            // Create a key based on all fields except configGroup
+            String key = createRowKey(row);
+            groupedRows.computeIfAbsent(key, k -> new ArrayList<>()).add(row);
+        }
+        
+        List<ExcelParserV5.FlowRow> combinedRows = new ArrayList<>();
+        
+        for (List<ExcelParserV5.FlowRow> group : groupedRows.values()) {
+            if (group.size() == 1) {
+                // No duplicates, add as is
+                combinedRows.add(group.get(0));
+            } else {
+                // Multiple rows with same fields but different config groups
+                // Combine them into one row
+                ExcelParserV5.FlowRow combined = new ExcelParserV5.FlowRow();
+                ExcelParserV5.FlowRow first = group.get(0);
+                
+                // Copy all fields from first row
+                copyFlowRow(first, combined);
+                
+                // Merge unique config group values
+                Set<String> uniqueConfigGroups = new LinkedHashSet<>();
+                for (ExcelParserV5.FlowRow r : group) {
+                    if (r.configGroup != null && !r.configGroup.trim().isEmpty()) {
+                        // Split by common separators and add unique values
+                        for (String part : r.configGroup.split("[,/\\|]")) {
+                            String trimmed = part.trim();
+                            if (!trimmed.isEmpty()) {
+                                uniqueConfigGroups.add(trimmed);
+                            }
+                        }
+                    }
+                }
+                
+                // Join unique config groups
+                combined.configGroup = String.join(" / ", uniqueConfigGroups);
+                combinedRows.add(combined);
+            }
+        }
+        
+        return combinedRows;
+    }
+    
+    /**
+     * Create a unique key for a flow row based on all fields except configGroup
+     */
+    private String createRowKey(ExcelParserV5.FlowRow row) {
+        return String.join("|",
+            nvl(row.type),
+            nvl(row.alarmName),
+            nvl(row.sendingName),
+            nvl(row.priorityRaw),
+            nvl(row.deviceA),
+            nvl(row.deviceB),
+            nvl(row.ringtone),
+            nvl(row.responseOptions),
+            nvl(row.breakThroughDND),
+            nvl(row.multiUserAccept),
+            nvl(row.escalateAfter),
+            nvl(row.ttlValue),
+            String.valueOf(row.enunciate),
+            String.valueOf(row.emdan),
+            nvl(row.t1), nvl(row.r1),
+            nvl(row.t2), nvl(row.r2),
+            nvl(row.t3), nvl(row.r3),
+            nvl(row.t4), nvl(row.r4),
+            nvl(row.t5), nvl(row.r5),
+            String.valueOf(row.inScope)
+        );
+    }
+    
+    /**
+     * Null-value helper for key creation
+     */
+    private String nvl(String value) {
+        return value == null ? "" : value;
+    }
+    
+    /**
+     * Copy all fields from source to destination FlowRow
+     */
+    private void copyFlowRow(ExcelParserV5.FlowRow source, ExcelParserV5.FlowRow dest) {
+        dest.inScope = source.inScope;
+        dest.type = source.type;
+        dest.alarmName = source.alarmName;
+        dest.sendingName = source.sendingName;
+        dest.configGroup = source.configGroup;
+        dest.priorityRaw = source.priorityRaw;
+        dest.deviceA = source.deviceA;
+        dest.deviceB = source.deviceB;
+        dest.ringtone = source.ringtone;
+        dest.responseOptions = source.responseOptions;
+        dest.breakThroughDND = source.breakThroughDND;
+        dest.multiUserAccept = source.multiUserAccept;
+        dest.escalateAfter = source.escalateAfter;
+        dest.ttlValue = source.ttlValue;
+        dest.enunciate = source.enunciate;
+        dest.emdan = source.emdan;
+        dest.t1 = source.t1;
+        dest.r1 = source.r1;
+        dest.t2 = source.t2;
+        dest.r2 = source.r2;
+        dest.t3 = source.t3;
+        dest.r3 = source.r3;
+        dest.t4 = source.t4;
+        dest.r4 = source.r4;
+        dest.t5 = source.t5;
+        dest.r5 = source.r5;
+    }
+    
+    /**
+     * Refresh all flow tables
+     */
+    private void refreshAllTables() {
+        if (tableNurseCalls != null) {
+            tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
+            tableNurseCalls.refresh();
+        }
+        if (tableClinicals != null) {
+            tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
+            tableClinicals.refresh();
+        }
+        if (tableOrders != null) {
+            tableOrders.setItems(FXCollections.observableArrayList(parser.orders));
+            tableOrders.refresh();
+        }
     }
 }
