@@ -26,6 +26,10 @@ public class XmlParser {
     
     // Facility/unit tracking
     private final Map<String, Set<String>> facilityUnits = new HashMap<>();
+    // Track config groups by (facility, unit) per flow type to build Unit rows reliably
+    private final Map<String, Map<String, java.util.Set<String>>> nurseCfgByFacUnit = new HashMap<>();
+    private final Map<String, Map<String, java.util.Set<String>>> clinicalCfgByFacUnit = new HashMap<>();
+    private final Map<String, Map<String, java.util.Set<String>>> ordersCfgByFacUnit = new HashMap<>();
     
     // Rule collection before processing
     private final List<Rule> allRules = new ArrayList<>();
@@ -474,6 +478,8 @@ public class XmlParser {
                 flow.configGroup = createConfigGroup(dataset, fset, uset);
 
                 addToList(flow);
+                // Track config group per (facility, unit) and type for Unit rows
+                trackConfigGroupForUnit(flow.type, fac, un, flow.configGroup);
             }
         }
     }
@@ -549,6 +555,8 @@ public class XmlParser {
                 flow.configGroup = createConfigGroup(dataset, fset, uset);
 
                 addToList(flow);
+                // Track config group per (facility, unit) and type for Unit rows
+                trackConfigGroupForUnit(flow.type, fac, un, flow.configGroup);
             }
         }
     }
@@ -557,62 +565,48 @@ public class XmlParser {
      * Create unit rows
      */
     private void createUnitRows() {
-        // Build a map of (facility, unit) -> list of config groups from actual flows
-        Map<String, Map<String, java.util.Set<String>>> facilityUnitToConfigGroups = new HashMap<>();
-        // Key structure: facility -> unit -> Set of config groups
-        
-        // Scan all flows to collect config groups per (facility, unit)
-        for (ExcelParserV5.FlowRow flow : nurseCalls) {
-            collectConfigGroupsForFlow(flow, facilityUnitToConfigGroups, "nurse");
-        }
-        for (ExcelParserV5.FlowRow flow : clinicals) {
-            collectConfigGroupsForFlow(flow, facilityUnitToConfigGroups, "clinical");
-        }
-        for (ExcelParserV5.FlowRow flow : orders) {
-            collectConfigGroupsForFlow(flow, facilityUnitToConfigGroups, "orders");
-        }
-        
-        // Create UnitRow for each unique (facility, unit) combination
-        for (Map.Entry<String, Map<String, java.util.Set<String>>> facilityEntry : facilityUnitToConfigGroups.entrySet()) {
-            String facility = facilityEntry.getKey();
-            
-            for (Map.Entry<String, java.util.Set<String>> unitEntry : facilityEntry.getValue().entrySet()) {
-                String unit = unitEntry.getKey();
-                java.util.Set<String> configGroups = unitEntry.getValue();
-                
+        // Build union of all facilities and units across types
+        Set<String> facilities = new LinkedHashSet<>();
+        facilities.addAll(nurseCfgByFacUnit.keySet());
+        facilities.addAll(clinicalCfgByFacUnit.keySet());
+        facilities.addAll(ordersCfgByFacUnit.keySet());
+
+        for (String facility : facilities) {
+            // Union of units for this facility across all types
+            Set<String> unitsForFacility = new LinkedHashSet<>();
+            unitsForFacility.addAll(nurseCfgByFacUnit.getOrDefault(facility, Map.of()).keySet());
+            unitsForFacility.addAll(clinicalCfgByFacUnit.getOrDefault(facility, Map.of()).keySet());
+            unitsForFacility.addAll(ordersCfgByFacUnit.getOrDefault(facility, Map.of()).keySet());
+
+            for (String unit : unitsForFacility) {
                 ExcelParserV5.UnitRow unitRow = new ExcelParserV5.UnitRow();
                 unitRow.facility = facility;
                 unitRow.unitNames = unit;
-                
-                // Set config groups based on the actual config groups from flows
-                for (String configGroup : configGroups) {
-                    // Determine which type based on the flow type that created it
-                    // The configGroup format is Facility_Unit_Dataset
-                    String[] parts = configGroup.split("_");
-                    String dataset = parts.length > 0 ? parts[parts.length - 1] : "";
-                    
-                    if (dataset.contains("Nurse") || dataset.equals("NurseCalls")) {
-                        if (unitRow.nurseGroup.isEmpty()) {
-                            unitRow.nurseGroup = configGroup;
-                        } else if (!unitRow.nurseGroup.contains(configGroup)) {
-                            unitRow.nurseGroup += ", " + configGroup;
-                        }
-                    } else if (dataset.contains("Order") || dataset.equals("Orders")) {
-                        if (unitRow.ordersGroup.isEmpty()) {
-                            unitRow.ordersGroup = configGroup;
-                        } else if (!unitRow.ordersGroup.contains(configGroup)) {
-                            unitRow.ordersGroup += ", " + configGroup;
-                        }
-                    } else {
-                        // Default to clinical
-                        if (unitRow.clinGroup.isEmpty()) {
-                            unitRow.clinGroup = configGroup;
-                        } else if (!unitRow.clinGroup.contains(configGroup)) {
-                            unitRow.clinGroup += ", " + configGroup;
-                        }
-                    }
+
+                // Nurse groups
+                for (String cfg : nurseCfgByFacUnit
+                        .getOrDefault(facility, Map.of())
+                        .getOrDefault(unit, Set.of())) {
+                    if (unitRow.nurseGroup.isEmpty()) unitRow.nurseGroup = cfg;
+                    else if (!unitRow.nurseGroup.contains(cfg)) unitRow.nurseGroup += ", " + cfg;
                 }
-                
+
+                // Clinical groups
+                for (String cfg : clinicalCfgByFacUnit
+                        .getOrDefault(facility, Map.of())
+                        .getOrDefault(unit, Set.of())) {
+                    if (unitRow.clinGroup.isEmpty()) unitRow.clinGroup = cfg;
+                    else if (!unitRow.clinGroup.contains(cfg)) unitRow.clinGroup += ", " + cfg;
+                }
+
+                // Orders groups
+                for (String cfg : ordersCfgByFacUnit
+                        .getOrDefault(facility, Map.of())
+                        .getOrDefault(unit, Set.of())) {
+                    if (unitRow.ordersGroup.isEmpty()) unitRow.ordersGroup = cfg;
+                    else if (!unitRow.ordersGroup.contains(cfg)) unitRow.ordersGroup += ", " + cfg;
+                }
+
                 units.add(unitRow);
             }
         }
@@ -621,53 +615,24 @@ public class XmlParser {
     /**
      * Helper method to extract facility and unit from a flow's config group and track it
      */
-    private void collectConfigGroupsForFlow(ExcelParserV5.FlowRow flow, 
-                                            Map<String, Map<String, java.util.Set<String>>> facilityUnitToConfigGroups,
-                                            String flowType) {
-        if (flow.configGroup == null || flow.configGroup.isEmpty()) return;
-        
-        // Parse the configGroup to extract facility and unit
-        // Format: Facility_Unit_Dataset or variations
-        String configGroup = flow.configGroup;
-        String[] parts = configGroup.split("_");
-        
-        String facility = "";
-        String unit = "";
-        
-        if (parts.length >= 3) {
-            // Facility_Unit_Dataset format
-            facility = parts[0];
-            unit = parts[1];
-        } else if (parts.length == 2) {
-            // Could be Dataset_Facility or Dataset_Unit
-            // Check if first part looks like a dataset name
-            if (parts[0].equals("NurseCalls") || parts[0].equals("Clinicals") || parts[0].equals("Orders")) {
-                // Dataset_Unit format
-                unit = parts[1];
-            } else {
-                // Facility_Dataset format (no unit)
-                facility = parts[0];
-            }
-        }
-        
-        // If we couldn't extract facility/unit from config group, try to get from facilityUnits map
-        if (facility.isEmpty() && unit.isEmpty() && !facilityUnits.isEmpty()) {
-            // Use the first facility/unit from the facilityUnits tracking
-            Map.Entry<String, Set<String>> firstEntry = facilityUnits.entrySet().iterator().next();
-            facility = firstEntry.getKey();
-            if (!firstEntry.getValue().isEmpty()) {
-                unit = firstEntry.getValue().iterator().next();
-            }
-        }
-        
-        // Track this config group for this (facility, unit)
-        if (!facility.isEmpty() || !unit.isEmpty()) {
-            String fac = facility.isEmpty() ? "" : facility;
-            String u = unit.isEmpty() ? "" : unit;
-            
-            facilityUnitToConfigGroups
+    // Helper: track config groups per (facility, unit) using emitted flow context
+    private void trackConfigGroupForUnit(String flowType, String facility, String unit, String configGroup) {
+        String fac = facility == null ? "" : facility;
+        String un = unit == null ? "" : unit;
+        if ("NurseCalls".equals(flowType)) {
+            nurseCfgByFacUnit
                 .computeIfAbsent(fac, k -> new HashMap<>())
-                .computeIfAbsent(u, k -> new java.util.HashSet<>())
+                .computeIfAbsent(un, k -> new java.util.HashSet<>())
+                .add(configGroup);
+        } else if ("Orders".equals(flowType)) {
+            ordersCfgByFacUnit
+                .computeIfAbsent(fac, k -> new HashMap<>())
+                .computeIfAbsent(un, k -> new java.util.HashSet<>())
+                .add(configGroup);
+        } else {
+            clinicalCfgByFacUnit
+                .computeIfAbsent(fac, k -> new HashMap<>())
+                .computeIfAbsent(un, k -> new java.util.HashSet<>())
                 .add(configGroup);
         }
     }
@@ -700,16 +665,12 @@ public class XmlParser {
     private String createConfigGroup(String dataset, Set<String> facilities, Set<String> units) {
         String facility = facilities.isEmpty() ? "" : facilities.iterator().next();
         String unit = units.isEmpty() ? "" : units.iterator().next();
-        
-        if (facility.isEmpty() && unit.isEmpty()) {
-            return dataset;
-        } else if (facility.isEmpty()) {
-            return dataset + "_" + unit;
-        } else if (unit.isEmpty()) {
-            return dataset + "_" + facility;
-        } else {
-            return facility + "_" + unit + "_" + dataset;
-        }
+        // Always place dataset last. Omit empty segments but keep order as Facility_Unit_Dataset
+        List<String> parts = new ArrayList<>();
+        if (facility != null && !facility.isEmpty()) parts.add(facility);
+        if (unit != null && !unit.isEmpty()) parts.add(unit);
+        if (dataset != null && !dataset.isEmpty()) parts.add(dataset);
+        return String.join("_", parts);
     }
     
     private boolean hasDestination(Rule rule) {
@@ -899,6 +860,9 @@ public class XmlParser {
         datasetViews.clear();
         facilityUnits.clear();
         allRules.clear();
+        nurseCfgByFacUnit.clear();
+        clinicalCfgByFacUnit.clear();
+        ordersCfgByFacUnit.clear();
     }
     
     // ========== Public Getters ==========
