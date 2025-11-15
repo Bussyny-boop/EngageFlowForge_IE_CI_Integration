@@ -596,9 +596,10 @@ public class ExcelParserV5 {
         row.priorityRaw = priority;
       }
       
-      // Parse alarmsAlerts (get the first alarm name)
+      // Parse alarmsAlerts (JSON authoritative list of alarms for this flow)
       List<String> alarmsAlerts = (List<String>) flow.get("alarmsAlerts");
       if (alarmsAlerts != null && !alarmsAlerts.isEmpty()) {
+        // Keep first for now; we'll expand to one row per alarm below
         row.alarmName = alarmsAlerts.get(0);
       }
       
@@ -827,15 +828,58 @@ public class ExcelParserV5 {
         }
       }
       
+      // Expand into separate GUI rows if multiple alarms are present
+      List<FlowRow> rowsToAdd = new ArrayList<>();
+      if (alarmsAlerts != null && alarmsAlerts.size() > 1) {
+        for (String alarm : alarmsAlerts) {
+          FlowRow copy = copyFlowRow(row);
+          copy.alarmName = alarm;
+          rowsToAdd.add(copy);
+        }
+      } else {
+        rowsToAdd.add(row);
+      }
+
       // Add to the appropriate list
       if (isNurseSide) {
-        nurseCalls.add(row);
+        nurseCalls.addAll(rowsToAdd);
       } else if (isOrders) {
-        orders.add(row);
+        orders.addAll(rowsToAdd);
       } else {
-        clinicals.add(row);
+        clinicals.addAll(rowsToAdd);
       }
     }
+  }
+
+  /**
+   * Creates a deep-ish copy of a FlowRow for JSON load expansion.
+   * Copies all scalar fields used by the GUI; maps/lists are not referenced here.
+   */
+  private static FlowRow copyFlowRow(FlowRow src) {
+    FlowRow dst = new FlowRow();
+    dst.inScope = src.inScope;
+    dst.type = src.type;
+    dst.configGroup = src.configGroup;
+    dst.alarmName = src.alarmName;
+    dst.sendingName = src.sendingName;
+    dst.priorityRaw = src.priorityRaw;
+    dst.deviceA = src.deviceA;
+    dst.deviceB = src.deviceB;
+    dst.ringtone = src.ringtone;
+    dst.responseOptions = src.responseOptions;
+    dst.breakThroughDND = src.breakThroughDND;
+    dst.multiUserAccept = src.multiUserAccept;
+    dst.escalateAfter = src.escalateAfter;
+    dst.ttlValue = src.ttlValue;
+    dst.enunciate = src.enunciate;
+    dst.emdan = src.emdan;
+    dst.t1 = src.t1; dst.r1 = src.r1;
+    dst.t2 = src.t2; dst.r2 = src.r2;
+    dst.t3 = src.t3; dst.r3 = src.r3;
+    dst.t4 = src.t4; dst.r4 = src.r4;
+    dst.t5 = src.t5; dst.r5 = src.r5;
+    dst.customTabSource = src.customTabSource;
+    return dst;
   }
   
   /**
