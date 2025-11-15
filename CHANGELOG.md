@@ -5,6 +5,19 @@ All notable changes to Engage FlowForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-11-15
+
+### Added
+- Settings → UI Feedback: Timeout slider now supports configurable min/max bounds.
+	- New range fields (min/max) persist via preferences and immediately re-bound the slider.
+	- Current timeout value is clamped to the active range.
+
+### Changed
+- Units tab UX: Comma-separated values are displayed and stored as newline-separated values
+	for improved readability across these columns: Unit Names, POD Room Filter, Nurse Group,
+	Clinical Group, Orders Group, No Caregiver Group, and Comments. Facility column remains
+	unchanged (commas preserved).
+
 ## [2.0.0] - 2025-11-09
 
 ### Changed
