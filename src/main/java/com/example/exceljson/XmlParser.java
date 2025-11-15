@@ -515,8 +515,24 @@ public class XmlParser {
             facilityToUnits.computeIfAbsent(facility, k -> new LinkedHashSet<>()).addAll(refRule.units);
         }
         
-        // Map component to device
-        if (refRule.component != null) {
+        // Map component to device - use component from SEND rules, not escalation rules
+        // Find the first SEND rule to get the component that actually sends messages
+        RuleData sendRuleForDevice = null;
+        for (RuleData rule : allRules) {
+            // Check if this is a SEND rule (has destination/role)
+            if (rule.role != null && !rule.role.isEmpty() || 
+                (rule.settings.containsKey("destination") && 
+                 rule.settings.get("destination") != null && 
+                 !((String)rule.settings.get("destination")).isEmpty())) {
+                sendRuleForDevice = rule;
+                break;
+            }
+        }
+        
+        if (sendRuleForDevice != null && sendRuleForDevice.component != null) {
+            flow.deviceA = mapComponentToDevice(sendRuleForDevice.component);
+        } else if (refRule.component != null) {
+            // Fallback to refRule if no SEND rule found (shouldn't happen in normal cases)
             flow.deviceA = mapComponentToDevice(refRule.component);
         }
         
