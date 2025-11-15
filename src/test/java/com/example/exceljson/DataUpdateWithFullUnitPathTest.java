@@ -1,7 +1,9 @@
 package com.example.exceljson;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DataUpdateWithFullUnitPathTest {
 
     @Test
-    public void testDataUpdateWithFullUnitPath() throws Exception {
+    public void testDataUpdateWithFullUnitPath(@TempDir Path tempDir) throws Exception {
         // Create test XML file with full unit path "bed.room.unit.name"
         String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<package version-major=\"1\" version-minor=\"0\">\n" +
@@ -96,7 +98,7 @@ public class DataUpdateWithFullUnitPathTest {
             "  </contents>\n" +
             "</package>";
         
-        File xmlFile = new File("/tmp/test-dataupdate-full-path.xml");
+        File xmlFile = tempDir.resolve("test-dataupdate-full-path.xml").toFile();
         java.nio.file.Files.write(xmlFile.toPath(), xmlContent.getBytes());
         
         XmlParser parser = new XmlParser();

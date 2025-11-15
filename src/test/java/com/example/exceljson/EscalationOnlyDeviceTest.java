@@ -1,7 +1,9 @@
 package com.example.exceljson;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EscalationOnlyDeviceTest {
 
     @Test
-    public void testEscalationOnlyUsesComponentForDevice() throws Exception {
+    public void testEscalationOnlyUsesComponentForDevice(@TempDir Path tempDir) throws Exception {
         String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<package version-major=\"1\" version-minor=\"0\">\n" +
             "  <meta-data><name>Test</name></meta-data>\n" +
@@ -54,7 +56,7 @@ public class EscalationOnlyDeviceTest {
             "  </contents>\n" +
             "</package>";
         
-        File xmlFile = new File("/tmp/test-escalation-only.xml");
+        File xmlFile = tempDir.resolve("test-escalation-only.xml").toFile();
         java.nio.file.Files.write(xmlFile.toPath(), xmlContent.getBytes());
         
         XmlParser parser = new XmlParser();
