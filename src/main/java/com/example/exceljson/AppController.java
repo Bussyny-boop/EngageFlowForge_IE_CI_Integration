@@ -1,6 +1,7 @@
 package com.example.exceljson;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.animation.ParallelTransition;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -20,6 +21,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.concurrent.Task;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.Slider;
 
 import java.io.File;
 import java.util.*;
@@ -76,6 +80,11 @@ public class AppController {
     @FXML private CheckBox defaultXmppCheckbox;
     @FXML private Button resetDefaultsButton;
     @FXML private Button resetPathsButton;
+    @FXML private Spinner<Integer> loadedTimeoutSpinner; // legacy support if present
+    @FXML private Slider loadedTimeoutSlider;
+    @FXML private Label loadedTimeoutValueLabel;
+    @FXML private TextField loadedTimeoutMinField;
+    @FXML private TextField loadedTimeoutMaxField;
     @FXML private TextField roomFilterNursecallField;
     @FXML private TextField roomFilterClinicalField;
     @FXML private TextField roomFilterOrdersField;
@@ -223,9 +232,15 @@ public class AppController {
     private static final String PREF_KEY_DARK_MODE = "darkMode";
     private static final String PREF_KEY_SIDEBAR_COLLAPSED = "sidebarCollapsed";
     private static final String PREF_KEY_CUSTOM_TAB_MAPPINGS = "customTabMappings";
+    private static final String PREF_KEY_LOADED_TIMEOUT_SECONDS = "loadedTimeoutSeconds";
+    private static final String PREF_KEY_LOADED_TIMEOUT_MIN = "loadedTimeoutMin";
+    private static final String PREF_KEY_LOADED_TIMEOUT_MAX = "loadedTimeoutMax";
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
+    private double loadedTimeoutSeconds = 10.0;
+    private double loadedTimeoutMin = 3.0;
+    private double loadedTimeoutMax = 120.0;
 
     // ---------- Initialization ----------
     @FXML
@@ -238,6 +253,13 @@ public class AppController {
         String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
         isDarkMode = prefs.getBoolean(PREF_KEY_DARK_MODE, false);
         isSidebarCollapsed = prefs.getBoolean(PREF_KEY_SIDEBAR_COLLAPSED, false);
+        // Load min/max and current timeout, with validation
+        loadedTimeoutMin = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MIN, "3"), 3.0), 1.0, 600.0);
+        loadedTimeoutMax = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MAX, "120"), 120.0), 2.0, 600.0);
+        if (loadedTimeoutMax <= loadedTimeoutMin) {
+            loadedTimeoutMax = Math.min(loadedTimeoutMin + 1, 600.0);
+        }
+        loadedTimeoutSeconds = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_SECONDS, "10"), 10.0), loadedTimeoutMin, loadedTimeoutMax);
 
         if (excelDirPath != null) {
             lastExcelDir = new File(excelDirPath);
@@ -351,6 +373,7 @@ public class AppController {
         setupNavigation();
         setupSettingsDrawer();
         setupCustomTabMappings();
+        setupLoadedTimeoutControl();
         
         // --- Merge Flows checkbox mutual exclusion logic (three-way) ---
         if (noMergeCheckbox != null && mergeByConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox != null) {
@@ -405,6 +428,107 @@ public class AppController {
         // Initialize labels
         updateJsonModeLabel();
         updateCurrentFileLabel();
+    }
+
+    // ---------- Loaded Timeout Control Setup ----------
+    private void setupLoadedTimeoutControl() {
+        // Preferred: slider (current UI)
+        if (loadedTimeoutSlider != null) {
+            loadedTimeoutSlider.setMin(loadedTimeoutMin);
+            loadedTimeoutSlider.setMax(loadedTimeoutMax);
+            loadedTimeoutSlider.setBlockIncrement(1);
+            loadedTimeoutSlider.setValue(clamp(loadedTimeoutSeconds, loadedTimeoutMin, loadedTimeoutMax));
+            updateLoadedTimeoutLabel(loadedTimeoutSlider.getValue());
+            loadedTimeoutSlider.valueProperty().addListener((obs, oldV, newV) -> {
+                if (newV == null) return;
+                double v = newV.doubleValue();
+                updateLoadedTimeoutLabel(v);
+                int iv = (int) Math.round(v);
+                loadedTimeoutSeconds = iv;
+                Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+                prefs.put(PREF_KEY_LOADED_TIMEOUT_SECONDS, String.valueOf(iv));
+            });
+        }
+
+        // Min/Max fields
+        if (loadedTimeoutMinField != null) {
+            loadedTimeoutMinField.setText(String.valueOf((int) Math.round(loadedTimeoutMin)));
+            loadedTimeoutMinField.focusedProperty().addListener((obs, was, isNow) -> {
+                if (!isNow) applyMinMaxFromFields();
+            });
+            loadedTimeoutMinField.setOnAction(e -> applyMinMaxFromFields());
+        }
+        if (loadedTimeoutMaxField != null) {
+            loadedTimeoutMaxField.setText(String.valueOf((int) Math.round(loadedTimeoutMax)));
+            loadedTimeoutMaxField.focusedProperty().addListener((obs, was, isNow) -> {
+                if (!isNow) applyMinMaxFromFields();
+            });
+            loadedTimeoutMaxField.setOnAction(e -> applyMinMaxFromFields());
+        }
+
+        // Backward compatibility: spinner (if present in older layouts)
+        if (loadedTimeoutSpinner != null) {
+            int initial = (int) Math.round(loadedTimeoutSeconds);
+            SpinnerValueFactory.IntegerSpinnerValueFactory vf =
+                new SpinnerValueFactory.IntegerSpinnerValueFactory(3, 120, initial, 1);
+            loadedTimeoutSpinner.setValueFactory(vf);
+            loadedTimeoutSpinner.setEditable(true);
+            loadedTimeoutSpinner.valueProperty().addListener((obs, oldV, newV) -> {
+                if (newV == null) return;
+                loadedTimeoutSeconds = newV.doubleValue();
+                Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+                prefs.put(PREF_KEY_LOADED_TIMEOUT_SECONDS, String.valueOf(newV));
+            });
+            var editor = loadedTimeoutSpinner.getEditor();
+            if (editor != null) {
+                editor.focusedProperty().addListener((obs, was, isNow) -> {
+                    if (!isNow) {
+                        try {
+                            int v = Integer.parseInt(editor.getText().trim());
+                            v = Math.max(3, Math.min(120, v));
+                            loadedTimeoutSpinner.getValueFactory().setValue(v);
+                        } catch (Exception ignored) {}
+                    }
+                });
+            }
+        }
+    }
+
+    private void updateLoadedTimeoutLabel(double value) {
+        if (loadedTimeoutValueLabel != null) {
+            int iv = (int) Math.round(value);
+            loadedTimeoutValueLabel.setText(iv + "s");
+        }
+    }
+
+    private void applyMinMaxFromFields() {
+        try {
+            int min = loadedTimeoutMinField != null ? Integer.parseInt(loadedTimeoutMinField.getText().trim()) : (int) loadedTimeoutMin;
+            int max = loadedTimeoutMaxField != null ? Integer.parseInt(loadedTimeoutMaxField.getText().trim()) : (int) loadedTimeoutMax;
+            min = (int) clamp(min, 1, 600);
+            max = (int) clamp(max, 2, 600);
+            if (max <= min) max = Math.min(min + 1, 600);
+            loadedTimeoutMin = min;
+            loadedTimeoutMax = max;
+
+            Preferences prefs = Preferences.userNodeForPackage(AppController.class);
+            prefs.put(PREF_KEY_LOADED_TIMEOUT_MIN, String.valueOf(min));
+            prefs.put(PREF_KEY_LOADED_TIMEOUT_MAX, String.valueOf(max));
+
+            if (loadedTimeoutSlider != null) {
+                loadedTimeoutSlider.setMin(min);
+                loadedTimeoutSlider.setMax(max);
+                double clamped = clamp(loadedTimeoutSeconds, min, max);
+                loadedTimeoutSlider.setValue(clamped);
+                loadedTimeoutSeconds = clamped;
+                prefs.put(PREF_KEY_LOADED_TIMEOUT_SECONDS, String.valueOf((int) Math.round(clamped)));
+                updateLoadedTimeoutLabel(clamped);
+            }
+        } catch (Exception ignored) { }
+    }
+
+    private static double clamp(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
     }
     
     // ---------- Navigation Setup ----------
@@ -805,6 +929,78 @@ public class AppController {
         }
     }
 
+    // ---------- Button State Helpers ----------
+    private void setButtonLoading(Button button, boolean loading) {
+        if (button == null) return;
+        if (loading) {
+            button.getStyleClass().remove("loaded");
+            if (!button.getStyleClass().contains("loading")) {
+                button.getStyleClass().add("loading");
+            }
+            // Save original text once
+            if (!button.getProperties().containsKey("origText")) {
+                button.getProperties().put("origText", button.getText());
+            }
+            // Show spinner and update text
+            String base = String.valueOf(button.getProperties().get("origText"));
+            button.setText(base + " — Loading…");
+            javafx.scene.control.ProgressIndicator pi = new javafx.scene.control.ProgressIndicator();
+            pi.setPrefSize(12, 12);
+            pi.setProgress(-1);
+            button.setGraphic(pi);
+            button.setGraphicTextGap(8);
+            button.setTooltip(new Tooltip("Loading…"));
+            button.setDisable(true);
+        } else {
+            button.getStyleClass().remove("loading");
+            // Restore text and graphic when not loading
+            Object orig = button.getProperties().get("origText");
+            if (orig != null) button.setText(String.valueOf(orig));
+            button.setGraphic(null);
+            // If no loaded state, remove tooltip
+            if (!button.getStyleClass().contains("loaded")) {
+                button.setTooltip(null);
+            }
+            button.setDisable(false);
+        }
+    }
+
+    private void setButtonLoaded(Button button, boolean loaded) {
+        if (button == null) return;
+        button.getStyleClass().remove("loading");
+        if (loaded) {
+            if (!button.getStyleClass().contains("loaded")) {
+                button.getStyleClass().add("loaded");
+            }
+            // Ensure original text captured
+            if (!button.getProperties().containsKey("origText")) {
+                button.getProperties().put("origText", button.getText());
+            }
+            String base = String.valueOf(button.getProperties().get("origText"));
+            button.setText(base + " ✓");
+            button.setGraphic(null);
+            button.setTooltip(new Tooltip("Last load succeeded"));
+        } else {
+            button.getStyleClass().remove("loaded");
+            Object orig = button.getProperties().get("origText");
+            if (orig != null) button.setText(String.valueOf(orig));
+            button.setGraphic(null);
+            button.setTooltip(null);
+        }
+    }
+
+    private void autoClearLoaded(Button button, double seconds) {
+        if (button == null) return;
+        PauseTransition pause = new PauseTransition(Duration.seconds(seconds));
+        pause.setOnFinished(e -> {
+            // Only clear if still showing as loaded and not currently loading
+            if (button.getStyleClass().contains("loaded") && !button.getStyleClass().contains("loading")) {
+                setButtonLoaded(button, false);
+            }
+        });
+        pause.play();
+    }
+
     // ---------- Load NDW (Excel) ----------
     private void loadNdw() {
         try {
@@ -824,76 +1020,106 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, true);
 
-            // Show progress
+            // Indicate loading state
+            setButtonLoading(loadNdwButton, true);
             showProgressBar("📥 Loading Excel file...");
 
-            // Load Excel file
-            parser.load(file);
-            String loadSummary = parser.getLoadSummary();
-            
-            currentExcelFile = file;
-            updateCurrentFileLabel(); // Update file label
-            jsonPreview.setText(loadSummary);
-
-            refreshTables();
-            tableUnits.refresh();
-            tableNurseCalls.refresh();
-            tableClinicals.refresh();
-            if (tableOrders != null) tableOrders.refresh();
-
-            setJsonButtonsEnabled(true);
-            setExcelButtonsEnabled(true);
-            
-            // Hide progress and update status
-            hideProgressBar();
-            updateStatusLabel(); // Update status with filter counts
-            updateCustomTabStats(); // Update custom tab statistics
-            
-            // Build success message
-            StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
-
-            // Excel load: include the same counts as JSON/XML
-            int nurseFlows = parser.nurseCalls.size();
-            int clinicalFlows = parser.clinicals.size();
-            int ordersFlows = parser.orders.size();
-            int unitsCount = parser.getUnitsCount();
-            int nurseGroups = parser.getNurseConfigGroupCount();
-            int clinicalGroups = parser.getClinicalConfigGroupCount();
-            int ordersGroups = parser.getOrdersConfigGroupCount();
-            int totalGroups = parser.getTotalConfigGroupCount();
-
-            successMsg.append("\n\nLoaded ")
-                    .append(nurseFlows).append(" Nurse Calls, ")
-                    .append(clinicalFlows).append(" Clinicals, and ")
-                    .append(ordersFlows).append(" Orders flows.\n")
-                    .append("Units: ").append(unitsCount).append("\n")
-                    .append("Config Groups — Nurse: ").append(nurseGroups)
-                    .append(", Clinical: ").append(clinicalGroups)
-                    .append(", Orders: ").append(ordersGroups)
-                    .append(" (Total: ").append(totalGroups).append(")");
-
-            int movedCount = parser.getEmdanMovedCount();
-            if (movedCount > 0) {
-                successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
-            }
-            
-            // Add custom tab information
-            Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
-            if (!customTabCounts.isEmpty()) {
-                int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
-                if (totalCustomRows > 0) {
-                    successMsg.append("\n\nCustom Tabs Processed:");
-                    for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
-                        String flowType = customTabMappings.get(entry.getKey());
-                        successMsg.append("\n  • ").append(entry.getKey())
-                                 .append(" → ").append(flowType)
-                                 .append(": ").append(entry.getValue()).append(" rows");
-                    }
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    parser.load(file);
+                    return null;
                 }
-            }
+            };
 
-            showInfo(successMsg.toString());
+            task.setOnSucceeded(ev -> {
+                try {
+                    String loadSummary = parser.getLoadSummary();
+                    currentExcelFile = file;
+                    updateCurrentFileLabel();
+                    jsonPreview.setText(loadSummary);
+
+                    // Normalize Unit tab data: commas → newlines
+                    normalizeAllUnitRows();
+
+                    refreshTables();
+                    tableUnits.refresh();
+                    tableNurseCalls.refresh();
+                    tableClinicals.refresh();
+                    if (tableOrders != null) tableOrders.refresh();
+
+                    setJsonButtonsEnabled(true);
+                    setExcelButtonsEnabled(true);
+
+                    // Hide progress and update status
+                    hideProgressBar();
+                    updateStatusLabel();
+                    updateCustomTabStats();
+
+                    // Mark button loaded
+                    setButtonLoading(loadNdwButton, false);
+                    setButtonLoaded(loadNdwButton, true);
+                    autoClearLoaded(loadNdwButton, loadedTimeoutSeconds);
+
+                    // Build success message
+                    StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
+
+                    int nurseFlows = parser.nurseCalls.size();
+                    int clinicalFlows = parser.clinicals.size();
+                    int ordersFlows = parser.orders.size();
+                    int unitsCount = parser.getUnitsCount();
+                    int nurseGroups = parser.getNurseConfigGroupCount();
+                    int clinicalGroups = parser.getClinicalConfigGroupCount();
+                    int ordersGroups = parser.getOrdersConfigGroupCount();
+                    int totalGroups = parser.getTotalConfigGroupCount();
+
+                    successMsg.append("\n\nLoaded ")
+                            .append(nurseFlows).append(" Nurse Calls, ")
+                            .append(clinicalFlows).append(" Clinicals, and ")
+                            .append(ordersFlows).append(" Orders flows.\n")
+                            .append("Units: ").append(unitsCount).append("\n")
+                            .append("Config Groups — Nurse: ").append(nurseGroups)
+                            .append(", Clinical: ").append(clinicalGroups)
+                            .append(", Orders: ").append(ordersGroups)
+                            .append(" (Total: ").append(totalGroups).append(")");
+
+                    int movedCount = parser.getEmdanMovedCount();
+                    if (movedCount > 0) {
+                        successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
+                    }
+
+                    Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
+                    if (!customTabCounts.isEmpty()) {
+                        int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
+                        if (totalCustomRows > 0) {
+                            successMsg.append("\n\nCustom Tabs Processed:");
+                            for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
+                                String flowType = customTabMappings.get(entry.getKey());
+                                successMsg.append("\n  • ").append(entry.getKey())
+                                         .append(" → ").append(flowType)
+                                         .append(": ").append(entry.getValue()).append(" rows");
+                            }
+                        }
+                    }
+
+                    showInfo(successMsg.toString());
+                } finally {
+                    setButtonLoading(loadNdwButton, false);
+                }
+            });
+
+            task.setOnFailed(ev -> {
+                setButtonLoading(loadNdwButton, false);
+                hideProgressBar();
+                Throwable ex = task.getException();
+                showError("Failed to load file: " + (ex != null ? ex.getMessage() : "Unknown error"));
+            });
+
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
         } catch (Exception ex) {
+            setButtonLoading(loadNdwButton, false);
             hideProgressBar();
             showError("Failed to load file: " + ex.getMessage());
         }
@@ -918,75 +1144,105 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, true);
 
-            // Show progress
+            // Loading state + progress
+            setButtonLoading(loadXmlButton, true);
             showProgressBar("📥 Loading XML file...");
 
-            // Load XML file
-            XmlParser xmlParser = new XmlParser();
-            xmlParser.load(file);
+            Task<Void> task = new Task<>() {
+                private XmlParser xmlParser;
+                @Override
+                protected Void call() throws Exception {
+                    xmlParser = new XmlParser();
+                    xmlParser.load(file);
+                    return null;
+                }
+                @Override
+                protected void succeeded() {
+                    try {
+                        // Transfer data from XML parser to main parser lists
+                        parser.units.clear();
+                        parser.units.addAll(xmlParser.getUnits());
+                        parser.nurseCalls.clear();
+                        parser.nurseCalls.addAll(xmlParser.getNurseCalls());
+                        parser.clinicals.clear();
+                        parser.clinicals.addAll(xmlParser.getClinicals());
+                        parser.orders.clear();
+                        parser.orders.addAll(xmlParser.getOrders());
 
-            // Transfer data from XML parser to main parser lists
-            parser.units.clear();
-            parser.units.addAll(xmlParser.getUnits());
+                        String loadSummary = xmlParser.getLoadSummary();
 
-            parser.nurseCalls.clear();
-            parser.nurseCalls.addAll(xmlParser.getNurseCalls());
+                        currentExcelFile = file;
+                        updateCurrentFileLabel();
+                        jsonPreview.setText(loadSummary);
 
-            parser.clinicals.clear();
-            parser.clinicals.addAll(xmlParser.getClinicals());
+                        // Normalize Unit tab data: commas → newlines
+                        normalizeAllUnitRows();
 
-            parser.orders.clear();
-            parser.orders.addAll(xmlParser.getOrders());
+                        refreshTables();
+                        tableUnits.refresh();
+                        tableNurseCalls.refresh();
+                        tableClinicals.refresh();
+                        if (tableOrders != null) tableOrders.refresh();
 
-            String loadSummary = xmlParser.getLoadSummary();
+                        setJsonButtonsEnabled(true);
+                        setExcelButtonsEnabled(true);
 
-            currentExcelFile = file;
-            updateCurrentFileLabel();
-            jsonPreview.setText(loadSummary);
+                        // Hide progress and update status
+                        hideProgressBar();
+                        updateStatusLabel();
+                        updateCustomTabStats();
 
-            refreshTables();
-            tableUnits.refresh();
-            tableNurseCalls.refresh();
-            tableClinicals.refresh();
-            if (tableOrders != null) tableOrders.refresh();
+                        // Mark button loaded
+                        setButtonLoading(loadXmlButton, false);
+                        setButtonLoaded(loadXmlButton, true);
+                        autoClearLoaded(loadXmlButton, loadedTimeoutSeconds);
 
-            setJsonButtonsEnabled(true);
-            setExcelButtonsEnabled(true);
+                        // Success message
+                        int nurseFlows = parser.nurseCalls.size();
+                        int clinicalFlows = parser.clinicals.size();
+                        int ordersFlows = parser.orders.size();
+                        int unitsCount = parser.units.size();
 
-            // Hide progress and update status
-            hideProgressBar();
-            updateStatusLabel();
-            updateCustomTabStats();
+                        int nurseGroups = (int) parser.nurseCalls.stream()
+                            .map(fr -> fr.configGroup)
+                                .filter(s -> s != null && !s.isBlank())
+                                .distinct()
+                                .count();
+                        int clinicalGroups = (int) parser.clinicals.stream()
+                            .map(fr -> fr.configGroup)
+                                .filter(s -> s != null && !s.isBlank())
+                                .distinct()
+                                .count();
+                        int ordersGroups = (int) parser.orders.stream()
+                            .map(fr -> fr.configGroup)
+                                .filter(s -> s != null && !s.isBlank())
+                                .distinct()
+                                .count();
+                        int totalGroups = nurseGroups + clinicalGroups + ordersGroups;
 
-            // Success message mirroring JSON/Excel
-            int nurseFlows = parser.nurseCalls.size();
-            int clinicalFlows = parser.clinicals.size();
-            int ordersFlows = parser.orders.size();
-            int unitsCount = parser.units.size();
+                        showInfo("✅ XML loaded successfully\n\n" +
+                            "Loaded " + nurseFlows + " Nurse Calls, " + clinicalFlows + " Clinicals, and " + ordersFlows + " Orders flows.\n" +
+                            "Units: " + unitsCount + "\n" +
+                            "Config Groups — Nurse: " + nurseGroups + ", Clinical: " + clinicalGroups + ", Orders: " + ordersGroups +
+                            " (Total: " + totalGroups + ")");
+                    } finally {
+                        setButtonLoading(loadXmlButton, false);
+                    }
+                }
+                @Override
+                protected void failed() {
+                    setButtonLoading(loadXmlButton, false);
+                    hideProgressBar();
+                    Throwable ex = getException();
+                    showError("Failed to load XML file: " + (ex != null ? ex.getMessage() : "Unknown error"));
+                }
+            };
 
-            int nurseGroups = (int) parser.nurseCalls.stream()
-                .map(fr -> fr.configGroup)
-                    .filter(s -> s != null && !s.isBlank())
-                    .distinct()
-                    .count();
-            int clinicalGroups = (int) parser.clinicals.stream()
-                .map(fr -> fr.configGroup)
-                    .filter(s -> s != null && !s.isBlank())
-                    .distinct()
-                    .count();
-            int ordersGroups = (int) parser.orders.stream()
-                .map(fr -> fr.configGroup)
-                    .filter(s -> s != null && !s.isBlank())
-                    .distinct()
-                    .count();
-            int totalGroups = nurseGroups + clinicalGroups + ordersGroups;
-
-            showInfo("✅ XML loaded successfully\n\n" +
-                "Loaded " + nurseFlows + " Nurse Calls, " + clinicalFlows + " Clinicals, and " + ordersFlows + " Orders flows.\n" +
-                "Units: " + unitsCount + "\n" +
-                "Config Groups — Nurse: " + nurseGroups + ", Clinical: " + clinicalGroups + ", Orders: " + ordersGroups +
-                " (Total: " + totalGroups + ")");
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
         } catch (Exception ex) {
+            setButtonLoading(loadXmlButton, false);
             hideProgressBar();
             showError("Failed to load XML file: " + ex.getMessage());
         }
@@ -1011,60 +1267,91 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, false);
 
-            // Show progress
+            // Loading state + progress
+            setButtonLoading(loadJsonButton, true);
             showProgressBar("📥 Loading JSON file...");
 
-            // Load JSON file
-            parser.loadJson(file);
-            
-            currentExcelFile = null; // Clear current Excel file reference
-            updateCurrentFileLabel(); // Update file label
-            
-            // Build load summary
-            StringBuilder loadSummary = new StringBuilder();
-            loadSummary.append("✅ JSON loaded successfully\n\n");
-            loadSummary.append(String.format("Loaded:\n"));
-            loadSummary.append(String.format("  • %d Nurse Call flows\n", parser.nurseCalls.size()));
-            loadSummary.append(String.format("  • %d Clinical flows\n", parser.clinicals.size()));
-            loadSummary.append(String.format("  • %d Orders flows\n", parser.orders.size()));
-            loadSummary.append(String.format("  • %d Units\n", parser.getUnitsCount()));
-            loadSummary.append(String.format(
-                "  • Config Groups: %d (Nurse), %d (Clinical), %d (Orders) — Total %d\n",
-                parser.getNurseConfigGroupCount(),
-                parser.getClinicalConfigGroupCount(),
-                parser.getOrdersConfigGroupCount(),
-                parser.getTotalConfigGroupCount()
-            ));
-            loadSummary.append("\n⚠️ Note: Units data may be incomplete when loading from JSON.\n");
-            loadSummary.append("Some fields may not be fully populated.\n");
-            loadSummary.append("Consider loading the original Excel file for complete data.");
-            
-            jsonPreview.setText(loadSummary.toString());
+            Task<Void> task = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    parser.loadJson(file);
+                    return null;
+                }
+            };
 
-            refreshTables();
-            tableUnits.refresh();
-            tableNurseCalls.refresh();
-            tableClinicals.refresh();
-            if (tableOrders != null) tableOrders.refresh();
+            task.setOnSucceeded(ev -> {
+                try {
+                    currentExcelFile = null; // Clear current Excel file reference
+                    updateCurrentFileLabel(); // Update file label
 
-            setJsonButtonsEnabled(true);
-            setExcelButtonsEnabled(true);
+                    StringBuilder loadSummary = new StringBuilder();
+                    loadSummary.append("✅ JSON loaded successfully\n\n");
+                    loadSummary.append(String.format("Loaded:\n"));
+                    loadSummary.append(String.format("  • %d Nurse Call flows\n", parser.nurseCalls.size()));
+                    loadSummary.append(String.format("  • %d Clinical flows\n", parser.clinicals.size()));
+                    loadSummary.append(String.format("  • %d Orders flows\n", parser.orders.size()));
+                    loadSummary.append(String.format("  • %d Units\n", parser.getUnitsCount()));
+                    loadSummary.append(String.format(
+                        "  • Config Groups: %d (Nurse), %d (Clinical), %d (Orders) — Total %d\n",
+                        parser.getNurseConfigGroupCount(),
+                        parser.getClinicalConfigGroupCount(),
+                        parser.getOrdersConfigGroupCount(),
+                        parser.getTotalConfigGroupCount()
+                    ));
+                    loadSummary.append("\n⚠️ Note: Units data may be incomplete when loading from JSON.\n");
+                    loadSummary.append("Some fields may not be fully populated.\n");
+                    loadSummary.append("Consider loading the original Excel file for complete data.");
 
-            // Hide progress and update status
-            hideProgressBar();
-            updateStatusLabel(); // Update status with filter counts
+                    jsonPreview.setText(loadSummary.toString());
 
-                showInfo("✅ JSON loaded successfully\n\n" +
-                    "Loaded " + parser.nurseCalls.size() + " Nurse Calls, " +
-                    parser.clinicals.size() + " Clinicals, and " +
-                    parser.orders.size() + " Orders flows.\n" +
-                    "Units: " + parser.getUnitsCount() + "\n" +
-                    "Config Groups — Nurse: " + parser.getNurseConfigGroupCount() +
-                    ", Clinical: " + parser.getClinicalConfigGroupCount() +
-                    ", Orders: " + parser.getOrdersConfigGroupCount() +
-                    " (Total: " + parser.getTotalConfigGroupCount() + ")\n\n" +
-                    "⚠️ Note: Some data may be incomplete when loading from JSON.");
+                    // Normalize Unit tab data: commas → newlines
+                    normalizeAllUnitRows();
+
+                    refreshTables();
+                    tableUnits.refresh();
+                    tableNurseCalls.refresh();
+                    tableClinicals.refresh();
+                    if (tableOrders != null) tableOrders.refresh();
+
+                    setJsonButtonsEnabled(true);
+                    setExcelButtonsEnabled(true);
+
+                    // Hide progress and update status
+                    hideProgressBar();
+                    updateStatusLabel();
+
+                    // Mark button loaded
+                    setButtonLoading(loadJsonButton, false);
+                    setButtonLoaded(loadJsonButton, true);
+                    autoClearLoaded(loadJsonButton, loadedTimeoutSeconds);
+
+                    showInfo("✅ JSON loaded successfully\n\n" +
+                        "Loaded " + parser.nurseCalls.size() + " Nurse Calls, " +
+                        parser.clinicals.size() + " Clinicals, and " +
+                        parser.orders.size() + " Orders flows.\n" +
+                        "Units: " + parser.getUnitsCount() + "\n" +
+                        "Config Groups — Nurse: " + parser.getNurseConfigGroupCount() +
+                        ", Clinical: " + parser.getClinicalConfigGroupCount() +
+                        ", Orders: " + parser.getOrdersConfigGroupCount() +
+                        " (Total: " + parser.getTotalConfigGroupCount() + ")\n\n" +
+                        "⚠️ Note: Some data may be incomplete when loading from JSON.");
+                } finally {
+                    setButtonLoading(loadJsonButton, false);
+                }
+            });
+
+            task.setOnFailed(ev -> {
+                setButtonLoading(loadJsonButton, false);
+                hideProgressBar();
+                Throwable ex = task.getException();
+                showError("Failed to load JSON file: " + (ex != null ? ex.getMessage() : "Unknown error"));
+            });
+
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
         } catch (Exception ex) {
+            setButtonLoading(loadJsonButton, false);
             hideProgressBar();
             showError("Failed to load JSON file: " + ex.getMessage());
         }
@@ -1419,14 +1706,15 @@ public class AppController {
     // ---------- Table column setup ----------
     private void initializeUnitColumns() {
         if (tableUnits != null) tableUnits.setEditable(true);
+        // Preserve commas in Facility; no newline conversion
         setupEditable(unitFacilityCol, r -> r.facility, (r, v) -> r.facility = v);
-        setupEditable(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
-        setupEditable(unitPodRoomFilterCol, r -> r.podRoomFilter, (r, v) -> r.podRoomFilter = v);
-        setupEditable(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
-        setupEditable(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
-        setupEditable(unitOrdersGroupCol, r -> r.ordersGroup, (r, v) -> r.ordersGroup = v);
-        setupEditable(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
-        setupEditable(unitCommentsCol, r -> r.comments, (r, v) -> r.comments = v);
+        setupEditableUnit(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
+        setupEditableUnit(unitPodRoomFilterCol, r -> r.podRoomFilter, (r, v) -> r.podRoomFilter = v);
+        setupEditableUnit(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
+        setupEditableUnit(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
+        setupEditableUnit(unitOrdersGroupCol, r -> r.ordersGroup, (r, v) -> r.ordersGroup = v);
+        setupEditableUnit(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
+        setupEditableUnit(unitCommentsCol, r -> r.comments, (r, v) -> r.comments = v);
     }
 
     private void initializeNurseColumns() {
@@ -1527,6 +1815,45 @@ public class AppController {
         col.setOnEditCommit(ev -> {
             R row = ev.getRowValue();
             setter.accept(row, ev.getNewValue());
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
+    }
+
+    // ---------- Units-specific helpers: commas → newlines ----------
+    private static String commaToNewlines(String s) {
+        if (s == null) return null;
+        return s.replaceAll("\\s*,\\s*", "\n");
+    }
+
+    private void normalizeUnitRow(ExcelParserV5.UnitRow r) {
+        if (r == null) return;
+        r.unitNames = commaToNewlines(r.unitNames);
+        r.podRoomFilter = commaToNewlines(r.podRoomFilter);
+        r.nurseGroup = commaToNewlines(r.nurseGroup);
+        r.clinGroup = commaToNewlines(r.clinGroup);
+        r.ordersGroup = commaToNewlines(r.ordersGroup);
+        r.noCareGroup = commaToNewlines(r.noCareGroup);
+        r.comments = commaToNewlines(r.comments);
+    }
+
+    private void normalizeAllUnitRows() {
+        if (parser == null || parser.units == null) return;
+        for (ExcelParserV5.UnitRow r : parser.units) {
+            normalizeUnitRow(r);
+        }
+    }
+
+    private void setupEditableUnit(TableColumn<ExcelParserV5.UnitRow, String> col,
+                                   Function<ExcelParserV5.UnitRow, String> getter,
+                                   BiConsumer<ExcelParserV5.UnitRow, String> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
+        col.setCellFactory(TextAreaTableCell.forTableColumn());
+        col.setOnEditCommit(ev -> {
+            ExcelParserV5.UnitRow row = ev.getRowValue();
+            String newVal = ev.getNewValue();
+            newVal = commaToNewlines(newVal);
+            setter.accept(row, newVal);
             if (col.getTableView() != null) col.getTableView().refresh();
         });
     }
@@ -2324,6 +2651,17 @@ public class AppController {
                 // Disable buttons
                 setJsonButtonsEnabled(false);
                 setExcelButtonsEnabled(false);
+
+                // Reset load button states
+                setButtonLoaded(loadNdwButton, false);
+                setButtonLoaded(loadXmlButton, false);
+                setButtonLoaded(loadJsonButton, false);
+                setButtonLoading(loadNdwButton, false);
+                setButtonLoading(loadXmlButton, false);
+                setButtonLoading(loadJsonButton, false);
+                if (loadNdwButton != null) loadNdwButton.setTooltip(null);
+                if (loadXmlButton != null) loadXmlButton.setTooltip(null);
+                if (loadJsonButton != null) loadJsonButton.setTooltip(null);
                 
                 // Refresh tables
                 if (tableUnits != null) tableUnits.refresh();

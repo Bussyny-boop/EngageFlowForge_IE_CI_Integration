@@ -308,6 +308,36 @@
                                     
                                     <Separator />
                                     
+                                    <!-- UI Feedback Settings -->
+                                    <Label text="UI Feedback" style="-fx-font-weight:bold;" />
+                                    <GridPane hgap="10" vgap="8">
+                                        <Label text="Loaded state timeout:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
+                                            <Slider fx:id="loadedTimeoutSlider" min="3" max="120" blockIncrement="1" majorTickUnit="10" minorTickCount="4" showTickMarks="true" showTickLabels="true" prefWidth="220">
+                                                <tooltip>
+                                                    <Tooltip text="How long a button stays green with a checkmark after a successful load" />
+                                                </tooltip>
+                                            </Slider>
+                                            <Label fx:id="loadedTimeoutValueLabel" text="10s" />
+                                        </HBox>
+                                        <Label text="Range (min–max):" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                        <HBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1" alignment="CENTER_LEFT">
+                                            <TextField fx:id="loadedTimeoutMinField" promptText="min" prefWidth="60">
+                                                <tooltip>
+                                                    <Tooltip text="Minimum seconds (1–600)." />
+                                                </tooltip>
+                                            </TextField>
+                                            <Label text="–" />
+                                            <TextField fx:id="loadedTimeoutMaxField" promptText="max" prefWidth="60">
+                                                <tooltip>
+                                                    <Tooltip text="Maximum seconds (>= min, up to 600)." />
+                                                </tooltip>
+                                            </TextField>
+                                        </HBox>
+                                    </GridPane>
+
+                                    <Separator />
+
                                     <!-- Other Settings -->
                                     <Button fx:id="resetPathsButton" text="🔄 Reset File Paths" styleClass="button-secondary" />
                                 </VBox>

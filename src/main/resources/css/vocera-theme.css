@@ -229,6 +229,19 @@
     -fx-background-color: #BDC3C7;
 }
 
+/* --- Loading/Loaded button states --- */
+.button.loading {
+    -fx-background-color: linear-gradient(to bottom, #F39C12, #D68910);
+    -fx-text-fill: white;
+    -fx-border-color: #F8C471;
+}
+
+.button.loaded {
+    -fx-background-color: linear-gradient(to bottom, #27AE60, #1E8449);
+    -fx-text-fill: white;
+    -fx-border-color: #58D68D;
+}
+
 /* --- Theme Toggle Button --- */
 .theme-toggle {
     -fx-background-color: linear-gradient(to bottom, #34495E, #2C3E50);
