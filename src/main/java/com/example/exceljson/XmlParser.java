@@ -266,8 +266,16 @@ public class XmlParser {
             rule.state = filter.value.trim();
         }
         
-        // Role
-        if (filter.path.contains("role.name")) {
+        // Role - extract from various role-related filter paths
+        if (filter.path.contains("role.name") || 
+            filter.path.contains("assignments.role") || 
+            filter.path.equals("role")) {
+            // Store the role value directly from the filter
+            rule.role = filter.value.trim();
+        }
+        
+        // Also try to extract role from assignment level description paths
+        if (filter.path.contains("assignment_level") && filter.path.contains("description")) {
             rule.role = filter.value.trim();
         }
     }
@@ -383,9 +391,8 @@ public class XmlParser {
      * Create simple flow row (no escalation)
      */
     private void createSimpleFlow(String dataset, String alertType, List<Rule> rules) {
-        // Use first rule with destination
+        // Use first rule (destination is optional)
         Rule sendRule = rules.stream()
-            .filter(this::hasDestination)
             .findFirst()
             .orElse(null);
         
@@ -399,7 +406,7 @@ public class XmlParser {
         flow.configGroup = createConfigGroup(dataset, sendRule.units);
         flow.deviceA = mapComponent(sendRule.component);
         
-        // Set recipient and timing
+        // Set recipient and timing (recipient is optional)
         flow.r1 = extractDestination(sendRule);
         if (sendRule.triggerCreate) {
             flow.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
@@ -471,13 +478,23 @@ public class XmlParser {
     }
     
     private String extractDestination(Rule rule) {
+        String destination = null;
         if (rule.settings.containsKey("destination")) {
-            return rule.settings.get("destination").toString();
+            destination = rule.settings.get("destination").toString();
         }
+        
+        // If destination is a group (starts with g-), use it directly
+        if (destination != null && destination.startsWith("g-")) {
+            return destination;
+        }
+        
+        // Otherwise, prefer role name from view filters over raw destination template
         if (rule.role != null && !rule.role.isEmpty()) {
             return rule.role;
         }
-        return "";
+        
+        // Fall back to destination if no role is found (for templates or other values)
+        return destination != null ? destination : "";
     }
     
     private void setRecipient(ExcelParserV5.FlowRow flow, int index, String recipient) {
