@@ -419,6 +419,9 @@ public class XmlParser {
         // Map from SOURCE state (the state being checked in condition) to escalation rule
         Map<String, RuleData> escalateRulesBySourceState = new LinkedHashMap<>();
         
+        // Track whether we have any DataUpdate escalation rules
+        boolean hasDataUpdateEscalation = false;
+        
         for (RuleData rule : rules) {
             if (rule.state != null && !rule.state.isEmpty()) {
                 // Check if this is a SEND rule (has destination/role) or ESCALATE rule
@@ -435,9 +438,20 @@ public class XmlParser {
                 } else {
                     // ESCALATE rule - the state value indicates the SOURCE state (in the condition)
                     // This rule transitions FROM this state TO another state
+                    // Track if we have DataUpdate escalation rules
+                    if ("DataUpdate".equalsIgnoreCase(rule.component)) {
+                        hasDataUpdateEscalation = true;
+                    }
                     escalateRulesBySourceState.put(rule.state, rule);
                 }
             }
+        }
+        
+        // If we have DataUpdate escalation rules, filter out non-DataUpdate escalation rules
+        // This ensures timing comes ONLY from DataUpdate interface when it's present
+        if (hasDataUpdateEscalation) {
+            escalateRulesBySourceState.entrySet().removeIf(entry -> 
+                !"DataUpdate".equalsIgnoreCase(entry.getValue().component));
         }
         
         // Find all unique alert types across the group (only from SEND rules)
