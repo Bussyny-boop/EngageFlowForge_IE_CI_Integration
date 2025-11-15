@@ -1,7 +1,9 @@
 package com.example.exceljson;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GroupDestinationTest {
 
     @Test
-    public void testGroupDestinationWithGroupState() throws Exception {
+    public void testGroupDestinationWithGroupState(@TempDir Path tempDir) throws Exception {
         String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<package version-major=\"1\" version-minor=\"0\">\n" +
             "  <meta-data><name>Test Group Destination</name></meta-data>\n" +
@@ -58,7 +60,7 @@ public class GroupDestinationTest {
             "  </contents>\n" +
             "</package>";
         
-        File xmlFile = new File("/tmp/test-group-destination.xml");
+        File xmlFile = tempDir.resolve("test-group-destination.xml").toFile();
         java.nio.file.Files.write(xmlFile.toPath(), xmlContent.getBytes());
         
         XmlParser parser = new XmlParser();
@@ -95,7 +97,7 @@ public class GroupDestinationTest {
     }
     
     @Test
-    public void testVariousGroupDestinations() throws Exception {
+    public void testVariousGroupDestinations(@TempDir Path tempDir) throws Exception {
         String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<package version-major=\"1\" version-minor=\"0\">\n" +
             "  <meta-data><name>Test</name></meta-data>\n" +
@@ -140,7 +142,7 @@ public class GroupDestinationTest {
             "  </contents>\n" +
             "</package>";
         
-        File xmlFile = new File("/tmp/test-various-groups.xml");
+        File xmlFile = tempDir.resolve("test-various-groups.xml").toFile();
         java.nio.file.Files.write(xmlFile.toPath(), xmlContent.getBytes());
         
         XmlParser parser = new XmlParser();
