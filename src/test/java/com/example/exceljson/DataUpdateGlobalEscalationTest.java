@@ -66,13 +66,13 @@ public class DataUpdateGlobalEscalationTest {
         // This means CHARGE NURSE should be R1 (primary recipient)
         boolean foundChargeNurse = false;
         for (ExcelParserV5.FlowRow flow : clinicals) {
-            if ("CHARGE NURSE".equals(flow.r1)) {
+            if ("VAssign:CHARGE NURSE".equals(flow.r1)) {
                 foundChargeNurse = true;
                 assertEquals("VMP", flow.deviceA, "Flow with CHARGE NURSE should use VMP");
             }
         }
         
-        assertTrue(foundChargeNurse, "Should find flow with CHARGE NURSE as R1 (Group state treated as Primary)");
+        assertTrue(foundChargeNurse, "Should find flow with VAssign:CHARGE NURSE as R1 (Group state treated as Primary)");
     }
     
     @Test
@@ -116,11 +116,11 @@ public class DataUpdateGlobalEscalationTest {
         // All flows should have recipients extracted from role names or destinations
         for (ExcelParserV5.FlowRow flow : clinicals) {
             if (flow.r1 != null && !flow.r1.isEmpty()) {
-                // Recipients should be one of: NURSE, NURSE BUDDY, CHARGE NURSE, or a destination value
+                // Recipients should be one of: VAssign:NURSE, VAssign:NURSE BUDDY, VAssign:CHARGE NURSE, or a destination value
                 assertTrue(
-                    flow.r1.equals("NURSE") || 
-                    flow.r1.equals("NURSE BUDDY") || 
-                    flow.r1.equals("CHARGE NURSE") ||
+                    flow.r1.equals("VAssign:NURSE") || 
+                    flow.r1.equals("VAssign:NURSE BUDDY") || 
+                    flow.r1.equals("VAssign:CHARGE NURSE") ||
                     flow.r1.startsWith("#{"),
                     "R1 should be a valid recipient: " + flow.r1
                 );

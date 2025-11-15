@@ -39,17 +39,17 @@ public class XmlParserTest {
                 foundLowHR = true;
                 assertEquals("VMP", flow.deviceA, "Device should be VMP");
                 assertEquals("30", flow.t1, "T1 should be 30");
-                assertEquals("2", flow.priorityRaw, "Priority should be 2");
+                assertEquals("Normal", flow.priorityRaw, "Priority should be Normal");
                 assertEquals("10", flow.ttlValue, "TTL should be 10");
-                assertEquals("Nurse", flow.r1, "Recipient should be Nurse (from role)");
+                assertEquals("VAssign:Nurse", flow.r1, "Recipient should be VAssign:Nurse (from role)");
             }
             if (flow.alarmName.contains("High Heart Rate")) {
                 foundHighHR = true;
-                assertEquals("Nurse", flow.r1, "Recipient should be Nurse");
+                assertEquals("VAssign:Nurse", flow.r1, "Recipient should be VAssign:Nurse");
             }
             if (flow.alarmName.contains("APNEA")) {
                 foundAPNEA = true;
-                assertEquals("Nurse", flow.r1, "Recipient should be Nurse");
+                assertEquals("VAssign:Nurse", flow.r1, "Recipient should be VAssign:Nurse");
             }
         }
         
@@ -106,7 +106,7 @@ public class XmlParserTest {
                 foundTestAlert = true;
                 assertEquals("VMP", flow.deviceA, "Device should be VMP");
                 assertEquals("15", flow.t1, "T1 should be 15");
-                assertEquals("1", flow.priorityRaw, "Priority should be 1");
+                assertEquals("High", flow.priorityRaw, "Priority should be High");
                 assertEquals("5", flow.ttlValue, "TTL should be 5");
             }
         }
@@ -144,11 +144,11 @@ public class XmlParserTest {
                 foundCodeBlue = true;
                 assertEquals("VMP", flow.deviceA, "Device should be VMP");
                 assertEquals("5", flow.t1, "T1 should be 5");
-                assertEquals("3", flow.priorityRaw, "Priority should be 3");
+                assertEquals("Urgent", flow.priorityRaw, "Priority should be Urgent");
                 assertEquals("15", flow.ttlValue, "TTL should be 15");
                 assertEquals("TRUE", flow.breakThroughDND, "Break through DND should be TRUE");
-                // Recipient should be the group name (destination with g- prefix)
-                assertEquals("g-CodeBlueTeam", flow.r1, "Recipient should be g-CodeBlueTeam (group destination)");
+                // Recipient should be the group name (destination with g- prefix) with VAssign prefix
+                assertEquals("VAssign:g-CodeBlueTeam", flow.r1, "Recipient should be VAssign:g-CodeBlueTeam (group destination)");
             }
         }
         assertTrue(foundCodeBlue, "Should find Code Blue alert");
@@ -186,7 +186,7 @@ public class XmlParserTest {
                 foundBedExit = true;
                 assertEquals("OutgoingWCTP", flow.deviceA, "Device should be OutgoingWCTP");
                 assertEquals("Immediate", flow.t1, "T1 should be Immediate");
-                assertEquals("2", flow.priorityRaw, "Priority should be 2");
+                assertEquals("Normal", flow.priorityRaw, "Priority should be Normal");
                 assertEquals("10", flow.ttlValue, "TTL should be 10");
                 // Recipient should be the exact destination value when no role is found
                 assertEquals("#{bed.room.unit.first.users.devices.lines.number}", flow.r1, 

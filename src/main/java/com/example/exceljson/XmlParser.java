@@ -67,6 +67,7 @@ public class XmlParser {
         Set<String> units = new HashSet<>();
         String state;
         String role;
+        boolean roleFromView; // Track if role was extracted from view filter
     }
     
     /**
@@ -272,11 +273,13 @@ public class XmlParser {
             filter.path.equals("role")) {
             // Store the role value directly from the filter
             rule.role = filter.value.trim();
+            rule.roleFromView = true;
         }
         
         // Also try to extract role from assignment level description paths
         if (filter.path.contains("assignment_level") && filter.path.contains("description")) {
             rule.role = filter.value.trim();
+            rule.roleFromView = true;
         }
     }
     
@@ -387,12 +390,15 @@ public class XmlParser {
             
             if (sendRule != null) {
                 String recipient = extractDestination(sendRule);
-                setRecipient(flow, i + 1, recipient);
+                setRecipient(flow, i + 1, recipient, sendRule.roleFromView);
                 
                 // Apply settings from first send rule
                 if (i == 0) {
                     applySettings(flow, sendRule);
                     if (sendRule.triggerCreate) {
+                        flow.t1 = "Immediate";
+                    } else if (flow.t1 == null || flow.t1.isEmpty()) {
+                        // Default to Immediate if not specified
                         flow.t1 = "Immediate";
                     }
                 }
@@ -436,9 +442,14 @@ public class XmlParser {
         flow.deviceA = mapComponent(sendRule.component);
         
         // Set recipient and timing (recipient is optional)
-        flow.r1 = extractDestination(sendRule);
+        String recipient = extractDestination(sendRule);
+        setRecipient(flow, 1, recipient, sendRule.roleFromView);
+        
         if (sendRule.triggerCreate) {
             flow.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
+        } else if (flow.t1 == null || flow.t1.isEmpty()) {
+            // Default to Immediate if not specified
+            flow.t1 = "Immediate";
         }
         
         applySettings(flow, sendRule);
@@ -526,14 +537,25 @@ public class XmlParser {
         return destination != null ? destination : "";
     }
     
-    private void setRecipient(ExcelParserV5.FlowRow flow, int index, String recipient) {
+    private String formatRecipient(String recipient, boolean isFromRole) {
+        if (recipient == null || recipient.isEmpty()) return "";
+        
+        // Add VAssign: prefix only if recipient was determined from role.name filter
+        if (isFromRole) {
+            return "VAssign:" + recipient;
+        }
+        return recipient;
+    }
+    
+    private void setRecipient(ExcelParserV5.FlowRow flow, int index, String recipient, boolean isFromRole) {
         if (recipient == null || recipient.isEmpty()) return;
+        String formatted = formatRecipient(recipient, isFromRole);
         switch (index) {
-            case 1: flow.r1 = recipient; break;
-            case 2: flow.r2 = recipient; break;
-            case 3: flow.r3 = recipient; break;
-            case 4: flow.r4 = recipient; break;
-            case 5: flow.r5 = recipient; break;
+            case 1: flow.r1 = formatted; break;
+            case 2: flow.r2 = formatted; break;
+            case 3: flow.r3 = formatted; break;
+            case 4: flow.r4 = formatted; break;
+            case 5: flow.r5 = formatted; break;
         }
     }
     
@@ -564,13 +586,15 @@ public class XmlParser {
         Map<String, Object> settings = rule.settings;
         
         if (settings.containsKey("priority")) {
-            flow.priorityRaw = settings.get("priority").toString();
+            String priorityRaw = settings.get("priority").toString();
+            flow.priorityRaw = mapPriority(priorityRaw);
         }
         if (settings.containsKey("ttl")) {
             flow.ttlValue = settings.get("ttl").toString();
         }
         if (settings.containsKey("enunciate")) {
-            flow.enunciate = settings.get("enunciate").toString();
+            String enunciate = settings.get("enunciate").toString();
+            flow.enunciate = normalizeEnunciate(enunciate);
         }
         if (settings.containsKey("overrideDND")) {
             boolean override = Boolean.parseBoolean(settings.get("overrideDND").toString());
@@ -578,6 +602,23 @@ public class XmlParser {
         }
         if (settings.containsKey("displayValues")) {
             flow.responseOptions = settings.get("displayValues").toString();
+        }
+    }
+    
+    private String normalizeEnunciate(String enunciate) {
+        if ("ENUNCIATE_ALWAYS".equals(enunciate)) {
+            return "ENUNCIATE";
+        }
+        return enunciate;
+    }
+    
+    private String mapPriority(String priority) {
+        switch (priority) {
+            case "0":
+            case "3": return "Urgent";
+            case "1": return "High";
+            case "2": return "Normal";
+            default: return priority;
         }
     }
     
