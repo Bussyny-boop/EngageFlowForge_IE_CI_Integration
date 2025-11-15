@@ -588,8 +588,28 @@ public class XmlParser {
             flow.deviceA = mapComponentToDevice(refRule.component);
         }
         
+        // Handle "Group" state specially - it maps to 1st recipient (R1) like Primary
+        // This allows rules with state="Group" to send to the first recipient
+        String groupSendKey = "Group|" + alertType;
+        Map<String, RuleData> groupSendRulesForAlert = sendRulesByStateAndAlertType.get(groupSendKey);
+        RuleData groupSendRule = (groupSendRulesForAlert != null) ? groupSendRulesForAlert.get("Group") : null;
+        if (groupSendRule != null) {
+            String recipient = extractRecipient(groupSendRule);
+            setRecipient(flow, 1, recipient); // Group state -> R1
+            
+            if (groupSendRule.isCreate) {
+                flow.t1 = "Immediate";
+            }
+            
+            // Apply settings from the group send rule
+            if (flow.priorityRaw == null || flow.priorityRaw.isEmpty()) {
+                applySettings(flow, groupSendRule.settings);
+            }
+        }
+        
         // Process escalation states in order: Primary -> Secondary -> Tertiary -> Quaternary
         // According to requirements:
+        // - state=Primary or state=Group determines 1st recipient (R1)
         // - state=Primary determines time to 2nd recipient (T2/R2)
         // - state=Secondary determines time to 3rd recipient (T3/R3)
         // - state=Tertiary determines time to 4th recipient (T4/R4)
