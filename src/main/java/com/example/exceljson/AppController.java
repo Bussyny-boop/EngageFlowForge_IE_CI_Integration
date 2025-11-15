@@ -104,6 +104,9 @@ public class AppController {
     @FXML private ComboBox<String> nurseConfigGroupFilter;
     @FXML private ComboBox<String> clinicalConfigGroupFilter;
     @FXML private ComboBox<String> ordersConfigGroupFilter;
+    @FXML private TextField nurseAlarmNameFilter;
+    @FXML private TextField clinicalAlarmNameFilter;
+    @FXML private TextField ordersAlarmNameFilter;
 
     // ---------- Units ----------
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
@@ -2419,6 +2422,17 @@ public class AppController {
         if (ordersConfigGroupFilter != null) {
             ordersConfigGroupFilter.setOnAction(e -> applyOrdersFilter());
         }
+        
+        // Initialize alarm name filter text fields
+        if (nurseAlarmNameFilter != null) {
+            nurseAlarmNameFilter.textProperty().addListener((obs, oldV, newV) -> applyNurseFilter());
+        }
+        if (clinicalAlarmNameFilter != null) {
+            clinicalAlarmNameFilter.textProperty().addListener((obs, oldV, newV) -> applyClinicalFilter());
+        }
+        if (ordersAlarmNameFilter != null) {
+            ordersAlarmNameFilter.textProperty().addListener((obs, oldV, newV) -> applyOrdersFilter());
+        }
     }
 
     // ---------- Update Filter Options ----------
@@ -2525,23 +2539,29 @@ public class AppController {
     private void applyNurseFilter() {
         if (nurseCallsFilteredList == null) return;
         
-        String selected = nurseConfigGroupFilter.getSelectionModel().getSelectedItem();
-        if (selected == null || selected.equals("All")) {
-            // Check all rows when "All" is selected
-            if (nurseCallsFullList != null) {
-                for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
-                    flow.inScope = true;
-                }
+        String selectedConfigGroup = nurseConfigGroupFilter != null ? nurseConfigGroupFilter.getSelectionModel().getSelectedItem() : null;
+        String alarmNameText = nurseAlarmNameFilter != null ? nurseAlarmNameFilter.getText() : "";
+        String alarmFilter = alarmNameText != null ? alarmNameText.trim().toLowerCase() : "";
+        
+        nurseCallsFilteredList.setPredicate(flow -> {
+            // Config group filter
+            boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
+            
+            // Alarm name filter
+            boolean alarmMatch = alarmFilter.isEmpty() || 
+                (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+            
+            return configMatch && alarmMatch;
+        });
+        
+        // Update inScope based on filter
+        if (nurseCallsFullList != null) {
+            for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
+                boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
+                boolean alarmMatch = alarmFilter.isEmpty() || 
+                    (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+                flow.inScope = configMatch && alarmMatch;
             }
-            nurseCallsFilteredList.setPredicate(flow -> true); // Show all
-        } else {
-            // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
-            if (nurseCallsFullList != null) {
-                for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
-                    flow.inScope = selected.equals(flow.configGroup);
-                }
-            }
-            nurseCallsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
         if (tableNurseCalls != null) tableNurseCalls.refresh();
@@ -2551,23 +2571,29 @@ public class AppController {
     private void applyClinicalFilter() {
         if (clinicalsFilteredList == null) return;
         
-        String selected = clinicalConfigGroupFilter.getSelectionModel().getSelectedItem();
-        if (selected == null || selected.equals("All")) {
-            // Check all rows when "All" is selected
-            if (clinicalsFullList != null) {
-                for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
-                    flow.inScope = true;
-                }
+        String selectedConfigGroup = clinicalConfigGroupFilter != null ? clinicalConfigGroupFilter.getSelectionModel().getSelectedItem() : null;
+        String alarmNameText = clinicalAlarmNameFilter != null ? clinicalAlarmNameFilter.getText() : "";
+        String alarmFilter = alarmNameText != null ? alarmNameText.trim().toLowerCase() : "";
+        
+        clinicalsFilteredList.setPredicate(flow -> {
+            // Config group filter
+            boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
+            
+            // Alarm name filter
+            boolean alarmMatch = alarmFilter.isEmpty() || 
+                (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+            
+            return configMatch && alarmMatch;
+        });
+        
+        // Update inScope based on filter
+        if (clinicalsFullList != null) {
+            for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
+                boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
+                boolean alarmMatch = alarmFilter.isEmpty() || 
+                    (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+                flow.inScope = configMatch && alarmMatch;
             }
-            clinicalsFilteredList.setPredicate(flow -> true); // Show all
-        } else {
-            // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
-            if (clinicalsFullList != null) {
-                for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
-                    flow.inScope = selected.equals(flow.configGroup);
-                }
-            }
-            clinicalsFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
         if (tableClinicals != null) tableClinicals.refresh();
@@ -2577,23 +2603,29 @@ public class AppController {
     private void applyOrdersFilter() {
         if (ordersFilteredList == null) return;
         
-        String selected = ordersConfigGroupFilter.getSelectionModel().getSelectedItem();
-        if (selected == null || selected.equals("All")) {
-            // Check all rows when "All" is selected
-            if (ordersFullList != null) {
-                for (ExcelParserV5.FlowRow flow : ordersFullList) {
-                    flow.inScope = true;
-                }
+        String selectedConfigGroup = ordersConfigGroupFilter != null ? ordersConfigGroupFilter.getSelectionModel().getSelectedItem() : null;
+        String alarmNameText = ordersAlarmNameFilter != null ? ordersAlarmNameFilter.getText() : "";
+        String alarmFilter = alarmNameText != null ? alarmNameText.trim().toLowerCase() : "";
+        
+        ordersFilteredList.setPredicate(flow -> {
+            // Config group filter
+            boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
+            
+            // Alarm name filter
+            boolean alarmMatch = alarmFilter.isEmpty() || 
+                (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+            
+            return configMatch && alarmMatch;
+        });
+        
+        // Update inScope based on filter
+        if (ordersFullList != null) {
+            for (ExcelParserV5.FlowRow flow : ordersFullList) {
+                boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
+                boolean alarmMatch = alarmFilter.isEmpty() || 
+                    (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+                flow.inScope = configMatch && alarmMatch;
             }
-            ordersFilteredList.setPredicate(flow -> true); // Show all
-        } else {
-            // Update inScope based on filter: uncheck filtered-out rows, keep checked for visible rows
-            if (ordersFullList != null) {
-                for (ExcelParserV5.FlowRow flow : ordersFullList) {
-                    flow.inScope = selected.equals(flow.configGroup);
-                }
-            }
-            ordersFilteredList.setPredicate(flow -> selected.equals(flow.configGroup));
         }
         
         if (tableOrders != null) tableOrders.refresh();

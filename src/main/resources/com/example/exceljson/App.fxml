@@ -393,13 +393,22 @@
                                     <!-- Nurse Calls View -->
                                     <BorderPane fx:id="nurseCallsView" visible="false">
                                         <top>
-                                            <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-                                                <padding>
-                                                    <Insets top="5" right="5" bottom="5" left="5" />
-                                                </padding>
-                                                <Label text="Filter by Config Group:" />
-                                                <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
-                                            </HBox>
+                                            <VBox spacing="5">
+                                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                                    <padding>
+                                                        <Insets top="5" right="5" bottom="5" left="5" />
+                                                    </padding>
+                                                    <Label text="Filter by Config Group:" />
+                                                    <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
+                                                </HBox>
+                                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                                    <padding>
+                                                        <Insets top="0" right="5" bottom="5" left="5" />
+                                                    </padding>
+                                                    <Label text="Filter by Alarm Name:" />
+                                                    <TextField fx:id="nurseAlarmNameFilter" promptText="Search alarm name..." prefWidth="200" />
+                                                </HBox>
+                                            </VBox>
                                         </top>
                                         <center>
                                             <TableView fx:id="tableNurseCalls" editable="true">
@@ -435,13 +444,22 @@
                                     <!-- Clinicals View -->
                                     <BorderPane fx:id="clinicalsView" visible="false">
                                         <top>
-                                            <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-                                                <padding>
-                                                    <Insets top="5" right="5" bottom="5" left="5" />
-                                                </padding>
-                                                <Label text="Filter by Config Group:" />
-                                                <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
-                                            </HBox>
+                                            <VBox spacing="5">
+                                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                                    <padding>
+                                                        <Insets top="5" right="5" bottom="5" left="5" />
+                                                    </padding>
+                                                    <Label text="Filter by Config Group:" />
+                                                    <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
+                                                </HBox>
+                                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                                    <padding>
+                                                        <Insets top="0" right="5" bottom="5" left="5" />
+                                                    </padding>
+                                                    <Label text="Filter by Alarm Name:" />
+                                                    <TextField fx:id="clinicalAlarmNameFilter" promptText="Search alarm name..." prefWidth="200" />
+                                                </HBox>
+                                            </VBox>
                                         </top>
                                         <center>
                                             <TableView fx:id="tableClinicals" editable="true">
@@ -478,13 +496,22 @@
                                     <!-- Orders View -->
                                     <BorderPane fx:id="ordersView" visible="false">
                                         <top>
-                                            <HBox spacing="10" alignment="CENTER_LEFT" BorderPane.alignment="CENTER">
-                                                <padding>
-                                                    <Insets top="5" right="5" bottom="5" left="5" />
-                                                </padding>
-                                                <Label text="Filter by Config Group:" />
-                                                <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
-                                            </HBox>
+                                            <VBox spacing="5">
+                                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                                    <padding>
+                                                        <Insets top="5" right="5" bottom="5" left="5" />
+                                                    </padding>
+                                                    <Label text="Filter by Config Group:" />
+                                                    <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
+                                                </HBox>
+                                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                                    <padding>
+                                                        <Insets top="0" right="5" bottom="5" left="5" />
+                                                    </padding>
+                                                    <Label text="Filter by Alarm Name:" />
+                                                    <TextField fx:id="ordersAlarmNameFilter" promptText="Search alarm name..." prefWidth="200" />
+                                                </HBox>
+                                            </VBox>
                                         </top>
                                         <center>
                                             <TableView fx:id="tableOrders" editable="true">
