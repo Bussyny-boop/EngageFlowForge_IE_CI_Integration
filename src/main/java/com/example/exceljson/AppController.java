@@ -530,6 +530,15 @@ public class AppController {
     private static double clamp(double v, double min, double max) {
         return Math.max(min, Math.min(max, v));
     }
+
+    private static double safeParseDouble(String s, double fallback) {
+        if (s == null) return fallback;
+        try {
+            return Double.parseDouble(s.trim());
+        } catch (Exception ex) {
+            return fallback;
+        }
+    }
     
     // ---------- Navigation Setup ----------
     private void setupNavigation() {
