@@ -78,6 +78,13 @@
                             <!-- Load Excel or XML -->
                             <Button fx:id="loadButton" text="📂 Load File" maxWidth="Infinity" styleClass="nav-button" />
                             
+                            <!-- Load JSON -->
+                            <Button fx:id="loadJsonButton" text="📥 Load JSON" maxWidth="Infinity" styleClass="nav-button">
+                                <tooltip>
+                                    <Tooltip text="Load a previously exported JSON file back into the application" />
+                                </tooltip>
+                            </Button>
+                            
                             <!-- Clear All -->
                             <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" maxWidth="Infinity" styleClass="nav-button" />
                             

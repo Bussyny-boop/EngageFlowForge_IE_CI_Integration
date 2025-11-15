@@ -53,6 +53,7 @@ public class AppController {
 
     // ---------- UI Elements ----------
     @FXML private Button loadButton;
+    @FXML private Button loadJsonButton;
     @FXML private Button saveExcelButton;
     @FXML private Button saveExcelAsButton;
     @FXML private Button clearAllButton;
@@ -260,6 +261,7 @@ public class AppController {
         setExcelButtonsEnabled(false);
 
         loadButton.setOnAction(e -> loadExcel());
+        if (loadJsonButton != null) loadJsonButton.setOnAction(e -> loadJson());
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
         if (clearAllButton != null) clearAllButton.setOnAction(e -> clearAllData());
@@ -902,6 +904,71 @@ public class AppController {
         } catch (Exception ex) {
             hideProgressBar();
             showError("Failed to load file: " + ex.getMessage());
+        }
+    }
+
+    // ---------- Load JSON ----------
+    private void loadJson() {
+        try {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Select JSON File to Load");
+            chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("JSON Files", "*.json")
+            );
+
+            if (lastJsonDir != null && lastJsonDir.exists()) {
+                chooser.setInitialDirectory(lastJsonDir);
+            }
+
+            File file = chooser.showOpenDialog(getStage());
+            if (file == null) return;
+
+            // Remember directory
+            rememberDirectory(file, false);
+
+            // Show progress
+            showProgressBar("📥 Loading JSON file...");
+
+            // Load JSON file
+            parser.loadJson(file);
+            
+            currentExcelFile = null; // Clear current Excel file reference
+            updateCurrentFileLabel(); // Update file label
+            
+            // Build load summary
+            StringBuilder loadSummary = new StringBuilder();
+            loadSummary.append("✅ JSON loaded successfully\n\n");
+            loadSummary.append(String.format("Loaded:\n"));
+            loadSummary.append(String.format("  • %d Nurse Call flows\n", parser.nurseCalls.size()));
+            loadSummary.append(String.format("  • %d Clinical flows\n", parser.clinicals.size()));
+            loadSummary.append(String.format("  • %d Orders flows\n", parser.orders.size()));
+            loadSummary.append("\n⚠️ Note: Units data may be incomplete when loading from JSON.\n");
+            loadSummary.append("Some fields may not be fully populated.\n");
+            loadSummary.append("Consider loading the original Excel file for complete data.");
+            
+            jsonPreview.setText(loadSummary.toString());
+
+            refreshTables();
+            tableUnits.refresh();
+            tableNurseCalls.refresh();
+            tableClinicals.refresh();
+            if (tableOrders != null) tableOrders.refresh();
+
+            setJsonButtonsEnabled(true);
+            setExcelButtonsEnabled(true);
+
+            // Hide progress and update status
+            hideProgressBar();
+            updateStatusLabel(); // Update status with filter counts
+
+            showInfo("✅ JSON loaded successfully\n\n" +
+                    "Loaded " + parser.nurseCalls.size() + " Nurse Calls, " +
+                    parser.clinicals.size() + " Clinicals, and " +
+                    parser.orders.size() + " Orders flows.\n\n" +
+                    "⚠️ Note: Some data may be incomplete when loading from JSON.");
+        } catch (Exception ex) {
+            hideProgressBar();
+            showError("Failed to load JSON file: " + ex.getMessage());
         }
     }
 
