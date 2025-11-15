@@ -2135,7 +2135,7 @@ public class ExcelParserV5 {
   private boolean containsEdge(String deviceName) {
     if (isBlank(deviceName)) return false;
     String lower = deviceName.toLowerCase(Locale.ROOT);
-    return lower.contains("edge") || lower.contains("iphone-edge");
+    return lower.contains("edge") || lower.contains("iphone-edge") || lower.contains("outgoingwctp");
   }
 
   private boolean containsVcs(String deviceName) {
@@ -2173,9 +2173,9 @@ public class ExcelParserV5 {
 
   /**
    * Checks if the device name contains valid recipient keywords.
-   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, Custom unit, Group, Assigned, CS
+   * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, VMP, OutgoingWCTP
    * This is used to validate Device-A column values for GUI highlighting.
-   * Returns false for blank/empty values.
+   * Returns true for blank/empty values (not highlighted).
    */
   public boolean hasValidRecipientKeyword(String deviceName) {
     if (isBlank(deviceName)) return true; // Blank cells are considered valid (not highlighted)
@@ -2183,7 +2183,9 @@ public class ExcelParserV5 {
     return lower.contains("vcs") || 
            lower.contains("edge") || 
            lower.contains("xmpp") || 
-           lower.contains("vocera");
+           lower.contains("vocera") ||
+           lower.contains("vmp") ||
+           lower.contains("outgoingwctp");
   }
 
   /**

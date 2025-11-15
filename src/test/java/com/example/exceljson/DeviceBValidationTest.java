@@ -150,6 +150,11 @@ public class DeviceBValidationTest {
         assertTrue(parser.hasValidRecipientKeyword("XMPP"));
         assertTrue(parser.hasValidRecipientKeyword("xmpp"));
         assertTrue(parser.hasValidRecipientKeyword("iPhone-Edge"));
+        assertTrue(parser.hasValidRecipientKeyword("VMP"));
+        assertTrue(parser.hasValidRecipientKeyword("vmp"));
+        assertTrue(parser.hasValidRecipientKeyword("OutgoingWCTP"));
+        assertTrue(parser.hasValidRecipientKeyword("outgoingwctp"));
+        assertTrue(parser.hasValidRecipientKeyword("OUTGOINGWCTP"));
 
         // Empty/blank should be considered valid (not highlighted)
         assertTrue(parser.hasValidRecipientKeyword(""));

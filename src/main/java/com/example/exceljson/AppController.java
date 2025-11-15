@@ -1452,7 +1452,7 @@ public class AppController {
      * Sets up an editable column for Device-A with validation highlighting.
      * Cells that don't contain valid recipient keywords are highlighted with light orange.
      * Blank cells are NOT highlighted.
-     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
+     * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, VMP, OutgoingWCTP
      */
     private void setupDeviceAColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
         if (col == null) return;
