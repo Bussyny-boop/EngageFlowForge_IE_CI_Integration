@@ -133,4 +133,27 @@ public class DataUpdateInterfaceTest {
                 "Config group should be just dataset name when no unit specified, got: " + flow.configGroup);
         }
     }
+    
+    @Test
+    public void testVMPDeferDeliveryByIsIgnored() throws Exception {
+        XmlParser parser = new XmlParser();
+        
+        File xmlFile = new File("src/test/resources/test-dataupdate-interface.xml");
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        
+        // VMP rules have defer-delivery-by="1" but this should be ignored for timing
+        // Only DataUpdate interface defer-delivery-by="60" should be used
+        // Verify that NO flow has T2="1" (which would indicate VMP timing was used)
+        for (ExcelParserV5.FlowRow flow : clinicals) {
+            if (flow.t2 != null && !flow.t2.isEmpty()) {
+                assertNotEquals("1", flow.t2, 
+                    "T2 should not be 1 (VMP defer-delivery-by should be ignored). " +
+                    "Only DataUpdate defer-delivery-by should set timing. Got T2=" + flow.t2);
+                assertEquals("60", flow.t2, 
+                    "T2 should be 60 from DataUpdate interface, not from VMP interface");
+            }
+        }
+    }
 }
