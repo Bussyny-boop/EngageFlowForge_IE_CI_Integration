@@ -74,7 +74,7 @@ public class JsonParserEnhancedTest {
         assertEquals("VAssign:[Room] Charge Nurse", flow.r1, "First recipient should be Charge Nurse with VAssign prefix");
         assertEquals("", flow.t1, "First delay should be 0 (empty)");
 
-        assertEquals("RN Group", flow.r2, "Second recipient should be RN Group");
+        assertEquals("VGroup: RN Group", flow.r2, "Second recipient should be RN Group with VGroup prefix");
         assertEquals("60", flow.t2, "Second delay should be 60 seconds");
 
         assertEquals("VAssign:[Room] Supervisor", flow.r3, "Third recipient should be Supervisor with VAssign prefix");
@@ -122,7 +122,7 @@ public class JsonParserEnhancedTest {
         ExcelParserV5.FlowRow flow = parser.clinicals.get(0);
 
         // Should have all recipients newline-separated
-        String expected = "VAssign:[Room] Nurse\nVAssign:[Room] Tech\nTeam A\nTeam B";
+        String expected = "VAssign:[Room] Nurse\nVAssign:[Room] Tech\nVGroup: Team A\nVGroup: Team B";
         assertEquals(expected, flow.r1, "All recipients should be newline-separated");
     }
 
@@ -230,19 +230,19 @@ public class JsonParserEnhancedTest {
         assertFalse(parser.nurseCalls.isEmpty());
         ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
-        assertEquals("Team1", flow.r1);
+        assertEquals("VGroup: Team1", flow.r1);
         assertEquals("", flow.t1);
 
-        assertEquals("Team2", flow.r2);
+        assertEquals("VGroup: Team2", flow.r2);
         assertEquals("30", flow.t2);
 
-        assertEquals("Team3", flow.r3);
+        assertEquals("VGroup: Team3", flow.r3);
         assertEquals("60", flow.t3);
 
-        assertEquals("Team4", flow.r4);
+        assertEquals("VGroup: Team4", flow.r4);
         assertEquals("90", flow.t4);
 
-        assertEquals("Team5", flow.r5);
+        assertEquals("VGroup: Team5", flow.r5);
         assertEquals("120", flow.t5);
     }
 

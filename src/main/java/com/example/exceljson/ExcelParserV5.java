@@ -759,7 +759,14 @@ public class ExcelParserV5 {
                 if (recipientBuilder.length() > 0) {
                   recipientBuilder.append("\n");
                 }
-                recipientBuilder.append(groupName);
+                // Prefix group recipients with VGroup: to align with GUI semantics
+                String gn = groupName.trim();
+                String lower = gn.toLowerCase(Locale.ROOT);
+                if (lower.startsWith("vgroup")) {
+                  recipientBuilder.append(gn);
+                } else {
+                  recipientBuilder.append("VGroup: ").append(gn);
+                }
               }
             }
           }
