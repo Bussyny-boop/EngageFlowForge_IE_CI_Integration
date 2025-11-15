@@ -163,8 +163,8 @@
                                         style="-fx-background-color: transparent; -fx-background: transparent;"
                                         VBox.vgrow="ALWAYS">
                                 <VBox spacing="10" style="-fx-padding: 15;">
-                                    <!-- Merge Logic Options (Mutually Exclusive) -->
-                                    <Label text="Merge Logic" style="-fx-font-weight:bold;">
+                                    <!-- Merge Engage Rules Options (Mutually Exclusive) -->
+                                    <Label text="Merge Engage Rules" style="-fx-font-weight:bold;">
                                         <tooltip>
                                             <Tooltip text="Choose how to merge flows with identical delivery parameters. Only one option can be selected at a time." />
                                         </tooltip>
