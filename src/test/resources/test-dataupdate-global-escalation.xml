@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test DataUpdate Global Escalation</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for alarm types -->
+        <view>
+          <name>Alarm_included_in_LowHR_HighHR</name>
+          <description>Alarms included in LowHR, HighHR</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>LHR,HHR</value>
+          </filter>
+        </view>
+        
+        <!-- Views for states -->
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_secondary_state</name>
+          <description>Alarm is at secondary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Secondary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_group_state</name>
+          <description>Alarm is at group state (should be treated as Primary)</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Group</value>
+          </filter>
+        </view>
+        
+        <!-- Views for roles -->
+        <view>
+          <name>Role_caregiver_NURSE_is_online</name>
+          <description>Role caregiver NURSE is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Role_caregiver_NURSE_BUDDY_is_online</name>
+          <description>Role caregiver NURSE BUDDY is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE BUDDY</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Role_caregiver_CHARGE_NURSE_is_online</name>
+          <description>Role caregiver CHARGE NURSE is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>CHARGE NURSE</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alarm_has_not_been_responded_to</name>
+          <description>Alarm has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- VMP Interface for sending messages -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND PRIMARY -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND PRIMARY | LHR | HHR | VMP | NURSE | ALL UNITS</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_included_in_LowHR_HighHR</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10}</settings>
+        </rule>
+        
+        <!-- SEND SECONDARY -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND SECONDARY | LHR | HHR | VMP | NURSE BUDDY | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_included_in_LowHR_HighHR</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_secondary_state</view>
+            <view>Role_caregiver_NURSE_BUDDY_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10}</settings>
+        </rule>
+        
+        <!-- SEND GROUP (should be treated as Primary) -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND GROUP | LHR | HHR | VMP | CHARGE NURSE | ALL UNITS</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_included_in_LowHR_HighHR</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_group_state</view>
+            <view>Role_caregiver_CHARGE_NURSE_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate Interface for escalation timing - applies to ALL ALARMS, ALL UNITS -->
+      <interface component="DataUpdate">
+        <name>DataUpdate for Alerts</name>
+        
+        <!-- ESCALATE TO SECONDARY: After 60 seconds with no primary response -->
+        <!-- Note: No alert_type or unit.name in views - applies to ALL -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO SECONDARY | 60 SEC DELAY | ALL ALARMS | NO PRIMARY RESPONSE  | ALL UNITS | ALL FACILITIES</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"},{"path":"history.previous_state","value":"#{state}"},{"path":"history.state","value":"Secondary"},{"path":"history.reason","value":"No Response"}]}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

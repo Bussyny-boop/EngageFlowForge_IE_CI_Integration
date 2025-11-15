@@ -226,6 +226,10 @@ public class XmlParser {
                         // Extract state value
                         if (filter.path != null && filter.path.equals("state")) {
                             state = filter.value;
+                            // Normalize "Group" state to "Primary" as per requirements
+                            if ("Group".equalsIgnoreCase(state)) {
+                                state = "Primary";
+                            }
                         }
                     }
                 }
@@ -359,10 +363,40 @@ public class XmlParser {
         // Group rules by dataset and alert types
         Map<String, List<RuleData>> groupedRules = new LinkedHashMap<>();
         
+        // Separate DataUpdate escalation rules with no alert types/units (apply to ALL)
+        List<RuleData> globalDataUpdateRules = new ArrayList<>();
+        
         for (RuleData rule : collectedRules) {
-            // Create a key based on dataset + alert types + units
-            String key = createRuleGroupKey(rule);
-            groupedRules.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+            // Check if this is a DataUpdate escalation rule with no alert types or units
+            if ("DataUpdate".equalsIgnoreCase(rule.component) && 
+                rule.alertTypes.isEmpty() && 
+                rule.units.isEmpty() &&
+                rule.state != null && !rule.state.isEmpty() &&
+                (rule.role == null || rule.role.isEmpty()) &&
+                (!rule.settings.containsKey("destination") || 
+                 rule.settings.get("destination") == null || 
+                 ((String)rule.settings.get("destination")).isEmpty())) {
+                // This is a global DataUpdate escalation rule
+                globalDataUpdateRules.add(rule);
+            } else {
+                // Create a key based on dataset + alert types + units
+                String key = createRuleGroupKey(rule);
+                groupedRules.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+            }
+        }
+        
+        // Add global DataUpdate rules to ALL groups with the same dataset and state-based escalation
+        for (RuleData globalRule : globalDataUpdateRules) {
+            for (Map.Entry<String, List<RuleData>> entry : groupedRules.entrySet()) {
+                List<RuleData> rules = entry.getValue();
+                // Check if this group has the same dataset and has state-based escalation with multiple states
+                if (rules.size() > 0 && 
+                    globalRule.dataset != null && 
+                    globalRule.dataset.equals(rules.get(0).dataset) &&
+                    hasMultiStateEscalation(rules)) {
+                    rules.add(globalRule);
+                }
+            }
         }
         
         // Process each group
@@ -408,6 +442,20 @@ public class XmlParser {
             }
         }
         return false;
+    }
+    
+    /**
+     * Check if a group has more than one state escalation.
+     * This is used to determine if global DataUpdate rules should be applied.
+     */
+    private boolean hasMultiStateEscalation(List<RuleData> rules) {
+        Set<String> states = new HashSet<>();
+        for (RuleData rule : rules) {
+            if (rule.state != null && !rule.state.isEmpty()) {
+                states.add(rule.state);
+            }
+        }
+        return states.size() > 1;
     }
     
     /**
