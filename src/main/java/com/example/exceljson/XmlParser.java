@@ -667,9 +667,14 @@ public class XmlParser {
     private String createConfigGroup(String dataset, Set<String> facilities, Set<String> units) {
         String facility = facilities.isEmpty() ? "" : facilities.iterator().next();
         String unit = units.isEmpty() ? "" : units.iterator().next();
-        // Always place dataset last. Omit empty segments but keep order as Facility_Unit_Dataset
+        // Always place dataset last. Use "All_Facilities" when facility cannot be determined
         List<String> parts = new ArrayList<>();
-        if (facility != null && !facility.isEmpty()) parts.add(facility);
+        if (facility != null && !facility.isEmpty()) {
+            parts.add(facility);
+        } else {
+            // Hardcode "All_Facilities" when facility name is not found
+            parts.add("All_Facilities");
+        }
         if (unit != null && !unit.isEmpty()) parts.add(unit);
         if (dataset != null && !dataset.isEmpty()) parts.add(dataset);
         return String.join("_", parts);

@@ -125,12 +125,12 @@ public class DataUpdateInterfaceTest {
         
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         
-        // Since there's no unit.name filter in the views, all flows should have empty config group
-        // or config group that doesn't include a specific unit
+        // Since there's no unit.name or facility.name filter in the views, 
+        // config group should be "All_Facilities_Clinicals" or "All_Facilities_<dataset>"
         for (ExcelParserV5.FlowRow flow : clinicals) {
-            // Config group should be just the dataset name when no unit is specified
-            assertTrue(flow.configGroup.equals("Clinicals") || flow.configGroup.isEmpty(),
-                "Config group should be just dataset name when no unit specified, got: " + flow.configGroup);
+            // Config group should start with "All_Facilities" when no facility is specified
+            assertTrue(flow.configGroup.startsWith("All_Facilities"),
+                "Config group should start with 'All_Facilities' when no facility specified, got: " + flow.configGroup);
         }
     }
     
