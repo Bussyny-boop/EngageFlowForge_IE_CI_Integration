@@ -219,9 +219,9 @@ class XmlParserVAssignTest {
         assertEquals(1, parser.getNurseCalls().size(), "Should have 1 nurse call");
         ExcelParserV5.FlowRow flow = parser.getNurseCalls().get(0);
         
-        // Verify config group includes unit
-        assertEquals("NurseCalls_ICU", flow.configGroup, 
-            "Config group should be 'NurseCalls_ICU' (dataset_unit format)");
+        // Verify config group includes facility, unit, and dataset (Facility_Unit_Dataset format)
+        assertEquals("BCH_ICU_NurseCalls", flow.configGroup, 
+            "Config group should be 'BCH_ICU_NurseCalls' (Facility_Unit_Dataset format)");
         
         // Verify unit row was created with facility
         assertEquals(1, parser.getUnits().size(), "Should have 1 unit row");
@@ -308,9 +308,9 @@ class XmlParserVAssignTest {
             assertEquals("VAssign:[Room] Nurse\nVAssign:[Room] Physician", flow.r1,
                 "Should have both recipients with newline separator");
             
-            // Feature 3: Config group with facility and unit
-            assertEquals("Clinicals_ER", flow.configGroup,
-                "Config group should include unit: 'Clinicals_ER'");
+            // Feature 3: Config group with facility, unit, and dataset (Facility_Unit_Dataset format)
+            assertEquals("MainHospital_ER_Clinicals", flow.configGroup,
+                "Config group should be 'MainHospital_ER_Clinicals' (Facility_Unit_Dataset format)");
         }
         
         // Verify unit row

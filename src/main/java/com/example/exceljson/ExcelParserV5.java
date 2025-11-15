@@ -531,38 +531,129 @@ public class ExcelParserV5 {
         }
       }
       
-      // Parse destinations to extract recipients
+      // Parse destinations to extract recipients and timing (r1-r5, t1-t5)
       List<Map<String, Object>> destinations = (List<Map<String, Object>>) flow.get("destinations");
-      if (destinations != null && !destinations.isEmpty()) {
-        // Extract recipients from destinations
-        // This is a simplified approach - full parsing would require more complex logic
-        Map<String, Object> firstDest = destinations.get(0);
-        if (firstDest != null) {
-          Object orders = firstDest.get("orders");
-          if (orders instanceof List) {
-            List<Map<String, Object>> ordersList = (List<Map<String, Object>>) orders;
-            if (!ordersList.isEmpty()) {
-              Map<String, Object> firstOrder = ordersList.get(0);
-              Object recipients = firstOrder.get("recipients");
-              if (recipients instanceof List) {
-                List<String> recipientsList = (List<String>) recipients;
-                if (!recipientsList.isEmpty()) {
-                  row.r1 = recipientsList.get(0);
+      if (destinations != null) {
+        for (int i = 0; i < Math.min(destinations.size(), 5); i++) {
+          Map<String, Object> dest = destinations.get(i);
+          if (dest == null) continue;
+          
+          // Extract delay time
+          Object delayObj = dest.get("delayTime");
+          String delayStr = "";
+          if (delayObj instanceof Number) {
+            int delaySeconds = ((Number) delayObj).intValue();
+            if (delaySeconds > 0) {
+              delayStr = String.valueOf(delaySeconds);
+            }
+          }
+          
+          // Extract recipients from groups and functional roles
+          StringBuilder recipientBuilder = new StringBuilder();
+          
+          // Get functional roles
+          List<Map<String, Object>> functionalRoles = (List<Map<String, Object>>) dest.get("functionalRoles");
+          if (functionalRoles != null) {
+            for (Map<String, Object> role : functionalRoles) {
+              String roleName = (String) role.get("name");
+              String facilityName = (String) role.get("facilityName");
+              if (roleName != null && !roleName.isEmpty()) {
+                if (recipientBuilder.length() > 0) {
+                  recipientBuilder.append("\n");
+                }
+                // Check if it has VAssign prefix
+                if (facilityName != null && !facilityName.isEmpty() && !facilityName.equals(roleName)) {
+                  recipientBuilder.append("VAssign:[Room] ").append(roleName);
+                } else {
+                  recipientBuilder.append(roleName);
                 }
               }
             }
           }
+          
+          // Get groups
+          List<Map<String, Object>> groups = (List<Map<String, Object>>) dest.get("groups");
+          if (groups != null) {
+            for (Map<String, Object> group : groups) {
+              String groupName = (String) group.get("name");
+              if (groupName != null && !groupName.isEmpty()) {
+                if (recipientBuilder.length() > 0) {
+                  recipientBuilder.append("\n");
+                }
+                recipientBuilder.append(groupName);
+              }
+            }
+          }
+          
+          // Assign to the appropriate r/t fields
+          String recipient = recipientBuilder.toString();
+          switch (i) {
+            case 0:
+              row.r1 = recipient;
+              row.t1 = delayStr;
+              break;
+            case 1:
+              row.r2 = recipient;
+              row.t2 = delayStr;
+              break;
+            case 2:
+              row.r3 = recipient;
+              row.t3 = delayStr;
+              break;
+            case 3:
+              row.r4 = recipient;
+              row.t4 = delayStr;
+              break;
+            case 4:
+              row.r5 = recipient;
+              row.t5 = delayStr;
+              break;
+          }
         }
       }
       
-      // Parse units to potentially populate config group information
+      // Parse units to extract facility, unit names and build proper config group
       List<Map<String, Object>> flowUnits = (List<Map<String, Object>>) flow.get("units");
-      if (flowUnits != null && !flowUnits.isEmpty() && row.configGroup.isEmpty()) {
-        // Try to extract config group from first unit
+      if (flowUnits != null && !flowUnits.isEmpty()) {
         Map<String, Object> firstUnit = flowUnits.get(0);
-        String facility = (String) firstUnit.get("facility");
-        if (facility != null && !facility.isEmpty()) {
-          row.configGroup = facility;
+        String facilityName = (String) firstUnit.get("facilityName");
+        String unitName = (String) firstUnit.get("name");
+        
+        // Build config group using Facility + Unit + Dataset format
+        // Extract dataset from existing configGroup or alarm name
+        String dataset = row.configGroup.isEmpty() ? row.alarmName : row.configGroup;
+        
+        if (facilityName != null && !facilityName.isEmpty() && unitName != null && !unitName.isEmpty()) {
+          row.configGroup = facilityName + "_" + unitName + "_" + dataset;
+        } else if (facilityName != null && !facilityName.isEmpty()) {
+          row.configGroup = facilityName + "_" + dataset;
+        } else if (unitName != null && !unitName.isEmpty()) {
+          row.configGroup = unitName + "_" + dataset;
+        }
+        
+        // Also populate the units list and group-to-units mapping for this flow
+        for (Map<String, Object> unitMap : flowUnits) {
+          String fac = (String) unitMap.get("facilityName");
+          String unit = (String) unitMap.get("name");
+          
+          if (fac != null && unit != null && !fac.isEmpty() && !unit.isEmpty()) {
+            // Create unit reference map
+            Map<String, String> unitRef = new LinkedHashMap<>();
+            unitRef.put("facilityName", fac);
+            unitRef.put("name", unit);
+            
+            // Add to appropriate group-to-units mapping
+            Map<String, List<Map<String, String>>> groupMap;
+            if (isNurseSide) {
+              groupMap = nurseGroupToUnits;
+            } else if (isOrders) {
+              groupMap = ordersGroupToUnits;
+            } else {
+              groupMap = clinicalGroupToUnits;
+            }
+            
+            groupMap.computeIfAbsent(row.configGroup, k -> new ArrayList<>()).add(unitRef);
+          }
         }
       }
       

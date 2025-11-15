@@ -395,7 +395,7 @@ public class XmlParser {
         
         // Get reference rule for common fields
         Rule refRule = sendByState.values().iterator().next();
-        flow.configGroup = createConfigGroup(dataset, refRule.units);
+        flow.configGroup = createConfigGroup(dataset, refRule.facilities, refRule.units);
         flow.deviceA = mapComponent(refRule.component);
         
         // Map states to recipients and timing
@@ -454,7 +454,7 @@ public class XmlParser {
         flow.type = normalizeDataset(dataset);
         flow.alarmName = alertType;
         flow.sendingName = alertType;
-        flow.configGroup = createConfigGroup(dataset, sendRule.units);
+        flow.configGroup = createConfigGroup(dataset, sendRule.facilities, sendRule.units);
         flow.deviceA = mapComponent(sendRule.component);
         
         // Set recipient and timing (recipient is optional)
@@ -522,9 +522,19 @@ public class XmlParser {
         }
     }
     
-    private String createConfigGroup(String dataset, Set<String> units) {
+    private String createConfigGroup(String dataset, Set<String> facilities, Set<String> units) {
+        String facility = facilities.isEmpty() ? "" : facilities.iterator().next();
         String unit = units.isEmpty() ? "" : units.iterator().next();
-        return unit.isEmpty() ? dataset : dataset + "_" + unit;
+        
+        if (facility.isEmpty() && unit.isEmpty()) {
+            return dataset;
+        } else if (facility.isEmpty()) {
+            return dataset + "_" + unit;
+        } else if (unit.isEmpty()) {
+            return dataset + "_" + facility;
+        } else {
+            return facility + "_" + unit + "_" + dataset;
+        }
     }
     
     private boolean hasDestination(Rule rule) {
