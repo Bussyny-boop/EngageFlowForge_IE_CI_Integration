@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test State-Based Time Application</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for alarm types -->
+        <view>
+          <name>Alarm_included_in_APNEA</name>
+          <description>APNEA alarm</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>APNEA</value>
+          </filter>
+        </view>
+        
+        <!-- Views for states -->
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_secondary_state</name>
+          <description>Alarm is at secondary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Secondary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_tertiary_state</name>
+          <description>Alarm is at tertiary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Tertiary</value>
+          </filter>
+        </view>
+        
+        <!-- Views for roles -->
+        <view>
+          <name>Role_caregiver_NURSE_is_online</name>
+          <description>Role caregiver NURSE is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Role_caregiver_CHARGE_NURSE_is_online</name>
+          <description>Role caregiver CHARGE NURSE is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>CHARGE NURSE</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Role_caregiver_SUPERVISOR_is_online</name>
+          <description>Role caregiver SUPERVISOR is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>SUPERVISOR</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alarm_has_not_been_responded_to</name>
+          <description>Alarm has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- VMP Interface for sending messages -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND PRIMARY -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND PRIMARY | APNEA | VMP | NURSE</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_included_in_APNEA</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2"}</settings>
+        </rule>
+        
+        <!-- SEND SECONDARY -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND SECONDARY | APNEA | VMP | CHARGE NURSE</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_included_in_APNEA</view>
+            <view>Alarm_is_at_secondary_state</view>
+            <view>Role_caregiver_CHARGE_NURSE_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2"}</settings>
+        </rule>
+        
+        <!-- SEND TERTIARY -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND TERTIARY | APNEA | VMP | SUPERVISOR</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_included_in_APNEA</view>
+            <view>Alarm_is_at_tertiary_state</view>
+            <view>Role_caregiver_SUPERVISOR_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate Interface for escalation timing -->
+      <interface component="DataUpdate">
+        <name>DataUpdate for Alerts</name>
+        
+        <!-- ESCALATE TO TERTIARY: After 90 seconds at SECONDARY state -->
+        <!-- This rule has state=Secondary in condition, NO alert_type, NO unit.name -->
+        <!-- According to requirements: state=Secondary means apply timing to T3 (time to 3rd recipient) -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO TERTIARY | 90 SEC DELAY | ALL ALARMS | NO SECONDARY RESPONSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>90</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_secondary_state</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Tertiary"}]}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

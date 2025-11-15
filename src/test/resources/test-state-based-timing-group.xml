@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Group State</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for alert types -->
+        <view>
+          <name>Alert_type_included_in_Code_Blue</name>
+          <description>Code Blue alert</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Code Blue</value>
+          </filter>
+        </view>
+        
+        <!-- View for Group state -->
+        <view>
+          <name>Alert_is_at_Group_state</name>
+          <description>Alert is at Group state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Group</value>
+          </filter>
+        </view>
+        
+        <!-- View for facility -->
+        <view>
+          <name>Facility_name_Lakes</name>
+          <description>Facility name is Lakes</description>
+          <filter relation="equal">
+            <path>facility.name</path>
+            <value>LAKES</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alert_has_not_been_responded_to</name>
+          <description>Alert has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_active</name>
+          <description>Alert is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- VMP Interface for sending messages -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND GROUP - No role reference, should use destination from settings -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND GROUP | URGENT NO CALLBACK | ADULT CODE BLUE | GROUP | VMP | LAKES</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_Group_state</view>
+            <view>Alert_type_included_in_Code_Blue</view>
+            <view>Facility_name_Lakes</view>
+          </condition>
+          <settings>{"callbackNumber":"","callbackResponse":"Called","destination":"g-adult_code_blue2xxx","priority":"1"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
