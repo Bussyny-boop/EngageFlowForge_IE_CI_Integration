@@ -617,6 +617,9 @@ public class XmlParser {
                     recipient = destination;
                 } else if (rule.role != null && !rule.role.isEmpty()) {
                     recipient = rule.role;
+                } else {
+                    // When no role is found, use the exact destination value from settings
+                    recipient = destination;
                 }
             }
         } else if (rule.role != null && !rule.role.isEmpty()) {
@@ -743,11 +746,12 @@ public class XmlParser {
                 // If destination starts with "g-", use it as the recipient
                 if (destination.startsWith("g-")) {
                     recipient = destination;
-                } else {
+                } else if (role != null && !role.isEmpty()) {
                     // Otherwise use the role name (functional role)
-                    if (role != null && !role.isEmpty()) {
-                        recipient = role;
-                    }
+                    recipient = role;
+                } else {
+                    // When no role is found, use the exact destination value from settings
+                    recipient = destination;
                 }
             }
         } else if (role != null && !role.isEmpty()) {

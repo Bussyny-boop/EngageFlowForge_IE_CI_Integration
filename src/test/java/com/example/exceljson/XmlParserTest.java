@@ -164,4 +164,46 @@ public class XmlParserTest {
         }
         assertTrue(foundMemorialHospital, "Should find Memorial Hospital facility");
     }
+    
+    @Test
+    public void testDestinationOnlyRecipient() throws Exception {
+        XmlParser parser = new XmlParser();
+        
+        // Load XML file with destination only (no role in views)
+        File xmlFile = new File("src/test/resources/sample-engage-destination-only.xml");
+        assertTrue(xmlFile.exists(), "Sample XML file with destination only should exist");
+        
+        parser.load(xmlFile);
+        
+        // Verify nurse calls were created
+        List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
+        assertFalse(nurseCalls.isEmpty(), "Should have nurse call flows");
+        
+        // Verify destination-only recipient handling
+        boolean foundBedExit = false;
+        for (ExcelParserV5.FlowRow flow : nurseCalls) {
+            if (flow.alarmName.contains("Bed Exit")) {
+                foundBedExit = true;
+                assertEquals("OutgoingWCTP", flow.deviceA, "Device should be OutgoingWCTP");
+                assertEquals("Immediate", flow.t1, "T1 should be Immediate");
+                assertEquals("2", flow.priorityRaw, "Priority should be 2");
+                assertEquals("10", flow.ttlValue, "TTL should be 10");
+                // Recipient should be the exact destination value when no role is found
+                assertEquals("#{bed.room.unit.first.users.devices.lines.number}", flow.r1, 
+                    "Recipient should be exact destination value from settings when no role is found");
+            }
+        }
+        assertTrue(foundBedExit, "Should find Bed Exit alert");
+        
+        // Verify facility and unit
+        List<ExcelParserV5.UnitRow> units = parser.getUnits();
+        boolean foundWestWing = false;
+        for (ExcelParserV5.UnitRow unit : units) {
+            if (unit.facility.equals("West Wing")) {
+                foundWestWing = true;
+                assertTrue(unit.unitNames.contains("ICU"), "Should have ICU unit");
+            }
+        }
+        assertTrue(foundWestWing, "Should find West Wing facility");
+    }
 }

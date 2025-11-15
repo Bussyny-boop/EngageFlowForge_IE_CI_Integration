@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Engage Configuration - Destination Only</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        <view>
+          <name>Alarm_BedExit</name>
+          <description>Bed Exit Alert</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Bed Exit</value>
+          </filter>
+        </view>
+        <view>
+          <name>Facility_name_is_West_Wing</name>
+          <description>Facility name is West Wing</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>West Wing</value>
+          </filter>
+        </view>
+        <view>
+          <name>Unit_ICU</name>
+          <description>ICU Unit</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ICU</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    <workflows>
+    </workflows>
+    <interfaces>
+      <interface component="OutgoingWCTP">
+        <name>OutgoingWCTP</name>
+        <rule active="true" dataset="NurseCalls" no_loopback="true">
+          <purpose>SEND PRIMARY | Bed Exit | Edge | ICU</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>Immediate</defer-delivery-by>
+          <condition>
+            <view>Alarm_BedExit</view>
+            <view>Facility_name_is_West_Wing</view>
+            <view>Unit_ICU</view>
+          </condition>
+          <settings>{"callbackNumber":"#{bed.pillow_number}","callbackResponse":"Accepted","destination":"#{bed.room.unit.first.users.devices.lines.number}","escalationLevel":"#{state}","eventID":"NurseCalls:#{id}","message":"Area: #{bed.room.unit.name}:#{bed.room.room_number}\nAlert : #{alert_type}\n\n#{alert_content}","overrideDND":false,"parameters":[],"participationStatus":true,"patientMRN":"#{bed.patient.mrn}","priority":"2","responseAction":"responses.action","responses":[{"$$hashKey":"00I","displayValue":"Accept","storedValue":"Accepted"}],"ruleAction":"SEND_MESSAGE","shortMessage":"#{short_message}","subject":"#{alert_subject}","ttl":10,"username":"responses.usr.login"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
