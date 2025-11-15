@@ -287,19 +287,40 @@ public class XmlParser {
         // Group rules by dataset + alert types for escalation merging
         Map<String, List<Rule>> grouped = new HashMap<>();
         
+        // Collect global escalation rules (no alert type - apply to all)
+        List<Rule> globalEscalationRules = new ArrayList<>();
+        
         for (Rule rule : allRules) {
-            // Only process rules with alert types
-            if (rule.alertTypes.isEmpty()) continue;
-            
             // Track facilities/units
             for (String facility : rule.facilities) {
                 facilityUnits.computeIfAbsent(facility, k -> new HashSet<>()).addAll(rule.units);
             }
             
+            // If rule has no alert types but has state and defer-delivery-by, it's global escalation
+            if (rule.alertTypes.isEmpty() && rule.state != null && !rule.state.isEmpty() 
+                && rule.deferDeliveryBy != null && !hasDestination(rule)) {
+                globalEscalationRules.add(rule);
+                continue;
+            }
+            
+            // Skip other rules without alert types
+            if (rule.alertTypes.isEmpty()) continue;
+            
             // Group by dataset + alert types
             for (String alertType : rule.alertTypes) {
                 String key = rule.dataset + "|" + alertType;
                 grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+            }
+        }
+        
+        // Add global escalation rules to each alert type group in the same dataset
+        for (Rule globalRule : globalEscalationRules) {
+            for (Map.Entry<String, List<Rule>> entry : grouped.entrySet()) {
+                String[] parts = entry.getKey().split("\\|", 2);
+                String dataset = parts[0];
+                if (dataset.equals(globalRule.dataset)) {
+                    entry.getValue().add(globalRule);
+                }
             }
         }
         
@@ -338,8 +359,8 @@ public class XmlParser {
             if (hasDestination(rule)) {
                 sendByState.put(state, rule);
             }
-            // If DataUpdate with defer, it's escalation timing
-            else if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.deferDeliveryBy != null) {
+            // If has defer-delivery-by but no destination, it's escalation timing
+            else if (rule.deferDeliveryBy != null && !hasDestination(rule)) {
                 escalateDelay.put(state, rule.deferDeliveryBy);
             }
         }
@@ -378,9 +399,15 @@ public class XmlParser {
             }
             
             // Set escalation delay (maps to next recipient's time)
+            // Use raw seconds value, not formatted
             String delay = escalateDelay.get(state);
             if (delay != null && i < states.length - 1) {
-                setTime(flow, i + 2, delay);
+                switch (i + 2) {
+                    case 2: flow.t2 = delay; break;
+                    case 3: flow.t3 = delay; break;
+                    case 4: flow.t4 = delay; break;
+                    case 5: flow.t5 = delay; break;
+                }
             }
         }
         
@@ -391,9 +418,11 @@ public class XmlParser {
      * Create simple flow row (no escalation)
      */
     private void createSimpleFlow(String dataset, String alertType, List<Rule> rules) {
-        // Use first rule (destination is optional)
+        // Prefer rules with destination, but allow rules without if none have destination
         Rule sendRule = rules.stream()
+            .filter(this::hasDestination)
             .findFirst()
+            .or(() -> rules.stream().findFirst())
             .orElse(null);
         
         if (sendRule == null) return;
