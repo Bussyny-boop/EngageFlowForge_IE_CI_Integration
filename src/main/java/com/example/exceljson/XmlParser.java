@@ -227,6 +227,8 @@ public class XmlParser {
                         if (filter.path != null && filter.path.equals("state")) {
                             state = filter.value;
                             // Normalize "Group" state to "Primary" as per requirements
+                            // Group state means a single recipient (typically a group destination)
+                            // When no role reference is found, the destination from settings is used
                             if ("Group".equalsIgnoreCase(state)) {
                                 state = "Primary";
                             }
@@ -636,6 +638,8 @@ public class XmlParser {
             //     state=Secondary (i=1) determines T3 (i+2)
             //     state=Tertiary (i=2) determines T4 (i+2)
             //     state=Quaternary (i=3) determines T5 (i+2)
+            // When DataUpdate rules have no alert_type or unit.name, they apply to ALL alerts
+            // but the timing is still applied based on the state value in their condition
             if (escalateRule != null && escalateRule.deferDeliveryBy != null && !escalateRule.deferDeliveryBy.isEmpty()) {
                 int timeIndex = i + 2; // Next recipient after current state
                 setTime(flow, timeIndex, escalateRule.deferDeliveryBy);
