@@ -405,8 +405,8 @@
                                                     <padding>
                                                         <Insets top="0" right="5" bottom="5" left="5" />
                                                     </padding>
-                                                    <Label text="Filter by Alarm Name:" />
-                                                    <TextField fx:id="nurseAlarmNameFilter" promptText="Search alarm name..." prefWidth="200" />
+                                                    <Label text="Search:" />
+                                                    <TextField fx:id="nurseAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
                                                 </HBox>
                                             </VBox>
                                         </top>
@@ -456,8 +456,8 @@
                                                     <padding>
                                                         <Insets top="0" right="5" bottom="5" left="5" />
                                                     </padding>
-                                                    <Label text="Filter by Alarm Name:" />
-                                                    <TextField fx:id="clinicalAlarmNameFilter" promptText="Search alarm name..." prefWidth="200" />
+                                                    <Label text="Search:" />
+                                                    <TextField fx:id="clinicalAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
                                                 </HBox>
                                             </VBox>
                                         </top>
@@ -508,8 +508,8 @@
                                                     <padding>
                                                         <Insets top="0" right="5" bottom="5" left="5" />
                                                     </padding>
-                                                    <Label text="Filter by Alarm Name:" />
-                                                    <TextField fx:id="ordersAlarmNameFilter" promptText="Search alarm name..." prefWidth="200" />
+                                                    <Label text="Search:" />
+                                                    <TextField fx:id="ordersAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
                                                 </HBox>
                                             </VBox>
                                         </top>

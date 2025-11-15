@@ -2540,27 +2540,25 @@ public class AppController {
         if (nurseCallsFilteredList == null) return;
         
         String selectedConfigGroup = nurseConfigGroupFilter != null ? nurseConfigGroupFilter.getSelectionModel().getSelectedItem() : null;
-        String alarmNameText = nurseAlarmNameFilter != null ? nurseAlarmNameFilter.getText() : "";
-        String alarmFilter = alarmNameText != null ? alarmNameText.trim().toLowerCase() : "";
+        String searchText = nurseAlarmNameFilter != null ? nurseAlarmNameFilter.getText() : "";
+        String searchFilter = searchText != null ? searchText.trim().toLowerCase() : "";
         
         nurseCallsFilteredList.setPredicate(flow -> {
             // Config group filter
             boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
             
-            // Alarm name filter
-            boolean alarmMatch = alarmFilter.isEmpty() || 
-                (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+            // Search all columns
+            boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
             
-            return configMatch && alarmMatch;
+            return configMatch && searchMatch;
         });
         
         // Update inScope based on filter
         if (nurseCallsFullList != null) {
             for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
                 boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
-                boolean alarmMatch = alarmFilter.isEmpty() || 
-                    (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
-                flow.inScope = configMatch && alarmMatch;
+                boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
+                flow.inScope = configMatch && searchMatch;
             }
         }
         
@@ -2568,31 +2566,70 @@ public class AppController {
         updateStatusLabel();
     }
 
+    /**
+     * Helper method to check if a FlowRow matches the search filter in any column.
+     * Searches all text fields in the FlowRow for case-insensitive partial matches.
+     * 
+     * @param flow The FlowRow to search
+     * @param searchFilter The lowercase search string
+     * @return true if any column contains the search filter
+     */
+    private boolean matchesAnyColumn(ExcelParserV5.FlowRow flow, String searchFilter) {
+        if (flow == null || searchFilter == null || searchFilter.isEmpty()) {
+            return true;
+        }
+        
+        // Search all string fields in FlowRow
+        return (flow.alarmName != null && flow.alarmName.toLowerCase().contains(searchFilter)) ||
+               (flow.sendingName != null && flow.sendingName.toLowerCase().contains(searchFilter)) ||
+               (flow.priorityRaw != null && flow.priorityRaw.toLowerCase().contains(searchFilter)) ||
+               (flow.deviceA != null && flow.deviceA.toLowerCase().contains(searchFilter)) ||
+               (flow.deviceB != null && flow.deviceB.toLowerCase().contains(searchFilter)) ||
+               (flow.ringtone != null && flow.ringtone.toLowerCase().contains(searchFilter)) ||
+               (flow.responseOptions != null && flow.responseOptions.toLowerCase().contains(searchFilter)) ||
+               (flow.breakThroughDND != null && flow.breakThroughDND.toLowerCase().contains(searchFilter)) ||
+               (flow.multiUserAccept != null && flow.multiUserAccept.toLowerCase().contains(searchFilter)) ||
+               (flow.escalateAfter != null && flow.escalateAfter.toLowerCase().contains(searchFilter)) ||
+               (flow.ttlValue != null && flow.ttlValue.toLowerCase().contains(searchFilter)) ||
+               (flow.enunciate != null && flow.enunciate.toLowerCase().contains(searchFilter)) ||
+               (flow.emdan != null && flow.emdan.toLowerCase().contains(searchFilter)) ||
+               (flow.configGroup != null && flow.configGroup.toLowerCase().contains(searchFilter)) ||
+               (flow.customTabSource != null && flow.customTabSource.toLowerCase().contains(searchFilter)) ||
+               (flow.t1 != null && flow.t1.toLowerCase().contains(searchFilter)) ||
+               (flow.r1 != null && flow.r1.toLowerCase().contains(searchFilter)) ||
+               (flow.t2 != null && flow.t2.toLowerCase().contains(searchFilter)) ||
+               (flow.r2 != null && flow.r2.toLowerCase().contains(searchFilter)) ||
+               (flow.t3 != null && flow.t3.toLowerCase().contains(searchFilter)) ||
+               (flow.r3 != null && flow.r3.toLowerCase().contains(searchFilter)) ||
+               (flow.t4 != null && flow.t4.toLowerCase().contains(searchFilter)) ||
+               (flow.r4 != null && flow.r4.toLowerCase().contains(searchFilter)) ||
+               (flow.t5 != null && flow.t5.toLowerCase().contains(searchFilter)) ||
+               (flow.r5 != null && flow.r5.toLowerCase().contains(searchFilter));
+    }
+
     private void applyClinicalFilter() {
         if (clinicalsFilteredList == null) return;
         
         String selectedConfigGroup = clinicalConfigGroupFilter != null ? clinicalConfigGroupFilter.getSelectionModel().getSelectedItem() : null;
-        String alarmNameText = clinicalAlarmNameFilter != null ? clinicalAlarmNameFilter.getText() : "";
-        String alarmFilter = alarmNameText != null ? alarmNameText.trim().toLowerCase() : "";
+        String searchText = clinicalAlarmNameFilter != null ? clinicalAlarmNameFilter.getText() : "";
+        String searchFilter = searchText != null ? searchText.trim().toLowerCase() : "";
         
         clinicalsFilteredList.setPredicate(flow -> {
             // Config group filter
             boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
             
-            // Alarm name filter
-            boolean alarmMatch = alarmFilter.isEmpty() || 
-                (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+            // Search all columns
+            boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
             
-            return configMatch && alarmMatch;
+            return configMatch && searchMatch;
         });
         
         // Update inScope based on filter
         if (clinicalsFullList != null) {
             for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
                 boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
-                boolean alarmMatch = alarmFilter.isEmpty() || 
-                    (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
-                flow.inScope = configMatch && alarmMatch;
+                boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
+                flow.inScope = configMatch && searchMatch;
             }
         }
         
@@ -2604,27 +2641,25 @@ public class AppController {
         if (ordersFilteredList == null) return;
         
         String selectedConfigGroup = ordersConfigGroupFilter != null ? ordersConfigGroupFilter.getSelectionModel().getSelectedItem() : null;
-        String alarmNameText = ordersAlarmNameFilter != null ? ordersAlarmNameFilter.getText() : "";
-        String alarmFilter = alarmNameText != null ? alarmNameText.trim().toLowerCase() : "";
+        String searchText = ordersAlarmNameFilter != null ? ordersAlarmNameFilter.getText() : "";
+        String searchFilter = searchText != null ? searchText.trim().toLowerCase() : "";
         
         ordersFilteredList.setPredicate(flow -> {
             // Config group filter
             boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
             
-            // Alarm name filter
-            boolean alarmMatch = alarmFilter.isEmpty() || 
-                (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
+            // Search all columns
+            boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
             
-            return configMatch && alarmMatch;
+            return configMatch && searchMatch;
         });
         
         // Update inScope based on filter
         if (ordersFullList != null) {
             for (ExcelParserV5.FlowRow flow : ordersFullList) {
                 boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
-                boolean alarmMatch = alarmFilter.isEmpty() || 
-                    (flow.alarmName != null && flow.alarmName.toLowerCase().contains(alarmFilter));
-                flow.inScope = configMatch && alarmMatch;
+                boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
+                flow.inScope = configMatch && searchMatch;
             }
         }
         
