@@ -1911,19 +1911,19 @@ public class ExcelParserV5 {
   private boolean containsVcs(String deviceName) {
     if (isBlank(deviceName)) return false;
     String lower = deviceName.toLowerCase(Locale.ROOT);
-    return lower.contains("vocera vcs") || lower.contains("vcs");
+    return lower.contains("vocera vcs") || lower.contains("vcs") || lower.contains("vmp");
   }
 
   /**
-   * Checks if the device name contains "Vocera" or "VMI" but NOT "Vocera VCS" or "VoceraVCS".
+   * Checks if the device name contains "Vocera" or "VMI" but NOT "Vocera VCS" or "VoceraVCS" or "VMP".
    * This is used to identify Vocera adapter interface devices.
    */
   private boolean containsVocera(String deviceName) {
     if (isBlank(deviceName)) return false;
     String lower = deviceName.toLowerCase(Locale.ROOT);
     
-    // Exclude "Vocera VCS" and "VoceraVCS" - these should use VMP
-    if (lower.contains("vocera vcs") || lower.contains("voceravcs")) {
+    // Exclude "Vocera VCS", "VoceraVCS", and "VMP" - these should use VMP adapter
+    if (lower.contains("vocera vcs") || lower.contains("voceravcs") || lower.contains("vmp")) {
       return false;
     }
     
