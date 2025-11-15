@@ -52,7 +52,8 @@ public class AppController {
     @FXML private Button sidebarToggleButton;
 
     // ---------- UI Elements ----------
-    @FXML private Button loadButton;
+    @FXML private Button loadNdwButton;
+    @FXML private Button loadXmlButton;
     @FXML private Button loadJsonButton;
     @FXML private Button saveExcelButton;
     @FXML private Button saveExcelAsButton;
@@ -260,7 +261,8 @@ public class AppController {
         setJsonButtonsEnabled(false);
         setExcelButtonsEnabled(false);
 
-        loadButton.setOnAction(e -> loadExcel());
+        if (loadNdwButton != null) loadNdwButton.setOnAction(e -> loadNdw());
+        if (loadXmlButton != null) loadXmlButton.setOnAction(e -> loadXml());
         if (loadJsonButton != null) loadJsonButton.setOnAction(e -> loadJson());
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
@@ -803,15 +805,13 @@ public class AppController {
         }
     }
 
-    // ---------- Load Excel ----------
-    private void loadExcel() {
+    // ---------- Load NDW (Excel) ----------
+    private void loadNdw() {
         try {
             FileChooser chooser = new FileChooser();
-            chooser.setTitle("Select Excel Workbook or XML File");
+            chooser.setTitle("Select NDW Excel Workbook");
             chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel and XML Files", "*.xlsx", "*.xml"),
-                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"),
-                new FileChooser.ExtensionFilter("XML Files", "*.xml")
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
             );
 
             if (lastExcelDir != null && lastExcelDir.exists()) {
@@ -824,38 +824,12 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, true);
 
-            // Determine file type and load accordingly
-            String fileName = file.getName().toLowerCase();
-            boolean isXml = fileName.endsWith(".xml");
-            
             // Show progress
-            showProgressBar(isXml ? "📥 Loading XML file..." : "📥 Loading Excel file...");
-            
-            String loadSummary;
-            if (isXml) {
-                // Load XML file
-                XmlParser xmlParser = new XmlParser();
-                xmlParser.load(file);
-                
-                // Transfer data from XML parser to main parser lists
-                parser.units.clear();
-                parser.units.addAll(xmlParser.getUnits());
-                
-                parser.nurseCalls.clear();
-                parser.nurseCalls.addAll(xmlParser.getNurseCalls());
-                
-                parser.clinicals.clear();
-                parser.clinicals.addAll(xmlParser.getClinicals());
-                
-                parser.orders.clear();
-                parser.orders.addAll(xmlParser.getOrders());
-                
-                loadSummary = xmlParser.getLoadSummary();
-            } else {
-                // Load Excel file
-                parser.load(file);
-                loadSummary = parser.getLoadSummary();
-            }
+            showProgressBar("📥 Loading Excel file...");
+
+            // Load Excel file
+            parser.load(file);
+            String loadSummary = parser.getLoadSummary();
             
             currentExcelFile = file;
             updateCurrentFileLabel(); // Update file label
@@ -876,34 +850,145 @@ public class AppController {
             updateCustomTabStats(); // Update custom tab statistics
             
             // Build success message
-            StringBuilder successMsg = new StringBuilder(isXml ? "✅ XML loaded successfully" : "✅ Excel loaded successfully");
+            StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
+
+            // Excel load: include the same counts as JSON/XML
+            int nurseFlows = parser.nurseCalls.size();
+            int clinicalFlows = parser.clinicals.size();
+            int ordersFlows = parser.orders.size();
+            int unitsCount = parser.getUnitsCount();
+            int nurseGroups = parser.getNurseConfigGroupCount();
+            int clinicalGroups = parser.getClinicalConfigGroupCount();
+            int ordersGroups = parser.getOrdersConfigGroupCount();
+            int totalGroups = parser.getTotalConfigGroupCount();
+
+            successMsg.append("\n\nLoaded ")
+                    .append(nurseFlows).append(" Nurse Calls, ")
+                    .append(clinicalFlows).append(" Clinicals, and ")
+                    .append(ordersFlows).append(" Orders flows.\n")
+                    .append("Units: ").append(unitsCount).append("\n")
+                    .append("Config Groups — Nurse: ").append(nurseGroups)
+                    .append(", Clinical: ").append(clinicalGroups)
+                    .append(", Orders: ").append(ordersGroups)
+                    .append(" (Total: ").append(totalGroups).append(")");
+
+            int movedCount = parser.getEmdanMovedCount();
+            if (movedCount > 0) {
+                successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
+            }
             
-            if (!isXml) {
-                int movedCount = parser.getEmdanMovedCount();
-                if (movedCount > 0) {
-                    successMsg.append("\n\nMoved ").append(movedCount).append(" EMDAN rows to Clinicals");
-                }
-                
-                // Add custom tab information
-                Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
-                if (!customTabCounts.isEmpty()) {
-                    int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
-                    if (totalCustomRows > 0) {
-                        successMsg.append("\n\nCustom Tabs Processed:");
-                        for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
-                            String flowType = customTabMappings.get(entry.getKey());
-                            successMsg.append("\n  • ").append(entry.getKey())
-                                     .append(" → ").append(flowType)
-                                     .append(": ").append(entry.getValue()).append(" rows");
-                        }
+            // Add custom tab information
+            Map<String, Integer> customTabCounts = parser.getCustomTabRowCounts();
+            if (!customTabCounts.isEmpty()) {
+                int totalCustomRows = customTabCounts.values().stream().mapToInt(Integer::intValue).sum();
+                if (totalCustomRows > 0) {
+                    successMsg.append("\n\nCustom Tabs Processed:");
+                    for (Map.Entry<String, Integer> entry : customTabCounts.entrySet()) {
+                        String flowType = customTabMappings.get(entry.getKey());
+                        successMsg.append("\n  • ").append(entry.getKey())
+                                 .append(" → ").append(flowType)
+                                 .append(": ").append(entry.getValue()).append(" rows");
                     }
                 }
             }
-            
+
             showInfo(successMsg.toString());
         } catch (Exception ex) {
             hideProgressBar();
             showError("Failed to load file: " + ex.getMessage());
+        }
+    }
+
+    // ---------- Load Engage XML ----------
+    private void loadXml() {
+        try {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Select Engage XML File");
+            chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("XML Files", "*.xml")
+            );
+
+            if (lastExcelDir != null && lastExcelDir.exists()) {
+                chooser.setInitialDirectory(lastExcelDir);
+            }
+
+            File file = chooser.showOpenDialog(getStage());
+            if (file == null) return;
+
+            // Remember directory
+            rememberDirectory(file, true);
+
+            // Show progress
+            showProgressBar("📥 Loading XML file...");
+
+            // Load XML file
+            XmlParser xmlParser = new XmlParser();
+            xmlParser.load(file);
+
+            // Transfer data from XML parser to main parser lists
+            parser.units.clear();
+            parser.units.addAll(xmlParser.getUnits());
+
+            parser.nurseCalls.clear();
+            parser.nurseCalls.addAll(xmlParser.getNurseCalls());
+
+            parser.clinicals.clear();
+            parser.clinicals.addAll(xmlParser.getClinicals());
+
+            parser.orders.clear();
+            parser.orders.addAll(xmlParser.getOrders());
+
+            String loadSummary = xmlParser.getLoadSummary();
+
+            currentExcelFile = file;
+            updateCurrentFileLabel();
+            jsonPreview.setText(loadSummary);
+
+            refreshTables();
+            tableUnits.refresh();
+            tableNurseCalls.refresh();
+            tableClinicals.refresh();
+            if (tableOrders != null) tableOrders.refresh();
+
+            setJsonButtonsEnabled(true);
+            setExcelButtonsEnabled(true);
+
+            // Hide progress and update status
+            hideProgressBar();
+            updateStatusLabel();
+            updateCustomTabStats();
+
+            // Success message mirroring JSON/Excel
+            int nurseFlows = parser.nurseCalls.size();
+            int clinicalFlows = parser.clinicals.size();
+            int ordersFlows = parser.orders.size();
+            int unitsCount = parser.units.size();
+
+            int nurseGroups = (int) parser.nurseCalls.stream()
+                .map(fr -> fr.configGroup)
+                    .filter(s -> s != null && !s.isBlank())
+                    .distinct()
+                    .count();
+            int clinicalGroups = (int) parser.clinicals.stream()
+                .map(fr -> fr.configGroup)
+                    .filter(s -> s != null && !s.isBlank())
+                    .distinct()
+                    .count();
+            int ordersGroups = (int) parser.orders.stream()
+                .map(fr -> fr.configGroup)
+                    .filter(s -> s != null && !s.isBlank())
+                    .distinct()
+                    .count();
+            int totalGroups = nurseGroups + clinicalGroups + ordersGroups;
+
+            showInfo("✅ XML loaded successfully\n\n" +
+                "Loaded " + nurseFlows + " Nurse Calls, " + clinicalFlows + " Clinicals, and " + ordersFlows + " Orders flows.\n" +
+                "Units: " + unitsCount + "\n" +
+                "Config Groups — Nurse: " + nurseGroups + ", Clinical: " + clinicalGroups + ", Orders: " + ordersGroups +
+                " (Total: " + totalGroups + ")");
+        } catch (Exception ex) {
+            hideProgressBar();
+            showError("Failed to load XML file: " + ex.getMessage());
         }
     }
 

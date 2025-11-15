@@ -75,15 +75,28 @@
                     </top>
                     <center>
                         <VBox fx:id="sidebarContent" spacing="8" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 10; -fx-spacing: 8;">
-                            <!-- Load Excel or XML -->
-                            <Button fx:id="loadButton" text="📂 Load File" maxWidth="Infinity" styleClass="nav-button" />
-                            
-                            <!-- Load JSON -->
-                            <Button fx:id="loadJsonButton" text="📥 Load JSON" maxWidth="Infinity" styleClass="nav-button">
-                                <tooltip>
-                                    <Tooltip text="Load a previously exported JSON file back into the application" />
-                                </tooltip>
-                            </Button>
+                            <!-- Load Section -->
+                            <Label text="Load Data" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 4 0 0 2;" />
+                            <VBox spacing="6">
+                                <!-- Load NDW (Excel) -->
+                                <Button fx:id="loadNdwButton" text="📄 Load NDW" maxWidth="Infinity" styleClass="nav-button">
+                                    <tooltip>
+                                        <Tooltip text="Load NDW Excel workbook (*.xlsx)" />
+                                    </tooltip>
+                                </Button>
+                                <!-- Load Engage XML -->
+                                <Button fx:id="loadXmlButton" text="🧩 Load Engage XML" maxWidth="Infinity" styleClass="nav-button">
+                                    <tooltip>
+                                        <Tooltip text="Load Engage interface rules from XML (*.xml)" />
+                                    </tooltip>
+                                </Button>
+                                <!-- Load Engage Rules (JSON) -->
+                                <Button fx:id="loadJsonButton" text="📥 Load Engage Rules" maxWidth="Infinity" styleClass="nav-button">
+                                    <tooltip>
+                                        <Tooltip text="Load previously exported Engage Rules JSON (*.json)" />
+                                    </tooltip>
+                                </Button>
+                            </VBox>
                             
                             <!-- Clear All -->
                             <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" maxWidth="Infinity" styleClass="nav-button" />

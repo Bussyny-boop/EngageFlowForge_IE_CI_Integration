@@ -40,6 +40,9 @@ public final class JobRunner {
         definitions.put("roundtrip-json", new JobHandler(
             "Load a JSON file and immediately re-export NurseCalls and Clinicals JSON to a directory.",
             this::runRoundtripJsonJob));
+        definitions.put("roundtrip-xml", new JobHandler(
+            "Load an Engage XML file and re-export NurseCalls and Clinicals JSON to a directory.",
+            this::runRoundtripXmlJob));
         this.jobs = Collections.unmodifiableMap(definitions);
     }
 
@@ -261,6 +264,67 @@ public final class JobRunner {
             return 0;
         } catch (Exception e) {
             err.printf("❌ Failed round-trip: %s%n", e.getMessage());
+            e.printStackTrace(err);
+            return 1;
+        }
+    }
+
+    private int runRoundtripXmlJob(String[] args) {
+        if (args.length < 2) {
+            err.println("Usage: JobRunner roundtrip-xml <input.xml> <outputDir>");
+            return 1;
+        }
+
+        File input = new File(args[0]).getAbsoluteFile();
+        if (!input.isFile()) {
+            err.printf("❌ Input XML file \"%s\" was not found.%n", input);
+            return 1;
+        }
+
+        File outputDir = new File(args[1]).getAbsoluteFile();
+        if (outputDir.exists() && !outputDir.isDirectory()) {
+            err.printf("❌ Output path exists but is not a directory: %s%n", outputDir);
+            return 1;
+        }
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            err.printf("❌ Unable to create output directory: %s%n", outputDir);
+            return 1;
+        }
+
+        try {
+            out.printf("📥 Loading XML: %s%n", input.getAbsolutePath());
+            com.example.exceljson.XmlParser xml = new com.example.exceljson.XmlParser();
+            xml.load(input);
+
+            // Show XML load summary for quick verification
+            out.println(xml.getLoadSummary());
+
+            // Transfer rows into ExcelParserV5 for JSON export
+            ExcelParserV5 parser = new ExcelParserV5();
+            parser.units.addAll(xml.getUnits());
+            parser.nurseCalls.addAll(xml.getNurseCalls());
+            parser.clinicals.addAll(xml.getClinicals());
+            parser.orders.addAll(xml.getOrders());
+
+            // Rebuild unit maps from Units tab to enable unit resolution for flow names/units
+            parser.rebuildUnitMaps();
+
+            File nurseOut = new File(outputDir, "NurseCalls.fromXml.json");
+            File clinicalOut = new File(outputDir, "Clinicals.fromXml.json");
+
+            out.printf("📤 Exporting to:%n  %s%n  %s%n", nurseOut.getAbsolutePath(), clinicalOut.getAbsolutePath());
+            parser.writeNurseCallsJson(nurseOut);
+            parser.writeClinicalsJson(clinicalOut);
+
+            boolean ok = nurseOut.isFile() && nurseOut.length() > 0 && clinicalOut.isFile() && clinicalOut.length() > 0;
+            if (!ok) {
+                throw new RuntimeException("One or more output files are missing or empty.");
+            }
+
+            out.println("✅ XML round-trip complete.");
+            return 0;
+        } catch (Exception e) {
+            err.printf("❌ Failed XML round-trip: %s%n", e.getMessage());
             e.printStackTrace(err);
             return 1;
         }

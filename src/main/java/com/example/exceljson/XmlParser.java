@@ -386,54 +386,96 @@ public class XmlParser {
         
         if (sendByState.isEmpty()) return;
         
-        // Create flow row
-        ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
-        flow.inScope = true;
-        flow.type = normalizeDataset(dataset);
-        flow.alarmName = alertType;
-        flow.sendingName = alertType;
-        
+        // Build a template flow with common fields and recipients/timing
+        ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
+        template.inScope = true;
+        template.type = normalizeDataset(dataset);
+        template.alarmName = alertType;
+        template.sendingName = alertType;
+
         // Get reference rule for common fields
         Rule refRule = sendByState.values().iterator().next();
-        flow.configGroup = createConfigGroup(dataset, refRule.facilities, refRule.units);
-        flow.deviceA = mapComponent(refRule.component);
-        
-        // Map states to recipients and timing
+        template.deviceA = mapComponent(refRule.component);
+
+        // Map states to recipients and timing on the template
         String[] states = {"Primary", "Secondary", "Tertiary", "Quaternary", "Quinary"};
         for (int i = 0; i < states.length; i++) {
             String state = states[i];
             Rule sendRule = sendByState.get(state);
-            
+
             if (sendRule != null) {
                 String recipient = extractDestination(sendRule);
-                setRecipient(flow, i + 1, recipient, sendRule.roleFromView);
-                
+                setRecipient(template, i + 1, recipient, sendRule.roleFromView);
+
                 // Apply settings from first send rule
                 if (i == 0) {
-                    applySettings(flow, sendRule);
+                    applySettings(template, sendRule);
                     if (sendRule.triggerCreate) {
-                        flow.t1 = "Immediate";
-                    } else if (flow.t1 == null || flow.t1.isEmpty()) {
+                        template.t1 = "Immediate";
+                    } else if (template.t1 == null || template.t1.isEmpty()) {
                         // Default to Immediate if not specified
-                        flow.t1 = "Immediate";
+                        template.t1 = "Immediate";
                     }
                 }
             }
-            
+
             // Set escalation delay (maps to next recipient's time)
             // Use raw seconds value, not formatted
             String delay = escalateDelay.get(state);
             if (delay != null && i < states.length - 1) {
                 switch (i + 2) {
-                    case 2: flow.t2 = delay; break;
-                    case 3: flow.t3 = delay; break;
-                    case 4: flow.t4 = delay; break;
-                    case 5: flow.t5 = delay; break;
+                    case 2: template.t2 = delay; break;
+                    case 3: template.t3 = delay; break;
+                    case 4: template.t4 = delay; break;
+                    case 5: template.t5 = delay; break;
                 }
             }
         }
-        
-        addToList(flow);
+
+        // Compute unions of facilities and units for splitting
+        Set<String> facs = new LinkedHashSet<>();
+        Set<String> uns = new LinkedHashSet<>();
+        for (Rule r : rules) {
+            facs.addAll(r.facilities);
+            uns.addAll(r.units);
+        }
+        if (facs.isEmpty()) facs.add("");
+        if (uns.isEmpty()) uns.add("");
+
+        // Emit one flow per (facility, unit) pair for accurate Units tab population
+        for (String fac : facs) {
+            for (String un : uns) {
+                ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+                // Copy from template
+                flow.inScope = template.inScope;
+                flow.type = template.type;
+                flow.alarmName = template.alarmName;
+                flow.sendingName = template.sendingName;
+                flow.priorityRaw = template.priorityRaw;
+                flow.deviceA = template.deviceA;
+                flow.deviceB = template.deviceB;
+                flow.ringtone = template.ringtone;
+                flow.responseOptions = template.responseOptions;
+                flow.breakThroughDND = template.breakThroughDND;
+                flow.multiUserAccept = template.multiUserAccept;
+                flow.escalateAfter = template.escalateAfter;
+                flow.ttlValue = template.ttlValue;
+                flow.enunciate = template.enunciate;
+                flow.emdan = template.emdan;
+                flow.t1 = template.t1; flow.r1 = template.r1;
+                flow.t2 = template.t2; flow.r2 = template.r2;
+                flow.t3 = template.t3; flow.r3 = template.r3;
+                flow.t4 = template.t4; flow.r4 = template.r4;
+                flow.t5 = template.t5; flow.r5 = template.r5;
+
+                // Config group built from explicit facility/unit
+                Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
+                Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
+                flow.configGroup = createConfigGroup(dataset, fset, uset);
+
+                addToList(flow);
+            }
+        }
     }
     
     /**
@@ -449,27 +491,66 @@ public class XmlParser {
         
         if (sendRule == null) return;
         
-        ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
-        flow.inScope = true;
-        flow.type = normalizeDataset(dataset);
-        flow.alarmName = alertType;
-        flow.sendingName = alertType;
-        flow.configGroup = createConfigGroup(dataset, sendRule.facilities, sendRule.units);
-        flow.deviceA = mapComponent(sendRule.component);
-        
+        // Build a template flow
+        ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
+        template.inScope = true;
+        template.type = normalizeDataset(dataset);
+        template.alarmName = alertType;
+        template.sendingName = alertType;
+        template.deviceA = mapComponent(sendRule.component);
+
         // Set recipient and timing (recipient is optional)
         String recipient = extractDestination(sendRule);
-        setRecipient(flow, 1, recipient, sendRule.roleFromView);
-        
+        setRecipient(template, 1, recipient, sendRule.roleFromView);
+
         if (sendRule.triggerCreate) {
-            flow.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
-        } else if (flow.t1 == null || flow.t1.isEmpty()) {
+            template.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
+        } else if (template.t1 == null || template.t1.isEmpty()) {
             // Default to Immediate if not specified
-            flow.t1 = "Immediate";
+            template.t1 = "Immediate";
         }
-        
-        applySettings(flow, sendRule);
-        addToList(flow);
+
+        applySettings(template, sendRule);
+
+        // Compute unions for splitting
+        Set<String> facs = new LinkedHashSet<>(sendRule.facilities);
+        Set<String> uns = new LinkedHashSet<>(sendRule.units);
+        if (facs.isEmpty()) facs.add("");
+        if (uns.isEmpty()) uns.add("");
+
+        for (String fac : facs) {
+            for (String un : uns) {
+                ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+                // Copy from template
+                flow.inScope = template.inScope;
+                flow.type = template.type;
+                flow.alarmName = template.alarmName;
+                flow.sendingName = template.sendingName;
+                flow.priorityRaw = template.priorityRaw;
+                flow.deviceA = template.deviceA;
+                flow.deviceB = template.deviceB;
+                flow.ringtone = template.ringtone;
+                flow.responseOptions = template.responseOptions;
+                flow.breakThroughDND = template.breakThroughDND;
+                flow.multiUserAccept = template.multiUserAccept;
+                flow.escalateAfter = template.escalateAfter;
+                flow.ttlValue = template.ttlValue;
+                flow.enunciate = template.enunciate;
+                flow.emdan = template.emdan;
+                flow.t1 = template.t1; flow.r1 = template.r1;
+                flow.t2 = template.t2; flow.r2 = template.r2;
+                flow.t3 = template.t3; flow.r3 = template.r3;
+                flow.t4 = template.t4; flow.r4 = template.r4;
+                flow.t5 = template.t5; flow.r5 = template.r5;
+
+                // Config group per facility/unit
+                Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
+                Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
+                flow.configGroup = createConfigGroup(dataset, fset, uset);
+
+                addToList(flow);
+            }
+        }
     }
     
     /**
@@ -839,14 +920,34 @@ public class XmlParser {
     }
     
     public String getLoadSummary() {
+        // Compute unique config group counts per flow type
+        int nurseCfgs = (int) nurseCalls.stream()
+                .map(r -> r.configGroup == null ? "" : r.configGroup.trim())
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .count();
+        int clinicalCfgs = (int) clinicals.stream()
+                .map(r -> r.configGroup == null ? "" : r.configGroup.trim())
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .count();
+        int ordersCfgs = (int) orders.stream()
+                .map(r -> r.configGroup == null ? "" : r.configGroup.trim())
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .count();
+        int totalCfgs = nurseCfgs + clinicalCfgs + ordersCfgs;
+
         return String.format(
             "✅ XML Load Complete%n%n" +
             "Loaded:%n" +
             "  • %d Unit rows%n" +
             "  • %d Nurse Call rows%n" +
             "  • %d Clinical rows%n" +
-            "  • %d Orders rows",
-            units.size(), nurseCalls.size(), clinicals.size(), orders.size()
+            "  • %d Orders rows%n" +
+            "  • Config Groups: %d (Nurse), %d (Clinical), %d (Orders) — Total %d",
+            units.size(), nurseCalls.size(), clinicals.size(), orders.size(),
+            nurseCfgs, clinicalCfgs, ordersCfgs, totalCfgs
         );
     }
 }
