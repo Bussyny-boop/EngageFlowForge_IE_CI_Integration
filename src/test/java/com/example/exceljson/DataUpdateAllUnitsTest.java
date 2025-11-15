@@ -1,9 +1,7 @@
 package com.example.exceljson;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DataUpdateAllUnitsTest {
 
     @Test
-    public void testDataUpdateWithoutUnitFiltersAppliesToAllUnits(@TempDir Path tempDir) throws Exception {
+    public void testDataUpdateWithoutUnitFiltersAppliesToAllUnits() throws Exception {
         // Create test XML file
         String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<package version-major=\"1\" version-minor=\"0\">\n" +
@@ -98,7 +96,7 @@ public class DataUpdateAllUnitsTest {
             "  </contents>\n" +
             "</package>";
         
-        File xmlFile = tempDir.resolve("test-dataupdate-all-units.xml").toFile();
+        File xmlFile = new File("/tmp/test-dataupdate-all-units.xml");
         java.nio.file.Files.write(xmlFile.toPath(), xmlContent.getBytes());
         
         XmlParser parser = new XmlParser();
