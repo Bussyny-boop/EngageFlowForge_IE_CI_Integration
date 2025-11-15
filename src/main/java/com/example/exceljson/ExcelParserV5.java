@@ -420,6 +420,134 @@ public class ExcelParserV5 {
         }
       }
     }
+    
+    // Generate UnitRows from the group-to-units mappings
+    generateUnitRowsFromMappings();
+  }
+  
+  /**
+   * Generates UnitRow entries from the nurseGroupToUnits, clinicalGroupToUnits, 
+   * and ordersGroupToUnits mappings. This is called after loading JSON or XML files
+   * to populate the Units tab with config group information.
+   */
+  private void generateUnitRowsFromMappings() {
+    // Create a map to track unique (facility, unitName) combinations
+    // Key: "facility|unitName", Value: UnitRow
+    Map<String, UnitRow> uniqueUnits = new LinkedHashMap<>();
+    
+    // Process nurse call groups
+    for (Map.Entry<String, List<Map<String, String>>> entry : nurseGroupToUnits.entrySet()) {
+      String configGroup = entry.getKey();
+      List<Map<String, String>> unitMaps = entry.getValue();
+      
+      for (Map<String, String> unitMap : unitMaps) {
+        String facility = unitMap.getOrDefault("facilityName", "");
+        String unitName = unitMap.getOrDefault("name", "");
+        String noCare = unitMap.getOrDefault("noCaregiverGroup", "");
+        String podRoomFilter = unitMap.getOrDefault("podRoomFilter", "");
+        
+        String key = facility + "|" + unitName;
+        UnitRow unitRow = uniqueUnits.computeIfAbsent(key, k -> {
+          UnitRow u = new UnitRow();
+          u.facility = facility;
+          u.unitNames = unitName;
+          u.podRoomFilter = podRoomFilter;
+          if (!noCare.isEmpty()) {
+            u.noCareGroup = noCare;
+          }
+          return u;
+        });
+        
+        // Add the nurse config group (the key from the map)
+        if (unitRow.nurseGroup.isEmpty()) {
+          unitRow.nurseGroup = configGroup;
+        } else if (!unitRow.nurseGroup.contains(configGroup)) {
+          unitRow.nurseGroup += ", " + configGroup;
+        }
+        
+        // Update noCareGroup if present
+        if (!noCare.isEmpty() && unitRow.noCareGroup.isEmpty()) {
+          unitRow.noCareGroup = noCare;
+        }
+      }
+    }
+    
+    // Process clinical groups
+    for (Map.Entry<String, List<Map<String, String>>> entry : clinicalGroupToUnits.entrySet()) {
+      String configGroup = entry.getKey();
+      List<Map<String, String>> unitMaps = entry.getValue();
+      
+      for (Map<String, String> unitMap : unitMaps) {
+        String facility = unitMap.getOrDefault("facilityName", "");
+        String unitName = unitMap.getOrDefault("name", "");
+        String noCare = unitMap.getOrDefault("noCaregiverGroup", "");
+        String podRoomFilter = unitMap.getOrDefault("podRoomFilter", "");
+        
+        String key = facility + "|" + unitName;
+        UnitRow unitRow = uniqueUnits.computeIfAbsent(key, k -> {
+          UnitRow u = new UnitRow();
+          u.facility = facility;
+          u.unitNames = unitName;
+          u.podRoomFilter = podRoomFilter;
+          if (!noCare.isEmpty()) {
+            u.noCareGroup = noCare;
+          }
+          return u;
+        });
+        
+        // Add the clinical config group (the key from the map)
+        if (unitRow.clinGroup.isEmpty()) {
+          unitRow.clinGroup = configGroup;
+        } else if (!unitRow.clinGroup.contains(configGroup)) {
+          unitRow.clinGroup += ", " + configGroup;
+        }
+        
+        // Update noCareGroup if present
+        if (!noCare.isEmpty() && unitRow.noCareGroup.isEmpty()) {
+          unitRow.noCareGroup = noCare;
+        }
+      }
+    }
+    
+    // Process orders groups
+    for (Map.Entry<String, List<Map<String, String>>> entry : ordersGroupToUnits.entrySet()) {
+      String configGroup = entry.getKey();
+      List<Map<String, String>> unitMaps = entry.getValue();
+      
+      for (Map<String, String> unitMap : unitMaps) {
+        String facility = unitMap.getOrDefault("facilityName", "");
+        String unitName = unitMap.getOrDefault("name", "");
+        String noCare = unitMap.getOrDefault("noCaregiverGroup", "");
+        String podRoomFilter = unitMap.getOrDefault("podRoomFilter", "");
+        
+        String key = facility + "|" + unitName;
+        UnitRow unitRow = uniqueUnits.computeIfAbsent(key, k -> {
+          UnitRow u = new UnitRow();
+          u.facility = facility;
+          u.unitNames = unitName;
+          u.podRoomFilter = podRoomFilter;
+          if (!noCare.isEmpty()) {
+            u.noCareGroup = noCare;
+          }
+          return u;
+        });
+        
+        // Add the orders config group (the key from the map)
+        if (unitRow.ordersGroup.isEmpty()) {
+          unitRow.ordersGroup = configGroup;
+        } else if (!unitRow.ordersGroup.contains(configGroup)) {
+          unitRow.ordersGroup += ", " + configGroup;
+        }
+        
+        // Update noCareGroup if present
+        if (!noCare.isEmpty() && unitRow.noCareGroup.isEmpty()) {
+          unitRow.noCareGroup = noCare;
+        }
+      }
+    }
+    
+    // Add all unique units to the units list
+    units.addAll(uniqueUnits.values());
   }
   
   /**
@@ -632,17 +760,28 @@ public class ExcelParserV5 {
         }
         
         // Also populate the units list and group-to-units mapping for this flow
+        // Create a SEPARATE config group for EACH unit (not just the first one)
         for (Map<String, Object> unitMap : flowUnits) {
           String fac = (String) unitMap.get("facilityName");
           String unit = (String) unitMap.get("name");
           
           if (fac != null && unit != null && !fac.isEmpty() && !unit.isEmpty()) {
+            // Build config group specific to THIS unit
+            String unitConfigGroup;
+            if (!fac.isEmpty() && !unit.isEmpty()) {
+              unitConfigGroup = fac + "_" + unit + "_" + dataset;
+            } else if (!fac.isEmpty()) {
+              unitConfigGroup = fac + "_" + dataset;
+            } else {
+              unitConfigGroup = unit + "_" + dataset;
+            }
+            
             // Create unit reference map
             Map<String, String> unitRef = new LinkedHashMap<>();
             unitRef.put("facilityName", fac);
             unitRef.put("name", unit);
             
-            // Add to appropriate group-to-units mapping
+            // Add to appropriate group-to-units mapping with the unit-specific config group
             Map<String, List<Map<String, String>>> groupMap;
             if (isNurseSide) {
               groupMap = nurseGroupToUnits;
@@ -652,7 +791,7 @@ public class ExcelParserV5 {
               groupMap = clinicalGroupToUnits;
             }
             
-            groupMap.computeIfAbsent(row.configGroup, k -> new ArrayList<>()).add(unitRef);
+            groupMap.computeIfAbsent(unitConfigGroup, k -> new ArrayList<>()).add(unitRef);
           }
         }
       }
