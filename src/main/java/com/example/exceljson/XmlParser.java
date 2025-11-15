@@ -356,13 +356,41 @@ public class XmlParser {
      * Groups rules by dataset and alert types, then merges escalation states.
      */
     private void mergeStateBasedRules() {
+        // Identify global DataUpdate escalation rules (without alert_type and unit.name filters)
+        // These should apply to ALL units and ALL alert types in their dataset
+        List<RuleData> globalDataUpdateRules = new ArrayList<>();
+        for (RuleData rule : collectedRules) {
+            if (isGlobalDataUpdateEscalationRule(rule)) {
+                globalDataUpdateRules.add(rule);
+            }
+        }
+        
         // Group rules by dataset and alert types
         Map<String, List<RuleData>> groupedRules = new LinkedHashMap<>();
         
         for (RuleData rule : collectedRules) {
+            // Skip global DataUpdate rules in initial grouping - they'll be added to all matching groups
+            if (isGlobalDataUpdateEscalationRule(rule)) {
+                continue;
+            }
+            
             // Create a key based on dataset + alert types + units
             String key = createRuleGroupKey(rule);
             groupedRules.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+        }
+        
+        // Add global DataUpdate rules to all groups with matching dataset
+        for (Map.Entry<String, List<RuleData>> entry : groupedRules.entrySet()) {
+            List<RuleData> rules = entry.getValue();
+            
+            // Add global DataUpdate rules that match this group's dataset
+            for (RuleData globalRule : globalDataUpdateRules) {
+                // Check if any rule in this group has the same dataset
+                if (!rules.isEmpty() && rules.get(0).dataset != null && 
+                    rules.get(0).dataset.equals(globalRule.dataset)) {
+                    rules.add(globalRule);
+                }
+            }
         }
         
         // Process each group
@@ -379,6 +407,30 @@ public class XmlParser {
                 }
             }
         }
+    }
+    
+    /**
+     * Check if a rule is a global DataUpdate escalation rule.
+     * Global rules are DataUpdate escalation rules without alert_type and unit.name filters.
+     * These should apply to ALL units and ALL alerts in their dataset.
+     */
+    private boolean isGlobalDataUpdateEscalationRule(RuleData rule) {
+        // Must be a DataUpdate component
+        if (!"DataUpdate".equalsIgnoreCase(rule.component)) {
+            return false;
+        }
+        
+        // Must be an escalation rule (not a SEND rule)
+        boolean isSendRule = rule.role != null && !rule.role.isEmpty() || 
+            (rule.settings.containsKey("destination") && 
+             rule.settings.get("destination") != null && 
+             !((String)rule.settings.get("destination")).isEmpty());
+        if (isSendRule) {
+            return false;
+        }
+        
+        // Must have no alert types AND no units (applies to all)
+        return rule.alertTypes.isEmpty() && rule.units.isEmpty();
     }
     
     /**
