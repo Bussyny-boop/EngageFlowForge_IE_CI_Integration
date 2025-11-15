@@ -156,4 +156,24 @@ public class DataUpdateInterfaceTest {
             }
         }
     }
+    
+    @Test
+    public void testDeviceAComesFromSendRulesNotEscalationRules() throws Exception {
+        XmlParser parser = new XmlParser();
+        
+        File xmlFile = new File("src/test/resources/test-dataupdate-interface.xml");
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        
+        // All flows should have Device-A = "VMP" (from VMP SEND rules)
+        // Device-A should NEVER be "Edge" (which is what DataUpdate escalation rule would map to)
+        for (ExcelParserV5.FlowRow flow : clinicals) {
+            assertNotNull(flow.deviceA, "Device-A should be set");
+            assertEquals("VMP", flow.deviceA, 
+                "Device-A should be VMP from SEND rules, not Edge from DataUpdate escalation rules");
+            assertNotEquals("Edge", flow.deviceA, 
+                "Device-A should not be Edge (from DataUpdate). It should come from SEND rules (VMP).");
+        }
+    }
 }
