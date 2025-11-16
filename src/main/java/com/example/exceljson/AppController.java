@@ -3121,6 +3121,10 @@ public class AppController {
             if (header.getStyleClass().contains("sticky-column") || 
                 isHeaderForColumn(header, column)) {
                 header.setTranslateX(hScrollValue);
+                header.setMouseTransparent(false);
+                header.setPickOnBounds(true);
+                header.setViewOrder(-1); // keep header above scrolling content
+                header.toFront();
             }
         }
         
@@ -3131,6 +3135,10 @@ public class AppController {
                 javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
                 if (tableCell.getTableColumn() == column) {
                     cell.setTranslateX(hScrollValue);
+                    cell.setMouseTransparent(false);
+                    cell.setPickOnBounds(true);
+                    cell.setViewOrder(-1); // ensure checkbox stays clickable
+                    cell.toFront();
                 }
             }
         }
