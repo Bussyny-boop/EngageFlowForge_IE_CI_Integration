@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam rectangle {
+  RoundCorner 12
+  BorderColor #000000
+  FontSize 14
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #111111
+  RoundCorner 10
+  FontSize 14
+}
+skinparam ArrowColor #333333
+skinparam ArrowFontSize 13
+
+note "Alert: Toilet Assist\nType: NurseCalls\nPriority: Medium" as Header_1 #FFFFFF
+
+rectangle "Assistant, NST" as Step_1_1 #FDF0E7
+note top of Step_1_1 : 0 sec
+
+rectangle "Buddy Assistant" as Step_1_2 #FDF0E7
+rectangle "Nurse" as Step_1_3 #FDF0E7
+rectangle "Nurse Buddy" as Step_1_4 #FDF0E7
+
+Header_1 -[hidden]-> Step_1_1
+Step_1_1 --> Step_1_2 : 60 sec
+Step_1_2 --> Step_1_3 : 60 sec
+Step_1_3 --> Step_1_4 : 60 sec
+@enduml

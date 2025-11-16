@@ -25,18 +25,26 @@ import javafx.concurrent.Task;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Slider;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.prefs.Preferences;
+import javax.imageio.ImageIO;
 import net.sourceforge.plantuml.SourceStringReader;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class AppController {
 
@@ -2887,6 +2895,45 @@ public class AppController {
 
     private static String safe(String v) { return v == null ? "" : v; }
 
+    private static String sanitizeForPlantUml(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String cleaned = value.chars()
+            .mapToObj(c -> {
+                if (c < 32 || c == 127) {
+                    return " ";
+                }
+                return String.valueOf((char) c);
+            })
+            .collect(Collectors.joining());
+
+        String normalized = cleaned
+            .replace("[", "(")
+            .replace("]", ")")
+            .replace("{", "(")
+            .replace("}", ")")
+            .replace("<", "(")
+            .replace(">", ")")
+            .replace("|", "/")
+            .replace("\\", "/")
+            .replace("\"", "'")
+            .replaceAll("\\s+", " ")
+            .trim();
+
+        return normalized.length() > 0 ? normalized : "-";
+    }
+
+    private static String sanitizeLabelOrEmpty(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return "";
+        }
+
+        String sanitized = sanitizeForPlantUml(value);
+        return "-".equals(sanitized) ? "" : sanitized;
+    }
+
     // ---------- Remember Directory ----------
     private void rememberDirectory(File file, boolean isExcel) {
         if (file == null) return;
@@ -3427,39 +3474,94 @@ public class AppController {
             // Group by config group
             Map<String, List<ExcelParserV5.FlowRow>> grouped = checkedRows.stream()
                 .collect(Collectors.groupingBy(r -> r.configGroup != null ? r.configGroup : "Unknown"));
-            // Build PlantUML component diagram (simple box/line)
+            // Build PlantUML component diagram (horizontal timeline box style)
             StringBuilder plantuml = new StringBuilder();
             plantuml.append("@startuml\n");
-            plantuml.append("title Alarm Flow (Box Diagram)\n");
+            plantuml.append("left to right direction\n");
+            plantuml.append("skinparam shadowing false\n");
+            plantuml.append("skinparam backgroundColor #FFFFFF\n");
             plantuml.append("skinparam componentStyle rectangle\n");
+            plantuml.append("skinparam rectangle {\n");
+            plantuml.append("  RoundCorner 12\n");
+            plantuml.append("  BorderColor #000000\n");
+            plantuml.append("  FontSize 14\n");
+            plantuml.append("}\n");
+            plantuml.append("skinparam note {\n");
+            plantuml.append("  BackgroundColor #FFFFFF\n");
+            plantuml.append("  BorderColor #111111\n");
+            plantuml.append("  RoundCorner 10\n");
+            plantuml.append("  FontSize 14\n");
+            plantuml.append("}\n");
+            plantuml.append("skinparam ArrowColor #333333\n");
+            plantuml.append("skinparam ArrowFontSize 13\n");
+
+            int rowCounter = 1;
             for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                plantuml.append("package \"").append(safe(entry.getKey())).append("\" {\n");
                 for (ExcelParserV5.FlowRow row : entry.getValue()) {
-                    String alarmId = "Alarm_" + Math.abs(row.hashCode());
-                    plantuml.append("  [").append(safe(row.alarmName)).append("] as ").append(alarmId).append("\n");
-                    // Recipients as boxes
-                    if (row.r1 != null && !row.r1.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r1)).append("] as R1_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R1_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t1)).append("\n");
+                    String[] recipients = { row.r1, row.r2, row.r3, row.r4, row.r5 };
+                    String[] times = { row.t1, row.t2, row.t3, row.t4, row.t5 };
+
+                    List<Integer> steps = new ArrayList<>();
+                    for (int i = 0; i < recipients.length; i++) {
+                        if (recipients[i] != null && !recipients[i].trim().isEmpty()) {
+                            steps.add(i);
+                        }
                     }
-                    if (row.r2 != null && !row.r2.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r2)).append("] as R2_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R2_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t2)).append("\n");
+
+                    if (steps.isEmpty()) {
+                        continue;
                     }
-                    if (row.r3 != null && !row.r3.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r3)).append("] as R3_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R3_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t3)).append("\n");
+
+                    String headerId = "Header_" + rowCounter;
+                    String firstStepId = "Step_" + rowCounter + "_1";
+                    String headerLabel = "Alert: " + sanitizeForPlantUml(row.alarmName)
+                        + "\\nType: " + sanitizeForPlantUml(row.type)
+                        + "\\nPriority: " + sanitizeForPlantUml(row.priorityRaw);
+
+                    plantuml.append("note \"").append(headerLabel).append("\" as ").append(headerId).append(" #FFFFFF\n");
+
+                    if (entry.getKey() != null && !entry.getKey().trim().isEmpty()) {
+                        String configLabel = sanitizeLabelOrEmpty(entry.getKey());
+                        if (!configLabel.isEmpty()) {
+                            plantuml.append("note left of ").append(headerId).append(" : Config Group: ").append(configLabel).append("\\n");
+                        }
                     }
-                    if (row.r4 != null && !row.r4.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r4)).append("] as R4_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R4_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t4)).append("\n");
+
+                    for (int i = 0; i < steps.size(); i++) {
+                        int idx = steps.get(i);
+                        String stepId = "Step_" + rowCounter + "_" + (i + 1);
+                        plantuml.append("rectangle \"")
+                            .append(sanitizeForPlantUml(recipients[idx]))
+                            .append("\" as ")
+                            .append(stepId)
+                            .append(" #FDF0E7\n");
+
+                        if (i == 0) {
+                            String firstTime = sanitizeLabelOrEmpty(times[idx]);
+                            if (!firstTime.isEmpty()) {
+                                plantuml.append("note top of ").append(stepId).append(" : ").append(firstTime).append("\\n");
+                            }
+                        }
                     }
-                    if (row.r5 != null && !row.r5.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r5)).append("] as R5_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R5_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t5)).append("\n");
+
+                    plantuml.append(headerId).append(" -[hidden]-> ").append(firstStepId).append("\n");
+
+                    for (int i = 0; i < steps.size() - 1; i++) {
+                        int currentIdx = steps.get(i);
+                        int nextIdx = steps.get(i + 1);
+                        String currentId = "Step_" + rowCounter + "_" + (i + 1);
+                        String nextId = "Step_" + rowCounter + "_" + (i + 2);
+                        String timeLabel = sanitizeLabelOrEmpty(times[nextIdx]);
+                        plantuml.append(currentId).append(" --> ").append(nextId);
+                        if (!timeLabel.isEmpty()) {
+                            plantuml.append(" : ").append(timeLabel);
+                        }
+                        plantuml.append("\n");
                     }
+
+                    plantuml.append("\n");
+                    rowCounter++;
                 }
-                plantuml.append("}\n");
             }
             plantuml.append("@enduml\n");
             // File chooser - check if stage is available
@@ -3479,14 +3581,48 @@ public class AppController {
             if (file == null) return;
             // Remember directory
             rememberDirectory(file, false);
-            // Generate PDF
-            try (OutputStream os = new FileOutputStream(file)) {
+            // Generate the diagram as PNG and embed into a PDF to avoid PlantUML PDF runtime issues
+            byte[] diagramBytes;
+            try (ByteArrayOutputStream pngOutput = new ByteArrayOutputStream()) {
                 SourceStringReader reader = new SourceStringReader(plantuml.toString());
-                reader.outputImage(os, new FileFormatOption(FileFormat.PDF));
+                reader.outputImage(pngOutput, new FileFormatOption(FileFormat.PNG));
+                diagramBytes = pngOutput.toByteArray();
             } catch (IOException e) {
-                showError("Error generating PDF: " + e.getMessage());
+                showError("Error generating diagram: " + e.getMessage());
                 return;
             }
+
+            BufferedImage diagramImage;
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(diagramBytes)) {
+                diagramImage = ImageIO.read(bais);
+            } catch (IOException e) {
+                showError("Error reading generated diagram: " + e.getMessage());
+                return;
+            }
+
+            if (diagramImage == null) {
+                showError("Generated diagram could not be read.");
+                return;
+            }
+
+            float widthPoints = diagramImage.getWidth() * 72f / 96f;
+            float heightPoints = diagramImage.getHeight() * 72f / 96f;
+
+            try (PDDocument document = new PDDocument()) {
+                PDPage page = new PDPage(new PDRectangle(widthPoints, heightPoints));
+                document.addPage(page);
+
+                PDImageXObject pdImage = LosslessFactory.createFromImage(document, diagramImage);
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                    contentStream.drawImage(pdImage, 0, 0, widthPoints, heightPoints);
+                }
+
+                document.save(file);
+            } catch (IOException e) {
+                showError("Error writing PDF: " + e.getMessage());
+                return;
+            }
+
             showInfo("Visual Flow PDF saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
             java.io.StringWriter sw = new java.io.StringWriter();
