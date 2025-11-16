@@ -2895,6 +2895,36 @@ public class AppController {
 
     private static String safe(String v) { return v == null ? "" : v; }
 
+    private static String sanitizeForPlantUml(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String cleaned = value.chars()
+            .mapToObj(c -> {
+                if (c < 32 || c == 127) {
+                    return " ";
+                }
+                return String.valueOf((char) c);
+            })
+            .collect(Collectors.joining());
+
+        String normalized = cleaned
+            .replace("[", "(")
+            .replace("]", ")")
+            .replace("{", "(")
+            .replace("}", ")")
+            .replace("<", "(")
+            .replace(">", ")")
+            .replace("|", "/")
+            .replace("\\", "/")
+            .replace("\"", "'")
+            .replaceAll("\\s+", " ")
+            .trim();
+
+        return normalized.length() > 0 ? normalized : "-";
+    }
+
     // ---------- Remember Directory ----------
     private void rememberDirectory(File file, boolean isExcel) {
         if (file == null) return;
@@ -3441,30 +3471,30 @@ public class AppController {
             plantuml.append("title Alarm Flow (Box Diagram)\n");
             plantuml.append("skinparam componentStyle rectangle\n");
             for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                plantuml.append("package \"").append(safe(entry.getKey())).append("\" {\n");
+                plantuml.append("package \"").append(sanitizeForPlantUml(entry.getKey())).append("\" {\n");
                 for (ExcelParserV5.FlowRow row : entry.getValue()) {
                     String alarmId = "Alarm_" + Math.abs(row.hashCode());
-                    plantuml.append("  [").append(safe(row.alarmName)).append("] as ").append(alarmId).append("\n");
+                    plantuml.append("  [").append(sanitizeForPlantUml(row.alarmName)).append("] as ").append(alarmId).append("\n");
                     // Recipients as boxes
                     if (row.r1 != null && !row.r1.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r1)).append("] as R1_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R1_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t1)).append("\n");
+                        plantuml.append("  [").append(sanitizeForPlantUml(row.r1)).append("] as R1_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R1_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t1)).append("\n");
                     }
                     if (row.r2 != null && !row.r2.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r2)).append("] as R2_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R2_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t2)).append("\n");
+                        plantuml.append("  [").append(sanitizeForPlantUml(row.r2)).append("] as R2_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R2_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t2)).append("\n");
                     }
                     if (row.r3 != null && !row.r3.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r3)).append("] as R3_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R3_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t3)).append("\n");
+                        plantuml.append("  [").append(sanitizeForPlantUml(row.r3)).append("] as R3_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R3_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t3)).append("\n");
                     }
                     if (row.r4 != null && !row.r4.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r4)).append("] as R4_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R4_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t4)).append("\n");
+                        plantuml.append("  [").append(sanitizeForPlantUml(row.r4)).append("] as R4_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R4_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t4)).append("\n");
                     }
                     if (row.r5 != null && !row.r5.trim().isEmpty()) {
-                        plantuml.append("  [").append(safe(row.r5)).append("] as R5_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R5_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t5)).append("\n");
+                        plantuml.append("  [").append(sanitizeForPlantUml(row.r5)).append("] as R5_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R5_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t5)).append("\n");
                     }
                 }
                 plantuml.append("}\n");

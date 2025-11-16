@@ -1,0 +1,26 @@
+@startuml
+title Alarm Flow (Box Diagram)
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Roboto
+skinparam defaultFontSize 14
+
+package "Cardiology" {
+  [Code Blue - CCU] as Alarm1
+  [Charge Nurse Phones] as R1_1
+  Alarm1 --down- R1_1 : 0s
+  [Rapid Response Team] as R2_1
+  Alarm1 --down- R2_1 : 15s
+}
+
+package "Oncology" {
+  [Bed Exit - West Wing] as Alarm2
+  [Unit Clerk Desk] as R1_2
+  Alarm2 --down- R1_2 : 0s
+  [Assigned Nurse] as R2_2
+  Alarm2 --down- R2_2 : 20s
+  [Charge Nurse] as R3_2
+  Alarm2 --down- R3_2 : 45s
+}
+@enduml
