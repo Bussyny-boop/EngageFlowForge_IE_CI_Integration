@@ -1763,7 +1763,14 @@ public class AppController {
     }
 
     private Stage getStage() {
-        return (Stage) jsonPreview.getScene().getWindow();
+        if (jsonPreview == null) return null;
+        var scene = jsonPreview.getScene();
+        if (scene == null) return null;
+        var window = scene.getWindow();
+        if (window instanceof Stage) {
+            return (Stage) window;
+        }
+        return null;
     }
 
     // ---------- Table column setup ----------
@@ -3399,6 +3406,12 @@ public class AppController {
                 return;
             }
 
+            // Check if UI is properly initialized
+            if (jsonPreview == null) {
+                showError("UI not fully initialized. Please try again.");
+                return;
+            }
+
             // Collect checked rows
             List<ExcelParserV5.FlowRow> checkedRows = new ArrayList<>();
             if (nurseCallsFullList != null) {
@@ -3471,7 +3484,13 @@ public class AppController {
             }
             plantuml.append("@enduml\n");
 
-            // File chooser
+            // File chooser - check if stage is available
+            Stage stage = getStage();
+            if (stage == null) {
+                showError("Application window not available. Please try again.");
+                return;
+            }
+
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Save Visual Flow PDF");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
@@ -3479,7 +3498,7 @@ public class AppController {
             if (lastJsonDir != null && lastJsonDir.exists()) {
                 chooser.setInitialDirectory(lastJsonDir);
             }
-            File file = chooser.showSaveDialog(getStage());
+            File file = chooser.showSaveDialog(stage);
             if (file == null) return;
 
             // Remember directory
@@ -3496,7 +3515,11 @@ public class AppController {
 
             showInfo("Visual Flow PDF saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
-            showError("Error generating visual flow: " + ex.getMessage());
+            String errorMsg = ex.getMessage();
+            if (errorMsg == null || errorMsg.trim().isEmpty()) {
+                errorMsg = "Unknown error occurred";
+            }
+            showError("Error generating visual flow: " + errorMsg);
         }
     }
 }
