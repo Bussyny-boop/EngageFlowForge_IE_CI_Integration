@@ -25,18 +25,26 @@ import javafx.concurrent.Task;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Slider;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.prefs.Preferences;
+import javax.imageio.ImageIO;
 import net.sourceforge.plantuml.SourceStringReader;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class AppController {
 
@@ -3479,14 +3487,48 @@ public class AppController {
             if (file == null) return;
             // Remember directory
             rememberDirectory(file, false);
-            // Generate PDF
-            try (OutputStream os = new FileOutputStream(file)) {
+            // Generate the diagram as PNG and embed into a PDF to avoid PlantUML PDF runtime issues
+            byte[] diagramBytes;
+            try (ByteArrayOutputStream pngOutput = new ByteArrayOutputStream()) {
                 SourceStringReader reader = new SourceStringReader(plantuml.toString());
-                reader.outputImage(os, new FileFormatOption(FileFormat.PDF));
+                reader.outputImage(pngOutput, new FileFormatOption(FileFormat.PNG));
+                diagramBytes = pngOutput.toByteArray();
             } catch (IOException e) {
-                showError("Error generating PDF: " + e.getMessage());
+                showError("Error generating diagram: " + e.getMessage());
                 return;
             }
+
+            BufferedImage diagramImage;
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(diagramBytes)) {
+                diagramImage = ImageIO.read(bais);
+            } catch (IOException e) {
+                showError("Error reading generated diagram: " + e.getMessage());
+                return;
+            }
+
+            if (diagramImage == null) {
+                showError("Generated diagram could not be read.");
+                return;
+            }
+
+            float widthPoints = diagramImage.getWidth() * 72f / 96f;
+            float heightPoints = diagramImage.getHeight() * 72f / 96f;
+
+            try (PDDocument document = new PDDocument()) {
+                PDPage page = new PDPage(new PDRectangle(widthPoints, heightPoints));
+                document.addPage(page);
+
+                PDImageXObject pdImage = LosslessFactory.createFromImage(document, diagramImage);
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                    contentStream.drawImage(pdImage, 0, 0, widthPoints, heightPoints);
+                }
+
+                document.save(file);
+            } catch (IOException e) {
+                showError("Error writing PDF: " + e.getMessage());
+                return;
+            }
+
             showInfo("Visual Flow PDF saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
             java.io.StringWriter sw = new java.io.StringWriter();
