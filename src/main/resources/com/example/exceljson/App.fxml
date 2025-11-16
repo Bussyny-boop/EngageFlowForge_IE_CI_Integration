@@ -138,6 +138,9 @@
                             
                             <!-- Export Orders JSON -->
                             <Button fx:id="exportOrdersJsonButton" text="💾 Export Orders" maxWidth="Infinity" styleClass="nav-button" />
+                            
+                            <!-- Visual Flow -->
+                            <Button fx:id="visualFlowButton" text="📊 Visual Flow" maxWidth="Infinity" styleClass="nav-button" />
                         </VBox>
                     </center>
                 </BorderPane>
