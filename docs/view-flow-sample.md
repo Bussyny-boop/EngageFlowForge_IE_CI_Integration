@@ -21,17 +21,20 @@ skinparam rectangle {
   RoundCorner 16
   FontSize 14
   FontColor #111111
-  BorderColor #444444
 }
+skinparam rectangle<<Header>> { BackgroundColor #f2f2f2 BorderColor #9a9a9a }
+skinparam rectangle<<Stage1>> { BackgroundColor #c8f7c5 BorderColor #4f9a4f }
+skinparam rectangle<<Stage2>> { BackgroundColor #cfe2ff BorderColor #4a78c2 }
+skinparam rectangle<<StageTail>> { BackgroundColor #cfe2ff BorderColor #4a78c2 }
 skinparam ArrowColor #333333
 skinparam ArrowFontSize 12
 skinparam ArrowThickness 1.4
 
-rectangle "Acute Care NC\nCode Blue\nHigh Priority" as Header_1 #f2f2f2;line:#9a9a9a
-rectangle "0 sec\n(Immediate)\nRecipient:\nPrimary RN" as Stage_1_1 #c8f7c5;line:#4f9a4f
+rectangle "Acute Care NC\nCode Blue\nHigh Priority" as Header_1 <<Header>>
+rectangle "0 sec\n(Immediate)\nRecipient:\nPrimary RN" as Stage_1_1 <<Stage1>>
 Header_1 -down-> Stage_1_1
 
-rectangle "60 sec\n(60 sec)\nRecipient:\nCharge RN" as Stage_1_2 #cfe2ff;line:#4a78c2
+rectangle "60 sec\n(60 sec)\nRecipient:\nCharge RN" as Stage_1_2 <<Stage2>>
 Stage_1_1 -down-> Stage_1_2 : 60 sec
 @enduml
 ```

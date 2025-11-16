@@ -3506,14 +3506,16 @@ public class AppController {
             plantuml.append("  RoundCorner 16\n");
             plantuml.append("  FontSize 14\n");
             plantuml.append("  FontColor #111111\n");
-            plantuml.append("  BorderColor #444444\n");
             plantuml.append("}\n");
+            plantuml.append("skinparam rectangle<<Header>> { BackgroundColor #f2f2f2 BorderColor #9a9a9a }\n");
+            plantuml.append("skinparam rectangle<<Stage1>> { BackgroundColor #c8f7c5 BorderColor #4f9a4f }\n");
+            plantuml.append("skinparam rectangle<<Stage2>> { BackgroundColor #cfe2ff BorderColor #4a78c2 }\n");
+            plantuml.append("skinparam rectangle<<StageTail>> { BackgroundColor #cfe2ff BorderColor #4a78c2 }\n");
             plantuml.append("skinparam ArrowColor #333333\n");
             plantuml.append("skinparam ArrowFontSize 12\n");
             plantuml.append("skinparam ArrowThickness 1.4\n");
 
-            String[] stageFills = {"#c8f7c5", "#cfe2ff"};
-            String[] stageBorders = {"#4f9a4f", "#4a78c2"};
+            String[] stageStereotypes = {"Stage1", "Stage2"};
 
             int rowCounter = 1;
             for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
@@ -3539,7 +3541,7 @@ public class AppController {
                         sanitizeForPlantUml(row.priorityRaw)
                     );
                     plantuml.append("rectangle \"").append(headerLabel).append("\" as ")
-                        .append(headerId).append(" #f2f2f2;line:#9a9a9a\n");
+                        .append(headerId).append(" <<Header>>\n");
 
                     String previousId = headerId;
 
@@ -3561,11 +3563,10 @@ public class AppController {
                             recipientLabel
                         );
 
-                        String fill = i < stageFills.length ? stageFills[i] : stageFills[stageFills.length - 1];
-                        String border = i < stageBorders.length ? stageBorders[i] : stageBorders[stageBorders.length - 1];
+                        String stereo = i < stageStereotypes.length ? stageStereotypes[i] : "StageTail";
 
                         plantuml.append("rectangle \"").append(stageLabel).append("\" as ").append(stageId)
-                            .append(" ").append(fill).append(";line:").append(border).append("\n");
+                            .append(" <<").append(stereo).append(">>\n");
 
                         String arrowLabel = "";
                         if (!isImmediateTime(times[idx])) {
