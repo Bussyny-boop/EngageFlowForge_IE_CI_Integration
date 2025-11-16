@@ -3169,6 +3169,11 @@ public class AppController {
      * with merged unique config group values
      */
     private void combineConfigGroupRows() {
+        // Don't combine if no data loaded
+        if (parser == null || parser.nurseCalls.isEmpty() && parser.clinicals.isEmpty() && parser.orders.isEmpty()) {
+            return;
+        }
+        
         // Backup original data before combining
         originalNurseCalls = new ArrayList<>(parser.nurseCalls);
         originalClinicals = new ArrayList<>(parser.clinicals);
@@ -3187,8 +3192,21 @@ public class AppController {
         parser.orders.clear();
         parser.orders.addAll(combinedOrders);
         
-        // Refresh tables
-        refreshAllTables();
+        // Update full lists and filtered lists properly
+        if (nurseCallsFullList != null) {
+            nurseCallsFullList.setAll(parser.nurseCalls);
+        }
+        if (clinicalsFullList != null) {
+            clinicalsFullList.setAll(parser.clinicals);
+        }
+        if (ordersFullList != null) {
+            ordersFullList.setAll(parser.orders);
+        }
+        
+        // Reapply filters
+        applyNurseFilter();
+        applyClinicalFilter();
+        applyOrdersFilter();
     }
     
     /**
@@ -3198,21 +3216,32 @@ public class AppController {
         if (originalNurseCalls != null) {
             parser.nurseCalls.clear();
             parser.nurseCalls.addAll(originalNurseCalls);
+            if (nurseCallsFullList != null) {
+                nurseCallsFullList.setAll(originalNurseCalls);
+            }
             originalNurseCalls = null;
         }
         if (originalClinicals != null) {
             parser.clinicals.clear();
             parser.clinicals.addAll(originalClinicals);
+            if (clinicalsFullList != null) {
+                clinicalsFullList.setAll(originalClinicals);
+            }
             originalClinicals = null;
         }
         if (originalOrders != null) {
             parser.orders.clear();
             parser.orders.addAll(originalOrders);
+            if (ordersFullList != null) {
+                ordersFullList.setAll(originalOrders);
+            }
             originalOrders = null;
         }
         
-        // Refresh tables
-        refreshAllTables();
+        // Reapply filters
+        applyNurseFilter();
+        applyClinicalFilter();
+        applyOrdersFilter();
     }
     
     /**
