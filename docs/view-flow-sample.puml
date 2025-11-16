@@ -1,0 +1,45 @@
+@startuml
+top to bottom direction
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam rectangle {
+  RoundCorner 16
+  FontSize 14
+  FontColor #111111
+}
+skinparam rectangle<<GlobalHeader>> {
+  BackgroundColor #ffffff
+  BorderColor #b5b5b5
+}
+skinparam rectangle<<FlowHeader>> {
+  BackgroundColor #dcdcdc
+  BorderColor #9a9a9a
+}
+skinparam rectangle<<StopA>> {
+  BackgroundColor #c8f7c5
+  BorderColor #4f9a4f
+}
+skinparam rectangle<<StopB>> {
+  BackgroundColor #cfe2ff
+  BorderColor #4a78c2
+}
+skinparam ArrowColor #333333
+skinparam ArrowFontSize 12
+skinparam ArrowThickness 1.4
+
+rectangle "NurseCall — Acute Care NC" as GlobalHeader_1 <<GlobalHeader>>
+
+together {
+  rectangle "Bath Call\nMedium(Edge)" as FlowHeader_1 <<FlowHeader>>
+  rectangle "Alarm Stop 1\nRecipient:\nVAssign:(Room) CNA" as Stop_1_1 <<StopA>>
+  FlowHeader_1 -down-> Stop_1_1 : Immediate
+  rectangle "Alarm Stop 2\nRecipient:\nVAssign: Nurse" as Stop_1_2 <<StopB>>
+  Stop_1_1 -down-> Stop_1_2 : 60 sec
+
+  rectangle "Bathroom Request Call\nMedium(Edge)" as FlowHeader_2 <<FlowHeader>>
+  rectangle "Alarm Stop 1\nRecipient:\nVAssign: CNA" as Stop_2_1 <<StopA>>
+  FlowHeader_2 -down-> Stop_2_1 : Immediate
+  rectangle "Alarm Stop 2\nRecipient:\nVAssign: Nurse" as Stop_2_2 <<StopB>>
+  Stop_2_1 -down-> Stop_2_2 : 60 sec
+}
+@enduml
