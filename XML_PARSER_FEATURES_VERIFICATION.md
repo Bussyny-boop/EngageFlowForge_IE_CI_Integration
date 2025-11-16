@@ -72,7 +72,7 @@ Just ran comprehensive tests - **ALL PASSING**:
 
 ```bash
 cd /workspaces/Engage-xml-Converter
-java -jar target/engage-rules-generator-2.5.0.jar
+java -jar target/engage-rules-generator-3.0.0.jar
 ```
 
 The JAR was just rebuilt (Nov 15 11:21) and includes all changes.
@@ -139,7 +139,7 @@ mvn javafx:run
 
 ```bash
 # Check JAR timestamp
-ls -lh target/engage-rules-generator-2.5.0.jar
+ls -lh target/engage-rules-generator-3.0.0.jar
 
 # Should show: Nov 15 11:21 (or later)
 ```
@@ -275,7 +275,7 @@ Load this file and check:
 2. ✅ Newline separator instead of comma
 3. ✅ Facility + Unit in config group name
 
-**Latest JAR built**: `target/engage-rules-generator-2.5.0.jar` (Nov 15 11:21)
+**Latest JAR built**: `target/engage-rules-generator-3.0.0.jar` (Nov 15 11:21)
 
 **Test coverage**: 4 new tests, all passing
 
