@@ -2925,6 +2925,15 @@ public class AppController {
         return normalized.length() > 0 ? normalized : "-";
     }
 
+    private static String sanitizeLabelOrEmpty(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return "";
+        }
+
+        String sanitized = sanitizeForPlantUml(value);
+        return "-".equals(sanitized) ? "" : sanitized;
+    }
+
     // ---------- Remember Directory ----------
     private void rememberDirectory(File file, boolean isExcel) {
         if (file == null) return;
@@ -3465,39 +3474,94 @@ public class AppController {
             // Group by config group
             Map<String, List<ExcelParserV5.FlowRow>> grouped = checkedRows.stream()
                 .collect(Collectors.groupingBy(r -> r.configGroup != null ? r.configGroup : "Unknown"));
-            // Build PlantUML component diagram (simple box/line)
+            // Build PlantUML component diagram (horizontal timeline box style)
             StringBuilder plantuml = new StringBuilder();
             plantuml.append("@startuml\n");
-            plantuml.append("title Alarm Flow (Box Diagram)\n");
+            plantuml.append("left to right direction\n");
+            plantuml.append("skinparam shadowing false\n");
+            plantuml.append("skinparam backgroundColor #FFFFFF\n");
             plantuml.append("skinparam componentStyle rectangle\n");
+            plantuml.append("skinparam rectangle {\n");
+            plantuml.append("  RoundCorner 12\n");
+            plantuml.append("  BorderColor #000000\n");
+            plantuml.append("  FontSize 14\n");
+            plantuml.append("}\n");
+            plantuml.append("skinparam note {\n");
+            plantuml.append("  BackgroundColor #FFFFFF\n");
+            plantuml.append("  BorderColor #111111\n");
+            plantuml.append("  RoundCorner 10\n");
+            plantuml.append("  FontSize 14\n");
+            plantuml.append("}\n");
+            plantuml.append("skinparam ArrowColor #333333\n");
+            plantuml.append("skinparam ArrowFontSize 13\n");
+
+            int rowCounter = 1;
             for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                plantuml.append("package \"").append(sanitizeForPlantUml(entry.getKey())).append("\" {\n");
                 for (ExcelParserV5.FlowRow row : entry.getValue()) {
-                    String alarmId = "Alarm_" + Math.abs(row.hashCode());
-                    plantuml.append("  [").append(sanitizeForPlantUml(row.alarmName)).append("] as ").append(alarmId).append("\n");
-                    // Recipients as boxes
-                    if (row.r1 != null && !row.r1.trim().isEmpty()) {
-                        plantuml.append("  [").append(sanitizeForPlantUml(row.r1)).append("] as R1_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R1_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t1)).append("\n");
+                    String[] recipients = { row.r1, row.r2, row.r3, row.r4, row.r5 };
+                    String[] times = { row.t1, row.t2, row.t3, row.t4, row.t5 };
+
+                    List<Integer> steps = new ArrayList<>();
+                    for (int i = 0; i < recipients.length; i++) {
+                        if (recipients[i] != null && !recipients[i].trim().isEmpty()) {
+                            steps.add(i);
+                        }
                     }
-                    if (row.r2 != null && !row.r2.trim().isEmpty()) {
-                        plantuml.append("  [").append(sanitizeForPlantUml(row.r2)).append("] as R2_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R2_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t2)).append("\n");
+
+                    if (steps.isEmpty()) {
+                        continue;
                     }
-                    if (row.r3 != null && !row.r3.trim().isEmpty()) {
-                        plantuml.append("  [").append(sanitizeForPlantUml(row.r3)).append("] as R3_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R3_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t3)).append("\n");
+
+                    String headerId = "Header_" + rowCounter;
+                    String firstStepId = "Step_" + rowCounter + "_1";
+                    String headerLabel = "Alert: " + sanitizeForPlantUml(row.alarmName)
+                        + "\\nType: " + sanitizeForPlantUml(row.type)
+                        + "\\nPriority: " + sanitizeForPlantUml(row.priorityRaw);
+
+                    plantuml.append("note \"").append(headerLabel).append("\" as ").append(headerId).append(" #FFFFFF\n");
+
+                    if (entry.getKey() != null && !entry.getKey().trim().isEmpty()) {
+                        String configLabel = sanitizeLabelOrEmpty(entry.getKey());
+                        if (!configLabel.isEmpty()) {
+                            plantuml.append("note left of ").append(headerId).append(" : Config Group: ").append(configLabel).append("\\n");
+                        }
                     }
-                    if (row.r4 != null && !row.r4.trim().isEmpty()) {
-                        plantuml.append("  [").append(sanitizeForPlantUml(row.r4)).append("] as R4_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R4_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t4)).append("\n");
+
+                    for (int i = 0; i < steps.size(); i++) {
+                        int idx = steps.get(i);
+                        String stepId = "Step_" + rowCounter + "_" + (i + 1);
+                        plantuml.append("rectangle \"")
+                            .append(sanitizeForPlantUml(recipients[idx]))
+                            .append("\" as ")
+                            .append(stepId)
+                            .append(" #FDF0E7\n");
+
+                        if (i == 0) {
+                            String firstTime = sanitizeLabelOrEmpty(times[idx]);
+                            if (!firstTime.isEmpty()) {
+                                plantuml.append("note top of ").append(stepId).append(" : ").append(firstTime).append("\\n");
+                            }
+                        }
                     }
-                    if (row.r5 != null && !row.r5.trim().isEmpty()) {
-                        plantuml.append("  [").append(sanitizeForPlantUml(row.r5)).append("] as R5_").append(Math.abs(row.hashCode())).append("\n");
-                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R5_").append(Math.abs(row.hashCode())).append(" : ").append(sanitizeForPlantUml(row.t5)).append("\n");
+
+                    plantuml.append(headerId).append(" -[hidden]-> ").append(firstStepId).append("\n");
+
+                    for (int i = 0; i < steps.size() - 1; i++) {
+                        int currentIdx = steps.get(i);
+                        int nextIdx = steps.get(i + 1);
+                        String currentId = "Step_" + rowCounter + "_" + (i + 1);
+                        String nextId = "Step_" + rowCounter + "_" + (i + 2);
+                        String timeLabel = sanitizeLabelOrEmpty(times[nextIdx]);
+                        plantuml.append(currentId).append(" --> ").append(nextId);
+                        if (!timeLabel.isEmpty()) {
+                            plantuml.append(" : ").append(timeLabel);
+                        }
+                        plantuml.append("\n");
                     }
+
+                    plantuml.append("\n");
+                    rowCounter++;
                 }
-                plantuml.append("}\n");
             }
             plantuml.append("@enduml\n");
             // File chooser - check if stage is available
