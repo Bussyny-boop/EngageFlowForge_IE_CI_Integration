@@ -1,33 +1,21 @@
 @startuml
-left to right direction
+top to bottom direction
 skinparam shadowing false
 skinparam backgroundColor #FFFFFF
-skinparam componentStyle rectangle
 skinparam rectangle {
-  RoundCorner 12
-  BorderColor #000000
+  RoundCorner 16
   FontSize 14
-}
-skinparam note {
-  BackgroundColor #FFFFFF
-  BorderColor #111111
-  RoundCorner 10
-  FontSize 14
+  FontColor #111111
+  BorderColor #444444
 }
 skinparam ArrowColor #333333
-skinparam ArrowFontSize 13
+skinparam ArrowFontSize 12
+skinparam ArrowThickness 1.4
 
-note "Alert: Toilet Assist\nType: NurseCalls\nPriority: Medium" as Header_1 #FFFFFF
+rectangle "Acute Care NC\nCode Blue\nHigh Priority" as Header_1 #f2f2f2;line:#9a9a9a
+rectangle "0 sec\n(Immediate)\nRecipient:\nPrimary RN" as Stage_1_1 #c8f7c5;line:#4f9a4f
+Header_1 -down-> Stage_1_1
 
-rectangle "Assistant, NST" as Step_1_1 #FDF0E7
-note top of Step_1_1 : 0 sec
-
-rectangle "Buddy Assistant" as Step_1_2 #FDF0E7
-rectangle "Nurse" as Step_1_3 #FDF0E7
-rectangle "Nurse Buddy" as Step_1_4 #FDF0E7
-
-Header_1 -[hidden]-> Step_1_1
-Step_1_1 --> Step_1_2 : 60 sec
-Step_1_2 --> Step_1_3 : 60 sec
-Step_1_3 --> Step_1_4 : 60 sec
+rectangle "60 sec\n(60 sec)\nRecipient:\nCharge RN" as Stage_1_2 #cfe2ff;line:#4a78c2
+Stage_1_1 -down-> Stage_1_2 : 60 sec
 @enduml

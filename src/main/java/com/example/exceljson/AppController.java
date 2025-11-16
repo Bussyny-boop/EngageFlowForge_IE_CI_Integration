@@ -2934,6 +2934,28 @@ public class AppController {
         return "-".equals(sanitized) ? "" : sanitized;
     }
 
+    private static boolean isImmediateTime(String value) {
+        if (value == null) {
+            return false;
+        }
+
+        String normalized = value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+        if (normalized.isEmpty()) {
+            return false;
+        }
+
+        if (normalized.equals("immediate") || normalized.equals("immediately") || normalized.equals("now")) {
+            return true;
+        }
+
+        return normalized.equals("0")
+            || normalized.equals("0s")
+            || normalized.equals("0sec")
+            || normalized.equals("0secs")
+            || normalized.equals("0second")
+            || normalized.equals("0seconds");
+    }
+
     // ---------- Remember Directory ----------
     private void rememberDirectory(File file, boolean isExcel) {
         if (file == null) return;
@@ -3474,26 +3496,24 @@ public class AppController {
             // Group by config group
             Map<String, List<ExcelParserV5.FlowRow>> grouped = checkedRows.stream()
                 .collect(Collectors.groupingBy(r -> r.configGroup != null ? r.configGroup : "Unknown"));
-            // Build PlantUML component diagram (horizontal timeline box style)
+            // Build PlantUML diagram with vertical staged layout
             StringBuilder plantuml = new StringBuilder();
             plantuml.append("@startuml\n");
-            plantuml.append("left to right direction\n");
+            plantuml.append("top to bottom direction\n");
             plantuml.append("skinparam shadowing false\n");
             plantuml.append("skinparam backgroundColor #FFFFFF\n");
-            plantuml.append("skinparam componentStyle rectangle\n");
             plantuml.append("skinparam rectangle {\n");
-            plantuml.append("  RoundCorner 12\n");
-            plantuml.append("  BorderColor #000000\n");
+            plantuml.append("  RoundCorner 16\n");
             plantuml.append("  FontSize 14\n");
-            plantuml.append("}\n");
-            plantuml.append("skinparam note {\n");
-            plantuml.append("  BackgroundColor #FFFFFF\n");
-            plantuml.append("  BorderColor #111111\n");
-            plantuml.append("  RoundCorner 10\n");
-            plantuml.append("  FontSize 14\n");
+            plantuml.append("  FontColor #111111\n");
+            plantuml.append("  BorderColor #444444\n");
             plantuml.append("}\n");
             plantuml.append("skinparam ArrowColor #333333\n");
-            plantuml.append("skinparam ArrowFontSize 13\n");
+            plantuml.append("skinparam ArrowFontSize 12\n");
+            plantuml.append("skinparam ArrowThickness 1.4\n");
+
+            String[] stageFills = {"#c8f7c5", "#cfe2ff"};
+            String[] stageBorders = {"#4f9a4f", "#4a78c2"};
 
             int rowCounter = 1;
             for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
@@ -3513,50 +3533,52 @@ public class AppController {
                     }
 
                     String headerId = "Header_" + rowCounter;
-                    String firstStepId = "Step_" + rowCounter + "_1";
-                    String headerLabel = "Alert: " + sanitizeForPlantUml(row.alarmName)
-                        + "\\nType: " + sanitizeForPlantUml(row.type)
-                        + "\\nPriority: " + sanitizeForPlantUml(row.priorityRaw);
+                    String headerLabel = String.join("\\n",
+                        sanitizeForPlantUml(entry.getKey()),
+                        sanitizeForPlantUml(row.alarmName),
+                        sanitizeForPlantUml(row.priorityRaw)
+                    );
+                    plantuml.append("rectangle \"").append(headerLabel).append("\" as ")
+                        .append(headerId).append(" #f2f2f2;line:#9a9a9a\n");
 
-                    plantuml.append("note \"").append(headerLabel).append("\" as ").append(headerId).append(" #FFFFFF\n");
-
-                    if (entry.getKey() != null && !entry.getKey().trim().isEmpty()) {
-                        String configLabel = sanitizeLabelOrEmpty(entry.getKey());
-                        if (!configLabel.isEmpty()) {
-                            plantuml.append("note left of ").append(headerId).append(" : Config Group: ").append(configLabel).append("\\n");
-                        }
-                    }
+                    String previousId = headerId;
 
                     for (int i = 0; i < steps.size(); i++) {
                         int idx = steps.get(i);
-                        String stepId = "Step_" + rowCounter + "_" + (i + 1);
-                        plantuml.append("rectangle \"")
-                            .append(sanitizeForPlantUml(recipients[idx]))
-                            .append("\" as ")
-                            .append(stepId)
-                            .append(" #FDF0E7\n");
+                        String stageId = "Stage_" + rowCounter + "_" + (i + 1);
+                        String timeLabel = sanitizeForPlantUml(times[idx]);
+                        String recipientLabel = sanitizeForPlantUml(recipients[idx]);
 
-                        if (i == 0) {
-                            String firstTime = sanitizeLabelOrEmpty(times[idx]);
-                            if (!firstTime.isEmpty()) {
-                                plantuml.append("note top of ").append(stepId).append(" : ").append(firstTime).append("\\n");
-                            }
+                        String displayTime = "-".equals(timeLabel) ? "-" : timeLabel;
+                        String qualifier = isImmediateTime(times[idx])
+                            ? "Immediate"
+                            : (!"-".equals(timeLabel) ? timeLabel : "-");
+
+                        String stageLabel = String.join("\\n",
+                            displayTime,
+                            "(" + qualifier + ")",
+                            "Recipient:",
+                            recipientLabel
+                        );
+
+                        String fill = i < stageFills.length ? stageFills[i] : stageFills[stageFills.length - 1];
+                        String border = i < stageBorders.length ? stageBorders[i] : stageBorders[stageBorders.length - 1];
+
+                        plantuml.append("rectangle \"").append(stageLabel).append("\" as ").append(stageId)
+                            .append(" ").append(fill).append(";line:").append(border).append("\n");
+
+                        String arrowLabel = "";
+                        if (!isImmediateTime(times[idx])) {
+                            arrowLabel = sanitizeLabelOrEmpty(times[idx]);
                         }
-                    }
 
-                    plantuml.append(headerId).append(" -[hidden]-> ").append(firstStepId).append("\n");
-
-                    for (int i = 0; i < steps.size() - 1; i++) {
-                        int currentIdx = steps.get(i);
-                        int nextIdx = steps.get(i + 1);
-                        String currentId = "Step_" + rowCounter + "_" + (i + 1);
-                        String nextId = "Step_" + rowCounter + "_" + (i + 2);
-                        String timeLabel = sanitizeLabelOrEmpty(times[nextIdx]);
-                        plantuml.append(currentId).append(" --> ").append(nextId);
-                        if (!timeLabel.isEmpty()) {
-                            plantuml.append(" : ").append(timeLabel);
+                        plantuml.append(previousId).append(" -down-> ").append(stageId);
+                        if (!arrowLabel.isEmpty()) {
+                            plantuml.append(" : ").append(arrowLabel);
                         }
                         plantuml.append("\n");
+
+                        previousId = stageId;
                     }
 
                     plantuml.append("\n");
