@@ -3405,13 +3405,10 @@ public class AppController {
                 showError("Please load an Excel file first.");
                 return;
             }
-
-            // Check if UI is properly initialized
             if (jsonPreview == null) {
                 showError("UI not fully initialized. Please try again.");
                 return;
             }
-
             // Collect checked rows
             List<ExcelParserV5.FlowRow> checkedRows = new ArrayList<>();
             if (nurseCallsFullList != null) {
@@ -3423,74 +3420,54 @@ public class AppController {
             if (ordersFullList != null) {
                 checkedRows.addAll(ordersFullList.stream().filter(r -> r.inScope).collect(Collectors.toList()));
             }
-
             if (checkedRows.isEmpty()) {
                 showError("No rows are checked (in scope). Please check some rows first.");
                 return;
             }
-
             // Group by config group
             Map<String, List<ExcelParserV5.FlowRow>> grouped = checkedRows.stream()
                 .collect(Collectors.groupingBy(r -> r.configGroup != null ? r.configGroup : "Unknown"));
-
-            // Build PlantUML
+            // Build PlantUML component diagram (simple box/line)
             StringBuilder plantuml = new StringBuilder();
             plantuml.append("@startuml\n");
-            plantuml.append("title Alarm Flow Diagram (Checked Rows)\n");
-            plantuml.append("skinparam backgroundColor #FEFEFE\n");
-            plantuml.append("skinparam sequenceParticipant underline\n");
-            plantuml.append("skinparam sequenceArrowColor blue\n");
-
+            plantuml.append("title Alarm Flow (Box Diagram)\n");
+            plantuml.append("skinparam componentStyle rectangle\n");
             for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                plantuml.append("== Config Group: ").append(safe(entry.getKey())).append(" ==\n");
+                plantuml.append("package \"").append(safe(entry.getKey())).append("\" {\n");
                 for (ExcelParserV5.FlowRow row : entry.getValue()) {
                     String alarmId = "Alarm_" + Math.abs(row.hashCode());
-                    plantuml.append("participant \"").append(safe(row.alarmName)).append("\" as ").append(alarmId).append("\n");
-
-                    // Define recipients
+                    plantuml.append("  [").append(safe(row.alarmName)).append("] as ").append(alarmId).append("\n");
+                    // Recipients as boxes
                     if (row.r1 != null && !row.r1.trim().isEmpty()) {
-                        plantuml.append("participant \"").append(safe(row.r1)).append("\" as R1_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  [").append(safe(row.r1)).append("] as R1_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R1_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t1)).append("\n");
                     }
                     if (row.r2 != null && !row.r2.trim().isEmpty()) {
-                        plantuml.append("participant \"").append(safe(row.r2)).append("\" as R2_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  [").append(safe(row.r2)).append("] as R2_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R2_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t2)).append("\n");
                     }
                     if (row.r3 != null && !row.r3.trim().isEmpty()) {
-                        plantuml.append("participant \"").append(safe(row.r3)).append("\" as R3_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  [").append(safe(row.r3)).append("] as R3_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R3_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t3)).append("\n");
                     }
                     if (row.r4 != null && !row.r4.trim().isEmpty()) {
-                        plantuml.append("participant \"").append(safe(row.r4)).append("\" as R4_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  [").append(safe(row.r4)).append("] as R4_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R4_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t4)).append("\n");
                     }
                     if (row.r5 != null && !row.r5.trim().isEmpty()) {
-                        plantuml.append("participant \"").append(safe(row.r5)).append("\" as R5_").append(Math.abs(row.hashCode())).append("\n");
-                    }
-
-                    // Arrows
-                    if (row.t1 != null && !row.t1.trim().isEmpty() && row.r1 != null && !row.r1.trim().isEmpty()) {
-                        plantuml.append(alarmId).append(" -> R1_").append(Math.abs(row.hashCode())).append(": ").append(safe(row.t1)).append("\n");
-                    }
-                    if (row.t2 != null && !row.t2.trim().isEmpty() && row.r2 != null && !row.r2.trim().isEmpty()) {
-                        plantuml.append(alarmId).append(" -> R2_").append(Math.abs(row.hashCode())).append(": ").append(safe(row.t2)).append("\n");
-                    }
-                    if (row.t3 != null && !row.t3.trim().isEmpty() && row.r3 != null && !row.r3.trim().isEmpty()) {
-                        plantuml.append(alarmId).append(" -> R3_").append(Math.abs(row.hashCode())).append(": ").append(safe(row.t3)).append("\n");
-                    }
-                    if (row.t4 != null && !row.t4.trim().isEmpty() && row.r4 != null && !row.r4.trim().isEmpty()) {
-                        plantuml.append(alarmId).append(" -> R4_").append(Math.abs(row.hashCode())).append(": ").append(safe(row.t4)).append("\n");
-                    }
-                    if (row.t5 != null && !row.t5.trim().isEmpty() && row.r5 != null && !row.r5.trim().isEmpty()) {
-                        plantuml.append(alarmId).append(" -> R5_").append(Math.abs(row.hashCode())).append(": ").append(safe(row.t5)).append("\n");
+                        plantuml.append("  [").append(safe(row.r5)).append("] as R5_").append(Math.abs(row.hashCode())).append("\n");
+                        plantuml.append("  ").append(alarmId).append(" --down- ").append("R5_").append(Math.abs(row.hashCode())).append(" : ").append(safe(row.t5)).append("\n");
                     }
                 }
+                plantuml.append("}\n");
             }
             plantuml.append("@enduml\n");
-
             // File chooser - check if stage is available
             Stage stage = getStage();
             if (stage == null) {
                 showError("Application window not available. Please try again.");
                 return;
             }
-
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Save Visual Flow PDF");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
@@ -3500,10 +3477,8 @@ public class AppController {
             }
             File file = chooser.showSaveDialog(stage);
             if (file == null) return;
-
             // Remember directory
             rememberDirectory(file, false);
-
             // Generate PDF
             try (OutputStream os = new FileOutputStream(file)) {
                 SourceStringReader reader = new SourceStringReader(plantuml.toString());
@@ -3512,10 +3487,8 @@ public class AppController {
                 showError("Error generating PDF: " + e.getMessage());
                 return;
             }
-
             showInfo("Visual Flow PDF saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
-            // Show full stack trace in error dialog for better diagnostics
             java.io.StringWriter sw = new java.io.StringWriter();
             java.io.PrintWriter pw = new java.io.PrintWriter(sw);
             ex.printStackTrace(pw);
