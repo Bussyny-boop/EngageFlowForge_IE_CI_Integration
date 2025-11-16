@@ -17,6 +17,7 @@ The snippet below matches the in-app export (white top header, gray alert header
 top to bottom direction
 skinparam shadowing false
 skinparam backgroundColor #FFFFFF
+hide stereotype
 skinparam rectangle {
   RoundCorner 16
   FontSize 14
@@ -42,8 +43,7 @@ skinparam ArrowColor #333333
 skinparam ArrowFontSize 12
 skinparam ArrowThickness 1.4
 
-rectangle "NurseCall — Acute Care NC" as GlobalHeader_1 <<GlobalHeader>>
-
+rectangle "NurseCall — Acute Care NC" as GlobalHeader_1 <<GlobalHeader>> {
 together {
   rectangle "Bath Call\nMedium(Edge)" as FlowHeader_1 <<FlowHeader>>
   rectangle "Alarm Stop 1\nRecipient:\nVAssign:(Room) CNA" as Stop_1_1 <<StopA>>
@@ -56,6 +56,7 @@ together {
   FlowHeader_2 -down-> Stop_2_1 : Immediate
   rectangle "Alarm Stop 2\nRecipient:\nVAssign: Nurse" as Stop_2_2 <<StopB>>
   Stop_2_1 -down-> Stop_2_2 : 60 sec
+}
 }
 @enduml
 ```

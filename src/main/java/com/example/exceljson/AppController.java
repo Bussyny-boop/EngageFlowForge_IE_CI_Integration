@@ -2962,6 +2962,7 @@ public class AppController {
         plantuml.append("top to bottom direction\n");
         plantuml.append("skinparam shadowing false\n");
         plantuml.append("skinparam backgroundColor #FFFFFF\n");
+        plantuml.append("hide stereotype\n");
         plantuml.append("skinparam rectangle {\n");
         plantuml.append("  RoundCorner 16\n");
         plantuml.append("  FontSize 14\n");
@@ -2985,11 +2986,10 @@ public class AppController {
         plantuml.append("}\n");
         plantuml.append("skinparam ArrowColor #333333\n");
         plantuml.append("skinparam ArrowFontSize 12\n");
-        plantuml.append("skinparam ArrowThickness 1.4\n");
+        plantuml.append("skinparam ArrowThickness 1.4\n\n");
 
         String globalHeaderLabel = tabLabel + " — " + configLabel;
-        plantuml.append("rectangle \"").append(globalHeaderLabel).append("\" as GlobalHeader_1 <<GlobalHeader>>\n\n");
-
+        plantuml.append("rectangle \"").append(globalHeaderLabel).append("\" as GlobalHeader_1 <<GlobalHeader>> {\n");
         plantuml.append("together {\n");
 
         int rowCounter = 1;
@@ -3064,6 +3064,7 @@ public class AppController {
             rowCounter++;
         }
 
+        plantuml.append("}\n");
         plantuml.append("}\n\n");
         plantuml.append("@enduml\n");
         return plantuml.toString();
