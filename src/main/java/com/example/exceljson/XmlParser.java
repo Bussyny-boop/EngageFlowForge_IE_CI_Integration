@@ -300,6 +300,10 @@ public class XmlParser {
         for (Rule rule : allRules) {
             // Track facilities/units
             for (String facility : rule.facilities) {
+                // If facility is a placeholder (e.g. "#{bed.room.facility.name}"), skip adding to facilityUnits
+                if (facility != null && facility.trim().equals("#{bed.room.facility.name}")) {
+                    continue;
+                }
                 facilityUnits.computeIfAbsent(facility, k -> new HashSet<>()).addAll(rule.units);
             }
             
@@ -669,10 +673,11 @@ public class XmlParser {
         String unit = units.isEmpty() ? "" : units.iterator().next();
         // Always place dataset last. Use "All_Facilities" and "AllUnits" when they cannot be determined
         List<String> parts = new ArrayList<>();
-        if (facility != null && !facility.isEmpty()) {
+        // Treat placeholder as missing facility
+        if (facility != null && !facility.isEmpty() && !facility.equals("#{bed.room.facility.name}")) {
             parts.add(facility);
         } else {
-            // Hardcode "All_Facilities" when facility name is not found
+            // Hardcode "All_Facilities" when facility name is not found or is a placeholder
             parts.add("All_Facilities");
         }
         if (unit != null && !unit.isEmpty()) {
