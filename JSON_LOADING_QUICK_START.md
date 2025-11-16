@@ -285,5 +285,5 @@ For issues or questions:
 ---
 
 **Feature Status**: ✅ Production Ready  
-**Version**: 2.5.0  
+**Version**: 3.0.0  
 **Last Updated**: November 15, 2025
