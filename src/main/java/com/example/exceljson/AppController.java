@@ -2956,6 +2956,119 @@ public class AppController {
             || normalized.equals("0seconds");
     }
 
+    private String buildVisualFlowDiagram(String tabLabel, String configLabel, List<ExcelParserV5.FlowRow> flows) {
+        StringBuilder plantuml = new StringBuilder();
+        plantuml.append("@startuml\n");
+        plantuml.append("top to bottom direction\n");
+        plantuml.append("skinparam shadowing false\n");
+        plantuml.append("skinparam backgroundColor #FFFFFF\n");
+        plantuml.append("skinparam rectangle {\n");
+        plantuml.append("  RoundCorner 16\n");
+        plantuml.append("  FontSize 14\n");
+        plantuml.append("  FontColor #111111\n");
+        plantuml.append("}\n");
+        plantuml.append("skinparam rectangle<<GlobalHeader>> {\n");
+        plantuml.append("  BackgroundColor #ffffff\n");
+        plantuml.append("  BorderColor #b5b5b5\n");
+        plantuml.append("}\n");
+        plantuml.append("skinparam rectangle<<FlowHeader>> {\n");
+        plantuml.append("  BackgroundColor #dcdcdc\n");
+        plantuml.append("  BorderColor #9a9a9a\n");
+        plantuml.append("}\n");
+        plantuml.append("skinparam rectangle<<StopA>> {\n");
+        plantuml.append("  BackgroundColor #c8f7c5\n");
+        plantuml.append("  BorderColor #4f9a4f\n");
+        plantuml.append("}\n");
+        plantuml.append("skinparam rectangle<<StopB>> {\n");
+        plantuml.append("  BackgroundColor #cfe2ff\n");
+        plantuml.append("  BorderColor #4a78c2\n");
+        plantuml.append("}\n");
+        plantuml.append("skinparam ArrowColor #333333\n");
+        plantuml.append("skinparam ArrowFontSize 12\n");
+        plantuml.append("skinparam ArrowThickness 1.4\n");
+
+        String globalHeaderLabel = tabLabel + " — " + configLabel;
+        plantuml.append("rectangle \"").append(globalHeaderLabel).append("\" as GlobalHeader_1 <<GlobalHeader>>\n\n");
+
+        plantuml.append("together {\n");
+
+        int rowCounter = 1;
+        for (ExcelParserV5.FlowRow row : flows) {
+            String[] recipients = { row.r1, row.r2, row.r3, row.r4, row.r5 };
+            String[] times = { row.t1, row.t2, row.t3, row.t4, row.t5 };
+
+            List<Integer> steps = new ArrayList<>();
+            for (int i = 0; i < recipients.length; i++) {
+                if (recipients[i] != null && !recipients[i].trim().isEmpty()) {
+                    steps.add(i);
+                }
+            }
+
+            if (steps.isEmpty()) {
+                continue;
+            }
+
+            List<String> headerLines = new ArrayList<>();
+            headerLines.add(sanitizeForPlantUml(row.alarmName));
+            String priority = sanitizeForPlantUml(row.priorityRaw);
+            if (!"-".equals(priority)) {
+                headerLines.add(priority);
+            }
+            String headerLabel = String.join("\\n", headerLines);
+            String headerId = "FlowHeader_" + rowCounter;
+            plantuml.append("  rectangle \"").append(headerLabel).append("\" as ")
+                .append(headerId).append(" <<FlowHeader>>\n");
+
+            String firstArrowLabel;
+            if (isImmediateTime(times[0])) {
+                firstArrowLabel = "Immediate";
+            } else {
+                firstArrowLabel = sanitizeLabelOrEmpty(times[0]);
+            }
+
+            String previousId = headerId;
+
+            for (int i = 0; i < steps.size(); i++) {
+                int idx = steps.get(i);
+                String stageId = "Stop_" + rowCounter + "_" + (i + 1);
+                String recipientLabel = sanitizeForPlantUml(recipients[idx]);
+
+                String stageLabel = String.join("\\n",
+                    "Alarm Stop " + (i + 1),
+                    "Recipient:",
+                    recipientLabel
+                );
+
+                String stereo = (i % 2 == 0) ? "StopA" : "StopB";
+
+                plantuml.append("  rectangle \"").append(stageLabel).append("\" as ")
+                    .append(stageId).append(" <<").append(stereo).append(">>\n");
+
+                String arrowLabel = "";
+                if (previousId.equals(headerId)) {
+                    arrowLabel = firstArrowLabel;
+                } else {
+                    arrowLabel = sanitizeLabelOrEmpty(times[idx]);
+                }
+
+                plantuml.append("  ").append(previousId).append(" -down-> ").append(stageId);
+                if (arrowLabel != null && !arrowLabel.isEmpty()) {
+                    plantuml.append(" : ").append(arrowLabel);
+                }
+                plantuml.append("\n");
+
+                previousId = stageId;
+            }
+
+            plantuml.append("\n");
+            rowCounter++;
+        }
+
+        plantuml.append("}\n\n");
+        plantuml.append("@enduml\n");
+        return plantuml.toString();
+    }
+
     // ---------- Remember Directory ----------
     private void rememberDirectory(File file, boolean isExcel) {
         if (file == null) return;
@@ -3493,112 +3606,42 @@ public class AppController {
                 showError("No rows are checked (in scope). Please check some rows first.");
                 return;
             }
-            // Group by config group
+            final String groupDelimiter = "||";
             Map<String, List<ExcelParserV5.FlowRow>> grouped = checkedRows.stream()
-                .collect(Collectors.groupingBy(r -> r.configGroup != null ? r.configGroup : "Unknown"));
-            // Build PlantUML diagram with vertical staged layout
-            StringBuilder plantuml = new StringBuilder();
-            plantuml.append("@startuml\n");
-            plantuml.append("top to bottom direction\n");
-            plantuml.append("skinparam shadowing false\n");
-            plantuml.append("skinparam backgroundColor #FFFFFF\n");
-            plantuml.append("skinparam rectangle {\n");
-            plantuml.append("  RoundCorner 16\n");
-            plantuml.append("  FontSize 14\n");
-            plantuml.append("  FontColor #111111\n");
-            plantuml.append("}\n");
-            plantuml.append("skinparam rectangle<<Header>> {\n");
-            plantuml.append("  BackgroundColor #f2f2f2\n");
-            plantuml.append("  BorderColor #9a9a9a\n");
-            plantuml.append("}\n");
-            plantuml.append("skinparam rectangle<<Stage1>> {\n");
-            plantuml.append("  BackgroundColor #c8f7c5\n");
-            plantuml.append("  BorderColor #4f9a4f\n");
-            plantuml.append("}\n");
-            plantuml.append("skinparam rectangle<<Stage2>> {\n");
-            plantuml.append("  BackgroundColor #cfe2ff\n");
-            plantuml.append("  BorderColor #4a78c2\n");
-            plantuml.append("}\n");
-            plantuml.append("skinparam rectangle<<StageTail>> {\n");
-            plantuml.append("  BackgroundColor #cfe2ff\n");
-            plantuml.append("  BorderColor #4a78c2\n");
-            plantuml.append("}\n");
-            plantuml.append("skinparam ArrowColor #333333\n");
-            plantuml.append("skinparam ArrowFontSize 12\n");
-            plantuml.append("skinparam ArrowThickness 1.4\n");
+                .collect(Collectors.groupingBy(r -> {
+                    String tabName = (r.customTabSource != null && !r.customTabSource.isBlank())
+                        ? r.customTabSource
+                        : safe(r.type);
+                    String config = (r.configGroup != null && !r.configGroup.isBlank())
+                        ? r.configGroup
+                        : "Unknown";
+                    return tabName + groupDelimiter + config;
+                }));
 
-            String[] stageStereotypes = {"Stage1", "Stage2"};
+            List<String> diagrams = new ArrayList<>();
 
-            int rowCounter = 1;
-            for (Map.Entry<String, List<ExcelParserV5.FlowRow>> entry : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList())) {
-                for (ExcelParserV5.FlowRow row : entry.getValue()) {
-                    String[] recipients = { row.r1, row.r2, row.r3, row.r4, row.r5 };
-                    String[] times = { row.t1, row.t2, row.t3, row.t4, row.t5 };
+            for (String key : grouped.keySet().stream().sorted().collect(Collectors.toList())) {
+                String[] parts = key.split("\\Q" + groupDelimiter + "\\E", 2);
+                String tabLabel = sanitizeForPlantUml(parts.length > 0 ? parts[0] : "");
+                if ("-".equals(tabLabel)) {
+                    tabLabel = "Unknown Tab";
+                }
+                String configLabel = sanitizeForPlantUml(parts.length > 1 ? parts[1] : "Unknown");
 
-                    List<Integer> steps = new ArrayList<>();
-                    for (int i = 0; i < recipients.length; i++) {
-                        if (recipients[i] != null && !recipients[i].trim().isEmpty()) {
-                            steps.add(i);
-                        }
-                    }
+                List<ExcelParserV5.FlowRow> flows = grouped.get(key).stream()
+                    .sorted(Comparator.comparing(r -> safe(r.alarmName)))
+                    .collect(Collectors.toList());
 
-                    if (steps.isEmpty()) {
-                        continue;
-                    }
-
-                    String headerId = "Header_" + rowCounter;
-                    String headerLabel = String.join("\\n",
-                        sanitizeForPlantUml(entry.getKey()),
-                        sanitizeForPlantUml(row.alarmName),
-                        sanitizeForPlantUml(row.priorityRaw)
-                    );
-                    plantuml.append("rectangle \"").append(headerLabel).append("\" as ")
-                        .append(headerId).append(" <<Header>>\n");
-
-                    String previousId = headerId;
-
-                    for (int i = 0; i < steps.size(); i++) {
-                        int idx = steps.get(i);
-                        String stageId = "Stage_" + rowCounter + "_" + (i + 1);
-                        String timeLabel = sanitizeForPlantUml(times[idx]);
-                        String recipientLabel = sanitizeForPlantUml(recipients[idx]);
-
-                        String displayTime = "-".equals(timeLabel) ? "-" : timeLabel;
-                        String qualifier = isImmediateTime(times[idx])
-                            ? "Immediate"
-                            : (!"-".equals(timeLabel) ? timeLabel : "-");
-
-                        String stageLabel = String.join("\\n",
-                            displayTime,
-                            "(" + qualifier + ")",
-                            "Recipient:",
-                            recipientLabel
-                        );
-
-                        String stereo = i < stageStereotypes.length ? stageStereotypes[i] : "StageTail";
-
-                        plantuml.append("rectangle \"").append(stageLabel).append("\" as ").append(stageId)
-                            .append(" <<").append(stereo).append(">>\n");
-
-                        String arrowLabel = "";
-                        if (!isImmediateTime(times[idx])) {
-                            arrowLabel = sanitizeLabelOrEmpty(times[idx]);
-                        }
-
-                        plantuml.append(previousId).append(" -down-> ").append(stageId);
-                        if (!arrowLabel.isEmpty()) {
-                            plantuml.append(" : ").append(arrowLabel);
-                        }
-                        plantuml.append("\n");
-
-                        previousId = stageId;
-                    }
-
-                    plantuml.append("\n");
-                    rowCounter++;
+                for (int i = 0; i < flows.size(); i += 3) {
+                    List<ExcelParserV5.FlowRow> pageFlows = flows.subList(i, Math.min(i + 3, flows.size()));
+                    diagrams.add(buildVisualFlowDiagram(tabLabel, configLabel, pageFlows));
                 }
             }
-            plantuml.append("@enduml\n");
+
+            if (diagrams.isEmpty()) {
+                showError("No valid flows found to export.");
+                return;
+            }
             // File chooser - check if stage is available
             Stage stage = getStage();
             if (stage == null) {
@@ -3616,40 +3659,56 @@ public class AppController {
             if (file == null) return;
             // Remember directory
             rememberDirectory(file, false);
-            // Generate the diagram as PNG and embed into a PDF to avoid PlantUML PDF runtime issues
-            byte[] diagramBytes;
-            try (ByteArrayOutputStream pngOutput = new ByteArrayOutputStream()) {
-                SourceStringReader reader = new SourceStringReader(plantuml.toString());
-                reader.outputImage(pngOutput, new FileFormatOption(FileFormat.PNG));
-                diagramBytes = pngOutput.toByteArray();
-            } catch (IOException e) {
-                showError("Error generating diagram: " + e.getMessage());
-                return;
-            }
-
-            BufferedImage diagramImage;
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(diagramBytes)) {
-                diagramImage = ImageIO.read(bais);
-            } catch (IOException e) {
-                showError("Error reading generated diagram: " + e.getMessage());
-                return;
-            }
-
-            if (diagramImage == null) {
-                showError("Generated diagram could not be read.");
-                return;
-            }
-
-            float widthPoints = diagramImage.getWidth() * 72f / 96f;
-            float heightPoints = diagramImage.getHeight() * 72f / 96f;
-
             try (PDDocument document = new PDDocument()) {
-                PDPage page = new PDPage(new PDRectangle(widthPoints, heightPoints));
-                document.addPage(page);
+                for (String diagram : diagrams) {
+                    byte[] diagramBytes;
+                    try (ByteArrayOutputStream pngOutput = new ByteArrayOutputStream()) {
+                        SourceStringReader reader = new SourceStringReader(diagram);
+                        reader.outputImage(pngOutput, new FileFormatOption(FileFormat.PNG));
+                        diagramBytes = pngOutput.toByteArray();
+                    } catch (IOException e) {
+                        showError("Error generating diagram: " + e.getMessage());
+                        return;
+                    }
 
-                PDImageXObject pdImage = LosslessFactory.createFromImage(document, diagramImage);
-                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                    contentStream.drawImage(pdImage, 0, 0, widthPoints, heightPoints);
+                    BufferedImage diagramImage;
+                    try (ByteArrayInputStream bais = new ByteArrayInputStream(diagramBytes)) {
+                        diagramImage = ImageIO.read(bais);
+                    } catch (IOException e) {
+                        showError("Error reading generated diagram: " + e.getMessage());
+                        return;
+                    }
+
+                    if (diagramImage == null) {
+                        showError("Generated diagram could not be read.");
+                        return;
+                    }
+
+                    float imageWidthPoints = diagramImage.getWidth() * 72f / 96f;
+                    float imageHeightPoints = diagramImage.getHeight() * 72f / 96f;
+
+                    PDPage page = new PDPage(PDRectangle.LETTER);
+                    document.addPage(page);
+
+                    float pageWidth = page.getMediaBox().getWidth();
+                    float pageHeight = page.getMediaBox().getHeight();
+                    float margin = 36f; // half-inch margin
+                    float availableWidth = Math.max(pageWidth - 2 * margin, 1f);
+                    float availableHeight = Math.max(pageHeight - 2 * margin, 1f);
+                    float scale = Math.min(availableWidth / imageWidthPoints, availableHeight / imageHeightPoints);
+                    if (!Float.isFinite(scale) || scale <= 0) {
+                        scale = 1f;
+                    }
+
+                    float drawWidth = imageWidthPoints * scale;
+                    float drawHeight = imageHeightPoints * scale;
+                    float startX = (pageWidth - drawWidth) / 2f;
+                    float startY = (pageHeight - drawHeight) / 2f;
+
+                    PDImageXObject pdImage = LosslessFactory.createFromImage(document, diagramImage);
+                    try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                        contentStream.drawImage(pdImage, startX, startY, drawWidth, drawHeight);
+                    }
                 }
 
                 document.save(file);

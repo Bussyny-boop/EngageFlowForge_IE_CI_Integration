@@ -1,16 +1,16 @@
 # Sample "Visual Flow" Diagram
 
-The **Visual Flow** button now renders each checked alarm as a **vertical, centered flow** with a gray header block and stacked recipient stages. Arrows run downward between blocks and carry the configured delay, while each stage shows the time, an immediate/delay qualifier, and the recipient name.
+The **Visual Flow** button now outputs a vertically stacked timeline that mirrors the "Alarm Stop" mockup: a single white header for the tab/config group, gray alert headers per row, and alternating green/blue alarm stop boxes connected by black arrows labeled with the configured delays. Exports automatically split across pages when more than three alerts are selected and scale each diagram to fill a letter-sized PDF page with small margins.
 
 ## Example Layout
-- Config Group: `Acute Care NC`
-- Alarm Name: `Code Blue`
-- Priority: `High Priority`
-- Stage 1: `0 sec` to `Primary RN` (Immediate)
-- Stage 2: `60 sec` to `Charge RN`
+- Tab / Dataset: `NurseCall`
+- Configuration Group: `Acute Care NC`
+- Alarm 1: `Bath Call` (priority `Medium(Edge)`)
+- Alarm 2: `Bathroom Request Call` (priority `Medium(Edge)`)
+- First recipient is treated as immediate; later delays show on the arrows only.
 
 ## PlantUML snippet
-The snippet below matches the styling used by the in-app export (rounded blocks, green first stage, blue second stage, and arrow labels for delays):
+The snippet below matches the in-app export (white top header, gray alert headers, green/blue alarm stops, and arrow labels for timing):
 
 ```plantuml
 @startuml
@@ -22,19 +22,19 @@ skinparam rectangle {
   FontSize 14
   FontColor #111111
 }
-skinparam rectangle<<Header>> {
-  BackgroundColor #f2f2f2
+skinparam rectangle<<GlobalHeader>> {
+  BackgroundColor #ffffff
+  BorderColor #b5b5b5
+}
+skinparam rectangle<<FlowHeader>> {
+  BackgroundColor #dcdcdc
   BorderColor #9a9a9a
 }
-skinparam rectangle<<Stage1>> {
+skinparam rectangle<<StopA>> {
   BackgroundColor #c8f7c5
   BorderColor #4f9a4f
 }
-skinparam rectangle<<Stage2>> {
-  BackgroundColor #cfe2ff
-  BorderColor #4a78c2
-}
-skinparam rectangle<<StageTail>> {
+skinparam rectangle<<StopB>> {
   BackgroundColor #cfe2ff
   BorderColor #4a78c2
 }
@@ -42,12 +42,21 @@ skinparam ArrowColor #333333
 skinparam ArrowFontSize 12
 skinparam ArrowThickness 1.4
 
-rectangle "Acute Care NC\nCode Blue\nHigh Priority" as Header_1 <<Header>>
-rectangle "0 sec\n(Immediate)\nRecipient:\nPrimary RN" as Stage_1_1 <<Stage1>>
-Header_1 -down-> Stage_1_1
+rectangle "NurseCall — Acute Care NC" as GlobalHeader_1 <<GlobalHeader>>
 
-rectangle "60 sec\n(60 sec)\nRecipient:\nCharge RN" as Stage_1_2 <<Stage2>>
-Stage_1_1 -down-> Stage_1_2 : 60 sec
+together {
+  rectangle "Bath Call\nMedium(Edge)" as FlowHeader_1 <<FlowHeader>>
+  rectangle "Alarm Stop 1\nRecipient:\nVAssign:(Room) CNA" as Stop_1_1 <<StopA>>
+  FlowHeader_1 -down-> Stop_1_1 : Immediate
+  rectangle "Alarm Stop 2\nRecipient:\nVAssign: Nurse" as Stop_1_2 <<StopB>>
+  Stop_1_1 -down-> Stop_1_2 : 60 sec
+
+  rectangle "Bathroom Request Call\nMedium(Edge)" as FlowHeader_2 <<FlowHeader>>
+  rectangle "Alarm Stop 1\nRecipient:\nVAssign: CNA" as Stop_2_1 <<StopA>>
+  FlowHeader_2 -down-> Stop_2_1 : Immediate
+  rectangle "Alarm Stop 2\nRecipient:\nVAssign: Nurse" as Stop_2_2 <<StopB>>
+  Stop_2_1 -down-> Stop_2_2 : 60 sec
+}
 @enduml
 ```
 
