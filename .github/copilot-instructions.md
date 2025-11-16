@@ -18,7 +18,7 @@ This command:
 - Cleans the `target/` directory
 - Compiles the source code
 - Runs all tests
-- Creates a shaded JAR with all dependencies at `target/engage-rules-generator-1.1.0.jar`
+- Creates a shaded JAR with all dependencies at `target/engage-rules-generator-3.0.0.jar`
 
 ### Running Tests
 
@@ -76,13 +76,13 @@ mvn javafx:run
 
 ### Command-Line Mode
 ```bash
-java -cp target/engage-rules-generator-1.1.0.jar \
+java -cp target/engage-rules-generator-3.0.0.jar \
     com.example.exceljson.jobs.JobRunner export-json <input.xlsx> <output.json>
 ```
 
 ### Smoke Test
 ```bash
-java -cp target/engage-rules-generator-1.1.0.jar \
+java -cp target/engage-rules-generator-3.0.0.jar \
     com.example.exceljson.jobs.JobRunner fail
 ```
 

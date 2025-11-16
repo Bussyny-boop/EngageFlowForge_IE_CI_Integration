@@ -1,6 +1,6 @@
-# Engage FlowForge 2.0
+# Engage FlowForge 3.0
 
-**Engage FlowForge 2.0** is a Java application that converts Vocera Engage Excel configuration sheets into JSON rule files. The application provides both a graphical user interface (GUI) and a command-line interface (CLI) for processing Excel workbooks containing nurse call and patient monitoring configurations.
+**Engage FlowForge 3.0** is a Java application that converts Vocera Engage Excel configuration sheets into JSON rule files. The application provides both a graphical user interface (GUI) and a command-line interface (CLI) for processing Excel workbooks containing nurse call and patient monitoring configurations.
 
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![JavaFX](https://img.shields.io/badge/JavaFX-21.0.3-blue)
@@ -20,18 +20,18 @@
 1. Go to the [Actions](../../actions) tab
 2. Find the latest successful build
 3. Download `engage-rules-generator-msi` artifact
-4. Extract and run `EngageFlowForge-2.0.msi`
+4. Extract and run `EngageFlowForge-3.0.msi`
 
 **macOS:**
 1. Go to the [Actions](../../actions) tab
 2. Find the latest successful build
 3. Download `engage-rules-generator-dmg` artifact
-4. Extract and run `EngageFlowForge-2.0.dmg`
+4. Extract and run `EngageFlowForge-3.0.dmg`
 
 #### Option 2: Run JAR File
 ```bash
 # Download the latest JAR from releases
-java -jar engage-rules-generator-2.0.0.jar
+java -jar engage-rules-generator-3.0.0.jar
 ```
 
 #### Option 3: Build from Source
@@ -44,7 +44,7 @@ cd NDW-To-Engage-Rules
 mvn clean package
 
 # Run the application
-java -jar target/engage-rules-generator-2.0.0.jar
+java -jar target/engage-rules-generator-3.0.0.jar
 ```
 
 ## 📖 Features

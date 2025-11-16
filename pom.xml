@@ -6,8 +6,8 @@
 
   <groupId>com.example</groupId>
   <artifactId>engage-rules-generator</artifactId>
-  <version>2.6.0</version>
-  <name>Engage FlowForge 2.6</name>
+  <version>3.0.0</version>
+  <name>Engage FlowForge 3.0</name>
   <description>Engage rules generation</description>
   <packaging>jar</packaging>
 
