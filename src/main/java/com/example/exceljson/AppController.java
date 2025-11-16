@@ -3515,11 +3515,16 @@ public class AppController {
 
             showInfo("Visual Flow PDF saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
+            // Show full stack trace in error dialog for better diagnostics
+            java.io.StringWriter sw = new java.io.StringWriter();
+            java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+            ex.printStackTrace(pw);
+            String stackTrace = sw.toString();
             String errorMsg = ex.getMessage();
             if (errorMsg == null || errorMsg.trim().isEmpty()) {
                 errorMsg = "Unknown error occurred";
             }
-            showError("Error generating visual flow: " + errorMsg);
+            showError("Error generating visual flow: " + errorMsg + "\n\nStack trace:\n" + stackTrace);
         }
     }
 }
