@@ -22,10 +22,22 @@ skinparam rectangle {
   FontSize 14
   FontColor #111111
 }
-skinparam rectangle<<Header>> { BackgroundColor #f2f2f2 BorderColor #9a9a9a }
-skinparam rectangle<<Stage1>> { BackgroundColor #c8f7c5 BorderColor #4f9a4f }
-skinparam rectangle<<Stage2>> { BackgroundColor #cfe2ff BorderColor #4a78c2 }
-skinparam rectangle<<StageTail>> { BackgroundColor #cfe2ff BorderColor #4a78c2 }
+skinparam rectangle<<Header>> {
+  BackgroundColor #f2f2f2
+  BorderColor #9a9a9a
+}
+skinparam rectangle<<Stage1>> {
+  BackgroundColor #c8f7c5
+  BorderColor #4f9a4f
+}
+skinparam rectangle<<Stage2>> {
+  BackgroundColor #cfe2ff
+  BorderColor #4a78c2
+}
+skinparam rectangle<<StageTail>> {
+  BackgroundColor #cfe2ff
+  BorderColor #4a78c2
+}
 skinparam ArrowColor #333333
 skinparam ArrowFontSize 12
 skinparam ArrowThickness 1.4
