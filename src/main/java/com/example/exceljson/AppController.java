@@ -3204,17 +3204,174 @@ public class AppController {
     private void applySidebarState() {
         if (sidebarContainer != null && sidebarContent != null && sidebarToggleButton != null) {
             if (isSidebarCollapsed) {
-                // Collapse: hide content, make container narrow
-                sidebarContent.setVisible(false);
-                sidebarContent.setManaged(false);
-                sidebarContainer.setPrefWidth(40); // Just wide enough for the toggle button
+                // Collapse: show icons only, make container narrow but visible
+                collapseSidebarToIcons();
                 sidebarToggleButton.setText("▶"); // Arrow pointing right
             } else {
-                // Expand: show content, make container normal width
-                sidebarContent.setVisible(true);
-                sidebarContent.setManaged(true);
-                sidebarContainer.setPrefWidth(200);
+                // Expand: show full content, make container normal width
+                expandSidebarToFull();
                 sidebarToggleButton.setText("◀"); // Arrow pointing left
+            }
+        }
+    }
+    
+    /**
+     * Store original button texts for sidebar collapse/expand functionality
+     */
+    private void storeOriginalButtonTexts() {
+        // Store regular button texts
+        if (loadNdwButton != null) originalButtonTexts.put(loadNdwButton, loadNdwButton.getText());
+        if (loadXmlButton != null) originalButtonTexts.put(loadXmlButton, loadXmlButton.getText());
+        if (loadJsonButton != null) originalButtonTexts.put(loadJsonButton, loadJsonButton.getText());
+        if (clearAllButton != null) originalButtonTexts.put(clearAllButton, clearAllButton.getText());
+        if (generateJsonButton != null) originalButtonTexts.put(generateJsonButton, generateJsonButton.getText());
+        if (exportNurseJsonButton != null) originalButtonTexts.put(exportNurseJsonButton, exportNurseJsonButton.getText());
+        if (exportClinicalJsonButton != null) originalButtonTexts.put(exportClinicalJsonButton, exportClinicalJsonButton.getText());
+        if (exportOrdersJsonButton != null) originalButtonTexts.put(exportOrdersJsonButton, exportOrdersJsonButton.getText());
+        if (visualFlowButton != null) originalButtonTexts.put(visualFlowButton, visualFlowButton.getText());
+        
+        // Store toggle button texts
+        if (navUnits != null) originalToggleTexts.put(navUnits, navUnits.getText());
+        if (navNurseCalls != null) originalToggleTexts.put(navNurseCalls, navNurseCalls.getText());
+        if (navClinicals != null) originalToggleTexts.put(navClinicals, navClinicals.getText());
+        if (navOrders != null) originalToggleTexts.put(navOrders, navOrders.getText());
+    }
+    
+    /**
+     * Collapse sidebar to show only icons
+     */
+    private void collapseSidebarToIcons() {
+        // Keep sidebar visible but make it narrow
+        sidebarContent.setVisible(true);
+        sidebarContent.setManaged(true);
+        sidebarContainer.setPrefWidth(60);
+        
+        // Add collapsed style class for CSS styling
+        if (!sidebarContent.getStyleClass().contains("sidebar-collapsed")) {
+            sidebarContent.getStyleClass().add("sidebar-collapsed");
+        }
+        
+        // Hide labels and convert buttons to icons
+        hideLabelsAndShowIcons();
+    }
+    
+    /**
+     * Expand sidebar to show full content
+     */
+    private void expandSidebarToFull() {
+        sidebarContent.setVisible(true);
+        sidebarContent.setManaged(true);
+        sidebarContainer.setPrefWidth(200);
+        
+        // Remove collapsed style class
+        sidebarContent.getStyleClass().remove("sidebar-collapsed");
+        
+        // Show labels and restore full text
+        showLabelsAndRestoreText();
+    }
+    
+    /**
+     * Hide labels and convert buttons to show only icons
+     */
+    private void hideLabelsAndShowIcons() {
+        // Convert buttons to icon-only mode
+        convertButtonToIcon(loadNdwButton);
+        convertButtonToIcon(loadXmlButton);
+        convertButtonToIcon(loadJsonButton);
+        convertButtonToIcon(clearAllButton);
+        convertButtonToIcon(generateJsonButton);
+        convertButtonToIcon(exportNurseJsonButton);
+        convertButtonToIcon(exportClinicalJsonButton);
+        convertButtonToIcon(exportOrdersJsonButton);
+        convertButtonToIcon(visualFlowButton);
+        
+        // Convert toggle buttons to icon-only mode
+        convertToggleButtonToIcon(navUnits);
+        convertToggleButtonToIcon(navNurseCalls);
+        convertToggleButtonToIcon(navClinicals);
+        convertToggleButtonToIcon(navOrders);
+    }
+    
+    /**
+     * Show labels and restore full text on buttons
+     */
+    private void showLabelsAndRestoreText() {
+        // Restore button texts
+        restoreButtonText(loadNdwButton);
+        restoreButtonText(loadXmlButton);
+        restoreButtonText(loadJsonButton);
+        restoreButtonText(clearAllButton);
+        restoreButtonText(generateJsonButton);
+        restoreButtonText(exportNurseJsonButton);
+        restoreButtonText(exportClinicalJsonButton);
+        restoreButtonText(exportOrdersJsonButton);
+        restoreButtonText(visualFlowButton);
+        
+        // Restore toggle button texts
+        restoreToggleButtonText(navUnits);
+        restoreToggleButtonText(navNurseCalls);
+        restoreToggleButtonText(navClinicals);
+        restoreToggleButtonText(navOrders);
+    }
+    
+    /**
+     * Convert a button to show only its icon
+     */
+    private void convertButtonToIcon(Button button) {
+        if (button != null && button.getUserData() != null) {
+            String icon = button.getUserData().toString();
+            button.setText(icon);
+            
+            // Add tooltip with full text
+            String originalText = originalButtonTexts.get(button);
+            if (originalText != null) {
+                // Remove emoji from tooltip text
+                String tooltipText = originalText.replaceAll("[\ud83c-\ud83f][\udc00-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\u2600-\u27ff]", "").trim();
+                button.setTooltip(new Tooltip(tooltipText));
+            }
+        }
+    }
+    
+    /**
+     * Convert a toggle button to show only its icon
+     */
+    private void convertToggleButtonToIcon(ToggleButton button) {
+        if (button != null && button.getUserData() != null) {
+            String icon = button.getUserData().toString();
+            button.setText(icon);
+            
+            // Add tooltip with full text
+            String originalText = originalToggleTexts.get(button);
+            if (originalText != null) {
+                // Remove emoji from tooltip text
+                String tooltipText = originalText.replaceAll("[\ud83c-\ud83f][\udc00-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\u2600-\u27ff]", "").trim();
+                button.setTooltip(new Tooltip(tooltipText));
+            }
+        }
+    }
+    
+    /**
+     * Restore a button's original text
+     */
+    private void restoreButtonText(Button button) {
+        if (button != null) {
+            String originalText = originalButtonTexts.get(button);
+            if (originalText != null) {
+                button.setText(originalText);
+                button.setTooltip(null);
+            }
+        }
+    }
+    
+    /**
+     * Restore a toggle button's original text
+     */
+    private void restoreToggleButtonText(ToggleButton button) {
+        if (button != null) {
+            String originalText = originalToggleTexts.get(button);
+            if (originalText != null) {
+                button.setText(originalText);
+                button.setTooltip(null);
             }
         }
     }
