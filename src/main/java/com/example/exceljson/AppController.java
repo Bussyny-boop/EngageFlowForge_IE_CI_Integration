@@ -267,7 +267,7 @@ public class AppController {
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
-    private double loadedTimeoutSeconds = 10.0;
+    private double loadedTimeoutSeconds = 600.0; // Default to persistent (10 minutes = never auto-clear)
     private double loadedTimeoutMin = 3.0;
     private double loadedTimeoutMax = 600.0; // 600 = 10 minutes, acts as "persistent"
     
@@ -294,7 +294,7 @@ public class AppController {
         if (loadedTimeoutMax <= loadedTimeoutMin) {
             loadedTimeoutMax = Math.min(loadedTimeoutMin + 1, 600.0);
         }
-        loadedTimeoutSeconds = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_SECONDS, "10"), 10.0), loadedTimeoutMin, loadedTimeoutMax);
+        loadedTimeoutSeconds = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_SECONDS, "600"), 600.0), loadedTimeoutMin, loadedTimeoutMax);
 
         if (excelDirPath != null) {
             lastExcelDir = new File(excelDirPath);
