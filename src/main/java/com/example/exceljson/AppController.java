@@ -242,6 +242,10 @@ public class AppController {
     
     // Map of custom tab name to its dynamic TableColumn in the Units table
     private final Map<String, TableColumn<ExcelParserV5.UnitRow, String>> customUnitColumns = new LinkedHashMap<>();
+    
+    // ---------- Button Text Storage for Animation/Progress ----------
+    private final Map<Button, String> originalButtonTexts = new HashMap<>();
+    private final Map<ToggleButton, String> originalToggleTexts = new HashMap<>();
 
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
