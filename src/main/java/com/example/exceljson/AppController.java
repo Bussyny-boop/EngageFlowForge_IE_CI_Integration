@@ -3260,8 +3260,8 @@ public class AppController {
             sidebarContent.getStyleClass().add("sidebar-collapsed");
         }
         
-        // Hide labels and convert buttons to icons
-        hideLabelsAndShowIcons();
+        // Hide labels and convert buttons to short text/icons
+        hideLabelsAndShowShortText();
     }
     
     /**
@@ -3276,13 +3276,13 @@ public class AppController {
         sidebarContent.getStyleClass().remove("sidebar-collapsed");
         
         // Show labels and restore full text
-        showLabelsAndRestoreText();
+        showLabelsAndRestoreFullText();
     }
     
     /**
-     * Hide labels and convert buttons to show only icons
+     * Hide labels and show short text on buttons (collapsed mode)
      */
-    private void hideLabelsAndShowIcons() {
+    private void hideLabelsAndShowShortText() {
         // Hide section labels in collapsed mode
         if (loadDataLabel != null) {
             loadDataLabel.setVisible(false);
@@ -3313,9 +3313,9 @@ public class AppController {
     }
     
     /**
-     * Show labels and restore full text on buttons
+     * Show labels and restore full text on buttons (expanded mode)
      */
-    private void showLabelsAndRestoreText() {
+    private void showLabelsAndRestoreFullText() {
         // Show section labels in expanded mode
         if (loadDataLabel != null) {
             loadDataLabel.setVisible(true);
