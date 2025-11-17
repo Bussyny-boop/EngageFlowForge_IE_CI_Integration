@@ -12,6 +12,7 @@ public final class Main {
         } catch (Throwable t) {
             // If JavaFX fails to start (e.g., no DISPLAY), provide a helpful message and attempt CLI
             System.err.println("Failed to launch GUI: " + t.getMessage());
+            t.printStackTrace(); // Print full stack trace for debugging
             int status = runCliIfPossible(args);
             if (status == Integer.MIN_VALUE) {
                 System.err.println("No known CLI job specified. See JobRunner --help for options.");
