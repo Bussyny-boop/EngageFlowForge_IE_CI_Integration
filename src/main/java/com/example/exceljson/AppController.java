@@ -339,6 +339,7 @@ public class AppController {
         // Setup sidebar toggle
         if (sidebarToggleButton != null) {
             sidebarToggleButton.setOnAction(e -> toggleSidebar());
+            storeOriginalButtonTexts(); // Store original texts before applying state
             applySidebarState(); // Apply saved state
         }
 
