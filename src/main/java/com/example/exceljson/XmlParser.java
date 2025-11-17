@@ -9,7 +9,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Collectors;
 
 /**
  * Clean XML Parser for Vocera Engage configuration files.
