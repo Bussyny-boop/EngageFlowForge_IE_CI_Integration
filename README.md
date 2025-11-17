@@ -10,17 +10,21 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Java 17** or higher
-- **Maven 3.6+** (for building from source)
+- **Java 17 or higher** (Required for running the JAR file directly)
+  - Download from [Oracle](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
+- **Maven 3.6+** (only needed for building from source)
+
+> **⚠️ Important:** If you don't have Java 17+ installed, use the **MSI installer** (Option 1 below) which includes a bundled Java runtime and doesn't require Java to be installed on your system.
 
 ### Download & Run
 
-#### Option 1: Download Pre-built Installer
+#### Option 1: Download Pre-built Installer (Recommended - No Java Required)
 **Windows:**
 1. Go to the [Actions](../../actions) tab
 2. Find the latest successful build
 3. Download `engage-rules-generator-msi` artifact
 4. Extract and run `EngageFlowForge-3.0.msi`
+5. The installer includes Java runtime - no separate Java installation needed
 
 **macOS:**
 1. Go to the [Actions](../../actions) tab
@@ -28,11 +32,21 @@
 3. Download `engage-rules-generator-dmg` artifact
 4. Extract and run `EngageFlowForge-3.0.dmg`
 
-#### Option 2: Run JAR File
+#### Option 2: Run JAR File (Requires Java 17+)
 ```bash
-# Download the latest JAR from releases
+# Verify you have Java 17 or higher
+java -version
+
+# If version is less than 17, download and install Java 17+ first
+# Then run:
 java -jar engage-rules-generator-3.0.0.jar
 ```
+
+**Common Error:** If you see `UnsupportedClassVersionError: Unsupported major.minor version 61.0`, your Java version is too old. Either:
+- Install Java 17+ and try again, OR
+- Use the MSI installer (Option 1) which includes Java
+
+📚 **[See detailed Java troubleshooting guide](docs/java-version-troubleshooting.md)**
 
 #### Option 3: Build from Source
 ```bash
