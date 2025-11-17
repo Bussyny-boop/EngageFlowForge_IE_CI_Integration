@@ -3294,17 +3294,17 @@ public class AppController {
             exportJsonLabel.setManaged(false);
         }
         
-        // Set short vertical text for main app buttons
-        setCollapsedButton(loadNdwButton, "NDW", "Load NDW");
-        setCollapsedButton(loadXmlButton, "XML", "Load Engage XML");
-        setCollapsedButton(loadJsonButton, "JSN", "Load Engage Rules");
-        setCollapsedButton(clearAllButton, "DEL", "Clear All");
-        setCollapsedButton(generateJsonButton, "PREV", "Preview JSON");
-        // Export JSON: use icons for Nursecall, Clinicals, Orders
+        // Set distinct icons for collapsed mode
+        setCollapsedButton(loadNdwButton, "📄", "Load NDW");
+        setCollapsedButton(loadXmlButton, "📋", "Load Engage XML");
+        setCollapsedButton(loadJsonButton, "📥", "Load Engage Rules");
+        setCollapsedButton(clearAllButton, "🗑️", "Clear All");
+        setCollapsedButton(generateJsonButton, "👁️", "Preview JSON");
+        // Export JSON: use distinct icons
         setCollapsedButton(exportNurseJsonButton, "🩺", "Nursecall");
         setCollapsedButton(exportClinicalJsonButton, "🧬", "Clinicals");
         setCollapsedButton(exportOrdersJsonButton, "📦", "Orders");
-        setCollapsedButton(visualFlowButton, "VF", "Visual CallFlow");
+        setCollapsedButton(visualFlowButton, "🔀", "Visual CallFlow");
 
         // Table tabs: keep icons only
         setCollapsedTab(navUnits, "", "Units");

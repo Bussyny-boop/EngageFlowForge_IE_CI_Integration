@@ -178,15 +178,13 @@
 /* --- Collapsed Sidebar Styles --- */
 .sidebar-collapsed .nav-button {
     -fx-alignment: CENTER;
-    -fx-padding: 6 2;
-    -fx-font-size: 10px;
+    -fx-padding: 10 4;
+    -fx-font-size: 22px;
     -fx-text-alignment: CENTER;
-    -fx-wrap-text: true;
+    -fx-wrap-text: false;
     -fx-max-width: 56;
     -fx-pref-width: 56;
-    -fx-min-height: 45;
-    -fx-text-overrun: clip;
-    -fx-ellipsis-string: "";
+    -fx-min-height: 50;
 }
 
 .sidebar-collapsed Label {
@@ -296,15 +294,11 @@
 
 /* --- Loading/Loaded button states --- */
 .button.loading {
-    -fx-background-color: linear-gradient(to bottom, #F39C12, #D68910);
-    -fx-text-fill: #1E1E1E;
-    -fx-border-color: #F8C471;
+    /* Keep default button appearance, only show loading spinner */
 }
 
 .button.loaded {
-    -fx-background-color: linear-gradient(to bottom, #27AE60, #1E8449);
-    -fx-text-fill: white;
-    -fx-border-color: #58D68D;
+    /* Keep default button appearance, only show checkmark */
 }
 
 /* --- Theme Toggle Button --- */
