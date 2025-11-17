@@ -46,6 +46,8 @@ java -jar engage-rules-generator-3.0.0.jar
 - Install Java 17+ and try again, OR
 - Use the MSI installer (Option 1) which includes Java
 
+📚 **[See detailed Java troubleshooting guide](docs/java-version-troubleshooting.md)**
+
 #### Option 3: Build from Source
 ```bash
 # Clone the repository
