@@ -1,5 +1,6 @@
 package com.example.exceljson;
 
+import com.example.exceljson.jobs.JobRunner;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -7,14 +8,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class MainTest {
 
     @Test
-    void runsKnownJob() {
-        Integer status = Main.maybeRunJob(new String[]{"fail"});
-        assertNotNull(status);
+    void runsKnownJobViaJobRunner() {
+        int status = new JobRunner().run("fail");
         assertEquals(0, status);
     }
 
     @Test
-    void unknownJobFallsBackToUi() {
-        assertNull(Main.maybeRunJob(new String[]{"--ui"}));
+    void unknownJobReturnsNonZero() {
+        int status = new JobRunner().run("not-a-job");
+        assertNotEquals(0, status);
     }
 }
