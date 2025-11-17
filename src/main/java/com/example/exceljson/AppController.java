@@ -3333,32 +3333,33 @@ public class AppController {
         removeTooltip(navNurseCalls);
         removeTooltip(navClinicals);
         removeTooltip(navOrders);
-        /**
-         * Set a button to collapsed mode with short text and tooltip
-         */
-        private void setCollapsedButton(Button button, String shortText, String tooltip) {
-            if (button != null) {
-                button.setText(shortText);
-                button.setTooltip(new Tooltip(tooltip));
-            }
+    }
+    
+    /**
+     * Set a button to collapsed mode with short text and tooltip
+     */
+    private void setCollapsedButton(Button button, String shortText, String tooltip) {
+        if (button != null) {
+            button.setText(shortText);
+            button.setTooltip(new Tooltip(tooltip));
         }
+    }
 
-        /**
-         * Set a toggle button (tab) to collapsed mode (icon only, tooltip for full name)
-         */
-        private void setCollapsedTab(ToggleButton button, String icon, String tooltip) {
-            if (button != null) {
-                if (!icon.isEmpty()) button.setText(icon);
-                button.setTooltip(new Tooltip(tooltip));
-            }
+    /**
+     * Set a toggle button (tab) to collapsed mode (icon only, tooltip for full name)
+     */
+    private void setCollapsedTab(ToggleButton button, String icon, String tooltip) {
+        if (button != null) {
+            if (!icon.isEmpty()) button.setText(icon);
+            button.setTooltip(new Tooltip(tooltip));
         }
+    }
 
-        /**
-         * Remove tooltip from a button or toggle button
-         */
-        private void removeTooltip(ButtonBase button) {
-            if (button != null) button.setTooltip(null);
-        }
+    /**
+     * Remove tooltip from a button or toggle button
+     */
+    private void removeTooltip(ButtonBase button) {
+        if (button != null) button.setTooltip(null);
     }
     
     /**
