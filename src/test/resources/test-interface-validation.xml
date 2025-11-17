@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Interface Validation</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- Views for alert types -->
+        <view>
+          <name>Valid_Alert_Types</name>
+          <description>Alert types that should be processed</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>LHR,HHR,APNEA</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Invalid_Alert_Types_Not_In</name>
+          <description>Alert types excluded with not_in logic</description>
+          <filter relation="not_in">
+            <path>alert_type</path>
+            <value>EXCLUDED_ALARM</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Uncovered_Alert_Types</name>
+          <description>Alert types not covered by any DataUpdate rule</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>UNCOVERED_ALARM</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Common_Condition</name>
+          <description>Common alarm condition</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- Valid VMP rule: Alert types covered by DataUpdate with valid logic -->
+      <interface component="VMP">
+        <name>Valid VMP Rule</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>VALID RULE - Alert types covered by DataUpdate</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Valid_Alert_Types</view>
+            <view>Common_Condition</view>
+          </condition>
+          <settings>{"ruleAction":"SEND_MESSAGE","message":"Valid rule"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- Invalid VMP rule: Alert types with not_in logic in DataUpdate -->
+      <interface component="VMP">
+        <name>Invalid VMP Rule - Not In</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>INVALID RULE - Uses not_in logic in DataUpdate</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Invalid_Alert_Types_Not_In</view>
+            <view>Common_Condition</view>
+          </condition>
+          <settings>{"ruleAction":"SEND_MESSAGE","message":"Should be excluded"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- Invalid VMP rule: Alert types not covered by any DataUpdate -->
+      <interface component="VMP">
+        <name>Invalid VMP Rule - Uncovered</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>INVALID RULE - Alert types not in DataUpdate</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Uncovered_Alert_Types</view>
+            <view>Common_Condition</view>
+          </condition>
+          <settings>{"ruleAction":"SEND_MESSAGE","message":"Should be excluded"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate rule with valid logic (should process VMP rules with matching alert types) -->
+      <interface component="DataUpdate">
+        <name>Valid DataUpdate Rule</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>Valid DataUpdate with create trigger</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Valid_Alert_Types</view>
+            <view>Common_Condition</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate rule with invalid not_in logic -->
+      <interface component="DataUpdate">
+        <name>Invalid DataUpdate Rule</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>Invalid DataUpdate with not_in logic</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Invalid_Alert_Types_Not_In</view>
+            <view>Common_Condition</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"}]}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
