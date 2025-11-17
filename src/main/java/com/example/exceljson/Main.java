@@ -33,16 +33,23 @@ public final class Main {
     }
 
     private static boolean isHeadless() {
+        // Only check GraphicsEnvironment on Linux/Unix - Windows/Mac should always attempt GUI
+        String os = System.getProperty("os.name", "").toLowerCase();
+        boolean isUnix = os.contains("linux") || os.contains("unix") || os.contains("solaris");
+        
+        if (!isUnix) {
+            // On Windows/Mac, always attempt GUI launch (jpackage includes runtime)
+            return false;
+        }
+        
+        // On Unix-like systems, check for headless mode
         try {
             if (GraphicsEnvironment.isHeadless()) return true;
         } catch (Throwable ignore) { /* fall through */ }
-        // Additional check for typical Linux envs
-        String os = System.getProperty("os.name", "").toLowerCase();
-        if (os.contains("linux") || os.contains("unix")) {
-            String display = System.getenv("DISPLAY");
-            return display == null || display.isBlank();
-        }
-        return false;
+        
+        // Additional check for DISPLAY environment variable on X11 systems
+        String display = System.getenv("DISPLAY");
+        return display == null || display.isBlank();
     }
 
     private static int runCliIfPossible(String[] args) {
