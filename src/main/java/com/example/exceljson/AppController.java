@@ -3152,6 +3152,7 @@ public class AppController {
     }
     
     // ---------- Sidebar Toggle ----------
+    @FXML
     private void toggleSidebar() {
         isSidebarCollapsed = !isSidebarCollapsed;
         
