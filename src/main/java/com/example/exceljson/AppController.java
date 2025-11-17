@@ -3279,22 +3279,23 @@ public class AppController {
      * Hide labels and convert buttons to show only icons
      */
     private void hideLabelsAndShowIcons() {
-        // Convert buttons to icon-only mode
-        convertButtonToIcon(loadNdwButton);
-        convertButtonToIcon(loadXmlButton);
-        convertButtonToIcon(loadJsonButton);
-        convertButtonToIcon(clearAllButton);
-        convertButtonToIcon(generateJsonButton);
-        convertButtonToIcon(exportNurseJsonButton);
-        convertButtonToIcon(exportClinicalJsonButton);
-        convertButtonToIcon(exportOrdersJsonButton);
-        convertButtonToIcon(visualFlowButton);
-        
-        // Convert toggle buttons to icon-only mode
-        convertToggleButtonToIcon(navUnits);
-        convertToggleButtonToIcon(navNurseCalls);
-        convertToggleButtonToIcon(navClinicals);
-        convertToggleButtonToIcon(navOrders);
+        // Set short vertical text for main app buttons
+        setCollapsedButton(loadNdwButton, "NDW", "Load NDW");
+        setCollapsedButton(loadXmlButton, "XML", "Load Engage XML");
+        setCollapsedButton(loadJsonButton, "JSN", "Load JSON");
+        setCollapsedButton(clearAllButton, "DEL", "Clear All");
+        setCollapsedButton(generateJsonButton, "PREV", "Preview JSON");
+        // Export JSON: use icons for Nursecall, Clinicals, Orders + JSN
+        setCollapsedButton(exportNurseJsonButton, "🩺\nJSN", "Export Nursecall JSON");
+        setCollapsedButton(exportClinicalJsonButton, "🧬\nJSN", "Export Clinicals JSON");
+        setCollapsedButton(exportOrdersJsonButton, "📦\nJSN", "Export Orders JSON");
+        setCollapsedButton(visualFlowButton, "VF", "Visual Flow");
+
+        // Table tabs: keep icons only (assuming navUnits, navNurseCalls, navClinicals, navOrders are ToggleButtons with icons)
+        setCollapsedTab(navUnits, "", "Units");
+        setCollapsedTab(navNurseCalls, "", "Nurse Calls");
+        setCollapsedTab(navClinicals, "", "Clinicals");
+        setCollapsedTab(navOrders, "", "Orders");
     }
     
     /**
@@ -3311,12 +3312,53 @@ public class AppController {
         restoreButtonText(exportClinicalJsonButton);
         restoreButtonText(exportOrdersJsonButton);
         restoreButtonText(visualFlowButton);
-        
-        // Restore toggle button texts
+
+        // Restore toggle button texts (table tabs)
         restoreToggleButtonText(navUnits);
         restoreToggleButtonText(navNurseCalls);
         restoreToggleButtonText(navClinicals);
         restoreToggleButtonText(navOrders);
+
+        // Remove tooltips in expanded mode
+        removeTooltip(loadNdwButton);
+        removeTooltip(loadXmlButton);
+        removeTooltip(loadJsonButton);
+        removeTooltip(clearAllButton);
+        removeTooltip(generateJsonButton);
+        removeTooltip(exportNurseJsonButton);
+        removeTooltip(exportClinicalJsonButton);
+        removeTooltip(exportOrdersJsonButton);
+        removeTooltip(visualFlowButton);
+        removeTooltip(navUnits);
+        removeTooltip(navNurseCalls);
+        removeTooltip(navClinicals);
+        removeTooltip(navOrders);
+        /**
+         * Set a button to collapsed mode with short text and tooltip
+         */
+        private void setCollapsedButton(Button button, String shortText, String tooltip) {
+            if (button != null) {
+                button.setText(shortText);
+                button.setTooltip(new Tooltip(tooltip));
+            }
+        }
+
+        /**
+         * Set a toggle button (tab) to collapsed mode (icon only, tooltip for full name)
+         */
+        private void setCollapsedTab(ToggleButton button, String icon, String tooltip) {
+            if (button != null) {
+                if (!icon.isEmpty()) button.setText(icon);
+                button.setTooltip(new Tooltip(tooltip));
+            }
+        }
+
+        /**
+         * Remove tooltip from a button or toggle button
+         */
+        private void removeTooltip(ButtonBase button) {
+            if (button != null) button.setTooltip(null);
+        }
     }
     
     /**
