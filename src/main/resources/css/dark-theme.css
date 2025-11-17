@@ -178,12 +178,15 @@
 /* --- Collapsed Sidebar Styles --- */
 .sidebar-collapsed .nav-button {
     -fx-alignment: CENTER;
-    -fx-padding: 8 4;
-    -fx-font-size: 11px;
+    -fx-padding: 6 2;
+    -fx-font-size: 10px;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: true;
-    -fx-max-width: 52;
-    -fx-pref-width: 52;
+    -fx-max-width: 56;
+    -fx-pref-width: 56;
+    -fx-min-height: 45;
+    -fx-text-overrun: clip;
+    -fx-ellipsis-string: "";
 }
 
 .sidebar-collapsed Label {

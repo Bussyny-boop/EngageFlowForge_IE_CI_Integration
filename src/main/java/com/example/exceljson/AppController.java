@@ -3260,7 +3260,7 @@ public class AppController {
             sidebarContent.getStyleClass().add("sidebar-collapsed");
         }
         
-        // Hide labels and convert buttons to short text/icons
+        // Hide section labels and show short text for collapsed state
         hideLabelsAndShowShortText();
     }
     
@@ -3275,7 +3275,7 @@ public class AppController {
         // Remove collapsed style class
         sidebarContent.getStyleClass().remove("sidebar-collapsed");
         
-        // Show labels and restore full text
+        // Show section labels and restore full text for expanded state
         showLabelsAndRestoreFullText();
     }
     
