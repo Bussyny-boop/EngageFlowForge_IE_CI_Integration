@@ -294,11 +294,15 @@
 
 /* --- Loading/Loaded button states --- */
 .button.loading {
-    /* Keep default button appearance, only show loading spinner */
+    -fx-background-color: linear-gradient(to bottom, #F39C12, #D68910);
+    -fx-text-fill: #1E1E1E;
+    -fx-border-color: #F8C471;
 }
 
 .button.loaded {
-    /* Keep default button appearance, only show checkmark */
+    -fx-background-color: linear-gradient(to bottom, #27AE60, #1E8449);
+    -fx-text-fill: white;
+    -fx-border-color: #58D68D;
 }
 
 /* --- Theme Toggle Button --- */
