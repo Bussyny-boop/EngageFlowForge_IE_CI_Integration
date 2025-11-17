@@ -182,6 +182,8 @@
     -fx-font-size: 22px;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: false;
+    -fx-text-overrun: clip;
+    -fx-ellipsis-string: "";
     -fx-max-width: 56;
     -fx-pref-width: 56;
     -fx-min-height: 50;
