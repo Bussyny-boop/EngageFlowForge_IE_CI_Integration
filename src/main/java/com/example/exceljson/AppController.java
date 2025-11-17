@@ -69,6 +69,10 @@ public class AppController {
     @FXML private BorderPane sidebarContainer;
     @FXML private VBox sidebarContent;
     @FXML private Button sidebarToggleButton;
+    @FXML private Label loadDataLabel;
+    @FXML private VBox loadButtonsContainer;
+    @FXML private Label exportJsonLabel;
+    @FXML private VBox exportButtonsContainer;
 
     // ---------- UI Elements ----------
     @FXML private Button loadNdwButton;
@@ -3279,19 +3283,29 @@ public class AppController {
      * Hide labels and convert buttons to show only icons
      */
     private void hideLabelsAndShowIcons() {
+        // Hide section labels in collapsed mode
+        if (loadDataLabel != null) {
+            loadDataLabel.setVisible(false);
+            loadDataLabel.setManaged(false);
+        }
+        if (exportJsonLabel != null) {
+            exportJsonLabel.setVisible(false);
+            exportJsonLabel.setManaged(false);
+        }
+        
         // Set short vertical text for main app buttons
         setCollapsedButton(loadNdwButton, "NDW", "Load NDW");
         setCollapsedButton(loadXmlButton, "XML", "Load Engage XML");
-        setCollapsedButton(loadJsonButton, "JSN", "Load JSON");
+        setCollapsedButton(loadJsonButton, "JSN", "Load Engage Rules");
         setCollapsedButton(clearAllButton, "DEL", "Clear All");
         setCollapsedButton(generateJsonButton, "PREV", "Preview JSON");
-        // Export JSON: use icons for Nursecall, Clinicals, Orders + JSN
-        setCollapsedButton(exportNurseJsonButton, "🩺\nJSN", "Export Nursecall JSON");
-        setCollapsedButton(exportClinicalJsonButton, "🧬\nJSN", "Export Clinicals JSON");
-        setCollapsedButton(exportOrdersJsonButton, "📦\nJSN", "Export Orders JSON");
-        setCollapsedButton(visualFlowButton, "VF", "Visual Flow");
+        // Export JSON: use icons for Nursecall, Clinicals, Orders
+        setCollapsedButton(exportNurseJsonButton, "🩺", "Nursecall");
+        setCollapsedButton(exportClinicalJsonButton, "🧬", "Clinicals");
+        setCollapsedButton(exportOrdersJsonButton, "📦", "Orders");
+        setCollapsedButton(visualFlowButton, "VF", "Visual CallFlow");
 
-        // Table tabs: keep icons only (assuming navUnits, navNurseCalls, navClinicals, navOrders are ToggleButtons with icons)
+        // Table tabs: keep icons only
         setCollapsedTab(navUnits, "", "Units");
         setCollapsedTab(navNurseCalls, "", "Nurse Calls");
         setCollapsedTab(navClinicals, "", "Clinicals");
@@ -3302,6 +3316,16 @@ public class AppController {
      * Show labels and restore full text on buttons
      */
     private void showLabelsAndRestoreText() {
+        // Show section labels in expanded mode
+        if (loadDataLabel != null) {
+            loadDataLabel.setVisible(true);
+            loadDataLabel.setManaged(true);
+        }
+        if (exportJsonLabel != null) {
+            exportJsonLabel.setVisible(true);
+            exportJsonLabel.setManaged(true);
+        }
+        
         // Restore button texts
         restoreButtonText(loadNdwButton);
         restoreButtonText(loadXmlButton);

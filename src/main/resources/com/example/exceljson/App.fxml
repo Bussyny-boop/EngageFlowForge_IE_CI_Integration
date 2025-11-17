@@ -86,8 +86,8 @@
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage XML -->
-                                <Button fx:id="loadXmlButton" text="🧩 Load Engage XML" maxWidth="Infinity" styleClass="nav-button">
-                                    <userData>🧩</userData>
+                                <Button fx:id="loadXmlButton" text="📋 Load Engage XML" maxWidth="Infinity" styleClass="nav-button">
+                                    <userData>📋</userData>
                                     <tooltip>
                                         <Tooltip text="Load Engage interface rules from XML (*.xml)" />
                                     </tooltip>
@@ -133,34 +133,50 @@
                             <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 8 0 8 0;" />
                             
                             <!-- Preview JSON (Combined) -->
-                            <Button fx:id="generateJsonButton" text="📋 Preview JSON" maxWidth="Infinity" styleClass="nav-button">
-                                <userData>📋</userData>
+                            <Button fx:id="generateJsonButton" text="👁️ Preview JSON" maxWidth="Infinity" styleClass="nav-button">
+                                <userData>👁️</userData>
                                 <tooltip>
-                                    <Tooltip text="Select this option to preview the JSON file for all selected rows in the dataset" />
+                                    <Tooltip text="Preview JSON file for all selected rows in the dataset" />
                                 </tooltip>
                             </Button>
                             
                             <!-- Separator between preview and export buttons -->
                             <Separator fx:id="exportSeparator" style="-fx-background-color: #3E3E3E; -fx-padding: 8 0 8 0;" />
                             
-                            <!-- Export Nursecall JSON -->
-                            <Button fx:id="exportNurseJsonButton" text="💾 Export Nursecall" maxWidth="Infinity" styleClass="nav-button">
-                                <userData>💾</userData>
-                            </Button>
+                            <!-- Export JSON Section Header -->
+                            <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 4 0 0 2;" />
+                            <VBox fx:id="exportButtonsContainer" spacing="6">
+                                <!-- Export Nursecall JSON -->
+                                <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="nav-button">
+                                    <userData>🩺</userData>
+                                    <tooltip>
+                                        <Tooltip text="Export Nursecall JSON" />
+                                    </tooltip>
+                                </Button>
+                                
+                                <!-- Export Clinical JSON -->
+                                <Button fx:id="exportClinicalJsonButton" text="🧬 Clinicals" maxWidth="Infinity" styleClass="nav-button">
+                                    <userData>🧬</userData>
+                                    <tooltip>
+                                        <Tooltip text="Export Clinicals JSON" />
+                                    </tooltip>
+                                </Button>
+                                
+                                <!-- Export Orders JSON -->
+                                <Button fx:id="exportOrdersJsonButton" text="📦 Orders" maxWidth="Infinity" styleClass="nav-button">
+                                    <userData>📦</userData>
+                                    <tooltip>
+                                        <Tooltip text="Export Orders JSON" />
+                                    </tooltip>
+                                </Button>
+                            </VBox>
                             
-                            <!-- Export Clinical JSON -->
-                            <Button fx:id="exportClinicalJsonButton" text="💾 Export Clinical" maxWidth="Infinity" styleClass="nav-button">
-                                <userData>💾</userData>
-                            </Button>
-                            
-                            <!-- Export Orders JSON -->
-                            <Button fx:id="exportOrdersJsonButton" text="💾 Export Orders" maxWidth="Infinity" styleClass="nav-button">
-                                <userData>💾</userData>
-                            </Button>
-                            
-                            <!-- Visual Flow -->
-                            <Button fx:id="visualFlowButton" text="📊 Visual Flow" maxWidth="Infinity" styleClass="nav-button">
-                                <userData>📊</userData>
+                            <!-- Visual CallFlow -->
+                            <Button fx:id="visualFlowButton" text="🔀 Visual CallFlow" maxWidth="Infinity" styleClass="nav-button">
+                                <userData>🔀</userData>
+                                <tooltip>
+                                    <Tooltip text="Generate Visual CallFlow Diagram" />
+                                </tooltip>
                             </Button>
                         </VBox>
                     </center>
