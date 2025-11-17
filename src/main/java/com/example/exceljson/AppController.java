@@ -1008,6 +1008,7 @@ public class AppController {
     // ---------- Button State Helpers ----------
     private void setButtonLoading(Button button, boolean loading) {
         if (button == null) return;
+        boolean isCollapsed = sidebarContent.getStyleClass().contains("sidebar-collapsed");
         if (loading) {
             button.getStyleClass().remove("loaded");
             if (!button.getStyleClass().contains("loading")) {
@@ -1017,14 +1018,18 @@ public class AppController {
             if (!button.getProperties().containsKey("origText")) {
                 button.getProperties().put("origText", button.getText());
             }
-            // Show spinner and update text
-            String base = String.valueOf(button.getProperties().get("origText"));
-            button.setText(base + " — Loading…");
+            // Show spinner
             javafx.scene.control.ProgressIndicator pi = new javafx.scene.control.ProgressIndicator();
             pi.setPrefSize(12, 12);
             pi.setProgress(-1);
             button.setGraphic(pi);
             button.setGraphicTextGap(8);
+            
+            // Only update text if sidebar is expanded
+            if (!isCollapsed) {
+                String base = String.valueOf(button.getProperties().get("origText"));
+                button.setText(base + " — Loading…");
+            }
             button.setTooltip(new Tooltip("Loading…"));
             button.setDisable(true);
         } else {
@@ -1043,6 +1048,7 @@ public class AppController {
 
     private void setButtonLoaded(Button button, boolean loaded) {
         if (button == null) return;
+        boolean isCollapsed = sidebarContent.getStyleClass().contains("sidebar-collapsed");
         button.getStyleClass().remove("loading");
         if (loaded) {
             if (!button.getStyleClass().contains("loaded")) {
@@ -1052,8 +1058,11 @@ public class AppController {
             if (!button.getProperties().containsKey("origText")) {
                 button.getProperties().put("origText", button.getText());
             }
-            String base = String.valueOf(button.getProperties().get("origText"));
-            button.setText(base + " ✓");
+            // Only update text if sidebar is expanded
+            if (!isCollapsed) {
+                String base = String.valueOf(button.getProperties().get("origText"));
+                button.setText(base + " ✓");
+            }
             button.setGraphic(null);
             button.setTooltip(new Tooltip("Last load succeeded"));
         } else {
