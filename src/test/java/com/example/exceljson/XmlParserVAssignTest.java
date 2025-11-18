@@ -121,6 +121,17 @@ class XmlParserVAssignTest {
                 </dataset>
               </datasets>
               <interfaces>
+                <interface component="DataUpdate">
+                  <rules>
+                    <rule active="true" dataset="NurseCalls">
+                      <purpose>CREATE TRIGGER | Emergency</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Multi_Roles</view>
+                      </condition>
+                    </rule>
+                  </rules>
+                </interface>
                 <interface component="VMP">
                   <rules>
                     <rule active="true" dataset="NurseCalls">
@@ -204,6 +215,17 @@ class XmlParserVAssignTest {
                 </dataset>
               </datasets>
               <interfaces>
+                <interface component="DataUpdate">
+                  <rules>
+                    <rule active="true" dataset="NurseCalls">
+                      <purpose>CREATE TRIGGER | High Priority</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>BCH_ICU_Alarms</view>
+                      </condition>
+                    </rule>
+                  </rules>
+                </interface>
                 <interface component="VMP">
                   <rules>
                     <rule active="true" dataset="NurseCalls">
@@ -282,6 +304,17 @@ class XmlParserVAssignTest {
                 </dataset>
               </datasets>
               <interfaces>
+                <interface component="DataUpdate">
+                  <rules>
+                    <rule active="true" dataset="Clinicals">
+                      <purpose>CREATE TRIGGER | SpO2 Low | Heart Rate High</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Hospital_ER_Monitors</view>
+                      </condition>
+                    </rule>
+                  </rules>
+                </interface>
                 <interface component="VMP">
                   <rules>
                     <rule active="true" dataset="Clinicals">
