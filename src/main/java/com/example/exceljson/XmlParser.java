@@ -754,12 +754,20 @@ public class XmlParser {
         Map<String, List<Rule>> sendByState = new HashMap<>();
         Map<String, String> escalateDelay = new HashMap<>();
         String initialDelay = null; // Delay before first state (Primary)
+        boolean hasCreateRuleWithoutDelay = false; // Track if there's a CREATE rule without delay (Immediate)
         
         // Check DataUpdate CREATE rules for initial delay
+        // Only consider rules that explicitly match THIS alert type
         for (Rule dataUpdateRule : dataUpdateRules) {
-            if (dataUpdateRule.triggerCreate && dataUpdateRule.deferDeliveryBy != null) {
-                initialDelay = dataUpdateRule.deferDeliveryBy;
-                break; // Use first one found
+            if (dataUpdateRule.triggerCreate && dataUpdateRule.alertTypes.contains(alertType)) {
+                if (dataUpdateRule.deferDeliveryBy != null) {
+                    initialDelay = dataUpdateRule.deferDeliveryBy;
+                    break; // Use first one found
+                } else {
+                    // Found a CREATE rule without delay - this means Immediate
+                    hasCreateRuleWithoutDelay = true;
+                    break;
+                }
             }
         }
         
@@ -794,7 +802,7 @@ public class XmlParser {
             List<Rule> sendRules = sendByState.get(singleState);
             
             for (Rule sendRule : sendRules) {
-                createSimpleFlowFromRule(dataset, alertType, sendRule, dataUpdateRules, initialDelay);
+                createSimpleFlowFromRule(dataset, alertType, sendRule, dataUpdateRules, initialDelay, hasCreateRuleWithoutDelay);
             }
             return;
         }
@@ -826,13 +834,13 @@ public class XmlParser {
                 }
                 
                 // Create escalation flow with this modified map
-                createEscalationFlowFromMap(dataset, alertType, modifiedSendByState, escalateDelay, initialDelay, dataUpdateRules, rules);
+                createEscalationFlowFromMap(dataset, alertType, modifiedSendByState, escalateDelay, initialDelay, hasCreateRuleWithoutDelay, dataUpdateRules, rules);
             }
             return;
         }
         
         // Otherwise, create a normal single escalation flow
-        createEscalationFlowFromMap(dataset, alertType, sendByState, escalateDelay, initialDelay, dataUpdateRules, rules);
+        createEscalationFlowFromMap(dataset, alertType, sendByState, escalateDelay, initialDelay, hasCreateRuleWithoutDelay, dataUpdateRules, rules);
     }
     
     /**
@@ -842,6 +850,7 @@ public class XmlParser {
                                              Map<String, List<Rule>> sendByState,
                                              Map<String, String> escalateDelay,
                                              String initialDelay,
+                                             boolean hasCreateRuleWithoutDelay,
                                              List<Rule> dataUpdateRules,
                                              List<Rule> allRules) {
         // Build a template flow with common fields and recipients/timing
@@ -855,6 +864,17 @@ public class XmlParser {
         Rule refRule = sendByState.values().iterator().next().get(0);
         template.deviceA = mapComponent(refRule.component);
 
+        // Set initial timing (T1) based on CREATE rules
+        // This should be set regardless of whether there's a SEND rule at Primary state
+        if (hasCreateRuleWithoutDelay) {
+            template.t1 = "Immediate";
+        } else if (initialDelay != null) {
+            template.t1 = initialDelay;
+        } else {
+            // Default to Immediate if not specified
+            template.t1 = "Immediate";
+        }
+
         // Map states to recipients and timing on the template
         String[] states = {"Primary", "Secondary", "Tertiary", "Quaternary", "Quinary"};
         for (int i = 0; i < states.length; i++) {
@@ -867,19 +887,9 @@ public class XmlParser {
                 String recipient = extractDestination(sendRule);
                 setRecipient(template, i + 1, recipient, sendRule.roleFromView);
 
-                // Apply settings from first send rule
+                // Apply settings from first send rule at Primary state
                 if (i == 0) {
                     applySettings(template, sendRule);
-                    // For first recipient, use initial delay if available, otherwise check if send rule has create trigger
-                    if (initialDelay != null) {
-                        template.t1 = initialDelay;
-                    } else if (sendRule.triggerCreate) {
-                        // If sendRule has defer-delivery-by, use it; otherwise Immediate
-                        template.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
-                    } else if (template.t1 == null || template.t1.isEmpty()) {
-                        // Default to Immediate if not specified
-                        template.t1 = "Immediate";
-                    }
                 }
             }
 
@@ -963,7 +973,7 @@ public class XmlParser {
     /**
      * Create a simple flow from a single rule (used for single-state with multiple SEND rules)
      */
-    private void createSimpleFlowFromRule(String dataset, String alertType, Rule sendRule, List<Rule> dataUpdateRules, String initialDelay) {
+    private void createSimpleFlowFromRule(String dataset, String alertType, Rule sendRule, List<Rule> dataUpdateRules, String initialDelay, boolean hasCreateRuleWithoutDelay) {
         // Build a template flow
         ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
         template.inScope = true;
@@ -976,7 +986,10 @@ public class XmlParser {
         String recipient = extractDestination(sendRule);
         setRecipient(template, 1, recipient, sendRule.roleFromView);
 
-        if (initialDelay != null) {
+        // Determine timing - prioritize CREATE rule without delay (Immediate)
+        if (hasCreateRuleWithoutDelay) {
+            template.t1 = "Immediate";
+        } else if (initialDelay != null) {
             template.t1 = initialDelay;
         } else if (sendRule.triggerCreate) {
             template.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
