@@ -402,15 +402,19 @@ public class XmlParser {
     }
     
     /**
-     * Check if the relation uses invalid logic that should exclude the rule
+     * Check if the relation uses invalid logic that should exclude the rule.
+     * Note: not_in is now supported and is NOT considered invalid logic.
      */
     private boolean hasInvalidLogic(String relation) {
         if (relation == null) return false;
         
         String lowerRelation = relation.toLowerCase();
+        // not_in is now supported, so we exclude it from invalid logic check
+        if (lowerRelation.equals("not_in")) {
+            return false;
+        }
         return lowerRelation.contains("not") || 
                lowerRelation.equals("null") ||
-               lowerRelation.contains("not_in") ||
                lowerRelation.contains("not_like") ||
                lowerRelation.contains("not_equal");
     }
@@ -433,7 +437,10 @@ public class XmlParser {
     }
     
     /**
-     * Check if a DataUpdate filter covers the target alert types
+     * Check if a DataUpdate filter covers the target alert types.
+     * 
+     * For "in" and "equal" relations: alert is covered if it's IN the list
+     * For "not_in" relation: alert is covered if it's NOT IN the exclusion list
      */
     private boolean coversAlertTypes(String relation, Set<String> dataUpdateAlertTypes, Set<String> targetAlertTypes) {
         if (relation == null || dataUpdateAlertTypes.isEmpty() || targetAlertTypes.isEmpty()) {
@@ -443,9 +450,19 @@ public class XmlParser {
         switch (relation.toLowerCase()) {
             case "in":
             case "equal":
-                // Check if any target alert type is covered
+                // Check if any target alert type is covered (positive match)
                 for (String targetType : targetAlertTypes) {
                     if (dataUpdateAlertTypes.contains(targetType)) {
+                        return true;
+                    }
+                }
+                return false;
+                
+            case "not_in":
+                // For not_in: alert is covered if it's NOT in the exclusion list
+                // Check if any target alert type is NOT in the exclusion list
+                for (String targetType : targetAlertTypes) {
+                    if (!dataUpdateAlertTypes.contains(targetType)) {
                         return true;
                     }
                 }
@@ -557,7 +574,10 @@ public class XmlParser {
     }
     
     /**
-     * Check if a single alert type is covered by a DataUpdate rule
+     * Check if a single alert type is covered by a DataUpdate rule.
+     * 
+     * For "in" and "equal" relations: alert is covered if it's in the list
+     * For "not_in" relation: alert is covered if it's NOT in the exclusion list
      */
     private boolean dataUpdateRuleCoversAlertType(Rule dataUpdateRule, String alertType) {
         if (dataUpdateRule == null || dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
@@ -575,10 +595,20 @@ public class XmlParser {
                     if (hasInvalidLogic(filter.relation)) {
                         return false;
                     }
-                    // Check if this specific alert type is in the filter values
+                    
                     Set<String> values = parseListValues(filter.value);
-                    if (values.contains(alertType)) {
-                        return true;
+                    String relation = filter.relation == null ? "" : filter.relation.toLowerCase();
+                    
+                    // For not_in: alert is covered if it's NOT in the exclusion list
+                    if (relation.equals("not_in")) {
+                        if (!values.contains(alertType)) {
+                            return true;
+                        }
+                    } else {
+                        // For in/equal: alert is covered if it's in the list
+                        if (values.contains(alertType)) {
+                            return true;
+                        }
                     }
                 }
             }

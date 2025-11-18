@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test DataUpdate NOT_IN Logic</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        
+        <!-- View for alerts NOT in the excluded list (using not_in relation) -->
+        <view>
+          <name>Alert_type_NOT_Codes</name>
+          <description>Alert type NOT Codes - excludes Code Blue types</description>
+          <filter relation="not_in">
+            <path>alert_type</path>
+            <value>Staff Assist, Adult Code Blue, Code Blue, STAT C-Section, Infant Code Blue, Peds Code Blue</value>
+          </filter>
+        </view>
+        
+        <!-- View for alerts IN a specific list (for comparison) -->
+        <view>
+          <name>Alert_type_included_in_Routine_Calls</name>
+          <description>Alert types included in routine calls</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Need RN, Water Request, Toilet Request, Pain Medication</value>
+          </filter>
+        </view>
+        
+        <!-- Views for facility -->
+        <view>
+          <name>Facility_name_TestHospital</name>
+          <description>Facility is Test Hospital</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Test Hospital</value>
+          </filter>
+        </view>
+        
+        <!-- Views for states -->
+        <view>
+          <name>Alert_has_no_state</name>
+          <description>Alert has no state</description>
+          <filter relation="null">
+            <path>state</path>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_at_primary_state</name>
+          <description>Alert is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alert_has_not_been_responded_to</name>
+          <description>Alert has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_active</name>
+          <description>Alert is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Bed_exists</name>
+          <description>Bed exists</description>
+          <filter relation="not_null">
+            <path>bed</path>
+          </filter>
+        </view>
+        
+        <!-- Role view -->
+        <view>
+          <name>Role_caregiver_NURSE</name>
+          <description>Role caregiver is NURSE</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- DataUpdate CREATE with NOT_IN filter - allows all alerts EXCEPT the excluded codes -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create Trigger</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE TRIGGER | All Room Alerts with Escalation | NOT Code Blue types</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_NOT_Codes</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_TestHospital</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"},{"path":"responded_to","value":"No"},{"path":"history.previous_state","value":"#{state}"},{"path":"history.state","value":"Primary"},{"path":"history.reason","value":"Complete Initialization"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VMP SEND rule for Need RN - Should be PROCESSED (Need RN is NOT in the excluded codes) -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <rule active="true" dataset="NurseCalls" no_loopback="true">
+          <purpose>SEND PRIMARY | Need RN | VMP | NURSE | Test Hospital</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>1</defer-delivery-by>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_included_in_Routine_Calls</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_name_TestHospital</view>
+            <view>Role_caregiver_NURSE</view>
+          </condition>
+          <settings>{"callbackNumber":"","callbackResponse":"","destination":"#{bed.locs.assignments.usr.devices.lines.number}","displayValues":["Acknowledge","Escalate"],"enunciate":"SYSTEM_DEFAULT","escalationLevel":"#{state}","eventID":"NurseCalls:#{id}","message":"Room: #{bed.room.room_number} - #{bed.bed_number}\nAlert: #{alert_type}\nPriority: #{priority}\nFacility: #{bed.room.facility.name}","overrideDND":false,"parameters":[],"participationStatus":true,"patientMRN":"#{bed.patient.mrn}","priority":"2","responseAction":"responses.action","ruleAction":"SEND_MESSAGE","shortMessage":"#{bed.room.room_number} Bed #{bed.bed_number} #{alert_type}","storedValues":["Accepted","Decline"],"subject":"#{alert_type} - Room #{bed.room.room_number}-#{bed.bed_number}","ttl":10,"username":"responses.usr.login"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate CREATE with IN filter - only specific routine calls -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Routine Calls</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE TRIGGER | Routine Calls Only</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_included_in_Routine_Calls</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_TestHospital</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
