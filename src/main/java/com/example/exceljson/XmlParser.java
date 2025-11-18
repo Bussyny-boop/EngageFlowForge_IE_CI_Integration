@@ -639,6 +639,9 @@ public class XmlParser {
         // Collect global escalation rules (no alert type - apply to all)
         List<Rule> globalEscalationRules = new ArrayList<>();
         
+        // Track CREATE DATAUPDATE rules by dataset + alert type for facility extraction
+        Map<String, List<Rule>> dataUpdateRulesByAlertType = new HashMap<>();
+        
         for (Rule rule : allRules) {
             // Track facilities/units
             for (String facility : rule.facilities) {
@@ -654,6 +657,14 @@ public class XmlParser {
                 && rule.deferDeliveryBy != null && !hasDestination(rule)) {
                 globalEscalationRules.add(rule);
                 continue;
+            }
+            
+            // Track DataUpdate CREATE rules for facility extraction
+            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate) {
+                for (String alertType : rule.alertTypes) {
+                    String key = rule.dataset + "|" + alertType;
+                    dataUpdateRulesByAlertType.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                }
             }
             
             // Skip DataUpdate rules - they're only used for validation, not for creating flows
@@ -705,13 +716,17 @@ public class XmlParser {
             String alertType = parts[1];
             List<Rule> rules = entry.getValue();
             
+            // Get corresponding CREATE DATAUPDATE rules for this alert type
+            String dataUpdateKey = dataset + "|" + alertType;
+            List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
+            
             // Check if this is an escalation group
             boolean hasEscalation = rules.stream().anyMatch(r -> r.state != null && !r.state.isEmpty());
             
             if (hasEscalation) {
-                createEscalationFlow(dataset, alertType, rules);
+                createEscalationFlow(dataset, alertType, rules, dataUpdateRules);
             } else {
-                createSimpleFlow(dataset, alertType, rules);
+                createSimpleFlow(dataset, alertType, rules, dataUpdateRules);
             }
         }
     }
@@ -719,7 +734,7 @@ public class XmlParser {
     /**
      * Create flow row with escalation
      */
-    private void createEscalationFlow(String dataset, String alertType, List<Rule> rules) {
+    private void createEscalationFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Separate send rules and escalate rules
         Map<String, Rule> sendByState = new HashMap<>();
         Map<String, String> escalateDelay = new HashMap<>();
@@ -792,15 +807,13 @@ public class XmlParser {
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // First, collect from DataUpdate CREATE rules
-        for (Rule r : rules) {
-            if ("DataUpdate".equalsIgnoreCase(r.component) && r.triggerCreate) {
-                facs.addAll(r.facilities);
-                uns.addAll(r.units);
-            }
+        // First, collect from DataUpdate CREATE rules (passed as parameter)
+        for (Rule r : dataUpdateRules) {
+            facs.addAll(r.facilities);
+            uns.addAll(r.units);
         }
         
-        // If no facilities/units found in DataUpdate rules, collect from all rules
+        // If no facilities/units found in DataUpdate rules, collect from all rules in this group
         if (facs.isEmpty() || uns.isEmpty()) {
             for (Rule r : rules) {
                 if (facs.isEmpty()) {
@@ -856,7 +869,7 @@ public class XmlParser {
     /**
      * Create simple flow row (no escalation)
      */
-    private void createSimpleFlow(String dataset, String alertType, List<Rule> rules) {
+    private void createSimpleFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Prefer rules with destination, but allow rules without if none have destination
         Rule sendRule = rules.stream()
             .filter(this::hasDestination)
@@ -892,12 +905,10 @@ public class XmlParser {
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // First, collect from DataUpdate CREATE rules in this group
-        for (Rule r : rules) {
-            if ("DataUpdate".equalsIgnoreCase(r.component) && r.triggerCreate) {
-                facs.addAll(r.facilities);
-                uns.addAll(r.units);
-            }
+        // First, collect from DataUpdate CREATE rules (passed as parameter)
+        for (Rule r : dataUpdateRules) {
+            facs.addAll(r.facilities);
+            uns.addAll(r.units);
         }
         
         // If no facilities/units found in DataUpdate rules, use from sendRule
