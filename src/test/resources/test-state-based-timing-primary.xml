@@ -88,6 +88,25 @@
     </datasets>
     
     <interfaces>
+      <!-- DataUpdate CREATE TRIGGER for APNEA and BRADY alerts -->
+      <interface component="DataUpdate">
+        <name>DataUpdate</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>CREATE TRIGGER | APNEA</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_included_in_APNEA</view>
+          </condition>
+        </rule>
+        <rule active="true" dataset="Clinicals">
+          <purpose>CREATE TRIGGER | BRADY</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_included_in_BRADY</view>
+          </condition>
+        </rule>
+      </interface>
+      
       <!-- VMP Interface for sending messages -->
       <interface component="VMP">
         <name>VMP</name>

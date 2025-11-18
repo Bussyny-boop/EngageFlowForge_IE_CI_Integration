@@ -201,6 +201,12 @@ public class XmlParser {
         if ("DataUpdate".equalsIgnoreCase(rule.component)) {
             return true;
         }
+        
+        // Always keep escalation timing rules (have defer-delivery-by but no destination)
+        // These apply globally across alert types and will be enriched with state info later
+        if (rule.deferDeliveryBy != null && !hasDestination(rule)) {
+            return true;
+        }
 
         // Collect DataUpdate(create=true) rules for the same dataset
         List<Rule> dataUpdateRules = allParsedRules.stream()
@@ -578,6 +584,11 @@ public class XmlParser {
             if (rule.alertTypes.isEmpty() && rule.state != null && !rule.state.isEmpty() 
                 && rule.deferDeliveryBy != null && !hasDestination(rule)) {
                 globalEscalationRules.add(rule);
+                continue;
+            }
+            
+            // Skip DataUpdate rules - they're only used for validation, not for creating flows
+            if ("DataUpdate".equalsIgnoreCase(rule.component)) {
                 continue;
             }
             

@@ -113,6 +113,18 @@
     </datasets>
     
     <interfaces>
+      <!-- DataUpdate CREATE TRIGGER for APNEA and ASYSTOLE alerts -->
+      <interface component="DataUpdate">
+        <name>DataUpdate</name>
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>CREATE TRIGGER | APNEA | ASYSTOLE</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_is_an_Apnea_or_Asystole</view>
+          </condition>
+        </rule>
+      </interface>
+      
       <interface component="VMP">
         <name>VMP</name>
         

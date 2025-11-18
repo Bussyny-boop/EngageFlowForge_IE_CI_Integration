@@ -92,6 +92,18 @@
     </datasets>
     
     <interfaces>
+      <!-- DataUpdate CREATE TRIGGER for APNEA -->
+      <interface component="DataUpdate">
+        <name>DataUpdate</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>CREATE TRIGGER | APNEA</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_included_in_APNEA</view>
+          </condition>
+        </rule>
+      </interface>
+      
       <interface component="VMP">
         <name>VMP</name>
         

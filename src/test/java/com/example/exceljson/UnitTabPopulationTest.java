@@ -130,6 +130,17 @@ public class UnitTabPopulationTest {
                 </dataset>
               </datasets>
               <interfaces>
+                <interface component="DataUpdate">
+                  <rules>
+                    <rule active="true" dataset="NurseCalls">
+                      <purpose>CREATE TRIGGER | Code Blue</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>ICU_Alarms</view>
+                      </condition>
+                    </rule>
+                  </rules>
+                </interface>
                 <interface component="VMP">
                   <rules>
                     <rule active="true" dataset="NurseCalls">
