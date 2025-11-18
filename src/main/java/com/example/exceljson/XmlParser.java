@@ -581,6 +581,11 @@ public class XmlParser {
                 continue;
             }
             
+            // Skip DataUpdate rules - they're only used for validation, not for creating flows
+            if ("DataUpdate".equalsIgnoreCase(rule.component)) {
+                continue;
+            }
+            
             // Skip other rules without alert types
             if (rule.alertTypes.isEmpty()) continue;
             
