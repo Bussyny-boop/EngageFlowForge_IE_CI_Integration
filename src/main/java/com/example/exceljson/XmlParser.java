@@ -750,7 +750,8 @@ public class XmlParser {
      */
     private void createEscalationFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Separate send rules and escalate rules
-        Map<String, Rule> sendByState = new HashMap<>();
+        // Changed from Map<String, Rule> to Map<String, List<Rule>> to support multiple SEND rules at same state
+        Map<String, List<Rule>> sendByState = new HashMap<>();
         Map<String, String> escalateDelay = new HashMap<>();
         String initialDelay = null; // Delay before first state (Primary)
         
@@ -769,7 +770,7 @@ public class XmlParser {
             
             // If has destination, it's a send rule
             if (hasDestination(rule)) {
-                sendByState.put(state, rule);
+                sendByState.computeIfAbsent(state, k -> new ArrayList<>()).add(rule);
             }
             // If has defer-delivery-by but no destination, it's escalation timing
             else if (rule.deferDeliveryBy != null && !hasDestination(rule)) {
@@ -779,6 +780,70 @@ public class XmlParser {
         
         if (sendByState.isEmpty()) return;
         
+        // Check how many unique states have SEND rules
+        int numStates = sendByState.size();
+        
+        // Check if any state has multiple SEND rules
+        boolean hasMultipleRulesAtSameState = sendByState.values().stream().anyMatch(list -> list.size() > 1);
+        
+        // If there's only ONE state and it has multiple SEND rules, create separate single-level flows
+        if (numStates == 1 && hasMultipleRulesAtSameState) {
+            // Single state (e.g., "Group"/"Primary") with multiple SEND rules
+            // Create a separate flow for each SEND rule
+            String singleState = sendByState.keySet().iterator().next();
+            List<Rule> sendRules = sendByState.get(singleState);
+            
+            for (Rule sendRule : sendRules) {
+                createSimpleFlowFromRule(dataset, alertType, sendRule, dataUpdateRules, initialDelay);
+            }
+            return;
+        }
+        
+        // If there are multiple states AND one state has multiple rules,
+        // we need to create multiple escalation chains (one for each rule at the multi-rule state)
+        if (numStates > 1 && hasMultipleRulesAtSameState) {
+            // Find which state has multiple rules
+            String multiRuleState = null;
+            List<Rule> multiRules = null;
+            for (Map.Entry<String, List<Rule>> entry : sendByState.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    multiRuleState = entry.getKey();
+                    multiRules = entry.getValue();
+                    break;
+                }
+            }
+            
+            // Create separate escalation chains for each rule at the multi-rule state
+            for (Rule multiRule : multiRules) {
+                // Build a modified sendByState map with only this rule for the multi-rule state
+                Map<String, List<Rule>> modifiedSendByState = new HashMap<>();
+                for (Map.Entry<String, List<Rule>> entry : sendByState.entrySet()) {
+                    if (entry.getKey().equals(multiRuleState)) {
+                        modifiedSendByState.put(entry.getKey(), List.of(multiRule));
+                    } else {
+                        modifiedSendByState.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                
+                // Create escalation flow with this modified map
+                createEscalationFlowFromMap(dataset, alertType, modifiedSendByState, escalateDelay, initialDelay, dataUpdateRules, rules);
+            }
+            return;
+        }
+        
+        // Otherwise, create a normal single escalation flow
+        createEscalationFlowFromMap(dataset, alertType, sendByState, escalateDelay, initialDelay, dataUpdateRules, rules);
+    }
+    
+    /**
+     * Create an escalation flow from the sendByState map
+     */
+    private void createEscalationFlowFromMap(String dataset, String alertType,
+                                             Map<String, List<Rule>> sendByState,
+                                             Map<String, String> escalateDelay,
+                                             String initialDelay,
+                                             List<Rule> dataUpdateRules,
+                                             List<Rule> allRules) {
         // Build a template flow with common fields and recipients/timing
         ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
         template.inScope = true;
@@ -786,17 +851,19 @@ public class XmlParser {
         template.alarmName = alertType;
         template.sendingName = alertType;
 
-        // Get reference rule for common fields
-        Rule refRule = sendByState.values().iterator().next();
+        // Get reference rule for common fields (use first rule from first state)
+        Rule refRule = sendByState.values().iterator().next().get(0);
         template.deviceA = mapComponent(refRule.component);
 
         // Map states to recipients and timing on the template
         String[] states = {"Primary", "Secondary", "Tertiary", "Quaternary", "Quinary"};
         for (int i = 0; i < states.length; i++) {
             String state = states[i];
-            Rule sendRule = sendByState.get(state);
+            List<Rule> sendRules = sendByState.get(state);
 
-            if (sendRule != null) {
+            if (sendRules != null && !sendRules.isEmpty()) {
+                // Use first rule for this state
+                Rule sendRule = sendRules.get(0);
                 String recipient = extractDestination(sendRule);
                 setRecipient(template, i + 1, recipient, sendRule.roleFromView);
 
@@ -842,7 +909,7 @@ public class XmlParser {
         
         // If no facilities/units found in DataUpdate rules, collect from all rules in this group
         if (facs.isEmpty() || uns.isEmpty()) {
-            for (Rule r : rules) {
+            for (Rule r : allRules) {
                 if (facs.isEmpty()) {
                     facs.addAll(r.facilities);
                 }
@@ -882,6 +949,92 @@ public class XmlParser {
                 flow.t5 = template.t5; flow.r5 = template.r5;
 
                 // Config group built from explicit facility/unit
+                Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
+                Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
+                flow.configGroup = createConfigGroup(dataset, fset, uset);
+
+                addToList(flow);
+                // Track config group per (facility, unit) and type for Unit rows
+                trackConfigGroupForUnit(flow.type, fac, un, flow.configGroup);
+            }
+        }
+    }
+    
+    /**
+     * Create a simple flow from a single rule (used for single-state with multiple SEND rules)
+     */
+    private void createSimpleFlowFromRule(String dataset, String alertType, Rule sendRule, List<Rule> dataUpdateRules, String initialDelay) {
+        // Build a template flow
+        ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
+        template.inScope = true;
+        template.type = normalizeDataset(dataset);
+        template.alarmName = alertType;
+        template.sendingName = alertType;
+        template.deviceA = mapComponent(sendRule.component);
+
+        // Set recipient and timing (recipient is optional)
+        String recipient = extractDestination(sendRule);
+        setRecipient(template, 1, recipient, sendRule.roleFromView);
+
+        if (initialDelay != null) {
+            template.t1 = initialDelay;
+        } else if (sendRule.triggerCreate) {
+            template.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
+        } else if (template.t1 == null || template.t1.isEmpty()) {
+            // Default to Immediate if not specified
+            template.t1 = "Immediate";
+        }
+
+        applySettings(template, sendRule);
+
+        // Compute unions for splitting
+        // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
+        Set<String> facs = new LinkedHashSet<>();
+        Set<String> uns = new LinkedHashSet<>();
+        
+        // First, collect from DataUpdate CREATE rules (passed as parameter)
+        for (Rule r : dataUpdateRules) {
+            facs.addAll(r.facilities);
+            uns.addAll(r.units);
+        }
+        
+        // If no facilities/units found in DataUpdate rules, use from sendRule
+        if (facs.isEmpty()) {
+            facs.addAll(sendRule.facilities);
+        }
+        if (uns.isEmpty()) {
+            uns.addAll(sendRule.units);
+        }
+        
+        if (facs.isEmpty()) facs.add("");
+        if (uns.isEmpty()) uns.add("");
+
+        for (String fac : facs) {
+            for (String un : uns) {
+                ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+                // Copy from template
+                flow.inScope = template.inScope;
+                flow.type = template.type;
+                flow.alarmName = template.alarmName;
+                flow.sendingName = template.sendingName;
+                flow.priorityRaw = template.priorityRaw;
+                flow.deviceA = template.deviceA;
+                flow.deviceB = template.deviceB;
+                flow.ringtone = template.ringtone;
+                flow.responseOptions = template.responseOptions;
+                flow.breakThroughDND = template.breakThroughDND;
+                flow.multiUserAccept = template.multiUserAccept;
+                flow.escalateAfter = template.escalateAfter;
+                flow.ttlValue = template.ttlValue;
+                flow.enunciate = template.enunciate;
+                flow.emdan = template.emdan;
+                flow.t1 = template.t1; flow.r1 = template.r1;
+                flow.t2 = template.t2; flow.r2 = template.r2;
+                flow.t3 = template.t3; flow.r3 = template.r3;
+                flow.t4 = template.t4; flow.r4 = template.r4;
+                flow.t5 = template.t5; flow.r5 = template.r5;
+
+                // Config group per facility/unit
                 Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
                 Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
                 flow.configGroup = createConfigGroup(dataset, fset, uset);
