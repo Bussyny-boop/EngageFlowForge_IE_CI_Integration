@@ -27,8 +27,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'liberica'
-          java-version: '21'
+          java-version: '21.0.3'
           java-package: 'jdk+fx'
+          check-latest: false
 
       - name: Set up Maven
         uses: stCarolas/setup-maven@v4
