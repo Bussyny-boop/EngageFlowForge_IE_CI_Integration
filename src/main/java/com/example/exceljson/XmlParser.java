@@ -236,23 +236,63 @@ public class XmlParser {
         if (ruleAlertKeys.isEmpty()) {
             return false;
         }
+        
+        // Extract the state requirement from the adapter rule's views (if any)
+        String requiredState = extractStateFromRule(rule);
 
         // Validate that at least one DataUpdate rule positively covers these alerts with valid logic
+        // IMPORTANT: If the adapter rule requires a specific state (e.g., Group), the DataUpdate rule
+        // must set alerts to that state
+        //
+        // However, if NO DataUpdate rules set any state, we allow the adapter rule through for backward
+        // compatibility (alerts may get default states from the application logic)
+        boolean anyDataUpdateSetsState = dataUpdateRules.stream()
+            .anyMatch(r -> r.state != null && !r.state.isEmpty());
+        
         for (Rule dataUpdateRule : dataUpdateRules) {
-            if (dataUpdateRuleCoversAlertKeys(dataUpdateRule, ruleAlertKeys)) {
-                // DEBUG
-                if (ruleAlertKeys.stream().anyMatch(k -> k.contains(" OT"))) {
-                    System.out.println("DEBUG: ALLOW rule '" + rule.purpose + "' because DataUpdate '" + dataUpdateRule.purpose + "' covers " + ruleAlertKeys);
-                }
-                return true;
+            // Check if alert types match
+            if (!dataUpdateRuleCoversAlertKeys(dataUpdateRule, ruleAlertKeys)) {
+                continue;
             }
+            
+            // Check if states match (if adapter rule requires a specific state)
+            if (requiredState != null && !requiredState.isEmpty() && anyDataUpdateSetsState) {
+                // Adapter rule requires a specific state, and DataUpdate rules DO set states
+                // So we need to ensure state matching
+                if (dataUpdateRule.state == null || !requiredState.equals(dataUpdateRule.state)) {
+                    // DataUpdate rule doesn't set the required state
+                    continue;
+                }
+            }
+            
+            // Both alert types and states match (or no state requirement, or no DataUpdate sets states)
+            return true;
         }
 
-        // No valid DataUpdate rule found that covers this adapter rule's alerts
-        if (ruleAlertKeys.stream().anyMatch(k -> k.contains(" OT"))) {
-            System.out.println("DEBUG: EXCLUDE rule '" + rule.purpose + "' - no DataUpdate covers " + ruleAlertKeys);
-        }
+        // No valid DataUpdate rule found that covers this adapter rule's alerts AND sets the required state
         return false;
+    }
+    
+    /**
+     * Extract the state requirement from an adapter rule's condition views.
+     * Returns the state value if found, or null if no state requirement.
+     */
+    private String extractStateFromRule(Rule rule) {
+        if (rule == null || rule.dataset == null) return null;
+        Map<String, View> views = datasetViews.get(rule.dataset);
+        if (views == null) return null;
+
+        for (String viewName : rule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if ("state".equals(path)) {
+                    return filter.value == null ? null : filter.value.trim();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -354,44 +394,21 @@ public class XmlParser {
             return false;
         }
         
-        // DEBUG
-        boolean debugThis = targetAlertKeys.stream().anyMatch(k -> k.contains(" OT"));
-        if (debugThis) {
-            System.out.println("  Checking rule: " + dataUpdateRule.purpose);
-            System.out.println("  Alert filters found: " + alertFilters.size());
-            for (AlertTypeFilter f : alertFilters) {
-                System.out.println("    - " + f.relation + ": " + f.values);
-            }
-        }
-        
         // ALL filters must agree that they cover at least one of the target alerts
         for (String targetAlert : targetAlertKeys) {
             boolean allFiltersCoverThis = true;
-            if (debugThis) {
-                System.out.println("  Checking target: " + targetAlert);
-            }
             for (AlertTypeFilter filter : alertFilters) {
-                boolean covers = filterCoversAlert(filter.relation, filter.values, targetAlert);
-                if (debugThis) {
-                    System.out.println("    Filter " + filter.relation + " covers? " + covers);
-                }
-                if (!covers) {
+                if (!filterCoversAlert(filter.relation, filter.values, targetAlert)) {
                     allFiltersCoverThis = false;
                     break;
                 }
             }
             // If all filters agree on covering this alert, the rule covers it
             if (allFiltersCoverThis) {
-                if (debugThis) {
-                    System.out.println("  ALL filters agree on covering '" + targetAlert + "' -> RULE COVERS IT");
-                }
                 return true;
             }
         }
         
-        if (debugThis) {
-            System.out.println("  NO alerts covered by all filters -> RULE DOES NOT COVER");
-        }
         return false;
     }
     
@@ -605,6 +622,10 @@ public class XmlParser {
         String settingsJson = getChildText(ruleElem, "settings");
         if (settingsJson != null && !settingsJson.isEmpty()) {
             rule.settings = parseSettings(settingsJson);
+            // For DataUpdate CREATE rules, extract the state they set from settings
+            if ("DataUpdate".equalsIgnoreCase(component) && rule.triggerCreate && rule.settings.containsKey("state")) {
+                rule.state = rule.settings.get("state").toString();
+            }
         }
         
         return rule;
@@ -1649,6 +1670,20 @@ public class XmlParser {
                 List<String> values = new ArrayList<>();
                 root.get("displayValues").forEach(n -> values.add(n.asText()));
                 result.put("displayValues", String.join(",", values));
+            }
+            
+            // Extract state from DataUpdate CREATE rule parameters
+            if (root.has("parameters") && root.get("parameters").isArray()) {
+                for (JsonNode param : root.get("parameters")) {
+                    if (param.has("path") && param.has("value")) {
+                        String path = param.get("path").asText();
+                        if ("state".equals(path)) {
+                            String value = param.get("value").asText();
+                            result.put("state", value);
+                            break;
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             // Ignore JSON parse errors
