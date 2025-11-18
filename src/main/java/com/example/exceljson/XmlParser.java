@@ -190,8 +190,10 @@ public class XmlParser {
      *
      * Required logic across ALL datasets (NurseCalls, Clinicals, Orders):
      * - DataUpdate rules themselves are always processed
-     * - For adapter/interface rules (e.g., VMP, Vocera, XMPP):
-     *   - Do NOT process unless there exists at least one DataUpdate (create=true) rule in the SAME dataset
+     * - For adapter/interface rules (e.g., VMP, Vocera, XMPP, CUCM):
+     *   - If the adapter rule itself uses trigger-on create="true", it should be processed WITHOUT
+     *     requiring a DataUpdate CREATE rule, as the adapter is performing the "Create" operation
+     *   - Otherwise, do NOT process unless there exists at least one DataUpdate (create=true) rule in the SAME dataset
      *     whose alert filter (type or name) positively includes this rule's alert(s)
      *   - If the DataUpdate rule uses invalid relations (not_in, not_like, not_equal, null), skip it
      *   - If this adapter rule has no alert type or alert name in its own views, do NOT process
@@ -205,6 +207,13 @@ public class XmlParser {
         // Always keep escalation timing rules (have defer-delivery-by but no destination)
         // These apply globally across alert types and will be enriched with state info later
         if (rule.deferDeliveryBy != null && !hasDestination(rule)) {
+            return true;
+        }
+
+        // NEW: Allow adapter rules (VMP, XMPP, CUCM, Vocera) with create="true" to function independently
+        // When an adapter rule itself uses "Create" in the send rule, it acts as both the interface
+        // and the data creation mechanism, so it does not require a separate DataUpdate CREATE rule
+        if (rule.triggerCreate && isAdapterComponent(rule.component)) {
             return true;
         }
 
@@ -1082,6 +1091,20 @@ public class XmlParser {
         }
         if (dataset != null && !dataset.isEmpty()) parts.add(dataset);
         return String.join("_", parts);
+    }
+    
+    /**
+     * Check if a component is an adapter/interface component (VMP, XMPP, CUCM, Vocera).
+     * These are components that can send messages/alerts to external systems.
+     */
+    private boolean isAdapterComponent(String component) {
+        if (component == null) return false;
+        String upper = component.toUpperCase();
+        return upper.equals("VMP") || 
+               upper.equals("XMPP") || 
+               upper.equals("CUCM") || 
+               upper.equals("VOCERA") ||
+               upper.equals("OUTGOINGWCTP");
     }
     
     private boolean hasDestination(Rule rule) {

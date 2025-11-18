@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Vocera Adapter Create Rule</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        
+        <!-- View for call types -->
+        <view>
+          <name>Call_is_BedExit</name>
+          <description>Call is Bed Exit</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Bed Exit</value>
+          </filter>
+        </view>
+        
+        <!-- View for facility -->
+        <view>
+          <name>Facility_is_MainCampus</name>
+          <description>Facility is Main Campus</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Main Campus</value>
+          </filter>
+        </view>
+        
+        <!-- View for active calls -->
+        <view>
+          <name>Call_is_active</name>
+          <description>Call is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- Vocera Interface with CREATE trigger - should work without DataUpdate CREATE rule -->
+      <interface component="Vocera">
+        <name>Vocera Nurse Calls</name>
+        
+        <!-- SEND BED EXIT with CREATE trigger -->
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND BED EXIT | VOCERA | MAIN CAMPUS</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Call_is_active</view>
+            <view>Call_is_BedExit</view>
+            <view>Facility_is_MainCampus</view>
+          </condition>
+          <settings>{"destination":"g-nurse-team","priority":"2","ttl":10,"enunciate":"ENUNCIATE_ALWAYS"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
