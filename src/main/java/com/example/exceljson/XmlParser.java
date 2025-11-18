@@ -491,6 +491,14 @@ public class XmlParser {
      * Enrich rules with data from views
      */
     private void enrichRulesWithViews() {
+        // Collect all DataUpdate (create=true) rules grouped by dataset for filtering
+        Map<String, List<Rule>> dataUpdateByDataset = new HashMap<>();
+        for (Rule rule : allRules) {
+            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate) {
+                dataUpdateByDataset.computeIfAbsent(rule.dataset, k -> new ArrayList<>()).add(rule);
+            }
+        }
+        
         for (Rule rule : allRules) {
             if (rule.dataset == null) continue;
             
@@ -505,7 +513,68 @@ public class XmlParser {
                     extractFilterData(rule, filter);
                 }
             }
+            
+            // Filter alert types: keep only those covered by CREATE DATAUPDATE rules
+            // Skip this filtering for DataUpdate rules and escalation timing rules
+            if (!"DataUpdate".equalsIgnoreCase(rule.component) && 
+                !(rule.deferDeliveryBy != null && !hasDestination(rule))) {
+                filterUncoveredAlertTypes(rule, dataUpdateByDataset.getOrDefault(rule.dataset, Collections.emptyList()));
+            }
         }
+    }
+    
+    /**
+     * Remove alert types from a rule that are not covered by any CREATE DATAUPDATE rule.
+     * Each alert type must be individually validated against the DataUpdate rules.
+     */
+    private void filterUncoveredAlertTypes(Rule rule, List<Rule> dataUpdateRules) {
+        if (rule.alertTypes.isEmpty() || dataUpdateRules.isEmpty()) {
+            return;
+        }
+        
+        // Keep only alert types that are covered by at least one DataUpdate rule
+        Set<String> coveredAlertTypes = new HashSet<>();
+        for (String alertType : rule.alertTypes) {
+            for (Rule dataUpdateRule : dataUpdateRules) {
+                if (dataUpdateRuleCoversAlertType(dataUpdateRule, alertType)) {
+                    coveredAlertTypes.add(alertType);
+                    break;
+                }
+            }
+        }
+        
+        // Replace the alert types set with only covered ones
+        rule.alertTypes = coveredAlertTypes;
+    }
+    
+    /**
+     * Check if a single alert type is covered by a DataUpdate rule
+     */
+    private boolean dataUpdateRuleCoversAlertType(Rule dataUpdateRule, String alertType) {
+        if (dataUpdateRule == null || dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
+            return false;
+        }
+        
+        Map<String, View> views = datasetViews.get(dataUpdateRule.dataset);
+        for (String viewName : dataUpdateRule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isAlertTypePath(path) || isAlertNamePath(path)) {
+                    // Reject invalid relations immediately
+                    if (hasInvalidLogic(filter.relation)) {
+                        return false;
+                    }
+                    // Check if this specific alert type is in the filter values
+                    Set<String> values = parseListValues(filter.value);
+                    if (values.contains(alertType)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
     
     /**
@@ -570,6 +639,9 @@ public class XmlParser {
         // Collect global escalation rules (no alert type - apply to all)
         List<Rule> globalEscalationRules = new ArrayList<>();
         
+        // Track CREATE DATAUPDATE rules by dataset + alert type for facility extraction
+        Map<String, List<Rule>> dataUpdateRulesByAlertType = new HashMap<>();
+        
         for (Rule rule : allRules) {
             // Track facilities/units
             for (String facility : rule.facilities) {
@@ -585,6 +657,14 @@ public class XmlParser {
                 && rule.deferDeliveryBy != null && !hasDestination(rule)) {
                 globalEscalationRules.add(rule);
                 continue;
+            }
+            
+            // Track DataUpdate CREATE rules for facility extraction
+            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate) {
+                for (String alertType : rule.alertTypes) {
+                    String key = rule.dataset + "|" + alertType;
+                    dataUpdateRulesByAlertType.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                }
             }
             
             // Skip DataUpdate rules - they're only used for validation, not for creating flows
@@ -636,13 +716,17 @@ public class XmlParser {
             String alertType = parts[1];
             List<Rule> rules = entry.getValue();
             
+            // Get corresponding CREATE DATAUPDATE rules for this alert type
+            String dataUpdateKey = dataset + "|" + alertType;
+            List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
+            
             // Check if this is an escalation group
             boolean hasEscalation = rules.stream().anyMatch(r -> r.state != null && !r.state.isEmpty());
             
             if (hasEscalation) {
-                createEscalationFlow(dataset, alertType, rules);
+                createEscalationFlow(dataset, alertType, rules, dataUpdateRules);
             } else {
-                createSimpleFlow(dataset, alertType, rules);
+                createSimpleFlow(dataset, alertType, rules, dataUpdateRules);
             }
         }
     }
@@ -650,7 +734,7 @@ public class XmlParser {
     /**
      * Create flow row with escalation
      */
-    private void createEscalationFlow(String dataset, String alertType, List<Rule> rules) {
+    private void createEscalationFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Separate send rules and escalate rules
         Map<String, Rule> sendByState = new HashMap<>();
         Map<String, String> escalateDelay = new HashMap<>();
@@ -719,12 +803,28 @@ public class XmlParser {
         }
 
         // Compute unions of facilities and units for splitting
+        // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
-        for (Rule r : rules) {
+        
+        // First, collect from DataUpdate CREATE rules (passed as parameter)
+        for (Rule r : dataUpdateRules) {
             facs.addAll(r.facilities);
             uns.addAll(r.units);
         }
+        
+        // If no facilities/units found in DataUpdate rules, collect from all rules in this group
+        if (facs.isEmpty() || uns.isEmpty()) {
+            for (Rule r : rules) {
+                if (facs.isEmpty()) {
+                    facs.addAll(r.facilities);
+                }
+                if (uns.isEmpty()) {
+                    uns.addAll(r.units);
+                }
+            }
+        }
+        
         if (facs.isEmpty()) facs.add("");
         if (uns.isEmpty()) uns.add("");
 
@@ -769,7 +869,7 @@ public class XmlParser {
     /**
      * Create simple flow row (no escalation)
      */
-    private void createSimpleFlow(String dataset, String alertType, List<Rule> rules) {
+    private void createSimpleFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Prefer rules with destination, but allow rules without if none have destination
         Rule sendRule = rules.stream()
             .filter(this::hasDestination)
@@ -801,8 +901,24 @@ public class XmlParser {
         applySettings(template, sendRule);
 
         // Compute unions for splitting
-        Set<String> facs = new LinkedHashSet<>(sendRule.facilities);
-        Set<String> uns = new LinkedHashSet<>(sendRule.units);
+        // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
+        Set<String> facs = new LinkedHashSet<>();
+        Set<String> uns = new LinkedHashSet<>();
+        
+        // First, collect from DataUpdate CREATE rules (passed as parameter)
+        for (Rule r : dataUpdateRules) {
+            facs.addAll(r.facilities);
+            uns.addAll(r.units);
+        }
+        
+        // If no facilities/units found in DataUpdate rules, use from sendRule
+        if (facs.isEmpty()) {
+            facs.addAll(sendRule.facilities);
+        }
+        if (uns.isEmpty()) {
+            uns.addAll(sendRule.units);
+        }
+        
         if (facs.isEmpty()) facs.add("");
         if (uns.isEmpty()) uns.add("");
 
