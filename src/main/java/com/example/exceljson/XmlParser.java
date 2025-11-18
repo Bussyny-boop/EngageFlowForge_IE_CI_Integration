@@ -337,7 +337,11 @@ public class XmlParser {
             for (Filter filter : view.filters) {
                 String path = filter.path == null ? "" : filter.path.trim();
                 if (isAlertTypePath(path) || isAlertNamePath(path)) {
-                    keys.addAll(parseListValues(filter.value));
+                    // Normalize alert names to lowercase for case-insensitive matching
+                    Set<String> values = parseListValues(filter.value);
+                    for (String val : values) {
+                        keys.add(val.toLowerCase());
+                    }
                 }
             }
         }
@@ -455,20 +459,29 @@ public class XmlParser {
      * Check if a single alert type filter covers a specific alert.
      * 
      * For "in" and "equal": alert is covered if it's IN the list
-     * For "not_in": alert is covered if it's NOT IN the exclusion list
+     * For "not_in", "not_like", "not_equal": alert is covered if it's NOT IN the exclusion list
      */
     private boolean filterCoversAlert(String relation, Set<String> filterValues, String targetAlert) {
         if (relation == null || filterValues.isEmpty() || targetAlert == null) {
             return false;
         }
         
+        // Normalize for case-insensitive comparison
+        Set<String> normalizedValues = new LinkedHashSet<>();
+        for (String val : filterValues) {
+            normalizedValues.add(val.toLowerCase());
+        }
+        String normalizedTarget = targetAlert.toLowerCase();
+        
         switch (relation.toLowerCase()) {
             case "in":
             case "equal":
-                return filterValues.contains(targetAlert);
+                return normalizedValues.contains(normalizedTarget);
                 
             case "not_in":
-                return !filterValues.contains(targetAlert);
+            case "not_like":
+            case "not_equal":
+                return !normalizedValues.contains(normalizedTarget);
                 
             default:
                 return false;
@@ -774,11 +787,15 @@ public class XmlParser {
     private void extractFilterData(Rule rule, Filter filter) {
         if (filter.path == null || filter.value == null) return;
         
-        // Alert types
+        String relation = filter.relation == null ? "" : filter.relation.toLowerCase();
+        boolean isExclusion = relation.equals("not_in") || relation.equals("not_like") || relation.equals("not_equal");
+        
+        // Alert types - keep original case for display
         if (filter.path.equals("alert_type")) {
             for (String type : filter.value.split(",")) {
                 String trimmed = type.trim();
                 if (!trimmed.isEmpty()) {
+                    // Keep original case for alert types (used for flow.alarmName)
                     rule.alertTypes.add(trimmed);
                 }
             }
@@ -786,15 +803,34 @@ public class XmlParser {
         
         // Facilities
         if (filter.path.contains("facility.name")) {
-            rule.facilities.add(filter.value.trim());
+            if (!isExclusion) {
+                rule.facilities.add(filter.value.trim());
+            }
         }
         
-        // Units
+        // Units - handle exclusions
         if (filter.path.contains("unit.name")) {
-            for (String unit : filter.value.split(",")) {
-                String trimmed = unit.trim();
-                if (!trimmed.isEmpty()) {
-                    rule.units.add(trimmed);
+            if (isExclusion) {
+                // Mark this rule as having unit exclusions
+                // Store exclusion info for config group naming
+                if (rule.settings.get("excludedUnits") == null) {
+                    rule.settings.put("excludedUnits", new LinkedHashSet<String>());
+                }
+                @SuppressWarnings("unchecked")
+                Set<String> excludedUnits = (Set<String>) rule.settings.get("excludedUnits");
+                for (String unit : filter.value.split(",")) {
+                    String trimmed = unit.trim();
+                    if (!trimmed.isEmpty()) {
+                        excludedUnits.add(trimmed);
+                    }
+                }
+            } else {
+                // Positive inclusion
+                for (String unit : filter.value.split(",")) {
+                    String trimmed = unit.trim();
+                    if (!trimmed.isEmpty()) {
+                        rule.units.add(trimmed);
+                    }
                 }
             }
         }
@@ -1141,6 +1177,16 @@ public class XmlParser {
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
+        // Collect excluded units from rules
+        Set<String> excludedUnits = new LinkedHashSet<>();
+        for (Rule r : allRules) {
+            if (r.settings.containsKey("excludedUnits")) {
+                @SuppressWarnings("unchecked")
+                Set<String> excluded = (Set<String>) r.settings.get("excludedUnits");
+                excludedUnits.addAll(excluded);
+            }
+        }
+        
         // NEW: Use facility from group key to separate by config group
         if (facilityFromKey != null && !facilityFromKey.isEmpty()) {
             facs.add(facilityFromKey);
@@ -1169,6 +1215,11 @@ public class XmlParser {
         // If no units found after filtering, use from group rules directly
         if (uns.isEmpty()) {
             uns.addAll(groupUnits);
+        }
+        
+        // If we have exclusions, don't populate specific units (will be empty for "AllUnits_Except_X")
+        if (!excludedUnits.isEmpty()) {
+            uns.clear();
         }
         
         if (facs.isEmpty()) facs.add("");
@@ -1203,7 +1254,7 @@ public class XmlParser {
                 // Config group built from explicit facility/unit
                 Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
                 Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
-                flow.configGroup = createConfigGroup(dataset, fset, uset);
+                flow.configGroup = createConfigGroup(dataset, fset, uset, excludedUnits);
 
                 addToList(flow);
                 // Track config group per (facility, unit) and type for Unit rows
@@ -1247,6 +1298,21 @@ public class XmlParser {
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
+        // Collect excluded units from sendRule and dataUpdateRules
+        Set<String> excludedUnits = new LinkedHashSet<>();
+        if (sendRule.settings.containsKey("excludedUnits")) {
+            @SuppressWarnings("unchecked")
+            Set<String> excluded = (Set<String>) sendRule.settings.get("excludedUnits");
+            excludedUnits.addAll(excluded);
+        }
+        for (Rule r : dataUpdateRules) {
+            if (r.settings.containsKey("excludedUnits")) {
+                @SuppressWarnings("unchecked")
+                Set<String> excluded = (Set<String>) r.settings.get("excludedUnits");
+                excludedUnits.addAll(excluded);
+            }
+        }
+        
         // NEW: Use facility from group key to separate by config group
         if (facilityFromKey != null && !facilityFromKey.isEmpty()) {
             facs.add(facilityFromKey);
@@ -1272,6 +1338,11 @@ public class XmlParser {
         // If no units found after filtering, use from sendRule directly
         if (uns.isEmpty()) {
             uns.addAll(sendRuleUnits);
+        }
+        
+        // If we have exclusions, don't populate specific units (will be empty for "AllUnits_Except_X")
+        if (!excludedUnits.isEmpty()) {
+            uns.clear();
         }
         
         if (facs.isEmpty()) facs.add("");
@@ -1305,7 +1376,7 @@ public class XmlParser {
                 // Config group per facility/unit
                 Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
                 Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
-                flow.configGroup = createConfigGroup(dataset, fset, uset);
+                flow.configGroup = createConfigGroup(dataset, fset, uset, excludedUnits);
 
                 addToList(flow);
                 // Track config group per (facility, unit) and type for Unit rows
@@ -1390,6 +1461,23 @@ public class XmlParser {
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
+        // Collect excluded units from rules and dataUpdateRules
+        Set<String> excludedUnits = new LinkedHashSet<>();
+        for (Rule r : rules) {
+            if (r.settings.containsKey("excludedUnits")) {
+                @SuppressWarnings("unchecked")
+                Set<String> excluded = (Set<String>) r.settings.get("excludedUnits");
+                excludedUnits.addAll(excluded);
+            }
+        }
+        for (Rule r : dataUpdateRules) {
+            if (r.settings.containsKey("excludedUnits")) {
+                @SuppressWarnings("unchecked")
+                Set<String> excluded = (Set<String>) r.settings.get("excludedUnits");
+                excludedUnits.addAll(excluded);
+            }
+        }
+        
         // NEW: Use facility from group key to separate by config group
         if (facilityFromKey != null && !facilityFromKey.isEmpty()) {
             facs.add(facilityFromKey);
@@ -1418,6 +1506,11 @@ public class XmlParser {
         // If no units found after filtering, use from group rules directly
         if (uns.isEmpty()) {
             uns.addAll(groupUnits);
+        }
+        
+        // If we have exclusions, don't populate specific units (will be empty for "AllUnits_Except_X")
+        if (!excludedUnits.isEmpty()) {
+            uns.clear();
         }
         
         if (facs.isEmpty()) facs.add("");
@@ -1451,7 +1544,7 @@ public class XmlParser {
                 // Config group per facility/unit
                 Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
                 Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
-                flow.configGroup = createConfigGroup(dataset, fset, uset);
+                flow.configGroup = createConfigGroup(dataset, fset, uset, excludedUnits);
 
                 addToList(flow);
                 // Track config group per (facility, unit) and type for Unit rows
@@ -1564,6 +1657,10 @@ public class XmlParser {
     }
     
     private String createConfigGroup(String dataset, Set<String> facilities, Set<String> units) {
+        return createConfigGroup(dataset, facilities, units, null);
+    }
+    
+    private String createConfigGroup(String dataset, Set<String> facilities, Set<String> units, Set<String> excludedUnits) {
         String facility = facilities.isEmpty() ? "" : facilities.iterator().next();
         String unit = units.isEmpty() ? "" : units.iterator().next();
         // Always place dataset last. Use "All_Facilities" and "AllUnits" when they cannot be determined
@@ -1575,12 +1672,24 @@ public class XmlParser {
             // Hardcode "All_Facilities" when facility name is not found or is a placeholder
             parts.add("All_Facilities");
         }
-        if (unit != null && !unit.isEmpty()) {
+        
+        // Handle unit exclusions
+        if (excludedUnits != null && !excludedUnits.isEmpty()) {
+            // Create "AllUnits_Except_X" naming pattern
+            StringBuilder unitPart = new StringBuilder("AllUnits_Except");
+            List<String> sortedExclusions = new ArrayList<>(excludedUnits);
+            Collections.sort(sortedExclusions);
+            for (String excluded : sortedExclusions) {
+                unitPart.append("_").append(excluded);
+            }
+            parts.add(unitPart.toString());
+        } else if (unit != null && !unit.isEmpty()) {
             parts.add(unit);
         } else {
             // Hardcode "AllUnits" when unit name is not found
             parts.add("AllUnits");
         }
+        
         if (dataset != null && !dataset.isEmpty()) parts.add(dataset);
         return String.join("_", parts);
     }
