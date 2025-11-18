@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Single Level Group State with Facility</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for alert types -->
+        <view>
+          <name>Nursecall_Alarm_Emdan_Bed_Exit_Safety_alarm</name>
+          <description>Nursecall Alarm Emdan Bed Exit Safety alarm</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Bed Exit, Safety Alarm</value>
+          </filter>
+        </view>
+        
+        <!-- View for Group state -->
+        <view>
+          <name>Alarm_is_at_group_state</name>
+          <description>Alarm is at Group state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Group</value>
+          </filter>
+        </view>
+        
+        <!-- View for Grand Itasca facility -->
+        <view>
+          <name>Facility_name_GICH</name>
+          <description>Facility name is GICH (Grand Itasca)</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Grand Itasca</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alarm_has_no_state</name>
+          <description>Alarm has no state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value></value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Bed_is_known</name>
+          <description>Bed is known</description>
+          <filter relation="not_equal">
+            <path>bed.id</path>
+            <value></value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_has_not_been_responded_to</name>
+          <description>Alarm has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <!-- View for role -->
+        <view>
+          <name>Role_caregiver_ALL_Room_Assignments_online_with_a_VMP_phone</name>
+          <description>Role caregiver ALL Room Assignments online with a VMP phone</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Charge_unit_Resource_Nurse_group_has_a_caregiver_who_is_online_with_a_VMP_device</name>
+          <description>Charge unit Resource Nurse group has a caregiver who is online with a VMP device</description>
+          <filter relation="equal">
+            <path>bed.room.unit.locs.required_roles.group.name</path>
+            <value>Resource Nurse</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- DataUpdate CREATE TRIGGER with facility filter for Grand Itasca -->
+      <interface component="DataUpdate">
+        <name>DataUpdate</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>CREATE TRIGGER | BED EXIT | SAFETY ALARM | GICH</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Facility_name_GICH</view>
+            <view>Nursecall_Alarm_Emdan_Bed_Exit_Safety_alarm</view>
+          </condition>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate SET TO GROUP - applies to all facilities in purpose but should inherit facility from CREATE rule -->
+      <interface component="DataUpdate">
+        <name>DataUpdate State Setter</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>1. SET TO GROUP | IMMEDIATE | BED EXIT | SAFETY ALARM | NURSECALL EMDAN | GICH | NEW REQUEST</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_has_no_state</view>
+            <view>Alarm_is_active</view>
+            <view>Bed_is_known</view>
+            <view>Nursecall_Alarm_Emdan_Bed_Exit_Safety_alarm</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Group"},{"path":"responded_to","value":"No"},{"path":"history.previous_state","value":"#{state}"},{"path":"history.state","value":"Group"},{"path":"history.reason","value":"Complete Initialization"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VMP Interface for sending messages -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND GROUP - Charge Nurse / Resource Nurse -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND GROUP | HIGH WITH CALLBACK | BED EXIT | SAFETY ALARM | CHARGE NURSE | RESOURCE NURSE | VMP | EMDAN | ALL FACILITIES</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_group_state</view>
+            <view>Charge_unit_Resource_Nurse_group_has_a_caregiver_who_is_online_with_a_VMP_device</view>
+            <view>Nursecall_Alarm_Emdan_Bed_Exit_Safety_alarm</view>
+          </condition>
+          <settings>{"destination":"#{bed.room.unit.locs.required_roles.group.all_users.devices.lines.number}","priority":"1","ttl":10,"enunciate":"SYSTEM_DEFAULT","callbackResponse":"Accepted"}</settings>
+        </rule>
+        
+        <!-- SEND GROUP - Room Assigned Caregivers -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND GROUP | HIGH WITH CALLBACK | BED EXIT | SAFETY ALARM | ROOM ASSIGNED CAREGIVERS | VMP | EMDAN | ALL FACILITIES</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_group_state</view>
+            <view>Nursecall_Alarm_Emdan_Bed_Exit_Safety_alarm</view>
+            <view>Role_caregiver_ALL_Room_Assignments_online_with_a_VMP_phone</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"1","ttl":10,"enunciate":"SYSTEM_DEFAULT","callbackResponse":"Accepted"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
