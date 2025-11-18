@@ -218,14 +218,26 @@ public class XmlParser {
         }
 
         // Collect DataUpdate(create=true) rules for the same dataset
-        List<Rule> dataUpdateRules = allParsedRules.stream()
+        List<Rule> dataUpdateCreateRules = allParsedRules.stream()
             .filter(r -> "DataUpdate".equalsIgnoreCase(r.component))
             .filter(r -> r.dataset != null && r.dataset.equals(rule.dataset))
             .filter(r -> r.triggerCreate)
             .collect(Collectors.toList());
+        
+        // Also collect DataUpdate(update=true) rules that set states for escalation
+        List<Rule> dataUpdateUpdateRules = allParsedRules.stream()
+            .filter(r -> "DataUpdate".equalsIgnoreCase(r.component))
+            .filter(r -> r.dataset != null && r.dataset.equals(rule.dataset))
+            .filter(r -> r.triggerUpdate)
+            .collect(Collectors.toList());
+        
+        // Combine both CREATE and UPDATE DataUpdate rules
+        List<Rule> dataUpdateRules = new ArrayList<>();
+        dataUpdateRules.addAll(dataUpdateCreateRules);
+        dataUpdateRules.addAll(dataUpdateUpdateRules);
 
         // If there are no create DataUpdate rules in this dataset, do NOT process adapter rules
-        if (dataUpdateRules.isEmpty()) {
+        if (dataUpdateCreateRules.isEmpty()) {
             return false;
         }
 
@@ -239,6 +251,12 @@ public class XmlParser {
         
         // Extract the state requirement from the adapter rule's views (if any)
         String requiredState = extractStateFromRule(rule);
+        
+        // For escalation SEND rules (Secondary/Tertiary/Quaternary states), allow them through
+        // if there are ANY DataUpdate rules for the alert type, without strict state matching
+        // These rules fire on state transitions managed by DataUpdate UPDATE rules
+        boolean isEscalationSendRule = requiredState != null && !requiredState.isEmpty() &&
+            !"Primary".equalsIgnoreCase(requiredState) && !"Group".equalsIgnoreCase(requiredState);
 
         // Validate that at least one DataUpdate rule positively covers these alerts with valid logic
         // IMPORTANT: If the adapter rule requires a specific state (e.g., Group), the DataUpdate rule
@@ -256,7 +274,8 @@ public class XmlParser {
             }
             
             // Check if states match (if adapter rule requires a specific state)
-            if (requiredState != null && !requiredState.isEmpty() && anyDataUpdateSetsState) {
+            // For escalation SEND rules, skip state validation - they just need DataUpdate coverage
+            if (!isEscalationSendRule && requiredState != null && !requiredState.isEmpty() && anyDataUpdateSetsState) {
                 // Adapter rule requires a specific state, and DataUpdate rules DO set states
                 // So we need to ensure state matching
                 if (dataUpdateRule.state == null || !requiredState.equals(dataUpdateRule.state)) {
@@ -265,7 +284,7 @@ public class XmlParser {
                 }
             }
             
-            // Both alert types and states match (or no state requirement, or no DataUpdate sets states)
+            // Both alert types and states match (or no state requirement, or no DataUpdate sets states, or is escalation rule)
             return true;
         }
 
@@ -622,8 +641,8 @@ public class XmlParser {
         String settingsJson = getChildText(ruleElem, "settings");
         if (settingsJson != null && !settingsJson.isEmpty()) {
             rule.settings = parseSettings(settingsJson);
-            // For DataUpdate CREATE rules, extract the state they set from settings
-            if ("DataUpdate".equalsIgnoreCase(component) && rule.triggerCreate && rule.settings.containsKey("state")) {
+            // For DataUpdate rules (both CREATE and UPDATE), extract the state they set from settings
+            if ("DataUpdate".equalsIgnoreCase(component) && rule.settings.containsKey("state")) {
                 rule.state = rule.settings.get("state").toString();
             }
         }
@@ -659,9 +678,17 @@ public class XmlParser {
             }
             
             // Filter alert types: keep only those covered by CREATE DATAUPDATE rules
-            // Skip this filtering for DataUpdate rules and escalation timing rules
+            // Skip this filtering for:
+            // 1. DataUpdate rules themselves
+            // 2. Escalation timing rules (defer-delivery-by without destination)
+            // 3. Escalation SEND rules (have state that's not Primary/Group and are UPDATE-triggered)
+            boolean isEscalationSendRule = rule.state != null && !rule.state.isEmpty() &&
+                !"Primary".equalsIgnoreCase(rule.state) && !"Group".equalsIgnoreCase(rule.state) &&
+                rule.triggerUpdate && hasDestination(rule);
+            
             if (!"DataUpdate".equalsIgnoreCase(rule.component) && 
-                !(rule.deferDeliveryBy != null && !hasDestination(rule))) {
+                !(rule.deferDeliveryBy != null && !hasDestination(rule)) &&
+                !isEscalationSendRule) {
                 filterUncoveredAlertTypes(rule, dataUpdateByDataset.getOrDefault(rule.dataset, Collections.emptyList()));
             }
         }
@@ -765,8 +792,10 @@ public class XmlParser {
             }
         }
         
-        // State
-        if (filter.path.equals("state")) {
+        // State - For DataUpdate rules, don't overwrite state from settings with state from views
+        // DataUpdate rules: state in settings = what they SET, state in views = what they REQUIRE
+        // Other rules (VMP, etc.): state in views = what they REQUIRE to trigger
+        if (filter.path.equals("state") && !"DataUpdate".equalsIgnoreCase(rule.component)) {
             rule.state = filter.value.trim();
         }
         
