@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="6" version-minor="6">
+  <meta-data>
+    <name>Test Group State Facility Duplication Fix</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        <!-- Alert type views -->
+        <view>
+          <name>Alert_type_Code_Blue</name>
+          <description>Alert type is Adult Code Blue</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Adult Code Blue</value>
+          </filter>
+        </view>
+        <view>
+          <name>Alert_type_STAT_C</name>
+          <description>Alert type is STAT C Section</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>STAT C Section</value>
+          </filter>
+        </view>
+        
+        <!-- State views -->
+        <view>
+          <name>Alert_is_at_Group_state</name>
+          <description>Alert is at Group state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Group</value>
+          </filter>
+        </view>
+        <view>
+          <name>Alert_has_no_state</name>
+          <description>Alert has no state</description>
+          <filter relation="null">
+            <path>state</path>
+          </filter>
+        </view>
+        <view>
+          <name>Alert_is_active</name>
+          <description>Alert is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        <view>
+          <name>Alert_has_not_been_responded_to</name>
+          <description>Alert has not been responded to</description>
+          <filter relation="equal">
+            <path>responded_to</path>
+            <value>No</value>
+          </filter>
+        </view>
+        
+        <!-- Facility views -->
+        <view>
+          <name>Facility_name_Northland</name>
+          <description>Facility is Northland</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Northland</value>
+          </filter>
+        </view>
+        <view>
+          <name>Facility_name_Ridges</name>
+          <description>Facility is Ridges</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Ridges</value>
+          </filter>
+        </view>
+        <view>
+          <name>Facility_name_Lakes</name>
+          <description>Facility is Lakes</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Lakes</value>
+          </filter>
+        </view>
+        <view>
+          <name>Facility_name_GICH</name>
+          <description>Facility is GICH</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>GICH</value>
+          </filter>
+        </view>
+        
+        <!-- Recipient views -->
+        <view>
+          <name>Recipient_of_the_alert_is_an_individual</name>
+          <description>Recipient of the alert is an individual</description>
+          <filter relation="equal">
+            <path>recipient.type</path>
+            <value>Individual</value>
+          </filter>
+        </view>
+        <view>
+          <name>Bed_exists</name>
+          <description>Bed exists</description>
+          <filter relation="not_null">
+            <path>bed</path>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    <workflows>
+    </workflows>
+    <interfaces>
+      <!-- DataUpdate CREATE rules for different facilities -->
+      <interface component="DataUpdate">
+        <name>DataUpdate for Alerts</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO GROUP | CODE BLUE | NORTHLAND</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_Northland</view>
+            <view>Recipient_of_the_alert_is_an_individual</view>
+            <view>Alert_type_Code_Blue</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Group"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO GROUP | CODE BLUE | LAKES</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_Lakes</view>
+            <view>Recipient_of_the_alert_is_an_individual</view>
+            <view>Alert_type_Code_Blue</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Group"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO GROUP | CODE BLUE | GICH</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_GICH</view>
+            <view>Recipient_of_the_alert_is_an_individual</view>
+            <view>Alert_type_Code_Blue</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Group"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO GROUP | CODE BLUE | RIDGES</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_Ridges</view>
+            <view>Recipient_of_the_alert_is_an_individual</view>
+            <view>Alert_type_Code_Blue</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Group"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO GROUP | STAT C SECTION | RIDGES</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Bed_exists</view>
+            <view>Facility_name_Ridges</view>
+            <view>Recipient_of_the_alert_is_an_individual</view>
+            <view>Alert_type_STAT_C</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Group"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VMP SEND rules for specific facilities - should only create one entry per facility -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls" no_loopback="true">
+          <purpose>SEND GROUP | URGENT NO CALLBACK | ADULT CODE BLUE | GROUP | VMP | NORTHLAND</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_Group_state</view>
+            <view>Alert_type_Code_Blue</view>
+            <view>Facility_name_Northland</view>
+          </condition>
+          <settings>{"destination":"g-adult_code_blue_northland","priority":"0","ttl":10,"enunciate":"ENUNCIATE_ALWAYS","overrideDND":true}</settings>
+        </rule>
+        <rule active="true" dataset="NurseCalls" no_loopback="true">
+          <purpose>SEND GROUP | URGENT NO CALLBACK | STAT C SECTION | GROUP | VMP | RIDGES</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_Group_state</view>
+            <view>Alert_type_STAT_C</view>
+            <view>Facility_name_Ridges</view>
+          </condition>
+          <settings>{"destination":"g-stat_c_section_ridges","priority":"0","ttl":10,"enunciate":"ENUNCIATE_ALWAYS","overrideDND":true}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

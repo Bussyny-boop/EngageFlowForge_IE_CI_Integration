@@ -206,4 +206,89 @@ public class XmlParserTest {
         }
         assertTrue(foundWestWing, "Should find West Wing facility");
     }
+    
+    @Test
+    public void testGroupStateFacilityDuplication() throws Exception {
+        XmlParser parser = new XmlParser();
+        
+        // Load XML file with multiple DataUpdate CREATE rules for different facilities
+        // and SEND rules for specific facilities only
+        File xmlFile = new File("src/test/resources/test-group-state-facility-duplication.xml");
+        assertTrue(xmlFile.exists(), "Test XML file should exist");
+        
+        parser.load(xmlFile);
+        
+        // Verify nurse calls were created
+        List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
+        assertFalse(nurseCalls.isEmpty(), "Should have nurse call flows");
+        
+        // Count flows for "Adult Code Blue" - should only have ONE for Northland
+        long adultCodeBlueCount = nurseCalls.stream()
+            .filter(f -> f.alarmName.equals("Adult Code Blue"))
+            .count();
+        assertEquals(1, adultCodeBlueCount, 
+            "Should have exactly 1 flow for Adult Code Blue (Northland only), not one per facility");
+        
+        // Verify the Adult Code Blue flow is for Northland
+        boolean foundNorthlandCodeBlue = false;
+        for (ExcelParserV5.FlowRow flow : nurseCalls) {
+            if (flow.alarmName.equals("Adult Code Blue")) {
+                foundNorthlandCodeBlue = true;
+                assertEquals("VMP", flow.deviceA, "Device should be VMP");
+                assertEquals("Immediate", flow.t1, "T1 should be Immediate");
+                assertEquals("Urgent", flow.priorityRaw, "Priority should be Urgent");
+                assertEquals("10", flow.ttlValue, "TTL should be 10");
+                assertEquals("TRUE", flow.breakThroughDND, "Break through DND should be TRUE");
+                assertTrue(flow.configGroup.contains("Northland"), 
+                    "Config group should contain Northland facility");
+                assertFalse(flow.configGroup.contains("Lakes"), 
+                    "Config group should NOT contain Lakes facility");
+                assertFalse(flow.configGroup.contains("GICH"), 
+                    "Config group should NOT contain GICH facility");
+                assertFalse(flow.configGroup.contains("Ridges"), 
+                    "Config group should NOT contain Ridges facility");
+            }
+        }
+        assertTrue(foundNorthlandCodeBlue, "Should find Adult Code Blue for Northland");
+        
+        // Count flows for "STAT C Section" - should only have ONE for Ridges
+        long statCSectionCount = nurseCalls.stream()
+            .filter(f -> f.alarmName.equals("STAT C Section"))
+            .count();
+        assertEquals(1, statCSectionCount, 
+            "Should have exactly 1 flow for STAT C Section (Ridges only), not one per facility");
+        
+        // Verify the STAT C Section flow is for Ridges
+        boolean foundRidgesStatC = false;
+        for (ExcelParserV5.FlowRow flow : nurseCalls) {
+            if (flow.alarmName.equals("STAT C Section")) {
+                foundRidgesStatC = true;
+                assertEquals("VMP", flow.deviceA, "Device should be VMP");
+                assertEquals("Immediate", flow.t1, "T1 should be Immediate");
+                assertEquals("Urgent", flow.priorityRaw, "Priority should be Urgent");
+                assertEquals("10", flow.ttlValue, "TTL should be 10");
+                assertEquals("TRUE", flow.breakThroughDND, "Break through DND should be TRUE");
+                assertTrue(flow.configGroup.contains("Ridges"), 
+                    "Config group should contain Ridges facility");
+                assertFalse(flow.configGroup.contains("Lakes"), 
+                    "Config group should NOT contain Lakes facility");
+                assertFalse(flow.configGroup.contains("GICH"), 
+                    "Config group should NOT contain GICH facility");
+                assertFalse(flow.configGroup.contains("Northland"), 
+                    "Config group should NOT contain Northland facility");
+            }
+        }
+        assertTrue(foundRidgesStatC, "Should find STAT C Section for Ridges");
+        
+        // Verify units are created correctly - should have one unit per facility
+        List<ExcelParserV5.UnitRow> units = parser.getUnits();
+        assertFalse(units.isEmpty(), "Should have unit rows");
+        
+        // Count unique facilities in units
+        long northlandUnits = units.stream().filter(u -> u.facility.equals("Northland")).count();
+        long ridgesUnits = units.stream().filter(u -> u.facility.equals("Ridges")).count();
+        
+        assertEquals(1, northlandUnits, "Should have exactly 1 Northland unit");
+        assertEquals(1, ridgesUnits, "Should have exactly 1 Ridges unit");
+    }
 }
