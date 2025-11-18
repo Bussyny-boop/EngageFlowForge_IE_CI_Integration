@@ -262,9 +262,10 @@ public class XmlParser {
         // IMPORTANT: If the adapter rule requires a specific state (e.g., Group), the DataUpdate rule
         // must set alerts to that state
         //
-        // However, if NO DataUpdate rules set any state, we allow the adapter rule through for backward
+        // However, if NO DataUpdate CREATE rules set any state, we allow the adapter rule through for backward
         // compatibility (alerts may get default states from the application logic)
-        boolean anyDataUpdateSetsState = dataUpdateRules.stream()
+        // We only consider CREATE rules for state checking, not escalation UPDATE rules
+        boolean anyDataUpdateCreateSetsState = dataUpdateCreateRules.stream()
             .anyMatch(r -> r.state != null && !r.state.isEmpty());
         
         for (Rule dataUpdateRule : dataUpdateRules) {
@@ -275,11 +276,17 @@ public class XmlParser {
             
             // Check if states match (if adapter rule requires a specific state)
             // For escalation SEND rules, skip state validation - they just need DataUpdate coverage
-            if (!isEscalationSendRule && requiredState != null && !requiredState.isEmpty() && anyDataUpdateSetsState) {
-                // Adapter rule requires a specific state, and DataUpdate rules DO set states
-                // So we need to ensure state matching
-                if (dataUpdateRule.state == null || !requiredState.equals(dataUpdateRule.state)) {
-                    // DataUpdate rule doesn't set the required state
+            if (!isEscalationSendRule && requiredState != null && !requiredState.isEmpty() && anyDataUpdateCreateSetsState) {
+                // Adapter rule requires a specific state, and DataUpdate CREATE rules DO set states
+                // So we need to ensure state matching - but only check CREATE rules, not escalation UPDATE rules
+                if (dataUpdateRule.triggerCreate) {
+                    if (dataUpdateRule.state == null || !requiredState.equals(dataUpdateRule.state)) {
+                        // DataUpdate CREATE rule doesn't set the required state
+                        continue;
+                    }
+                } else {
+                    // This is an UPDATE/escalation rule - skip state checking for these
+                    // They don't set the initial state, they transition between states
                     continue;
                 }
             }
@@ -795,8 +802,16 @@ public class XmlParser {
         // State - For DataUpdate rules, don't overwrite state from settings with state from views
         // DataUpdate rules: state in settings = what they SET, state in views = what they REQUIRE
         // Other rules (VMP, etc.): state in views = what they REQUIRE to trigger
-        if (filter.path.equals("state") && !"DataUpdate".equalsIgnoreCase(rule.component)) {
-            rule.state = filter.value.trim();
+        // EXCEPTION: For DataUpdate escalation rules (update with defer-delivery-by but no destination),
+        // we DO need the state from views to know when to apply the timing
+        if (filter.path.equals("state")) {
+            if (!"DataUpdate".equalsIgnoreCase(rule.component)) {
+                // Non-DataUpdate rules: state from view is what they require
+                rule.state = filter.value.trim();
+            } else if (rule.triggerUpdate && rule.deferDeliveryBy != null) {
+                // DataUpdate escalation timing rules: state from view indicates when to apply timing
+                rule.state = filter.value.trim();
+            }
         }
         
         // Role - extract from various role-related filter paths
@@ -1314,10 +1329,40 @@ public class XmlParser {
         String recipient = extractDestination(sendRule);
         setRecipient(template, 1, recipient, sendRule.roleFromView);
 
+        // Check for initial delay from CREATE rules
+        String initialDelay = null;
+        boolean hasCreateRuleWithoutDelay = false;
+        
+        // First check the send rule itself
         if (sendRule.triggerCreate) {
-            template.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
-        } else if (template.t1 == null || template.t1.isEmpty()) {
-            // Default to Immediate if not specified
+            if (sendRule.deferDeliveryBy != null) {
+                initialDelay = sendRule.deferDeliveryBy;
+            } else {
+                hasCreateRuleWithoutDelay = true;
+            }
+        }
+        
+        // If send rule doesn't have CREATE, check DataUpdate CREATE rules
+        if (initialDelay == null && !hasCreateRuleWithoutDelay) {
+            for (Rule dataUpdateRule : dataUpdateRules) {
+                if (dataUpdateRule.triggerCreate && dataUpdateRule.alertTypes.contains(alertType)) {
+                    if (dataUpdateRule.deferDeliveryBy != null) {
+                        initialDelay = dataUpdateRule.deferDeliveryBy;
+                        break;
+                    } else {
+                        hasCreateRuleWithoutDelay = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Set T1 based on what we found
+        if (hasCreateRuleWithoutDelay) {
+            template.t1 = "Immediate";
+        } else if (initialDelay != null) {
+            template.t1 = initialDelay;
+        } else {
             template.t1 = "Immediate";
         }
 
