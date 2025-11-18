@@ -17,13 +17,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ✅ Use Liberica JDK 21 with JavaFX built in
+      # ✅ Use Liberica JDK 21 with JavaFX built in (pinned to specific version for reliability)
       - name: Set up Liberica Full JDK (includes JavaFX)
         uses: actions/setup-java@v4
         with:
           distribution: 'liberica'
-          java-version: '21'
+          java-version: '21.0.3'
           java-package: 'jdk+fx'
+          check-latest: false
+          cache: 'maven'
 
       - name: Verify Java
         run: java -version
