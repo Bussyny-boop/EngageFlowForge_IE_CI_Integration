@@ -36,6 +36,16 @@
     <workflows>
     </workflows>
     <interfaces>
+      <interface component="DataUpdate">
+        <name>DataUpdate</name>
+        <rule active="true" dataset="NurseCalls" no_loopback="true">
+          <purpose>CREATE TRIGGER | Bed Exit</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_BedExit</view>
+          </condition>
+        </rule>
+      </interface>
       <interface component="OutgoingWCTP">
         <name>OutgoingWCTP</name>
         <rule active="true" dataset="NurseCalls" no_loopback="true">

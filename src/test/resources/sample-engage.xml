@@ -44,6 +44,16 @@
     <workflows>
     </workflows>
     <interfaces>
+      <interface component="DataUpdate">
+        <name>DataUpdate</name>
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>CREATE TRIGGER | LHR | HHR | APNEA</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_included_in_LowHR_HighHR_APNEA</view>
+          </condition>
+        </rule>
+      </interface>
       <interface component="VMP">
         <name>VMP</name>
         <rule active="true" dataset="Clinicals" no_loopback="true">
