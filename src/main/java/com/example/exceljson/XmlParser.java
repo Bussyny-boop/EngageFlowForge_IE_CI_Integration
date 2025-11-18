@@ -251,6 +251,12 @@ public class XmlParser {
         
         // Extract the state requirement from the adapter rule's views (if any)
         String requiredState = extractStateFromRule(rule);
+        
+        // For escalation SEND rules (Secondary/Tertiary/Quaternary states), allow them through
+        // if there are ANY DataUpdate rules for the alert type, without strict state matching
+        // These rules fire on state transitions managed by DataUpdate UPDATE rules
+        boolean isEscalationSendRule = requiredState != null && !requiredState.isEmpty() &&
+            !"Primary".equalsIgnoreCase(requiredState) && !"Group".equalsIgnoreCase(requiredState);
 
         // Validate that at least one DataUpdate rule positively covers these alerts with valid logic
         // IMPORTANT: If the adapter rule requires a specific state (e.g., Group), the DataUpdate rule
@@ -268,7 +274,8 @@ public class XmlParser {
             }
             
             // Check if states match (if adapter rule requires a specific state)
-            if (requiredState != null && !requiredState.isEmpty() && anyDataUpdateSetsState) {
+            // For escalation SEND rules, skip state validation - they just need DataUpdate coverage
+            if (!isEscalationSendRule && requiredState != null && !requiredState.isEmpty() && anyDataUpdateSetsState) {
                 // Adapter rule requires a specific state, and DataUpdate rules DO set states
                 // So we need to ensure state matching
                 if (dataUpdateRule.state == null || !requiredState.equals(dataUpdateRule.state)) {
@@ -277,7 +284,7 @@ public class XmlParser {
                 }
             }
             
-            // Both alert types and states match (or no state requirement, or no DataUpdate sets states)
+            // Both alert types and states match (or no state requirement, or no DataUpdate sets states, or is escalation rule)
             return true;
         }
 
@@ -785,8 +792,10 @@ public class XmlParser {
             }
         }
         
-        // State
-        if (filter.path.equals("state")) {
+        // State - For DataUpdate rules, don't overwrite state from settings with state from views
+        // DataUpdate rules: state in settings = what they SET, state in views = what they REQUIRE
+        // Other rules (VMP, etc.): state in views = what they REQUIRE to trigger
+        if (filter.path.equals("state") && !"DataUpdate".equalsIgnoreCase(rule.component)) {
             rule.state = filter.value.trim();
         }
         
