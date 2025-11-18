@@ -190,8 +190,10 @@ public class XmlParser {
      *
      * Required logic across ALL datasets (NurseCalls, Clinicals, Orders):
      * - DataUpdate rules themselves are always processed
-     * - For adapter/interface rules (e.g., VMP, Vocera, XMPP):
-     *   - Do NOT process unless there exists at least one DataUpdate (create=true) rule in the SAME dataset
+     * - For adapter/interface rules (e.g., VMP, Vocera, XMPP, CUCM):
+     *   - If the adapter rule itself uses trigger-on create="true", it should be processed WITHOUT
+     *     requiring a DataUpdate CREATE rule, as the adapter is performing the "Create" operation
+     *   - Otherwise, do NOT process unless there exists at least one DataUpdate (create=true) rule in the SAME dataset
      *     whose alert filter (type or name) positively includes this rule's alert(s)
      *   - If the DataUpdate rule uses invalid relations (not_in, not_like, not_equal, null), skip it
      *   - If this adapter rule has no alert type or alert name in its own views, do NOT process
@@ -205,6 +207,13 @@ public class XmlParser {
         // Always keep escalation timing rules (have defer-delivery-by but no destination)
         // These apply globally across alert types and will be enriched with state info later
         if (rule.deferDeliveryBy != null && !hasDestination(rule)) {
+            return true;
+        }
+
+        // NEW: Allow adapter rules (VMP, XMPP, CUCM, Vocera) with create="true" to function independently
+        // When an adapter rule itself uses "Create" in the send rule, it acts as both the interface
+        // and the data creation mechanism, so it does not require a separate DataUpdate CREATE rule
+        if (rule.triggerCreate && isAdapterComponent(rule.component)) {
             return true;
         }
 
@@ -667,9 +676,14 @@ public class XmlParser {
                 }
             }
             
-            // Skip DataUpdate rules - they're only used for validation, not for creating flows
+            // Skip DataUpdate rules that have destinations (they're interface-like, not escalation timing)
+            // But KEEP DataUpdate rules with defer-delivery-by and no destination (escalation timing rules)
             if ("DataUpdate".equalsIgnoreCase(rule.component)) {
-                continue;
+                // Keep escalation timing rules (have defer-delivery-by but no destination)
+                if (rule.deferDeliveryBy == null || hasDestination(rule)) {
+                    continue; // Skip non-escalation DataUpdate rules
+                }
+                // Fall through to add escalation timing DataUpdate rules to grouped
             }
             
             // Skip other rules without alert types
@@ -738,6 +752,15 @@ public class XmlParser {
         // Separate send rules and escalate rules
         Map<String, Rule> sendByState = new HashMap<>();
         Map<String, String> escalateDelay = new HashMap<>();
+        String initialDelay = null; // Delay before first state (Primary)
+        
+        // Check DataUpdate CREATE rules for initial delay
+        for (Rule dataUpdateRule : dataUpdateRules) {
+            if (dataUpdateRule.triggerCreate && dataUpdateRule.deferDeliveryBy != null) {
+                initialDelay = dataUpdateRule.deferDeliveryBy;
+                break; // Use first one found
+            }
+        }
         
         for (Rule rule : rules) {
             if (rule.state == null || rule.state.isEmpty()) continue;
@@ -780,8 +803,12 @@ public class XmlParser {
                 // Apply settings from first send rule
                 if (i == 0) {
                     applySettings(template, sendRule);
-                    if (sendRule.triggerCreate) {
-                        template.t1 = "Immediate";
+                    // For first recipient, use initial delay if available, otherwise check if send rule has create trigger
+                    if (initialDelay != null) {
+                        template.t1 = initialDelay;
+                    } else if (sendRule.triggerCreate) {
+                        // If sendRule has defer-delivery-by, use it; otherwise Immediate
+                        template.t1 = sendRule.deferDeliveryBy != null ? sendRule.deferDeliveryBy : "Immediate";
                     } else if (template.t1 == null || template.t1.isEmpty()) {
                         // Default to Immediate if not specified
                         template.t1 = "Immediate";
@@ -1082,6 +1109,20 @@ public class XmlParser {
         }
         if (dataset != null && !dataset.isEmpty()) parts.add(dataset);
         return String.join("_", parts);
+    }
+    
+    /**
+     * Check if a component is an adapter/interface component (VMP, XMPP, CUCM, Vocera).
+     * These are components that can send messages/alerts to external systems.
+     */
+    private boolean isAdapterComponent(String component) {
+        if (component == null) return false;
+        String upper = component.toUpperCase();
+        return upper.equals("VMP") || 
+               upper.equals("XMPP") || 
+               upper.equals("CUCM") || 
+               upper.equals("VOCERA") ||
+               upper.equals("OUTGOINGWCTP");
     }
     
     private boolean hasDestination(Rule rule) {

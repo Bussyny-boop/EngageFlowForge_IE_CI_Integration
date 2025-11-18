@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Adapter Update Rule Only</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Orders</name>
+        
+        <!-- View for order types -->
+        <view>
+          <name>Alert_is_Medication_Order</name>
+          <description>Alert is Medication Order</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Medication Order</value>
+          </filter>
+        </view>
+        
+        <!-- View for facility -->
+        <view>
+          <name>Facility_is_Southside</name>
+          <description>Facility is Southside</description>
+          <filter relation="equal">
+            <path>patient.current_place.room.facility.name</path>
+            <value>Southside</value>
+          </filter>
+        </view>
+        
+        <!-- View for active orders -->
+        <view>
+          <name>Order_is_active</name>
+          <description>Order is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- VMP Interface with UPDATE trigger only - should NOT work without DataUpdate CREATE rule -->
+      <interface component="VMP">
+        <name>VMP Orders</name>
+        
+        <!-- SEND MEDICATION ORDER with UPDATE trigger only (no create) -->
+        <rule active="true" dataset="Orders">
+          <purpose>SEND MEDICATION ORDER | VMP | SOUTHSIDE</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Order_is_active</view>
+            <view>Alert_is_Medication_Order</view>
+            <view>Facility_is_Southside</view>
+          </condition>
+          <settings>{"destination":"pharmacist-group","priority":"2","ttl":20160,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

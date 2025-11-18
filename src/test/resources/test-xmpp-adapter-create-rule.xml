@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test XMPP Adapter Create Rule</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for alarm types -->
+        <view>
+          <name>Alarm_is_Critical</name>
+          <description>Alarm is Critical</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Critical Alert</value>
+          </filter>
+        </view>
+        
+        <!-- View for facility -->
+        <view>
+          <name>Facility_is_TestHospital</name>
+          <description>Facility is Test Hospital</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Test Hospital</value>
+          </filter>
+        </view>
+        
+        <!-- View for active alerts -->
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- XMPP Interface with CREATE trigger - should work without DataUpdate CREATE rule -->
+      <interface component="XMPP">
+        <name>XMPP Clinical Alerts</name>
+        
+        <!-- SEND CRITICAL ALERT with CREATE trigger -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND CRITICAL ALERT | XMPP | TEST HOSPITAL</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_Critical</view>
+            <view>Facility_is_TestHospital</view>
+          </condition>
+          <settings>{"destination":"clinical-team@hospital.com","priority":"0","ttl":10,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

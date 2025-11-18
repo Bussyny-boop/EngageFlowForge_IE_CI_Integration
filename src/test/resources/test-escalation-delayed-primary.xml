@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Escalation with Delayed Primary</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for probe disconnect -->
+        <view>
+          <name>Alarm_included_in_Probe_Disconnect</name>
+          <description>Alarm included in Probe Disconnect</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Probe Disconnect</value>
+          </filter>
+        </view>
+        
+        <!-- View for no state -->
+        <view>
+          <name>Alarm_has_no_state</name>
+          <description>Alarm has no state</description>
+          <filter relation="null">
+            <path>state</path>
+          </filter>
+        </view>
+        
+        <!-- View for active -->
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <!-- View for Primary state -->
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- View for Secondary state -->
+        <view>
+          <name>Alarm_is_at_secondary_state</name>
+          <description>Alarm is at secondary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Secondary</value>
+          </filter>
+        </view>
+        
+        <!-- View for Tertiary state -->
+        <view>
+          <name>Alarm_is_at_tertiary_state</name>
+          <description>Alarm is at tertiary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Tertiary</value>
+          </filter>
+        </view>
+        
+        <!-- View for Quaternary state -->
+        <view>
+          <name>Alarm_is_at_quaternary_state</name>
+          <description>Alarm is at quaternary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Quaternary</value>
+          </filter>
+        </view>
+        
+        <!-- View for facility -->
+        <view>
+          <name>Facility_name_is_Northland</name>
+          <description>Facility name is Northland</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Northland</value>
+          </filter>
+        </view>
+        
+        <!-- View for role Nurse -->
+        <view>
+          <name>Role_caregiver_NURSE</name>
+          <description>Role caregiver NURSE</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+        
+        <!-- View for role Charge Nurse -->
+        <view>
+          <name>Role_caregiver_CHARGE_NURSE</name>
+          <description>Role caregiver CHARGE NURSE</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>CHARGE NURSE</value>
+          </filter>
+        </view>
+        
+        <!-- View for role Monitor Tech -->
+        <view>
+          <name>Role_caregiver_MONITOR_TECH</name>
+          <description>Role caregiver MONITOR TECH</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>MONITOR TECH</value>
+          </filter>
+        </view>
+        
+        <!-- View for role Unit Manager -->
+        <view>
+          <name>Role_caregiver_UNIT_MANAGER</name>
+          <description>Role caregiver UNIT MANAGER</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>UNIT MANAGER</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- DataUpdate Interface - Set to Primary after 60 seconds -->
+      <interface component="DataUpdate">
+        <name>DataUpdate for Probe Disconnect</name>
+        
+        <!-- SET TO PRIMARY | 60SEC | PROBE DISCONNECT -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>1. SET TO PRIMARY | 60SEC | PROBE DISCONNECT | ALARM ACTIVE | ALL UNIT | NORTHLAND</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_no_state</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_active</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+        
+        <!-- ESCALATE TO SECONDARY after 60 seconds -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>2. ESCALATE TO SECONDARY | 60SEC | PROBE DISCONNECT</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"}]}</settings>
+        </rule>
+        
+        <!-- ESCALATE TO TERTIARY after 60 seconds -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>3. ESCALATE TO TERTIARY | 60SEC | PROBE DISCONNECT</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_secondary_state</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Tertiary"}]}</settings>
+        </rule>
+        
+        <!-- ESCALATE TO QUATERNARY after 60 seconds -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>4. ESCALATE TO QUATERNARY | 60SEC | PROBE DISCONNECT</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_tertiary_state</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Quaternary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VMP Interface - Send to different recipients at each escalation level -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND PRIMARY to Nurse -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>2. SEND PRIMARY | PROBE DISCONNECT | NURSE | NORTHLAND</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+        
+        <!-- SEND SECONDARY to Charge Nurse -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>3. SEND SECONDARY | PROBE DISCONNECT | CHARGE NURSE | NORTHLAND</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_secondary_state</view>
+            <view>Role_caregiver_CHARGE_NURSE</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+        
+        <!-- SEND TERTIARY to Monitor Tech -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>4. SEND TERTIARY | PROBE DISCONNECT | MONITOR TECH | NORTHLAND</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_tertiary_state</view>
+            <view>Role_caregiver_MONITOR_TECH</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+        
+        <!-- SEND QUATERNARY to Unit Manager -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>5. SEND QUATERNARY | PROBE DISCONNECT | UNIT MANAGER | NORTHLAND</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_Probe_Disconnect</view>
+            <view>Alarm_is_at_quaternary_state</view>
+            <view>Role_caregiver_UNIT_MANAGER</view>
+            <view>Facility_name_is_Northland</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

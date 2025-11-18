@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Adapter Create Rule</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Orders</name>
+        
+        <!-- View for order types -->
+        <view>
+          <name>Alert_is_Epic_Order</name>
+          <description>Alert is Epic Order</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Epic Order</value>
+          </filter>
+        </view>
+        
+        <!-- View for facility -->
+        <view>
+          <name>Facility_name_is_GICH</name>
+          <description>Facility name is GICH</description>
+          <filter relation="equal">
+            <path>patient.current_place.room.facility.name</path>
+            <value>GICH</value>
+          </filter>
+        </view>
+        
+        <!-- View for group exists -->
+        <view>
+          <name>Vocera_group_number_Exists</name>
+          <description>Vocera group number exists</description>
+          <filter relation="not_equal">
+            <path>vocera_group_number</path>
+            <value></value>
+          </filter>
+        </view>
+        
+        <!-- View for no state (new alert) -->
+        <view>
+          <name>Alert_has_no_state</name>
+          <description>Alert has no state</description>
+          <filter relation="null">
+            <path>state</path>
+          </filter>
+        </view>
+        
+        <!-- View for recent alerts -->
+        <view>
+          <name>Alert_has_not_been_cancelled_and_is_recent</name>
+          <description>Alert has not been cancelled and is recent</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- VMP Interface with CREATE trigger - should work without DataUpdate CREATE rule -->
+      <interface component="VMP">
+        <name>VMP Orders</name>
+        
+        <!-- SEND EPIC ORDER with CREATE trigger - this should be processed without a DataUpdate CREATE rule -->
+        <rule active="true" dataset="Orders">
+          <purpose>SEND EPIC ORDER | ALL ORDERS CODES | VOCERA GROUP | VMP | GICH</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_has_not_been_cancelled_and_is_recent</view>
+            <view>Alert_is_Epic_Order</view>
+            <view>Facility_name_is_GICH</view>
+            <view>Vocera_group_number_Exists</view>
+          </condition>
+          <settings>{"destination":"#{vocera_group_number}","priority":"2","ttl":20160,"enunciate":"SYSTEM_DEFAULT"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
