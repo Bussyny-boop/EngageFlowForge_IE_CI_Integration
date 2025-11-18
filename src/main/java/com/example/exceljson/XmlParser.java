@@ -908,25 +908,48 @@ public class XmlParser {
 
         // Compute unions of facilities and units for splitting
         // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
+        // BUT only use facilities that are already specified in the current group of SEND rules
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // First, collect from DataUpdate CREATE rules (passed as parameter)
-        for (Rule r : dataUpdateRules) {
-            facs.addAll(r.facilities);
-            uns.addAll(r.units);
+        // First, collect facilities from the current group's SEND rules to establish scope
+        Set<String> groupFacilities = new LinkedHashSet<>();
+        Set<String> groupUnits = new LinkedHashSet<>();
+        for (Rule r : allRules) {
+            groupFacilities.addAll(r.facilities);
+            groupUnits.addAll(r.units);
         }
         
-        // If no facilities/units found in DataUpdate rules, collect from all rules in this group
-        if (facs.isEmpty() || uns.isEmpty()) {
-            for (Rule r : allRules) {
-                if (facs.isEmpty()) {
-                    facs.addAll(r.facilities);
-                }
-                if (uns.isEmpty()) {
-                    uns.addAll(r.units);
-                }
+        // Filter DataUpdate CREATE rules to only those matching the group's facilities
+        // This prevents duplication across facilities (e.g., creating entries for all facilities
+        // when the SEND rule only applies to one specific facility like "Northland")
+        for (Rule r : dataUpdateRules) {
+            // Only include facilities/units from DataUpdate rules that overlap with this group
+            if (!groupFacilities.isEmpty() && !r.facilities.isEmpty()) {
+                // Check for overlap between group facilities and DataUpdate rule facilities
+                Set<String> intersection = new LinkedHashSet<>(r.facilities);
+                intersection.retainAll(groupFacilities);
+                facs.addAll(intersection);
+            } else if (groupFacilities.isEmpty()) {
+                // If group has no facilities, use DataUpdate facilities as-is
+                facs.addAll(r.facilities);
             }
+            
+            if (!groupUnits.isEmpty() && !r.units.isEmpty()) {
+                Set<String> intersection = new LinkedHashSet<>(r.units);
+                intersection.retainAll(groupUnits);
+                uns.addAll(intersection);
+            } else if (groupUnits.isEmpty()) {
+                uns.addAll(r.units);
+            }
+        }
+        
+        // If no facilities/units found after filtering, use from group rules directly
+        if (facs.isEmpty()) {
+            facs.addAll(groupFacilities);
+        }
+        if (uns.isEmpty()) {
+            uns.addAll(groupUnits);
         }
         
         if (facs.isEmpty()) facs.add("");
@@ -1002,21 +1025,41 @@ public class XmlParser {
 
         // Compute unions for splitting
         // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
+        // BUT only use facilities that are already specified in the SEND rule
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // First, collect from DataUpdate CREATE rules (passed as parameter)
+        // Collect facilities from the SEND rule to establish scope
+        Set<String> sendRuleFacilities = new LinkedHashSet<>(sendRule.facilities);
+        Set<String> sendRuleUnits = new LinkedHashSet<>(sendRule.units);
+        
+        // Filter DataUpdate CREATE rules to only those matching the SEND rule's facilities
+        // This prevents duplication across facilities
         for (Rule r : dataUpdateRules) {
-            facs.addAll(r.facilities);
-            uns.addAll(r.units);
+            // Only include facilities/units from DataUpdate rules that overlap with the SEND rule
+            if (!sendRuleFacilities.isEmpty() && !r.facilities.isEmpty()) {
+                Set<String> intersection = new LinkedHashSet<>(r.facilities);
+                intersection.retainAll(sendRuleFacilities);
+                facs.addAll(intersection);
+            } else if (sendRuleFacilities.isEmpty()) {
+                facs.addAll(r.facilities);
+            }
+            
+            if (!sendRuleUnits.isEmpty() && !r.units.isEmpty()) {
+                Set<String> intersection = new LinkedHashSet<>(r.units);
+                intersection.retainAll(sendRuleUnits);
+                uns.addAll(intersection);
+            } else if (sendRuleUnits.isEmpty()) {
+                uns.addAll(r.units);
+            }
         }
         
-        // If no facilities/units found in DataUpdate rules, use from sendRule
+        // If no facilities/units found after filtering, use from sendRule directly
         if (facs.isEmpty()) {
-            facs.addAll(sendRule.facilities);
+            facs.addAll(sendRuleFacilities);
         }
         if (uns.isEmpty()) {
-            uns.addAll(sendRule.units);
+            uns.addAll(sendRuleUnits);
         }
         
         if (facs.isEmpty()) facs.add("");
@@ -1095,21 +1138,45 @@ public class XmlParser {
 
         // Compute unions for splitting
         // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
+        // BUT only use facilities that are already specified in the current group of rules
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // First, collect from DataUpdate CREATE rules (passed as parameter)
-        for (Rule r : dataUpdateRules) {
-            facs.addAll(r.facilities);
-            uns.addAll(r.units);
+        // Collect facilities from the current group's rules to establish scope
+        Set<String> groupFacilities = new LinkedHashSet<>();
+        Set<String> groupUnits = new LinkedHashSet<>();
+        for (Rule r : rules) {
+            groupFacilities.addAll(r.facilities);
+            groupUnits.addAll(r.units);
         }
         
-        // If no facilities/units found in DataUpdate rules, use from sendRule
+        // Filter DataUpdate CREATE rules to only those matching the group's facilities
+        // This prevents duplication across facilities
+        for (Rule r : dataUpdateRules) {
+            // Only include facilities/units from DataUpdate rules that overlap with this group
+            if (!groupFacilities.isEmpty() && !r.facilities.isEmpty()) {
+                Set<String> intersection = new LinkedHashSet<>(r.facilities);
+                intersection.retainAll(groupFacilities);
+                facs.addAll(intersection);
+            } else if (groupFacilities.isEmpty()) {
+                facs.addAll(r.facilities);
+            }
+            
+            if (!groupUnits.isEmpty() && !r.units.isEmpty()) {
+                Set<String> intersection = new LinkedHashSet<>(r.units);
+                intersection.retainAll(groupUnits);
+                uns.addAll(intersection);
+            } else if (groupUnits.isEmpty()) {
+                uns.addAll(r.units);
+            }
+        }
+        
+        // If no facilities/units found after filtering, use from group rules directly
         if (facs.isEmpty()) {
-            facs.addAll(sendRule.facilities);
+            facs.addAll(groupFacilities);
         }
         if (uns.isEmpty()) {
-            uns.addAll(sendRule.units);
+            uns.addAll(groupUnits);
         }
         
         if (facs.isEmpty()) facs.add("");
