@@ -87,6 +87,18 @@
     </datasets>
     
     <interfaces>
+      <!-- DataUpdate CREATE TRIGGER for all alert types -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create Trigger</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>CREATE TRIGGER | All Clinical Alerts</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alarm_included_in_LowHR_HighHR_APNEA_ECGAlarms_ETCO2_Probe_Disconnect</view>
+          </condition>
+        </rule>
+      </interface>
+      
       <!-- VMP Interface for sending messages -->
       <interface component="VMP">
         <name>VMP</name>
