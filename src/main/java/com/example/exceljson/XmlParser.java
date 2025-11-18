@@ -186,42 +186,137 @@ public class XmlParser {
     }
     
     /**
-     * Validate if a rule should be processed based on DataUpdate "Create" rules
+     * Validate if a rule should be processed based on DataUpdate "Create" rules.
+     *
+     * Required logic across ALL datasets (NurseCalls, Clinicals, Orders):
+     * - DataUpdate rules themselves are always processed
+     * - For adapter/interface rules (e.g., VMP, Vocera, XMPP):
+     *   - Do NOT process unless there exists at least one DataUpdate (create=true) rule in the SAME dataset
+     *     whose alert filter (type or name) positively includes this rule's alert(s)
+     *   - If the DataUpdate rule uses invalid relations (not_in, not_like, not_equal, null), skip it
+     *   - If this adapter rule has no alert type or alert name in its own views, do NOT process
      */
     private boolean shouldProcessRule(Rule rule, List<Rule> allParsedRules) {
-        // Skip validation for DataUpdate rules themselves
+        // Always keep DataUpdate rules
         if ("DataUpdate".equalsIgnoreCase(rule.component)) {
             return true;
         }
-        
-        // Find DataUpdate rules in the same dataset with trigger create=true
+
+        // Collect DataUpdate(create=true) rules for the same dataset
         List<Rule> dataUpdateRules = allParsedRules.stream()
             .filter(r -> "DataUpdate".equalsIgnoreCase(r.component))
             .filter(r -> r.dataset != null && r.dataset.equals(rule.dataset))
             .filter(r -> r.triggerCreate)
             .collect(Collectors.toList());
-        
-        // If no DataUpdate create rules exist, allow the rule
+
+        // If there are no create DataUpdate rules in this dataset, do NOT process adapter rules
         if (dataUpdateRules.isEmpty()) {
-            return true;
+            return false;
         }
-        
-        // Extract alert types from the current rule's views
-        Set<String> ruleAlertTypes = extractAlertTypesFromRule(rule);
-        
-        // If no alert types found in rule, allow it (might be non-alert-specific)
-        if (ruleAlertTypes.isEmpty()) {
-            return true;
+
+        // Extract alert identifiers (type and/or name) from the adapter rule's views
+        Set<String> ruleAlertKeys = extractAlertKeysFromRule(rule);
+
+        // If no alert identifiers are present on the adapter rule, do NOT process
+        if (ruleAlertKeys.isEmpty()) {
+            return false;
         }
-        
-        // Check if any DataUpdate rule covers these alert types with valid logic
+
+        // Validate that at least one DataUpdate rule positively covers these alerts with valid logic
         for (Rule dataUpdateRule : dataUpdateRules) {
-            if (dataUpdateRuleCoversAlertTypes(dataUpdateRule, ruleAlertTypes)) {
+            if (dataUpdateRuleCoversAlertKeys(dataUpdateRule, ruleAlertKeys)) {
                 return true;
             }
         }
-        
-        // No valid DataUpdate rule found for this rule's alert types
+
+        // No valid DataUpdate rule found that covers this adapter rule's alerts
+        return false;
+    }
+
+    /**
+     * Extract alert identifiers (alert_type and/or alert name) from a rule's condition views.
+     * Returns a set of alert keys that must be positively covered by a DataUpdate(create) rule.
+     */
+    private Set<String> extractAlertKeysFromRule(Rule rule) {
+        Set<String> keys = new LinkedHashSet<>();
+        if (rule == null || rule.dataset == null) return keys;
+        Map<String, View> views = datasetViews.get(rule.dataset);
+        if (views == null) return keys;
+
+        for (String viewName : rule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isAlertTypePath(path) || isAlertNamePath(path)) {
+                    keys.addAll(parseListValues(filter.value));
+                }
+            }
+        }
+        return keys;
+    }
+
+    /**
+     * Heuristic check if a filter path refers to an alert name (not facility/unit/role names).
+     * Matches common patterns like "alert.name", "*.alert_name", or exactly "name" within alert views.
+     */
+    private boolean isAlertNamePath(String path) {
+        if (path == null) return false;
+        String p = path.toLowerCase();
+        // Must reference both alert and name, or be a bare name
+        boolean looksLikeAlertName = (p.contains("alert") && p.contains("name")) || p.equals("name");
+        if (!looksLikeAlertName) return false;
+
+        // Exclude common non-alert name paths
+        if (p.contains("facility.name") || p.contains("unit.name") || p.contains("role.name") || p.contains("group.name")
+            || p.contains("usr.") || p.contains("device.") || p.contains("provider.") || p.contains("patient.")
+            || p.contains("room.") || p.contains("place.") || p.contains("location.") ) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Parse a comma-separated list value into a normalized set (trimmed, non-empty).
+     */
+    private Set<String> parseListValues(String value) {
+        Set<String> out = new LinkedHashSet<>();
+        if (value == null) return out;
+        for (String part : value.split(",")) {
+            String t = part == null ? "" : part.trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
+    }
+
+    /**
+     * Check if a DataUpdate(create) rule covers the given alert keys using valid positive logic.
+     * Accept only relations "in" or "equal"; reject any rule using invalid logic for the alert filter.
+     */
+    private boolean dataUpdateRuleCoversAlertKeys(Rule dataUpdateRule, Set<String> targetAlertKeys) {
+        if (dataUpdateRule == null || dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
+            return false;
+        }
+
+        Map<String, View> views = datasetViews.get(dataUpdateRule.dataset);
+        for (String viewName : dataUpdateRule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isAlertTypePath(path) || isAlertNamePath(path)) {
+                    // Reject invalid relations immediately
+                    if (hasInvalidLogic(filter.relation)) {
+                        return false;
+                    }
+                    // Require positive relation and overlapping values
+                    Set<String> values = parseListValues(filter.value);
+                    if (coversAlertTypes(filter.relation, values, targetAlertKeys)) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
     
