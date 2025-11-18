@@ -240,11 +240,18 @@ public class XmlParser {
         // Validate that at least one DataUpdate rule positively covers these alerts with valid logic
         for (Rule dataUpdateRule : dataUpdateRules) {
             if (dataUpdateRuleCoversAlertKeys(dataUpdateRule, ruleAlertKeys)) {
+                // DEBUG
+                if (ruleAlertKeys.stream().anyMatch(k -> k.contains(" OT"))) {
+                    System.out.println("DEBUG: ALLOW rule '" + rule.purpose + "' because DataUpdate '" + dataUpdateRule.purpose + "' covers " + ruleAlertKeys);
+                }
                 return true;
             }
         }
 
         // No valid DataUpdate rule found that covers this adapter rule's alerts
+        if (ruleAlertKeys.stream().anyMatch(k -> k.contains(" OT"))) {
+            System.out.println("DEBUG: EXCLUDE rule '" + rule.purpose + "' - no DataUpdate covers " + ruleAlertKeys);
+        }
         return false;
     }
 
@@ -306,7 +313,16 @@ public class XmlParser {
 
     /**
      * Check if a DataUpdate(create) rule covers the given alert keys using valid positive logic.
-     * Accept only relations "in" or "equal"; reject any rule using invalid logic for the alert filter.
+     * 
+     * IMPORTANT: A DataUpdate rule covers an alert type if AND ONLY IF **ALL** alert type/name filters
+     * in the rule's views positively match the alert. This ensures that rules with multiple "not_in"
+     * filters (e.g., "NOT codes AND NOT OT alerts") are correctly evaluated.
+     * 
+     * Logic:
+     * - Collect ALL alert type/name filters from ALL views in the rule
+     * - If ANY filter uses invalid logic (except not_in), reject the entire rule
+     * - ALL filters must agree that they cover the target alerts (positive match)
+     * - If any filter excludes the alert, the rule does NOT cover it
      */
     private boolean dataUpdateRuleCoversAlertKeys(Rule dataUpdateRule, Set<String> targetAlertKeys) {
         if (dataUpdateRule == null || dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
@@ -314,6 +330,10 @@ public class XmlParser {
         }
 
         Map<String, View> views = datasetViews.get(dataUpdateRule.dataset);
+        
+        // Collect ALL alert type filters from ALL views
+        List<AlertTypeFilter> alertFilters = new ArrayList<>();
+        
         for (String viewName : dataUpdateRule.viewNames) {
             View view = views.get(viewName);
             if (view == null || view.filters == null) continue;
@@ -324,15 +344,92 @@ public class XmlParser {
                     if (hasInvalidLogic(filter.relation)) {
                         return false;
                     }
-                    // Require positive relation and overlapping values
-                    Set<String> values = parseListValues(filter.value);
-                    if (coversAlertTypes(filter.relation, values, targetAlertKeys)) {
-                        return true;
-                    }
+                    alertFilters.add(new AlertTypeFilter(filter.relation, parseListValues(filter.value)));
                 }
             }
         }
+        
+        // If no alert type filters found, rule doesn't specifically target any alerts
+        if (alertFilters.isEmpty()) {
+            return false;
+        }
+        
+        // DEBUG
+        boolean debugThis = targetAlertKeys.stream().anyMatch(k -> k.contains(" OT"));
+        if (debugThis) {
+            System.out.println("  Checking rule: " + dataUpdateRule.purpose);
+            System.out.println("  Alert filters found: " + alertFilters.size());
+            for (AlertTypeFilter f : alertFilters) {
+                System.out.println("    - " + f.relation + ": " + f.values);
+            }
+        }
+        
+        // ALL filters must agree that they cover at least one of the target alerts
+        for (String targetAlert : targetAlertKeys) {
+            boolean allFiltersCoverThis = true;
+            if (debugThis) {
+                System.out.println("  Checking target: " + targetAlert);
+            }
+            for (AlertTypeFilter filter : alertFilters) {
+                boolean covers = filterCoversAlert(filter.relation, filter.values, targetAlert);
+                if (debugThis) {
+                    System.out.println("    Filter " + filter.relation + " covers? " + covers);
+                }
+                if (!covers) {
+                    allFiltersCoverThis = false;
+                    break;
+                }
+            }
+            // If all filters agree on covering this alert, the rule covers it
+            if (allFiltersCoverThis) {
+                if (debugThis) {
+                    System.out.println("  ALL filters agree on covering '" + targetAlert + "' -> RULE COVERS IT");
+                }
+                return true;
+            }
+        }
+        
+        if (debugThis) {
+            System.out.println("  NO alerts covered by all filters -> RULE DOES NOT COVER");
+        }
         return false;
+    }
+    
+    /**
+     * Helper class to store alert type filter information
+     */
+    private static class AlertTypeFilter {
+        String relation;
+        Set<String> values;
+        
+        AlertTypeFilter(String relation, Set<String> values) {
+            this.relation = relation;
+            this.values = values;
+        }
+    }
+    
+    /**
+     * Check if a single alert type filter covers a specific alert.
+     * 
+     * For "in" and "equal": alert is covered if it's IN the list
+     * For "not_in": alert is covered if it's NOT IN the exclusion list
+     */
+    private boolean filterCoversAlert(String relation, Set<String> filterValues, String targetAlert) {
+        if (relation == null || filterValues.isEmpty() || targetAlert == null) {
+            return false;
+        }
+        
+        switch (relation.toLowerCase()) {
+            case "in":
+            case "equal":
+                return filterValues.contains(targetAlert);
+                
+            case "not_in":
+                return !filterValues.contains(targetAlert);
+                
+            default:
+                return false;
+        }
     }
     
     /**
