@@ -977,15 +977,25 @@ public class XmlParser {
         
         // Check DataUpdate CREATE rules for initial delay
         // Only consider rules that explicitly match THIS alert type
+        // For flows without facility filters, use delay from ANY matching CREATE rule
         for (Rule dataUpdateRule : dataUpdateRules) {
             if (dataUpdateRule.triggerCreate && dataUpdateRule.alertTypes.contains(alertType)) {
-                if (dataUpdateRule.deferDeliveryBy != null) {
-                    initialDelay = dataUpdateRule.deferDeliveryBy;
-                    break; // Use first one found
-                } else {
-                    // Found a CREATE rule without delay - this means Immediate
-                    hasCreateRuleWithoutDelay = true;
-                    break;
+                // If this flow group has no facility filter (facilityFromKey is empty),
+                // accept delays from CREATE rules with facility filters
+                // This allows global flows to inherit timing from facility-specific rules
+                boolean facilityMatches = facilityFromKey.isEmpty() || 
+                                        dataUpdateRule.facilities.isEmpty() ||
+                                        dataUpdateRule.facilities.contains(facilityFromKey);
+                
+                if (facilityMatches) {
+                    if (dataUpdateRule.deferDeliveryBy != null) {
+                        initialDelay = dataUpdateRule.deferDeliveryBy;
+                        break; // Use first one found
+                    } else {
+                        // Found a CREATE rule without delay - this means Immediate
+                        hasCreateRuleWithoutDelay = true;
+                        break;
+                    }
                 }
             }
         }
@@ -1346,12 +1356,19 @@ public class XmlParser {
         if (initialDelay == null && !hasCreateRuleWithoutDelay) {
             for (Rule dataUpdateRule : dataUpdateRules) {
                 if (dataUpdateRule.triggerCreate && dataUpdateRule.alertTypes.contains(alertType)) {
-                    if (dataUpdateRule.deferDeliveryBy != null) {
-                        initialDelay = dataUpdateRule.deferDeliveryBy;
-                        break;
-                    } else {
-                        hasCreateRuleWithoutDelay = true;
-                        break;
+                    // If this flow group has no facility filter, accept delays from facility-specific CREATE rules
+                    boolean facilityMatches = facilityFromKey.isEmpty() ||
+                                            dataUpdateRule.facilities.isEmpty() ||
+                                            dataUpdateRule.facilities.contains(facilityFromKey);
+                    
+                    if (facilityMatches) {
+                        if (dataUpdateRule.deferDeliveryBy != null) {
+                            initialDelay = dataUpdateRule.deferDeliveryBy;
+                            break;
+                        } else {
+                            hasCreateRuleWithoutDelay = true;
+                            break;
+                        }
                     }
                 }
             }
