@@ -186,166 +186,21 @@ public class XmlParser {
     }
     
     /**
-     * Validate if a rule should be processed based on DataUpdate "Create" rules
+     * Validate if a rule should be processed based on DataUpdate "Create" rules.
+     * 
+     * For all datasets (Nurse Call, Clinical, Orders):
+     * - DataUpdate rules are always processed
+     * - Other interface rules are always processed regardless of DataUpdate coverage
+     * 
+     * This ensures consistent behavior across all dataset types.
      */
     private boolean shouldProcessRule(Rule rule, List<Rule> allParsedRules) {
-        // Skip validation for DataUpdate rules themselves
-        if ("DataUpdate".equalsIgnoreCase(rule.component)) {
-            return true;
-        }
-        
-        // Find DataUpdate rules in the same dataset with trigger create=true
-        List<Rule> dataUpdateRules = allParsedRules.stream()
-            .filter(r -> "DataUpdate".equalsIgnoreCase(r.component))
-            .filter(r -> r.dataset != null && r.dataset.equals(rule.dataset))
-            .filter(r -> r.triggerCreate)
-            .collect(Collectors.toList());
-        
-        // If no DataUpdate create rules exist, allow the rule
-        if (dataUpdateRules.isEmpty()) {
-            return true;
-        }
-        
-        // Extract alert types from the current rule's views
-        Set<String> ruleAlertTypes = extractAlertTypesFromRule(rule);
-        
-        // If no alert types found in rule, allow it (might be non-alert-specific)
-        if (ruleAlertTypes.isEmpty()) {
-            return true;
-        }
-        
-        // Check if any DataUpdate rule covers these alert types with valid logic
-        for (Rule dataUpdateRule : dataUpdateRules) {
-            if (dataUpdateRuleCoversAlertTypes(dataUpdateRule, ruleAlertTypes)) {
-                return true;
-            }
-        }
-        
-        // No valid DataUpdate rule found for this rule's alert types
-        return false;
+        // All active rules are processed
+        // No filtering based on DataUpdate rules
+        return true;
     }
     
-    /**
-     * Extract alert types from a rule's condition views
-     */
-    private Set<String> extractAlertTypesFromRule(Rule rule) {
-        Set<String> alertTypes = new HashSet<>();
-        
-        if (rule.dataset == null || !datasetViews.containsKey(rule.dataset)) {
-            return alertTypes;
-        }
-        
-        Map<String, View> views = datasetViews.get(rule.dataset);
-        
-        for (String viewName : rule.viewNames) {
-            View view = views.get(viewName);
-            if (view != null) {
-                for (Filter filter : view.filters) {
-                    if (isAlertTypePath(filter.path)) {
-                        alertTypes.addAll(parseAlertTypeValues(filter.value));
-                    }
-                }
-            }
-        }
-        
-        return alertTypes;
-    }
-    
-    /**
-     * Check if a DataUpdate rule covers the given alert types with valid logic
-     */
-    private boolean dataUpdateRuleCoversAlertTypes(Rule dataUpdateRule, Set<String> targetAlertTypes) {
-        if (dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
-            return false;
-        }
-        
-        Map<String, View> views = datasetViews.get(dataUpdateRule.dataset);
-        
-        for (String viewName : dataUpdateRule.viewNames) {
-            View view = views.get(viewName);
-            if (view != null) {
-                for (Filter filter : view.filters) {
-                    if (isAlertTypePath(filter.path)) {
-                        // Check if this filter uses invalid logic
-                        if (hasInvalidLogic(filter.relation)) {
-                            return false;
-                        }
-                        
-                        // Check if this filter covers the target alert types
-                        Set<String> dataUpdateAlertTypes = parseAlertTypeValues(filter.value);
-                        if (coversAlertTypes(filter.relation, dataUpdateAlertTypes, targetAlertTypes)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Check if a filter path refers to alert type
-     */
-    private boolean isAlertTypePath(String path) {
-        return path != null && path.toLowerCase().contains("alert_type");
-    }
-    
-    /**
-     * Check if the relation uses invalid logic that should exclude the rule
-     */
-    private boolean hasInvalidLogic(String relation) {
-        if (relation == null) return false;
-        
-        String lowerRelation = relation.toLowerCase();
-        return lowerRelation.contains("not") || 
-               lowerRelation.equals("null") ||
-               lowerRelation.contains("not_in") ||
-               lowerRelation.contains("not_like") ||
-               lowerRelation.contains("not_equal");
-    }
-    
-    /**
-     * Parse alert type values from filter value (handles comma-separated values)
-     */
-    private Set<String> parseAlertTypeValues(String value) {
-        Set<String> alertTypes = new HashSet<>();
-        if (value != null && !value.trim().isEmpty()) {
-            String[] parts = value.split(",");
-            for (String part : parts) {
-                String trimmed = part.trim();
-                if (!trimmed.isEmpty()) {
-                    alertTypes.add(trimmed);
-                }
-            }
-        }
-        return alertTypes;
-    }
-    
-    /**
-     * Check if a DataUpdate filter covers the target alert types
-     */
-    private boolean coversAlertTypes(String relation, Set<String> dataUpdateAlertTypes, Set<String> targetAlertTypes) {
-        if (relation == null || dataUpdateAlertTypes.isEmpty() || targetAlertTypes.isEmpty()) {
-            return false;
-        }
-        
-        switch (relation.toLowerCase()) {
-            case "in":
-            case "equal":
-                // Check if any target alert type is covered
-                for (String targetType : targetAlertTypes) {
-                    if (dataUpdateAlertTypes.contains(targetType)) {
-                        return true;
-                    }
-                }
-                return false;
-                
-            default:
-                // For other relations, assume they don't provide valid coverage
-                return false;
-        }
-    }
+    // ========== Deprecated Methods (kept for backward compatibility, no longer used) =========
     
     /**
      * Parse a single rule
