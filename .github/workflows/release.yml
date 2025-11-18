@@ -30,6 +30,7 @@ jobs:
           java-version: '21.0.3'
           java-package: 'jdk+fx'
           check-latest: false
+          cache: 'maven'
 
       - name: Set up Maven
         uses: stCarolas/setup-maven@v4
