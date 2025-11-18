@@ -720,14 +720,40 @@ public class XmlParser {
             if (rule.alertTypes.isEmpty()) continue;
             
             // Group by dataset + alert types + facility + units (for config group separation)
+            // NEW: Separate by individual facility instead of grouping all facilities together
             for (String alertType : rule.alertTypes) {
                 // Sort units for consistent grouping
                 String unitsKey = rule.units.stream().sorted().collect(java.util.stream.Collectors.joining(","));
-                // Sort facilities for consistent grouping
-                String facilitiesKey = rule.facilities.stream().sorted().collect(java.util.stream.Collectors.joining(","));
                 
-                String key = rule.dataset + "|" + alertType + "|" + facilitiesKey + "|" + unitsKey;
-                grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                // NEW: Create separate groups for each facility instead of merging them
+                if (rule.facilities.isEmpty()) {
+                    // No facilities specified in SEND rule - check DataUpdate CREATE rules for facilities
+                    String dataUpdateKey = rule.dataset + "|" + alertType;
+                    List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
+                    
+                    Set<String> facilitiesFromDataUpdate = new LinkedHashSet<>();
+                    for (Rule duRule : dataUpdateRules) {
+                        facilitiesFromDataUpdate.addAll(duRule.facilities);
+                    }
+                    
+                    if (facilitiesFromDataUpdate.isEmpty()) {
+                        // No facilities from DataUpdate either - create a single group with empty facility
+                        String key = rule.dataset + "|" + alertType + "||" + unitsKey;
+                        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                    } else {
+                        // Use facilities from DataUpdate CREATE rules - create separate group for each
+                        for (String facility : facilitiesFromDataUpdate) {
+                            String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
+                            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                        }
+                    }
+                } else {
+                    // Create a separate group for each facility in the rule
+                    for (String facility : rule.facilities) {
+                        String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
+                        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                    }
+                }
             }
         }
         
@@ -758,6 +784,7 @@ public class XmlParser {
             String[] parts = entry.getKey().split("\\|", 4);
             String dataset = parts[0];
             String alertType = parts[1];
+            String facilityFromKey = parts.length > 2 ? parts[2] : ""; // Extract facility from group key
             List<Rule> rules = entry.getValue();
             
             // Get corresponding CREATE DATAUPDATE rules for this alert type
@@ -768,9 +795,9 @@ public class XmlParser {
             boolean hasEscalation = rules.stream().anyMatch(r -> r.state != null && !r.state.isEmpty());
             
             if (hasEscalation) {
-                createEscalationFlow(dataset, alertType, rules, dataUpdateRules);
+                createEscalationFlow(dataset, alertType, facilityFromKey, rules, dataUpdateRules);
             } else {
-                createSimpleFlow(dataset, alertType, rules, dataUpdateRules);
+                createSimpleFlow(dataset, alertType, facilityFromKey, rules, dataUpdateRules);
             }
         }
     }
@@ -778,7 +805,7 @@ public class XmlParser {
     /**
      * Create flow row with escalation
      */
-    private void createEscalationFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
+    private void createEscalationFlow(String dataset, String alertType, String facilityFromKey, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Separate send rules and escalate rules
         // Changed from Map<String, Rule> to Map<String, List<Rule>> to support multiple SEND rules at same state
         Map<String, List<Rule>> sendByState = new HashMap<>();
@@ -832,7 +859,7 @@ public class XmlParser {
             List<Rule> sendRules = sendByState.get(singleState);
             
             for (Rule sendRule : sendRules) {
-                createSimpleFlowFromRule(dataset, alertType, sendRule, dataUpdateRules, initialDelay, hasCreateRuleWithoutDelay);
+                createSimpleFlowFromRule(dataset, alertType, facilityFromKey, sendRule, dataUpdateRules, initialDelay, hasCreateRuleWithoutDelay);
             }
             return;
         }
@@ -864,19 +891,20 @@ public class XmlParser {
                 }
                 
                 // Create escalation flow with this modified map
-                createEscalationFlowFromMap(dataset, alertType, modifiedSendByState, escalateDelay, initialDelay, hasCreateRuleWithoutDelay, dataUpdateRules, rules);
+                createEscalationFlowFromMap(dataset, alertType, facilityFromKey, modifiedSendByState, escalateDelay, initialDelay, hasCreateRuleWithoutDelay, dataUpdateRules, rules);
             }
             return;
         }
         
         // Otherwise, create a normal single escalation flow
-        createEscalationFlowFromMap(dataset, alertType, sendByState, escalateDelay, initialDelay, hasCreateRuleWithoutDelay, dataUpdateRules, rules);
+        createEscalationFlowFromMap(dataset, alertType, facilityFromKey, sendByState, escalateDelay, initialDelay, hasCreateRuleWithoutDelay, dataUpdateRules, rules);
     }
     
     /**
      * Create an escalation flow from the sendByState map
      */
     private void createEscalationFlowFromMap(String dataset, String alertType,
+                                             String facilityFromKey,
                                              Map<String, List<Rule>> sendByState,
                                              Map<String, String> escalateDelay,
                                              String initialDelay,
@@ -937,47 +965,36 @@ public class XmlParser {
         }
 
         // Compute unions of facilities and units for splitting
-        // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
-        // BUT only use facilities that are already specified in the current group of SEND rules
+        // Use facility from group key to ensure config group separation
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // First, collect facilities from the current group's SEND rules to establish scope
-        Set<String> groupFacilities = new LinkedHashSet<>();
+        // NEW: Use facility from group key to separate by config group
+        if (facilityFromKey != null && !facilityFromKey.isEmpty()) {
+            facs.add(facilityFromKey);
+        }
+        
+        // Collect units from the current group's rules
         Set<String> groupUnits = new LinkedHashSet<>();
         for (Rule r : allRules) {
-            groupFacilities.addAll(r.facilities);
             groupUnits.addAll(r.units);
         }
         
-        // Filter DataUpdate CREATE rules to only those matching the group's facilities
-        // This prevents duplication across facilities (e.g., creating entries for all facilities
-        // when the SEND rule only applies to one specific facility like "Northland")
+        // Filter DataUpdate CREATE rules to match the facility from key
         for (Rule r : dataUpdateRules) {
-            // Only include facilities/units from DataUpdate rules that overlap with this group
-            if (!groupFacilities.isEmpty() && !r.facilities.isEmpty()) {
-                // Check for overlap between group facilities and DataUpdate rule facilities
-                Set<String> intersection = new LinkedHashSet<>(r.facilities);
-                intersection.retainAll(groupFacilities);
-                facs.addAll(intersection);
-            } else if (groupFacilities.isEmpty()) {
-                // If group has no facilities, use DataUpdate facilities as-is
-                facs.addAll(r.facilities);
-            }
-            
-            if (!groupUnits.isEmpty() && !r.units.isEmpty()) {
-                Set<String> intersection = new LinkedHashSet<>(r.units);
-                intersection.retainAll(groupUnits);
-                uns.addAll(intersection);
-            } else if (groupUnits.isEmpty()) {
-                uns.addAll(r.units);
+            // Only include units from DataUpdate rules that match this facility
+            if (facilityFromKey.isEmpty() || r.facilities.isEmpty() || r.facilities.contains(facilityFromKey)) {
+                if (!groupUnits.isEmpty() && !r.units.isEmpty()) {
+                    Set<String> intersection = new LinkedHashSet<>(r.units);
+                    intersection.retainAll(groupUnits);
+                    uns.addAll(intersection);
+                } else if (groupUnits.isEmpty()) {
+                    uns.addAll(r.units);
+                }
             }
         }
         
-        // If no facilities/units found after filtering, use from group rules directly
-        if (facs.isEmpty()) {
-            facs.addAll(groupFacilities);
-        }
+        // If no units found after filtering, use from group rules directly
         if (uns.isEmpty()) {
             uns.addAll(groupUnits);
         }
@@ -1026,7 +1043,7 @@ public class XmlParser {
     /**
      * Create a simple flow from a single rule (used for single-state with multiple SEND rules)
      */
-    private void createSimpleFlowFromRule(String dataset, String alertType, Rule sendRule, List<Rule> dataUpdateRules, String initialDelay, boolean hasCreateRuleWithoutDelay) {
+    private void createSimpleFlowFromRule(String dataset, String alertType, String facilityFromKey, Rule sendRule, List<Rule> dataUpdateRules, String initialDelay, boolean hasCreateRuleWithoutDelay) {
         // Build a template flow
         ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
         template.inScope = true;
@@ -1054,40 +1071,33 @@ public class XmlParser {
         applySettings(template, sendRule);
 
         // Compute unions for splitting
-        // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
-        // BUT only use facilities that are already specified in the SEND rule
+        // Use facility from group key to ensure config group separation
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // Collect facilities from the SEND rule to establish scope
-        Set<String> sendRuleFacilities = new LinkedHashSet<>(sendRule.facilities);
+        // NEW: Use facility from group key to separate by config group
+        if (facilityFromKey != null && !facilityFromKey.isEmpty()) {
+            facs.add(facilityFromKey);
+        }
+        
+        // Collect units from the SEND rule
         Set<String> sendRuleUnits = new LinkedHashSet<>(sendRule.units);
         
-        // Filter DataUpdate CREATE rules to only those matching the SEND rule's facilities
-        // This prevents duplication across facilities
+        // Filter DataUpdate CREATE rules to match the facility from key
         for (Rule r : dataUpdateRules) {
-            // Only include facilities/units from DataUpdate rules that overlap with the SEND rule
-            if (!sendRuleFacilities.isEmpty() && !r.facilities.isEmpty()) {
-                Set<String> intersection = new LinkedHashSet<>(r.facilities);
-                intersection.retainAll(sendRuleFacilities);
-                facs.addAll(intersection);
-            } else if (sendRuleFacilities.isEmpty()) {
-                facs.addAll(r.facilities);
-            }
-            
-            if (!sendRuleUnits.isEmpty() && !r.units.isEmpty()) {
-                Set<String> intersection = new LinkedHashSet<>(r.units);
-                intersection.retainAll(sendRuleUnits);
-                uns.addAll(intersection);
-            } else if (sendRuleUnits.isEmpty()) {
-                uns.addAll(r.units);
+            // Only include units from DataUpdate rules that match this facility
+            if (facilityFromKey.isEmpty() || r.facilities.isEmpty() || r.facilities.contains(facilityFromKey)) {
+                if (!sendRuleUnits.isEmpty() && !r.units.isEmpty()) {
+                    Set<String> intersection = new LinkedHashSet<>(r.units);
+                    intersection.retainAll(sendRuleUnits);
+                    uns.addAll(intersection);
+                } else if (sendRuleUnits.isEmpty()) {
+                    uns.addAll(r.units);
+                }
             }
         }
         
-        // If no facilities/units found after filtering, use from sendRule directly
-        if (facs.isEmpty()) {
-            facs.addAll(sendRuleFacilities);
-        }
+        // If no units found after filtering, use from sendRule directly
         if (uns.isEmpty()) {
             uns.addAll(sendRuleUnits);
         }
@@ -1135,7 +1145,7 @@ public class XmlParser {
     /**
      * Create simple flow row (no escalation)
      */
-    private void createSimpleFlow(String dataset, String alertType, List<Rule> rules, List<Rule> dataUpdateRules) {
+    private void createSimpleFlow(String dataset, String alertType, String facilityFromKey, List<Rule> rules, List<Rule> dataUpdateRules) {
         // Prefer rules with destination, but allow rules without if none have destination
         Rule sendRule = rules.stream()
             .filter(this::hasDestination)
@@ -1167,44 +1177,36 @@ public class XmlParser {
         applySettings(template, sendRule);
 
         // Compute unions for splitting
-        // Prioritize facilities from DataUpdate CREATE rules over empty values from SEND rules
-        // BUT only use facilities that are already specified in the current group of rules
+        // Use facility from group key to ensure config group separation
         Set<String> facs = new LinkedHashSet<>();
         Set<String> uns = new LinkedHashSet<>();
         
-        // Collect facilities from the current group's rules to establish scope
-        Set<String> groupFacilities = new LinkedHashSet<>();
+        // NEW: Use facility from group key to separate by config group
+        if (facilityFromKey != null && !facilityFromKey.isEmpty()) {
+            facs.add(facilityFromKey);
+        }
+        
+        // Collect units from the current group's rules
         Set<String> groupUnits = new LinkedHashSet<>();
         for (Rule r : rules) {
-            groupFacilities.addAll(r.facilities);
             groupUnits.addAll(r.units);
         }
         
-        // Filter DataUpdate CREATE rules to only those matching the group's facilities
-        // This prevents duplication across facilities
+        // Filter DataUpdate CREATE rules to match the facility from key
         for (Rule r : dataUpdateRules) {
-            // Only include facilities/units from DataUpdate rules that overlap with this group
-            if (!groupFacilities.isEmpty() && !r.facilities.isEmpty()) {
-                Set<String> intersection = new LinkedHashSet<>(r.facilities);
-                intersection.retainAll(groupFacilities);
-                facs.addAll(intersection);
-            } else if (groupFacilities.isEmpty()) {
-                facs.addAll(r.facilities);
-            }
-            
-            if (!groupUnits.isEmpty() && !r.units.isEmpty()) {
-                Set<String> intersection = new LinkedHashSet<>(r.units);
-                intersection.retainAll(groupUnits);
-                uns.addAll(intersection);
-            } else if (groupUnits.isEmpty()) {
-                uns.addAll(r.units);
+            // Only include units from DataUpdate rules that match this facility
+            if (facilityFromKey.isEmpty() || r.facilities.isEmpty() || r.facilities.contains(facilityFromKey)) {
+                if (!groupUnits.isEmpty() && !r.units.isEmpty()) {
+                    Set<String> intersection = new LinkedHashSet<>(r.units);
+                    intersection.retainAll(groupUnits);
+                    uns.addAll(intersection);
+                } else if (groupUnits.isEmpty()) {
+                    uns.addAll(r.units);
+                }
             }
         }
         
-        // If no facilities/units found after filtering, use from group rules directly
-        if (facs.isEmpty()) {
-            facs.addAll(groupFacilities);
-        }
+        // If no units found after filtering, use from group rules directly
         if (uns.isEmpty()) {
             uns.addAll(groupUnits);
         }
