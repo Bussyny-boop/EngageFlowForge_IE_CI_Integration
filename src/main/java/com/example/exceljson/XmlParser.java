@@ -219,10 +219,12 @@ public class XmlParser {
         }
 
         // Collect DataUpdate(create=true) rules for the same dataset
+        // Only include ACTIVE rules
         List<Rule> dataUpdateCreateRules = allParsedRules.stream()
             .filter(r -> "DataUpdate".equalsIgnoreCase(r.component))
             .filter(r -> r.dataset != null && r.dataset.equals(rule.dataset))
             .filter(r -> r.triggerCreate)
+            .filter(r -> r.isActive)
             .collect(Collectors.toList());
         
         // Also collect DataUpdate(update=true) rules that set states for escalation
@@ -1030,14 +1032,7 @@ public class XmlParser {
      * Enrich rules with data from views
      */
     private void enrichRulesWithViews() {
-        // Collect all DataUpdate (create=true) rules grouped by dataset for filtering
-        Map<String, List<Rule>> dataUpdateByDataset = new HashMap<>();
-        for (Rule rule : allRules) {
-            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate) {
-                dataUpdateByDataset.computeIfAbsent(rule.dataset, k -> new ArrayList<>()).add(rule);
-            }
-        }
-        
+        // First, extract data from views into all rules
         for (Rule rule : allRules) {
             if (rule.dataset == null) continue;
             
@@ -1052,19 +1047,31 @@ public class XmlParser {
                     extractFilterData(rule, filter);
                 }
             }
+        }
+        
+        // NOW collect all DataUpdate (create=true) rules grouped by dataset for filtering
+        // Only include ACTIVE rules - inactive CREATE rules should not cause alerts to be processed
+        // This must be done AFTER extracting data from views so alert types are populated
+        Map<String, List<Rule>> dataUpdateByDataset = new HashMap<>();
+        for (Rule rule : allRules) {
+            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate && rule.isActive) {
+                dataUpdateByDataset.computeIfAbsent(rule.dataset, k -> new ArrayList<>()).add(rule);
+            }
+        }
+        
+        // Then apply filtering based on DataUpdate rules
+        for (Rule rule : allRules) {
+            if (rule.dataset == null) continue;
             
             // Filter alert types: keep only those covered by CREATE DATAUPDATE rules
             // Skip this filtering for:
             // 1. DataUpdate rules themselves
             // 2. Escalation timing rules (defer-delivery-by without destination)
-            // 3. Escalation SEND rules (have state that's not Primary/Group and are UPDATE-triggered)
-            boolean isEscalationSendRule = rule.state != null && !rule.state.isEmpty() &&
-                !"Primary".equalsIgnoreCase(rule.state) && !"Group".equalsIgnoreCase(rule.state) &&
-                rule.triggerUpdate && hasDestination(rule);
+            // NOTE: We DO filter escalation SEND rules (Secondary/Tertiary/etc) because they should
+            // only process alert types that have CREATE DATAUPDATE rules, just like Primary rules
             
             if (!"DataUpdate".equalsIgnoreCase(rule.component) && 
-                !(rule.deferDeliveryBy != null && !hasDestination(rule)) &&
-                !isEscalationSendRule) {
+                !(rule.deferDeliveryBy != null && !hasDestination(rule))) {
                 filterUncoveredAlertTypes(rule, dataUpdateByDataset.getOrDefault(rule.dataset, Collections.emptyList()));
             }
         }
@@ -1259,7 +1266,8 @@ public class XmlParser {
             }
             
             // Track DataUpdate CREATE rules for facility extraction
-            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate) {
+            // Only include ACTIVE rules
+            if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate && rule.isActive) {
                 for (String alertType : rule.alertTypes) {
                     String key = buildAlertKey(rule.dataset, alertType);
                     dataUpdateRulesByAlertType.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
