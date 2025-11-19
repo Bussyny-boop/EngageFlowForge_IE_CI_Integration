@@ -879,6 +879,9 @@ public class XmlParser {
         // Track CREATE DATAUPDATE rules by dataset + alert type for facility extraction
         Map<String, List<Rule>> dataUpdateRulesByAlertType = new HashMap<>();
         
+        // Track which SEND rules have been added to facility-specific groups to prevent duplicate All_Facilities entries
+        Set<Rule> rulesAddedToFacilityGroups = new HashSet<>();
+        
         for (Rule rule : allRules) {
             // Track facilities/units
             for (String facility : rule.facilities) {
@@ -940,11 +943,15 @@ public class XmlParser {
                     
                     if (facilitiesFromDataUpdate.isEmpty()) {
                         // No facilities from DataUpdate either - create a single group with empty facility
-                        String key = rule.dataset + "|" + alertType + "||" + unitsKey;
-                        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                        // BUT only if this rule hasn't already been added to a facility-specific group
+                        if (!rulesAddedToFacilityGroups.contains(rule)) {
+                            String key = rule.dataset + "|" + alertType + "||" + unitsKey;
+                            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                        }
                     } else {
                         // Use facilities from DataUpdate CREATE rules - create separate group for each
-                        // Do NOT create an empty facility group since we have explicit facilities
+                        // Mark this rule as added to facility-specific groups
+                        rulesAddedToFacilityGroups.add(rule);
                         for (String facility : facilitiesFromDataUpdate) {
                             String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
                             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
