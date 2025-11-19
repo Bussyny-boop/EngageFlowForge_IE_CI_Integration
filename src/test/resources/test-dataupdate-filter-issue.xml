@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test DataUpdate Alert Type Filtering Issue</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for SEND rule - includes many alert types -->
+        <view>
+          <name>Alarm_included_in_LowHR_HighHR_APNEA_ECGAlarms_ETCO2_Probe_Disconnect_Spo2Low_Spo2High</name>
+          <description>Alarm included in LowHR, HHighHR, Apnea, ECG Alarms, ETCO2, PROBE DISCONNECT SPO2 Low and SPO2 High</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>SpO2 Low, SpO2 High, Low Heart Rate, High Heart Rate, APNEA, AFIB, ST Changes, Pause, PSVT, ETCO2 HI, ETCO2 LO, ETCO2 LOW, ETCO2 HIGH, PROBE DISCONNECT, MAP High, MAP Low, SpO No Sensor, SpO Sensor Off</value>
+          </filter>
+        </view>
+        
+        <!-- View for CREATE rule - includes only 4 alert types -->
+        <view>
+          <name>Alarm_included_in_Probe_Disconnect_Only</name>
+          <description>Alarm included in Probe Disconnect Only</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>Probe Disconnect, SpO No Sensor, SpO Sensor Off, SpO No Pulse</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alarm_has_not_been_responded_to</name>
+          <description>Alarm has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alarm_has_no_state</name>
+          <description>Alarm has no state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value></value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Bed_is_known</name>
+          <description>Bed is known</description>
+          <filter relation="not_equal">
+            <path>bed</path>
+            <value></value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Role_caregiver_NURSE_is_online_with_a_VMP_phone</name>
+          <description>Role caregiver NURSE is online with a VMP phone</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- DataUpdate CREATE TRIGGER - only for 4 specific alerts -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create Trigger</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>1. SET TO PRIMARY | 60SEC | PROBE DISCONNECT | ALARM ACTIVE | ALL UNIT</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_has_no_state</view>
+            <view>Alarm_included_in_Probe_Disconnect_Only</view>
+            <view>Alarm_is_active</view>
+            <view>Bed_is_known</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"},{"path":"responded_to","value":"No"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VMP Interface SEND rule - includes many alert types -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- This SEND PRIMARY rule has trigger-on update and includes many alert types.
+             However, ONLY the 4 alerts that have CREATE rules should be processed.
+             The other alerts (LHR, HHR, APNEA, AFIB, etc.) should be filtered out. -->
+        <rule active="true" dataset="Clinicals" no_loopback="true">
+          <purpose>SEND PRIMARY | LHR | HHR | APNEA | AFIB | ST CHANGES | PAUSE | PSVT | ETCO2 HI | ETCO2 LO | ETCO2 LOW | ETCO2 HIGH | PROBE DISCONNECT | MAP HIGH | MAP LOW | SPO2 NO SENSOR | SPO2 SENSOR OFF | SPO2 HIGH | SPO2 LOW | NORMAL | VMP | NURSE | ALL UNITS | ALL FACILITIES</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_has_not_been_responded_to</view>
+            <view>Alarm_included_in_LowHR_HighHR_APNEA_ECGAlarms_ETCO2_Probe_Disconnect_Spo2Low_Spo2High</view>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE_is_online_with_a_VMP_phone</view>
+          </condition>
+          <settings>{"callbackNumber":"","callbackResponse":"","destination":"#{bed.locs.assignments.usr.devices.lines.number}","displayValues":["Acknowledge","Escalate"],"enunciate":"ENUNCIATE_ALWAYS","escalationLevel":"#{state}","eventID":"Clinicals:#{id}","message":"#{bed.room.name} - #{bed.bed_number}\nNote:#{bed.locs.notes}\n\n#{alert_summary}\nAlert Type: #{alert_type}\nAlarm Time: #{alarm_time.as_time}\n\nDetails:\n#{clinical_details.as_list(, detail_type, value, uom)}","overrideDND":false,"parameters":[],"participationStatus":true,"patientMRN":"#{clinical_patient.mrn}","priority":"2","responseAction":"responses.action","ruleAction":"SEND_MESSAGE","shortMessage":"#{bed.room.name} Bed #{bed.bed_number} #{alert_type}","storedValues":["Accepted","Decline Primary"],"subject":"#{alert_type} - #{bed.room.name}-#{bed.bed_number}","ttl":10,"username":"responses.usr.login"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
