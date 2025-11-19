@@ -2,21 +2,23 @@
 
 ## Summary
 
-Implemented support for `NOT_IN`, `NOT_LIKE`, and `NOT_EQUAL` filter operators in the XML parser to handle unit exclusions and case-insensitive alert matching across all datasets (NurseCalls, Clinicals, Orders).
+Implemented support for `NOT_IN`, `NOT_LIKE`, and `NOT_EQUAL` filter operators in the XML parser to handle unit exclusions and case-insensitive alert matching across all datasets (NurseCalls, Clinicals, Orders). Recent iterations extended this work to normalize alert names, eliminate stray `All_Facilities` flows, and keep recipient chains intact across facilities.
 
 ## Changes Made
 
-### 1. Case-Insensitive Alert Matching
+### 1. Case-Insensitive Alert Matching + Canonical Display Names
 
-**Modified `extractAlertKeysFromRule()`** (`XmlParser.java` line ~328):
-- Alert names are now normalized to lowercase when extracted for comparison
-- Example: "PROBE DISCONNECT" and "Probe Disconnect" are treated as the same alert
-- Alert keys stored in lowercase: `keys.add(val.toLowerCase())`
+**Modified `extractAlertKeysFromRule()` & `extractAlertTypesFromRule()`** (`XmlParser.java` lines ~328 & ~560):
+- Alert names/alert types are normalized to lowercase for comparisons, but we now maintain a canonical display form via `canonicalizeAlertName()`
+- Example: `"PROBE DISCONNECT"`, `"Probe Disconnect"`, and `"probe disconnect"` all normalize to the same key while the nicest casing is preserved for UI/JSON output
 
-**Modified `filterCoversAlert()`** (`XmlParser.java` line ~437):
-- Added case-insensitive comparison for alert filters
-- Both filter values and target alerts are normalized to lowercase before comparison
-- Supports all relation types: `in`, `equal`, `not_in`, `not_like`, `not_equal`
+**New helpers** (`XmlParser.java` lines ~360-430):
+- `normalizeAlertType()` and `ruleContainsAlertType()` centralize case-insensitive comparisons when inheriting timing/facilities from DataUpdate CREATE rules
+- `getDisplayAlertName()` ensures every flow uses the canonical friendly casing regardless of the source rule’s capitalization
+
+**Modified `filterCoversAlert()` / `coversAlertTypes()` / `dataUpdateRuleCoversAlertType()`** (`XmlParser.java` lines ~460-720 & ~840):
+- Filter values and targets are all normalized before comparison, allowing `not_in`, `not_like`, and `not_equal` relations to behave consistently even if XML mixes cases
+- Eliminates false negatives where DataUpdate entries used uppercase alert names while SEND rules used Title Case
 
 ### 2. Exclusion Operator Support
 
@@ -40,6 +42,16 @@ Implemented support for `NOT_IN`, `NOT_LIKE`, and `NOT_EQUAL` filter operators i
   - Creates config group: `"All_Facilities_AllUnits_Except_PACU_NurseCalls"`
 
 ### 4. Unit Population for Exclusions
+### 5. Facility Inheritance & All_Facilities Guardrails
+
+**Grouping logic** (`XmlParser.java` lines ~960-1110):
+- DataUpdate CREATE rules are now hashed by `dataset + normalizedAlertType`
+- When a SEND rule lacks explicit facilities, the parser inspects matching CREATE rules (case-insensitive) and emits one flow per facility, preventing duplicate `All_Facilities` rows
+- `ruleContainsAlertType()` guarantees facility/timing inheritance still works even if CREATE rules use uppercase alert names and SEND rules do not
+
+**Flow builders** (`createEscalationFlow*`, `createSimpleFlow*` lines ~1120-1530):
+- Lookups for initial timing and facility-specific delays also use `ruleContainsAlertType()`
+- Flow templates use `getDisplayAlertName()` so all downstream JSON rows reflect the canonical name chosen during parsing (no more mixed-case `Probe Disconnect` vs `PROBE DISCONNECT`)
 
 **Modified flow creation methods**:
 - `createEscalationFlowFromMap()` (line ~1175)
@@ -91,9 +103,9 @@ Implemented support for `NOT_IN`, `NOT_LIKE`, and `NOT_EQUAL` filter operators i
 ## Technical Details
 
 ### Alert Name Case Preservation
-- **Display names** (`flow.alarmName`): Preserves original case from XML
-- **Comparison keys**: Normalized to lowercase for matching
-- **Rationale**: UI shows original formatting, but matching is case-insensitive
+- **Display names** (`flow.alarmName` / `flow.sendingName`): We now select the best-cased variant observed per dataset/alert (`getDisplayAlertName`), so outputs stay human-friendly even if some XML entries are all caps
+- **Comparison keys**: Still normalized to lowercase for deterministic matching and facility inheritance
+- **Rationale**: UI receives consistent casing while logic remains case-insensitive
 
 ### Exclusion Detection
 ```java
