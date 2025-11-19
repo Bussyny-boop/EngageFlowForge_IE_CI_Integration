@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test CREATE View Alert Filtering</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        
+        <!-- View for CREATE rule - only has VENT ALARM, not VENT OUT -->
+        <view>
+          <name>Alert_type_VENT_ALARM</name>
+          <description>VENT ALARM only</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>VENT ALARM,RESPIRATORY MONITOR,EQUIPMENT,NURSECALL EMDAN,GICH,NEW REQUEST</value>
+          </filter>
+        </view>
+        
+        <!-- View for state Primary -->
+        <view>
+          <name>State_Primary</name>
+          <description>State is Primary</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- View for alert types in SEND rule - has VENT OUT, RESP OUT, etc. that are NOT in CREATE -->
+        <view>
+          <name>Alert_type_VENT_OUT_and_others</name>
+          <description>VENT OUT and other alerts NOT in CREATE</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>HIGH CALLBACK,VENT OUT,RESP OUT,EQUIP OUT,ROOM NURSE</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- CREATE rule with VENT ALARM in its view -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO PRIMARY | VENT ALARM | RESPIRATORY MONITOR | EQUIPMENT | NURSECALL EMDAN | GICH | NEW REQUEST</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_type_VENT_ALARM</view>
+            <view>State_Primary</view>
+          </condition>
+          <settings>
+            <state>Primary</state>
+          </settings>
+        </rule>
+      </interface>
+      
+      <!-- SEND rule with VENT OUT and other alerts NOT in CREATE rule -->
+      <!-- This rule should NOT be processed because none of its alerts are in the CREATE rule -->
+      <interface component="VMP">
+        <name>VMP Interface</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND PRIMARY | HIGH CALLBACK | VENT OUT | RESP OUT | EQUIP OUT | ROOM NURSE</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_type_VENT_OUT_and_others</view>
+            <view>State_Primary</view>
+          </condition>
+          <destination>
+            <role>NURSE</role>
+          </destination>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
