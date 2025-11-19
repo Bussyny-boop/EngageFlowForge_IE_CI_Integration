@@ -89,7 +89,7 @@ Implemented support for `NOT_IN`, `NOT_LIKE`, and `NOT_EQUAL` filter operators i
 ## Testing
 
 ### Test Results
-- **Total Tests**: 481
+- **Total Tests**: 483
 - **Failures**: 0
 - **Errors**: 0
 - **Skipped**: 0
@@ -98,7 +98,10 @@ Implemented support for `NOT_IN`, `NOT_LIKE`, and `NOT_EQUAL` filter operators i
 ### Key Tests Verified
 1. `TimingIssueRegressionTest` - Validates XML parsing with real XMLParser.xml
 2. `DataUpdateNotInTest` - Tests NOT_IN filter logic
-3. All existing tests continue to pass with new logic
+3. `NotInExclusionSendRuleTest` - Verifies SEND rules are only processed when CREATE DataUpdate rule covers the alert type and does NOT exclude it via NOT_IN
+   - **Test Case 1**: SEND rule for "Code Blue" is NOT processed when DataUpdate CREATE has `not_in` for "Code Blue"
+   - **Test Case 2**: SEND rule for "Probe Disconnect" IS processed when DataUpdate CREATE has `not_in` for "Code Blue" (i.e., Probe Disconnect is not excluded)
+4. All existing tests continue to pass with new logic
 
 ## Technical Details
 

@@ -24,6 +24,7 @@ public class XmlParser {
     
     // View definitions: dataset -> view name -> view
     private final Map<String, Map<String, View>> datasetViews = new HashMap<>();
+    private final Map<String, String> canonicalAlertNames = new HashMap<>();
     
     // Facility/unit tracking
     private final Map<String, Set<String>> facilityUnits = new HashMap<>();
@@ -381,6 +382,77 @@ public class XmlParser {
         return out;
     }
 
+    private String normalizeAlertType(String alertType) {
+        return alertType == null ? "" : alertType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean isAllCaps(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        boolean hasLetter = false;
+        for (char ch : value.toCharArray()) {
+            if (Character.isLetter(ch)) {
+                hasLetter = true;
+                if (!Character.isUpperCase(ch)) {
+                    return false;
+                }
+            }
+        }
+        return hasLetter;
+    }
+
+    private String chooseAlertDisplayName(String current, String candidate) {
+        if (candidate == null || candidate.isEmpty()) {
+            return current;
+        }
+        if (current == null || current.isEmpty()) {
+            return candidate;
+        }
+        boolean currentAllCaps = isAllCaps(current);
+        boolean candidateAllCaps = isAllCaps(candidate);
+        if (currentAllCaps && !candidateAllCaps) {
+            return candidate;
+        }
+        return current;
+    }
+
+    private String buildAlertKey(String dataset, String alertType) {
+        String ds = dataset == null ? "" : dataset.trim();
+        return ds + "|" + normalizeAlertType(alertType);
+    }
+
+    private String canonicalizeAlertName(String dataset, String alertType, Map<String, String> canonicalNames) {
+        if (alertType == null) {
+            return null;
+        }
+        String key = buildAlertKey(dataset, alertType);
+        String chosen = chooseAlertDisplayName(canonicalNames.get(key), alertType);
+        canonicalNames.put(key, chosen);
+        return chosen;
+    }
+
+    private String getDisplayAlertName(String dataset, String alertType) {
+        if (alertType == null || alertType.isEmpty()) {
+            return alertType;
+        }
+        String canonical = canonicalizeAlertName(dataset, alertType, canonicalAlertNames);
+        return (canonical == null || canonical.isEmpty()) ? alertType : canonical;
+    }
+
+    private boolean ruleContainsAlertType(Rule rule, String targetAlertType) {
+        if (rule == null || rule.alertTypes == null || rule.alertTypes.isEmpty() || targetAlertType == null) {
+            return false;
+        }
+        String normalizedTarget = normalizeAlertType(targetAlertType);
+        for (String existing : rule.alertTypes) {
+            if (normalizeAlertType(existing).equals(normalizedTarget)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Check if a DataUpdate(create) rule covers the given alert keys using valid positive logic.
      * 
@@ -505,7 +577,13 @@ public class XmlParser {
             if (view != null) {
                 for (Filter filter : view.filters) {
                     if (isAlertTypePath(filter.path)) {
-                        alertTypes.addAll(parseAlertTypeValues(filter.value));
+                        Set<String> values = parseAlertTypeValues(filter.value);
+                        for (String value : values) {
+                            String canonical = canonicalizeAlertName(rule.dataset, value, canonicalAlertNames);
+                            if (canonical != null && !canonical.isEmpty()) {
+                                alertTypes.add(canonical);
+                            }
+                        }
                     }
                 }
             }
@@ -599,13 +677,19 @@ public class XmlParser {
         if (relation == null || dataUpdateAlertTypes.isEmpty() || targetAlertTypes.isEmpty()) {
             return false;
         }
+        Set<String> normalizedData = dataUpdateAlertTypes.stream()
+            .map(this::normalizeAlertType)
+            .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        Set<String> normalizedTargets = targetAlertTypes.stream()
+            .map(this::normalizeAlertType)
+            .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
         
         switch (relation.toLowerCase()) {
             case "in":
             case "equal":
                 // Check if any target alert type is covered (positive match)
-                for (String targetType : targetAlertTypes) {
-                    if (dataUpdateAlertTypes.contains(targetType)) {
+                for (String targetType : normalizedTargets) {
+                    if (normalizedData.contains(targetType)) {
                         return true;
                     }
                 }
@@ -614,8 +698,8 @@ public class XmlParser {
             case "not_in":
                 // For not_in: alert is covered if it's NOT in the exclusion list
                 // Check if any target alert type is NOT in the exclusion list
-                for (String targetType : targetAlertTypes) {
-                    if (!dataUpdateAlertTypes.contains(targetType)) {
+                for (String targetType : normalizedTargets) {
+                    if (!normalizedData.contains(targetType)) {
                         return true;
                     }
                 }
@@ -762,16 +846,20 @@ public class XmlParser {
                     }
                     
                     Set<String> values = parseListValues(filter.value);
+                    Set<String> normalizedValues = values.stream()
+                        .map(this::normalizeAlertType)
+                        .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+                    String normalizedAlert = normalizeAlertType(alertType);
                     String relation = filter.relation == null ? "" : filter.relation.toLowerCase();
                     
                     // For not_in: alert is covered if it's NOT in the exclusion list
                     if (relation.equals("not_in")) {
-                        if (!values.contains(alertType)) {
+                        if (!normalizedValues.contains(normalizedAlert)) {
                             return true;
                         }
                     } else {
                         // For in/equal: alert is covered if it's in the list
-                        if (values.contains(alertType)) {
+                        if (normalizedValues.contains(normalizedAlert)) {
                             return true;
                         }
                     }
@@ -790,13 +878,15 @@ public class XmlParser {
         String relation = filter.relation == null ? "" : filter.relation.toLowerCase();
         boolean isExclusion = relation.equals("not_in") || relation.equals("not_like") || relation.equals("not_equal");
         
-        // Alert types - keep original case for display
+        // Alert types - keep user-friendly casing for display while matching case-insensitively
         if (filter.path.equals("alert_type")) {
             for (String type : filter.value.split(",")) {
                 String trimmed = type.trim();
                 if (!trimmed.isEmpty()) {
-                    // Keep original case for alert types (used for flow.alarmName)
-                    rule.alertTypes.add(trimmed);
+                    String canonical = canonicalizeAlertName(rule.dataset, trimmed, canonicalAlertNames);
+                    if (canonical != null && !canonical.isEmpty()) {
+                        rule.alertTypes.add(canonical);
+                    }
                 }
             }
         }
@@ -899,7 +989,7 @@ public class XmlParser {
             // Track DataUpdate CREATE rules for facility extraction
             if ("DataUpdate".equalsIgnoreCase(rule.component) && rule.triggerCreate) {
                 for (String alertType : rule.alertTypes) {
-                    String key = rule.dataset + "|" + alertType;
+                    String key = buildAlertKey(rule.dataset, alertType);
                     dataUpdateRulesByAlertType.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
                 }
             }
@@ -928,7 +1018,7 @@ public class XmlParser {
                 // NEW: Create separate groups for each facility instead of merging them
                 if (rule.facilities.isEmpty()) {
                     // No facilities specified in SEND rule - check DataUpdate CREATE rules for facilities
-                    String dataUpdateKey = rule.dataset + "|" + alertType;
+                    String dataUpdateKey = buildAlertKey(rule.dataset, alertType);
                     List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
                     
                     // Collect facilities from CREATE rules that have facility filters
@@ -992,7 +1082,7 @@ public class XmlParser {
             List<Rule> rules = entry.getValue();
             
             // Get corresponding CREATE DATAUPDATE rules for this alert type
-            String dataUpdateKey = dataset + "|" + alertType;
+            String dataUpdateKey = buildAlertKey(dataset, alertType);
             List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
             
             // Check if this is an escalation group
@@ -1021,7 +1111,7 @@ public class XmlParser {
         // Only consider rules that explicitly match THIS alert type
         // For flows without facility filters, use delay from ANY matching CREATE rule
         for (Rule dataUpdateRule : dataUpdateRules) {
-            if (dataUpdateRule.triggerCreate && dataUpdateRule.alertTypes.contains(alertType)) {
+            if (dataUpdateRule.triggerCreate && ruleContainsAlertType(dataUpdateRule, alertType)) {
                 // If this flow group has no facility filter (facilityFromKey is empty),
                 // accept delays from CREATE rules with facility filters
                 // This allows global flows to inherit timing from facility-specific rules
@@ -1129,8 +1219,9 @@ public class XmlParser {
         ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
         template.inScope = true;
         template.type = normalizeDataset(dataset);
-        template.alarmName = alertType;
-        template.sendingName = alertType;
+        String displayAlertName = getDisplayAlertName(dataset, alertType);
+        template.alarmName = displayAlertName;
+        template.sendingName = displayAlertName;
 
         // Get reference rule for common fields (use first rule from first state)
         Rule refRule = sendByState.values().iterator().next().get(0);
@@ -1277,8 +1368,9 @@ public class XmlParser {
         ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
         template.inScope = true;
         template.type = normalizeDataset(dataset);
-        template.alarmName = alertType;
-        template.sendingName = alertType;
+        String displayAlertName = getDisplayAlertName(dataset, alertType);
+        template.alarmName = displayAlertName;
+        template.sendingName = displayAlertName;
         template.deviceA = mapComponent(sendRule.component);
 
         // Set recipient and timing (recipient is optional)
@@ -1408,8 +1500,9 @@ public class XmlParser {
         ExcelParserV5.FlowRow template = new ExcelParserV5.FlowRow();
         template.inScope = true;
         template.type = normalizeDataset(dataset);
-        template.alarmName = alertType;
-        template.sendingName = alertType;
+        String displayAlertName = getDisplayAlertName(dataset, alertType);
+        template.alarmName = displayAlertName;
+        template.sendingName = displayAlertName;
         template.deviceA = mapComponent(sendRule.component);
 
         // Set recipient and timing (recipient is optional)
@@ -1432,7 +1525,7 @@ public class XmlParser {
         // If send rule doesn't have CREATE, check DataUpdate CREATE rules
         if (initialDelay == null && !hasCreateRuleWithoutDelay) {
             for (Rule dataUpdateRule : dataUpdateRules) {
-                if (dataUpdateRule.triggerCreate && dataUpdateRule.alertTypes.contains(alertType)) {
+                if (dataUpdateRule.triggerCreate && ruleContainsAlertType(dataUpdateRule, alertType)) {
                     // If this flow group has no facility filter, accept delays from facility-specific CREATE rules
                     boolean facilityMatches = facilityFromKey.isEmpty() ||
                                             dataUpdateRule.facilities.isEmpty() ||
@@ -1918,6 +2011,7 @@ public class XmlParser {
         nurseCfgByFacUnit.clear();
         clinicalCfgByFacUnit.clear();
         ordersCfgByFacUnit.clear();
+        canonicalAlertNames.clear();
     }
     
     // ========== Public Getters ==========
