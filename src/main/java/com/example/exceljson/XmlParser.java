@@ -2315,6 +2315,17 @@ public class XmlParser {
         if (settings.containsKey("displayValues")) {
             flow.responseOptions = settings.get("displayValues").toString();
         }
+        
+        // Set EMDAN Compliant field based on dataset
+        // "Yes" for Clinicals dataset, "No" for all others
+        if ("Clinicals".equals(flow.type)) {
+            flow.emdan = "Yes";
+        } else {
+            flow.emdan = "No";
+        }
+        
+        // Set escalateAfter to "1 decline" when reading XML data
+        flow.escalateAfter = "1 decline";
     }
     
     private String normalizeEnunciate(String enunciate) {
