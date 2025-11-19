@@ -879,9 +879,6 @@ public class XmlParser {
         // Track CREATE DATAUPDATE rules by dataset + alert type for facility extraction
         Map<String, List<Rule>> dataUpdateRulesByAlertType = new HashMap<>();
         
-        // Track which SEND rules have been added to facility-specific groups to prevent duplicate All_Facilities entries
-        Set<Rule> rulesAddedToFacilityGroups = new HashSet<>();
-        
         for (Rule rule : allRules) {
             // Track facilities/units
             for (String facility : rule.facilities) {
@@ -922,6 +919,23 @@ public class XmlParser {
             
             // Group by dataset + alert types + facility + units (for config group separation)
             // NEW: Separate by individual facility instead of grouping all facilities together
+            
+            // First pass: check if this rule should be added to ANY facility-specific groups
+            boolean hasAnyFacilitySpecificGroups = false;
+            if (rule.facilities.isEmpty()) {
+                for (String alertType : rule.alertTypes) {
+                    String dataUpdateKey = rule.dataset + "|" + alertType;
+                    List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
+                    boolean hasFacilitySpecificCreateRule = dataUpdateRules.stream()
+                        .anyMatch(duRule -> !duRule.facilities.isEmpty());
+                    if (hasFacilitySpecificCreateRule) {
+                        hasAnyFacilitySpecificGroups = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Second pass: actually add the rule to groups
             for (String alertType : rule.alertTypes) {
                 // Sort units for consistent grouping
                 String unitsKey = rule.units.stream().sorted().collect(java.util.stream.Collectors.joining(","));
@@ -942,16 +956,14 @@ public class XmlParser {
                     }
                     
                     if (facilitiesFromDataUpdate.isEmpty()) {
-                        // No facilities from DataUpdate either - create a single group with empty facility
-                        // BUT only if this rule hasn't already been added to a facility-specific group
-                        if (!rulesAddedToFacilityGroups.contains(rule)) {
+                        // No facilities from DataUpdate for THIS alert type
+                        // Only create All_Facilities group if the rule doesn't belong to ANY facility-specific groups
+                        if (!hasAnyFacilitySpecificGroups) {
                             String key = rule.dataset + "|" + alertType + "||" + unitsKey;
                             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
                         }
                     } else {
                         // Use facilities from DataUpdate CREATE rules - create separate group for each
-                        // Mark this rule as added to facility-specific groups
-                        rulesAddedToFacilityGroups.add(rule);
                         for (String facility : facilitiesFromDataUpdate) {
                             String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
                             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
