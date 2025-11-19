@@ -929,9 +929,13 @@ public class XmlParser {
                     String dataUpdateKey = rule.dataset + "|" + alertType;
                     List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
                     
+                    // Collect facilities from CREATE rules that have facility filters
                     Set<String> facilitiesFromDataUpdate = new LinkedHashSet<>();
                     for (Rule duRule : dataUpdateRules) {
-                        facilitiesFromDataUpdate.addAll(duRule.facilities);
+                        if (!duRule.facilities.isEmpty()) {
+                            // Only add facilities from CREATE rules that have explicit facility filters
+                            facilitiesFromDataUpdate.addAll(duRule.facilities);
+                        }
                     }
                     
                     if (facilitiesFromDataUpdate.isEmpty()) {
@@ -940,6 +944,7 @@ public class XmlParser {
                         grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
                     } else {
                         // Use facilities from DataUpdate CREATE rules - create separate group for each
+                        // Do NOT create an empty facility group since we have explicit facilities
                         for (String facility : facilitiesFromDataUpdate) {
                             String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
                             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
