@@ -1,0 +1,380 @@
+package com.example.exceljson;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.file.Path;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Tests for XML Parser settings extraction including:
+ * - Response Options (displayValues)
+ * - Genie Enunciation
+ * - EMDAN Compliant field
+ * - Escalate After field
+ */
+class XmlParserSettingsTest {
+
+    @Test
+    void testResponseOptionsExtraction(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create test XML with displayValues
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>Clinicals</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>APNEA</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>CREATE TRIGGER | APNEA</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>SEND PRIMARY | APNEA | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"2\",\"ttl\":10," +
+            "\"enunciate\":\"SYSTEM_DEFAULT\",\"overrideDND\":false," +
+            "\"displayValues\":[\"Acknowledge\",\"Escalate\"]}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        assertEquals(1, clinicals.size(), "Should have 1 clinical row");
+        
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
+        
+        // Verify response options were extracted
+        assertEquals("Acknowledge,Escalate", flow.responseOptions,
+            "Response options should be extracted from displayValues");
+    }
+
+    @Test
+    void testEnunciationExtraction(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create test XML with enunciate field
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>NurseCalls</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>Call</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"NurseCalls\">\n" +
+            "          <purpose>CREATE TRIGGER | Call</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"NurseCalls\">\n" +
+            "          <purpose>SEND PRIMARY | Call | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"1\"," +
+            "\"enunciate\":\"ENUNCIATE_ALWAYS\",\"displayValues\":[\"Accept\"]}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
+        assertEquals(1, nurseCalls.size(), "Should have 1 nurse call row");
+        
+        ExcelParserV5.FlowRow flow = nurseCalls.get(0);
+        
+        // Verify enunciation was extracted and normalized
+        assertEquals("ENUNCIATE", flow.enunciate,
+            "Enunciation should be extracted and ENUNCIATE_ALWAYS normalized to ENUNCIATE");
+    }
+
+    @Test
+    void testEmdanFieldForClinicals(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create test XML for Clinicals dataset
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>Clinicals</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>APNEA</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>CREATE TRIGGER | APNEA</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>SEND PRIMARY | APNEA | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"2\"}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        assertEquals(1, clinicals.size(), "Should have 1 clinical row");
+        
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
+        
+        // Verify EMDAN field is set to "Yes" for Clinicals dataset
+        assertEquals("Yes", flow.emdan,
+            "EMDAN Compliant should be 'Yes' for Clinicals dataset");
+    }
+
+    @Test
+    void testEmdanFieldForNurseCalls(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create test XML for NurseCalls dataset
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>NurseCalls</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>Call</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"NurseCalls\">\n" +
+            "          <purpose>CREATE TRIGGER | Call</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"NurseCalls\">\n" +
+            "          <purpose>SEND PRIMARY | Call | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"1\"}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
+        assertEquals(1, nurseCalls.size(), "Should have 1 nurse call row");
+        
+        ExcelParserV5.FlowRow flow = nurseCalls.get(0);
+        
+        // Verify EMDAN field is set to "No" for NurseCalls dataset
+        assertEquals("No", flow.emdan,
+            "EMDAN Compliant should be 'No' for NurseCalls dataset");
+    }
+
+    @Test
+    void testEscalateAfterField(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create test XML
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>Clinicals</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>APNEA</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>CREATE TRIGGER | APNEA</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>SEND PRIMARY | APNEA | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"2\"}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        assertEquals(1, clinicals.size(), "Should have 1 clinical row");
+        
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
+        
+        // Verify escalateAfter field is set to "1 decline"
+        assertEquals("1 decline", flow.escalateAfter,
+            "Escalate After should be set to '1 decline' when reading XML data");
+    }
+
+    @Test
+    void testAllFieldsTogether(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create comprehensive test XML with all fields
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>Clinicals</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>APNEA</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>CREATE TRIGGER | APNEA</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"Clinicals\">\n" +
+            "          <purpose>SEND PRIMARY | APNEA | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"0\",\"ttl\":15," +
+            "\"enunciate\":\"SYSTEM_DEFAULT\",\"overrideDND\":true," +
+            "\"displayValues\":[\"Acknowledge\",\"Escalate\"]}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
+        assertEquals(1, clinicals.size(), "Should have 1 clinical row");
+        
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
+        
+        // Verify all fields
+        assertEquals("Acknowledge,Escalate", flow.responseOptions,
+            "Response options should be extracted from displayValues");
+        assertEquals("SYSTEM_DEFAULT", flow.enunciate,
+            "Enunciation should be extracted");
+        assertEquals("Yes", flow.emdan,
+            "EMDAN Compliant should be 'Yes' for Clinicals dataset");
+        assertEquals("1 decline", flow.escalateAfter,
+            "Escalate After should be set to '1 decline'");
+        assertEquals("Urgent", flow.priorityRaw,
+            "Priority should be mapped correctly");
+        assertEquals("15", flow.ttlValue,
+            "TTL should be extracted");
+        assertEquals("TRUE", flow.breakThroughDND,
+            "Break Through DND should be extracted");
+    }
+}
