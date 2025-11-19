@@ -269,9 +269,23 @@ public class XmlParser {
         boolean anyDataUpdateCreateSetsState = dataUpdateCreateRules.stream()
             .anyMatch(r -> r.state != null && !r.state.isEmpty());
         
+        // Extract facilities and units from the adapter rule's views
+        Set<String> ruleFacilities = extractFacilitiesFromRule(rule);
+        Set<String> ruleUnits = extractUnitsFromRule(rule);
+        
         for (Rule dataUpdateRule : dataUpdateRules) {
             // Check if alert types match
             if (!dataUpdateRuleCoversAlertKeys(dataUpdateRule, ruleAlertKeys)) {
+                continue;
+            }
+            
+            // Check if facilities match (if adapter rule has facility filters)
+            if (!ruleFacilities.isEmpty() && !dataUpdateRuleCoversFacilities(dataUpdateRule, ruleFacilities)) {
+                continue;
+            }
+            
+            // Check if units match (if adapter rule has unit filters)
+            if (!ruleUnits.isEmpty() && !dataUpdateRuleCoversUnits(dataUpdateRule, ruleUnits)) {
                 continue;
             }
             
@@ -292,11 +306,11 @@ public class XmlParser {
                 }
             }
             
-            // Both alert types and states match (or no state requirement, or no DataUpdate sets states, or is escalation rule)
+            // Alert types, facilities, units, and states all match
             return true;
         }
 
-        // No valid DataUpdate rule found that covers this adapter rule's alerts AND sets the required state
+        // No valid DataUpdate rule found that covers this adapter rule's alerts, facilities, units, AND sets the required state
         return false;
     }
     
@@ -347,6 +361,238 @@ public class XmlParser {
             }
         }
         return keys;
+    }
+
+    /**
+     * Extract facility names from a rule's condition views.
+     * Returns a set of facility names that must be positively covered by a DataUpdate(create) rule.
+     */
+    private Set<String> extractFacilitiesFromRule(Rule rule) {
+        Set<String> facilities = new LinkedHashSet<>();
+        if (rule == null || rule.dataset == null) return facilities;
+        Map<String, View> views = datasetViews.get(rule.dataset);
+        if (views == null) return facilities;
+
+        for (String viewName : rule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isFacilityPath(path)) {
+                    // Normalize facility names to lowercase for case-insensitive matching
+                    Set<String> values = parseListValues(filter.value);
+                    for (String val : values) {
+                        facilities.add(val.toLowerCase());
+                    }
+                }
+            }
+        }
+        return facilities;
+    }
+
+    /**
+     * Extract unit names from a rule's condition views.
+     * Returns a set of unit names that must be positively covered by a DataUpdate(create) rule.
+     */
+    private Set<String> extractUnitsFromRule(Rule rule) {
+        Set<String> units = new LinkedHashSet<>();
+        if (rule == null || rule.dataset == null) return units;
+        Map<String, View> views = datasetViews.get(rule.dataset);
+        if (views == null) return units;
+
+        for (String viewName : rule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isUnitPath(path)) {
+                    // Normalize unit names to lowercase for case-insensitive matching
+                    Set<String> values = parseListValues(filter.value);
+                    for (String val : values) {
+                        units.add(val.toLowerCase());
+                    }
+                }
+            }
+        }
+        return units;
+    }
+
+    /**
+     * Check if a filter path refers to facility name
+     */
+    private boolean isFacilityPath(String path) {
+        return path != null && path.toLowerCase().contains("facility.name");
+    }
+
+    /**
+     * Check if a filter path refers to unit name
+     */
+    private boolean isUnitPath(String path) {
+        return path != null && path.toLowerCase().contains("unit.name");
+    }
+
+    /**
+     * Check if a DataUpdate(create) rule covers the given facility names using valid positive logic.
+     * Similar to dataUpdateRuleCoversAlertKeys but for facilities.
+     */
+    private boolean dataUpdateRuleCoversFacilities(Rule dataUpdateRule, Set<String> targetFacilities) {
+        if (dataUpdateRule == null || dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
+            return false;
+        }
+
+        Map<String, View> views = datasetViews.get(dataUpdateRule.dataset);
+        
+        // Collect ALL facility filters from ALL views
+        List<FacilityFilter> facilityFilters = new ArrayList<>();
+        
+        for (String viewName : dataUpdateRule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isFacilityPath(path)) {
+                    facilityFilters.add(new FacilityFilter(filter.relation, parseListValues(filter.value)));
+                }
+            }
+        }
+        
+        // If no facility filters found, rule doesn't specifically target any facilities
+        // This means it applies to ALL facilities, so return true
+        if (facilityFilters.isEmpty()) {
+            return true;
+        }
+        
+        // ALL filters must agree that they cover at least one of the target facilities
+        for (String targetFacility : targetFacilities) {
+            boolean allFiltersCoverThis = true;
+            for (FacilityFilter filter : facilityFilters) {
+                if (!filterCoversFacility(filter.relation, filter.values, targetFacility)) {
+                    allFiltersCoverThis = false;
+                    break;
+                }
+            }
+            // If all filters agree on covering this facility, the rule covers it
+            if (allFiltersCoverThis) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if a DataUpdate(create) rule covers the given unit names using valid positive logic.
+     * Similar to dataUpdateRuleCoversAlertKeys but for units.
+     */
+    private boolean dataUpdateRuleCoversUnits(Rule dataUpdateRule, Set<String> targetUnits) {
+        if (dataUpdateRule == null || dataUpdateRule.dataset == null || !datasetViews.containsKey(dataUpdateRule.dataset)) {
+            return false;
+        }
+
+        Map<String, View> views = datasetViews.get(dataUpdateRule.dataset);
+        
+        // Collect ALL unit filters from ALL views
+        List<UnitFilter> unitFilters = new ArrayList<>();
+        
+        for (String viewName : dataUpdateRule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            for (Filter filter : view.filters) {
+                String path = filter.path == null ? "" : filter.path.trim();
+                if (isUnitPath(path)) {
+                    unitFilters.add(new UnitFilter(filter.relation, parseListValues(filter.value)));
+                }
+            }
+        }
+        
+        // If no unit filters found, rule doesn't specifically target any units
+        // This means it applies to ALL units, so return true
+        if (unitFilters.isEmpty()) {
+            return true;
+        }
+        
+        // ALL filters must agree that they cover at least one of the target units
+        for (String targetUnit : targetUnits) {
+            boolean allFiltersCoverThis = true;
+            for (UnitFilter filter : unitFilters) {
+                if (!filterCoversUnit(filter.relation, filter.values, targetUnit)) {
+                    allFiltersCoverThis = false;
+                    break;
+                }
+            }
+            // If all filters agree on covering this unit, the rule covers it
+            if (allFiltersCoverThis) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if a single facility filter covers a specific facility.
+     * 
+     * For "in" and "equal": facility is covered if it's IN the list
+     * For "not_in", "not_like", "not_equal": facility is covered if it's NOT IN the exclusion list
+     */
+    private boolean filterCoversFacility(String relation, Set<String> filterValues, String targetFacility) {
+        if (relation == null || filterValues.isEmpty() || targetFacility == null) {
+            return false;
+        }
+        
+        // Normalize for case-insensitive comparison
+        Set<String> normalizedValues = new LinkedHashSet<>();
+        for (String val : filterValues) {
+            normalizedValues.add(val.toLowerCase());
+        }
+        String normalizedTarget = targetFacility.toLowerCase();
+        
+        switch (relation.toLowerCase()) {
+            case "in":
+            case "equal":
+                return normalizedValues.contains(normalizedTarget);
+                
+            case "not_in":
+            case "not_like":
+            case "not_equal":
+                return !normalizedValues.contains(normalizedTarget);
+                
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if a single unit filter covers a specific unit.
+     * 
+     * For "in" and "equal": unit is covered if it's IN the list
+     * For "not_in", "not_like", "not_equal": unit is covered if it's NOT IN the exclusion list
+     */
+    private boolean filterCoversUnit(String relation, Set<String> filterValues, String targetUnit) {
+        if (relation == null || filterValues.isEmpty() || targetUnit == null) {
+            return false;
+        }
+        
+        // Normalize for case-insensitive comparison
+        Set<String> normalizedValues = new LinkedHashSet<>();
+        for (String val : filterValues) {
+            normalizedValues.add(val.toLowerCase());
+        }
+        String normalizedTarget = targetUnit.toLowerCase();
+        
+        switch (relation.toLowerCase()) {
+            case "in":
+            case "equal":
+                return normalizedValues.contains(normalizedTarget);
+                
+            case "not_in":
+            case "not_like":
+            case "not_equal":
+                return !normalizedValues.contains(normalizedTarget);
+                
+            default:
+                return false;
+        }
     }
 
     /**
@@ -522,6 +768,32 @@ public class XmlParser {
         Set<String> values;
         
         AlertTypeFilter(String relation, Set<String> values) {
+            this.relation = relation;
+            this.values = values;
+        }
+    }
+    
+    /**
+     * Helper class to store facility filter information
+     */
+    private static class FacilityFilter {
+        String relation;
+        Set<String> values;
+        
+        FacilityFilter(String relation, Set<String> values) {
+            this.relation = relation;
+            this.values = values;
+        }
+    }
+    
+    /**
+     * Helper class to store unit filter information
+     */
+    private static class UnitFilter {
+        String relation;
+        Set<String> values;
+        
+        UnitFilter(String relation, Set<String> values) {
             this.relation = relation;
             this.values = values;
         }
@@ -1012,38 +1284,53 @@ public class XmlParser {
             
             // Second pass: actually add the rule to groups
             for (String alertType : rule.alertTypes) {
-                // Sort units for consistent grouping
-                String unitsKey = rule.units.stream().sorted().collect(java.util.stream.Collectors.joining(","));
+                // Get DataUpdate CREATE rules for this alert type
+                String dataUpdateKey = buildAlertKey(rule.dataset, alertType);
+                List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
                 
-                // NEW: Create separate groups for each facility instead of merging them
+                // Determine facilities to use: inherit from CREATE if SEND rule has none
+                Set<String> facilitiesToUse = new LinkedHashSet<>();
                 if (rule.facilities.isEmpty()) {
-                    // No facilities specified in SEND rule - check DataUpdate CREATE rules for facilities
-                    String dataUpdateKey = buildAlertKey(rule.dataset, alertType);
-                    List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
-                    
-                    // Collect facilities from CREATE rules that have facility filters
-                    Set<String> facilitiesFromDataUpdate = new LinkedHashSet<>();
+                    // No facilities in SEND rule - try to inherit from CREATE rules
                     for (Rule duRule : dataUpdateRules) {
                         if (!duRule.facilities.isEmpty()) {
-                            // Only add facilities from CREATE rules that have explicit facility filters
-                            facilitiesFromDataUpdate.addAll(duRule.facilities);
+                            // Only add facilities from CREATE rules with explicit facility filters (inclusive relations)
+                            facilitiesToUse.addAll(duRule.facilities);
                         }
                     }
-                    
-                    if (facilitiesFromDataUpdate.isEmpty()) {
-                        // No facilities defined for this alert type – keep the All_Facilities row
-                        String key = rule.dataset + "|" + alertType + "||" + unitsKey;
-                        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
-                    } else {
-                        // Use facilities from DataUpdate CREATE rules - create separate group for each
-                        for (String facility : facilitiesFromDataUpdate) {
-                            String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
-                            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
-                        }
-                    }
+                    // If no facilities found in CREATE rules either, facilitiesToUse stays empty (all facilities)
                 } else {
-                    // Create a separate group for each facility in the rule
-                    for (String facility : rule.facilities) {
+                    // Use facilities from SEND rule
+                    facilitiesToUse.addAll(rule.facilities);
+                }
+                
+                // Determine units to use: inherit from CREATE if SEND rule has none
+                Set<String> unitsToUse = new LinkedHashSet<>();
+                if (rule.units.isEmpty()) {
+                    // No units in SEND rule - try to inherit from CREATE rules
+                    for (Rule duRule : dataUpdateRules) {
+                        if (!duRule.units.isEmpty()) {
+                            // Only add units from CREATE rules with explicit unit filters (inclusive relations)
+                            unitsToUse.addAll(duRule.units);
+                        }
+                    }
+                    // If no units found in CREATE rules either, unitsToUse stays empty (all units)
+                } else {
+                    // Use units from SEND rule
+                    unitsToUse.addAll(rule.units);
+                }
+                
+                // Sort units for consistent grouping
+                String unitsKey = unitsToUse.stream().sorted().collect(java.util.stream.Collectors.joining(","));
+                
+                // Create groups based on determined facilities and units
+                if (facilitiesToUse.isEmpty()) {
+                    // No facilities - single group for all facilities
+                    String key = rule.dataset + "|" + alertType + "||" + unitsKey;
+                    grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                } else {
+                    // Create separate group for each facility
+                    for (String facility : facilitiesToUse) {
                         String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
                         grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
                     }

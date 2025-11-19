@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Config Group Separation and Inheritance</name>
+    <description>Test that config groups are not merged and facilities/units are inherited from CREATE rules</description>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        
+        <!-- Alert type views -->
+        <view>
+          <name>Alert_type_Need_RN</name>
+          <description>Alert type is Need RN</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Need RN</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_type_Call_Button</name>
+          <description>Alert type is Call Button</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Call Button</value>
+          </filter>
+        </view>
+        
+        <!-- Facility views -->
+        <view>
+          <name>Facility_Hospital_A</name>
+          <description>Facility is Hospital A</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Hospital A</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Facility_Hospital_B</name>
+          <description>Facility is Hospital B</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Hospital B</value>
+          </filter>
+        </view>
+        
+        <!-- Unit views -->
+        <view>
+          <name>Unit_ICU</name>
+          <description>Unit is ICU</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ICU</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Unit_ER</name>
+          <description>Unit is ER</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ER</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Unit_CCU</name>
+          <description>Unit is CCU</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>CCU</value>
+          </filter>
+        </view>
+        
+        <!-- State views -->
+        <view>
+          <name>Alert_has_no_state</name>
+          <description>Alert has no state</description>
+          <filter relation="null">
+            <path>state</path>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_at_primary_state</name>
+          <description>Alert is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alert_has_not_been_responded_to</name>
+          <description>Alert has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_active</name>
+          <description>Alert is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Bed_exists</name>
+          <description>Bed exists</description>
+          <filter relation="not_null">
+            <path>bed</path>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- Scenario 1: CREATE rule with multiple facilities and units - should create separate config groups -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create - Multiple Facilities and Units</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE | Need RN | Hospital A | ICU, ER</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Bed_exists</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ICU</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <interface component="DataUpdate">
+        <name>DataUpdate Create - Multiple Units</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE | Need RN | Hospital A | ER</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Bed_exists</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ER</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- SEND rule WITHOUT facility/unit filters - should inherit from CREATE rules -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Need RN | No Facility/Unit (should inherit from CREATE)</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Need RN"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- Scenario 2: CREATE rule for Hospital B with CCU -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create - Hospital B</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE | Call Button | Hospital B | CCU</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_Call_Button</view>
+            <view>Bed_exists</view>
+            <view>Facility_Hospital_B</view>
+            <view>Unit_CCU</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- SEND rule WITH specific facility but NO unit - should inherit unit from CREATE -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Call Button | Hospital B | No Unit (should inherit CCU from CREATE)</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Call_Button</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_Hospital_B</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Call Button"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>

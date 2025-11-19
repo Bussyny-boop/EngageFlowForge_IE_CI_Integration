@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Facility and Unit Filtering</name>
+    <description>Test that SEND rules only process facilities and units defined in CREATE rules</description>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        
+        <!-- View for alert type -->
+        <view>
+          <name>Alert_type_Need_RN</name>
+          <description>Alert type is Need RN</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Need RN</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_type_Call_Button</name>
+          <description>Alert type is Call Button</description>
+          <filter relation="equal">
+            <path>alert_type</path>
+            <value>Call Button</value>
+          </filter>
+        </view>
+        
+        <!-- Facility views -->
+        <view>
+          <name>Facility_Hospital_A</name>
+          <description>Facility is Hospital A</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Hospital A</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Facility_Hospital_B</name>
+          <description>Facility is Hospital B</description>
+          <filter relation="equal">
+            <path>bed.room.facility.name</path>
+            <value>Hospital B</value>
+          </filter>
+        </view>
+        
+        <!-- Unit views -->
+        <view>
+          <name>Unit_ICU</name>
+          <description>Unit is ICU</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ICU</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Unit_ER</name>
+          <description>Unit is ER</description>
+          <filter relation="equal">
+            <path>bed.room.unit.name</path>
+            <value>ER</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Unit_NOT_Psych</name>
+          <description>Unit is NOT Psych (exclusion)</description>
+          <filter relation="not_in">
+            <path>bed.room.unit.name</path>
+            <value>Psych</value>
+          </filter>
+        </view>
+        
+        <!-- State views -->
+        <view>
+          <name>Alert_has_no_state</name>
+          <description>Alert has no state</description>
+          <filter relation="null">
+            <path>state</path>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_at_primary_state</name>
+          <description>Alert is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- Common views -->
+        <view>
+          <name>Alert_has_not_been_responded_to</name>
+          <description>Alert has not been responded to</description>
+          <filter relation="equal">
+            <path>responded</path>
+            <value>false</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Alert_is_active</name>
+          <description>Alert is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <view>
+          <name>Bed_exists</name>
+          <description>Bed exists</description>
+          <filter relation="not_null">
+            <path>bed</path>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- Scenario 1: CREATE rule for Need RN in Hospital A, ICU -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create - Hospital A ICU</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE | Need RN | Hospital A | ICU</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Bed_exists</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ICU</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VALID: VMP SEND rule for Need RN, Hospital A, ICU - should be PROCESSED -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Need RN | Hospital A | ICU | VALID</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ICU</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Need RN in ICU"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- INVALID: VMP SEND rule for Need RN, Hospital B, ICU - should NOT be PROCESSED (facility not in CREATE) -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Need RN | Hospital B | ICU | INVALID FACILITY</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_Hospital_B</view>
+            <view>Unit_ICU</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Need RN in ICU"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- INVALID: VMP SEND rule for Need RN, Hospital A, ER - should NOT be PROCESSED (unit not in CREATE) -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Need RN | Hospital A | ER | INVALID UNIT</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Need_RN</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ER</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Need RN in ER"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- Scenario 2: CREATE rule with NOT_IN for units (all except Psych) -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create - NOT Psych</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>CREATE | Call Button | Hospital A | All Units except Psych</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_has_no_state</view>
+            <view>Alert_is_active</view>
+            <view>Alert_type_Call_Button</view>
+            <view>Bed_exists</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_NOT_Psych</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VALID: VMP SEND rule for Call Button, Hospital A, ICU - should be PROCESSED (ICU is NOT Psych) -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Call Button | Hospital A | ICU | VALID (NOT IN Psych)</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Call_Button</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ICU</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Call Button in ICU"}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VALID: VMP SEND rule for Call Button, Hospital A, ER - should be PROCESSED (ER is NOT Psych) -->
+      <interface component="VMP">
+        <name>VMP</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND | Call Button | Hospital A | ER | VALID (NOT IN Psych)</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_has_not_been_responded_to</view>
+            <view>Alert_type_Call_Button</view>
+            <view>Alert_is_active</view>
+            <view>Alert_is_at_primary_state</view>
+            <view>Facility_Hospital_A</view>
+            <view>Unit_ER</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","ruleAction":"SEND_MESSAGE","message":"Call Button in ER"}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
