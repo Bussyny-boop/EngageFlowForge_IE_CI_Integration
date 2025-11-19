@@ -1092,6 +1092,16 @@ public class XmlParser {
             return;
         }
         
+        // Debug output for PRIMARY Battery Low or ANY Battery Low
+        boolean isBatteryLowPrimary = rule.purpose != null && rule.purpose.toLowerCase().contains("battery low") && 
+            rule.purpose.toLowerCase().contains("primary");
+        
+        if (isBatteryLowPrimary) {
+            System.out.println("DEBUG filterUncoveredAlertTypes BEFORE: Purpose=" + 
+                rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
+                ", AlertTypes=" + rule.alertTypes + ", NumDataUpdateRules=" + dataUpdateRules.size());
+        }
+        
         // Keep only alert types that are covered by at least one DataUpdate rule
         Set<String> coveredAlertTypes = new HashSet<>();
         for (String alertType : rule.alertTypes) {
@@ -1105,6 +1115,10 @@ public class XmlParser {
         
         // Replace the alert types set with only covered ones
         rule.alertTypes = coveredAlertTypes;
+        
+        if (isBatteryLowPrimary) {
+            System.out.println("DEBUG filterUncoveredAlertTypes AFTER: AlertTypes=" + rule.alertTypes);
+        }
     }
     
     /**
@@ -1443,6 +1457,15 @@ public class XmlParser {
             String facilityFromKey = parts.length > 2 ? parts[2] : ""; // Extract facility from group key
             List<Rule> rules = entry.getValue();
             
+            // Debug output for Battery Low groups
+            if (alertType != null && alertType.toLowerCase().contains("battery low")) {
+                System.out.println("DEBUG GROUP: Key=" + entry.getKey() + ", NumRules=" + rules.size());
+                for (Rule r : rules) {
+                    System.out.println("  - State=" + r.state + ", HasDest=" + hasDestination(r) + 
+                        ", Purpose=" + (r.purpose != null ? r.purpose.substring(0, Math.min(100, r.purpose.length())) : "null"));
+                }
+            }
+            
             // Get corresponding CREATE DATAUPDATE rules for this alert type
             String dataUpdateKey = buildAlertKey(dataset, alertType);
             List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
@@ -1498,6 +1521,14 @@ public class XmlParser {
             if (rule.state == null || rule.state.isEmpty()) continue;
             
             String state = normalizeState(rule.state);
+            
+            // Debug output for Battery Low
+            if (alertType != null && alertType.toLowerCase().contains("battery low")) {
+                System.out.println("DEBUG createEscalationFlow: Alert=" + alertType + 
+                    ", State=" + state + ", HasDest=" + hasDestination(rule) + 
+                    ", Defer=" + rule.deferDeliveryBy + ", Role=" + rule.role +
+                    ", Purpose=" + (rule.purpose != null ? rule.purpose.substring(0, Math.min(80, rule.purpose.length())) : "null"));
+            }
             
             // If has destination, it's a send rule
             if (hasDestination(rule)) {
@@ -1610,6 +1641,14 @@ public class XmlParser {
                 // Use first rule for this state
                 Rule sendRule = sendRules.get(0);
                 String recipient = extractDestination(sendRule);
+                
+                // Debug output for Battery Low and Desat
+                if (alertType != null && (alertType.toLowerCase().contains("battery") || alertType.toLowerCase().contains("desat"))) {
+                    System.out.println("DEBUG: Alert=" + alertType + ", State=" + state + 
+                        ", Recipient=" + recipient + ", RoleFromView=" + sendRule.roleFromView + 
+                        ", Role=" + sendRule.role);
+                }
+                
                 setRecipient(template, i + 1, recipient, sendRule.roleFromView);
 
                 // Apply settings from first send rule at Primary state
