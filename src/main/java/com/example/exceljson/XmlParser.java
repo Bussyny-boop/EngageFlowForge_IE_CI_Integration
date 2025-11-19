@@ -200,8 +200,11 @@ public class XmlParser {
      *   - If this adapter rule has no alert type or alert name in its own views, do NOT process
      */
     private boolean shouldProcessRule(Rule rule, List<Rule> allParsedRules) {
-        // Always keep DataUpdate rules
+        // Don't process DataUpdate rules whose purpose starts with "RESET"
         if ("DataUpdate".equalsIgnoreCase(rule.component)) {
+            if (rule.purpose != null && rule.purpose.toUpperCase().startsWith("RESET")) {
+                return false;
+            }
             return true;
         }
         
