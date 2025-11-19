@@ -482,7 +482,8 @@ public class ExcelParserV5 {
         String noCare = unitMap.getOrDefault("noCaregiverGroup", "");
         String podRoomFilter = unitMap.getOrDefault("podRoomFilter", "");
         
-        String key = facility + "|" + unitName;
+        // Use lowercase key to combine units/facilities with same name but different cases
+        String key = facility.toLowerCase() + "|" + unitName.toLowerCase();
         UnitRow unitRow = uniqueUnits.computeIfAbsent(key, k -> {
           UnitRow u = new UnitRow();
           u.facility = facility;
@@ -519,7 +520,8 @@ public class ExcelParserV5 {
         String noCare = unitMap.getOrDefault("noCaregiverGroup", "");
         String podRoomFilter = unitMap.getOrDefault("podRoomFilter", "");
         
-        String key = facility + "|" + unitName;
+        // Use lowercase key to combine units/facilities with same name but different cases
+        String key = facility.toLowerCase() + "|" + unitName.toLowerCase();
         UnitRow unitRow = uniqueUnits.computeIfAbsent(key, k -> {
           UnitRow u = new UnitRow();
           u.facility = facility;
@@ -556,7 +558,8 @@ public class ExcelParserV5 {
         String noCare = unitMap.getOrDefault("noCaregiverGroup", "");
         String podRoomFilter = unitMap.getOrDefault("podRoomFilter", "");
         
-        String key = facility + "|" + unitName;
+        // Use lowercase key to combine units/facilities with same name but different cases
+        String key = facility.toLowerCase() + "|" + unitName.toLowerCase();
         UnitRow unitRow = uniqueUnits.computeIfAbsent(key, k -> {
           UnitRow u = new UnitRow();
           u.facility = facility;
