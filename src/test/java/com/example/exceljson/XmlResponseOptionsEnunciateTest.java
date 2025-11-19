@@ -558,4 +558,206 @@ class XmlResponseOptionsEnunciateTest {
         assertEquals("", flow.responseOptions, 
             "Empty displayValues array should result in empty response options");
     }
+
+    /**
+     * Test that escalateAfter defaults to "1 decline" when response options contain Decline/Escalate
+     * but no declineCount parameter is present
+     */
+    @Test
+    void testEscalateAfterDefaultsToOneDecline() throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        String xmlContent = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <package version-major="6" version-minor="6">
+              <contents>
+                <datasets>
+                  <dataset active="true">
+                    <name>NurseCalls</name>
+                    <view>
+                      <name>Test_View</name>
+                      <filter relation="equal">
+                        <path>alert_type</path>
+                        <value>Patient Request</value>
+                      </filter>
+                    </view>
+                  </dataset>
+                </datasets>
+                <interfaces>
+                  <interface component="VMP">
+                    <rule active="true" dataset="NurseCalls">
+                      <purpose>TEST SEND RULE</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Test_View</view>
+                      </condition>
+                      <settings>{"destination":"test-group","displayValues":["Acknowledge","Escalate"],"enunciate":"SYSTEM_DEFAULT","priority":"1","ttl":10,"overrideDND":false}</settings>
+                    </rule>
+                  </interface>
+                  <interface component="DataUpdate">
+                    <rule active="true" dataset="NurseCalls">
+                      <purpose>CREATE</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Test_View</view>
+                      </condition>
+                      <settings>{}</settings>
+                    </rule>
+                  </interface>
+                </interfaces>
+              </contents>
+            </package>
+            """;
+        
+        Files.writeString(xmlFile.toPath(), xmlContent);
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        // Find the flow
+        ExcelParserV5.FlowRow flow = parser.getNurseCalls().stream()
+            .filter(f -> "Patient Request".equals(f.alarmName))
+            .findFirst()
+            .orElse(null);
+        
+        assertNotNull(flow, "Should have found the Patient Request flow");
+        
+        // Verify escalateAfter defaults to "1 decline"
+        assertEquals("1 decline", flow.escalateAfter, 
+            "escalateAfter should default to '1 decline' when response options contain Escalate but no declineCount");
+    }
+
+    /**
+     * Test that escalateAfter is set to "All declines" when declineCount parameter is present
+     */
+    @Test
+    void testEscalateAfterAllDeclines() throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        String xmlContent = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <package version-major="6" version-minor="6">
+              <contents>
+                <datasets>
+                  <dataset active="true">
+                    <name>Clinicals</name>
+                    <view>
+                      <name>Test_View</name>
+                      <filter relation="equal">
+                        <path>alert_type</path>
+                        <value>High Blood Pressure</value>
+                      </filter>
+                    </view>
+                  </dataset>
+                </datasets>
+                <interfaces>
+                  <interface component="VMP">
+                    <rule active="true" dataset="Clinicals">
+                      <purpose>TEST SEND RULE</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Test_View</view>
+                      </condition>
+                      <settings>{"destination":"test-group","displayValues":["Acknowledge","Decline"],"enunciate":"ENUNCIATE_ALWAYS","priority":"0","ttl":15,"overrideDND":false,"parameters":[{"name":"declineCount","value":"\\"All Recipients\\""}]}</settings>
+                    </rule>
+                  </interface>
+                  <interface component="DataUpdate">
+                    <rule active="true" dataset="Clinicals">
+                      <purpose>CREATE</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Test_View</view>
+                      </condition>
+                      <settings>{}</settings>
+                    </rule>
+                  </interface>
+                </interfaces>
+              </contents>
+            </package>
+            """;
+        
+        Files.writeString(xmlFile.toPath(), xmlContent);
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        // Find the flow
+        ExcelParserV5.FlowRow flow = parser.getClinicals().stream()
+            .filter(f -> "High Blood Pressure".equals(f.alarmName))
+            .findFirst()
+            .orElse(null);
+        
+        assertNotNull(flow, "Should have found the High Blood Pressure flow");
+        
+        // Verify escalateAfter is set to "All declines"
+        assertEquals("All declines", flow.escalateAfter, 
+            "escalateAfter should be 'All declines' when declineCount parameter is 'All Recipients'");
+    }
+
+    /**
+     * Test that escalateAfter remains empty when response options don't include Decline/Escalate
+     */
+    @Test
+    void testEscalateAfterEmptyForOtherResponseOptions() throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        String xmlContent = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <package version-major="6" version-minor="6">
+              <contents>
+                <datasets>
+                  <dataset active="true">
+                    <name>Orders</name>
+                    <view>
+                      <name>Test_View</name>
+                      <filter relation="equal">
+                        <path>alert_type</path>
+                        <value>Medication Order</value>
+                      </filter>
+                    </view>
+                  </dataset>
+                </datasets>
+                <interfaces>
+                  <interface component="VMP">
+                    <rule active="true" dataset="Orders">
+                      <purpose>TEST SEND RULE</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Test_View</view>
+                      </condition>
+                      <settings>{"destination":"test-group","displayValues":["Accept","Reject"],"enunciate":"SYSTEM_DEFAULT","priority":"2","ttl":20,"overrideDND":false}</settings>
+                    </rule>
+                  </interface>
+                  <interface component="DataUpdate">
+                    <rule active="true" dataset="Orders">
+                      <purpose>CREATE</purpose>
+                      <trigger-on create="true"/>
+                      <condition>
+                        <view>Test_View</view>
+                      </condition>
+                      <settings>{}</settings>
+                    </rule>
+                  </interface>
+                </interfaces>
+              </contents>
+            </package>
+            """;
+        
+        Files.writeString(xmlFile.toPath(), xmlContent);
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        // Find the flow
+        ExcelParserV5.FlowRow flow = parser.getOrders().stream()
+            .filter(f -> "Medication Order".equals(f.alarmName))
+            .findFirst()
+            .orElse(null);
+        
+        assertNotNull(flow, "Should have found the Medication Order flow");
+        
+        // Verify escalateAfter remains empty (or null) for non-Decline/Escalate response options
+        assertTrue(flow.escalateAfter == null || flow.escalateAfter.isEmpty(), 
+            "escalateAfter should be empty when response options don't include Decline/Escalate");
+    }
 }
