@@ -2297,6 +2297,11 @@ public class XmlParser {
     private void applySettings(ExcelParserV5.FlowRow flow, Rule rule) {
         Map<String, Object> settings = rule.settings;
         
+        // Track presence of response options and declineCount to set escalateAfter properly
+        boolean hasResponseOptions = false;
+        boolean hasDeclineCount = false;
+        String declineCountValue = null;
+        
         if (settings.containsKey("priority")) {
             String priorityRaw = settings.get("priority").toString();
             flow.priorityRaw = mapPriority(priorityRaw);
@@ -2313,7 +2318,27 @@ public class XmlParser {
             flow.breakThroughDND = override ? "TRUE" : "FALSE";
         }
         if (settings.containsKey("displayValues")) {
-            flow.responseOptions = settings.get("displayValues").toString();
+            String displayValues = settings.get("displayValues").toString();
+            flow.responseOptions = displayValues;
+            // Check if response options suggest Accept/Decline pattern
+            String lower = displayValues.toLowerCase();
+            if (lower.contains("decline") || lower.contains("escalate")) {
+                hasResponseOptions = true;
+            }
+        }
+        
+        // Check for declineCount parameter
+        if (settings.containsKey("declineCount")) {
+            hasDeclineCount = true;
+            declineCountValue = settings.get("declineCount").toString();
+            if ("All Recipients".equalsIgnoreCase(declineCountValue)) {
+                flow.escalateAfter = "All declines";
+            }
+        }
+        
+        // If response options are present but declineCount is missing, default escalateAfter to "1 decline"
+        if (hasResponseOptions && !hasDeclineCount && (flow.escalateAfter == null || flow.escalateAfter.isEmpty())) {
+            flow.escalateAfter = "1 decline";
         }
         
         // Set EMDAN Compliant field based on dataset
@@ -2376,15 +2401,27 @@ public class XmlParser {
                 result.put("displayValues", String.join(",", values));
             }
             
-            // Extract state from DataUpdate CREATE rule parameters
+            // Extract state and declineCount from DataUpdate CREATE rule parameters
             if (root.has("parameters") && root.get("parameters").isArray()) {
                 for (JsonNode param : root.get("parameters")) {
+                    if (param.has("name") && param.has("value")) {
+                        String name = param.get("name").asText();
+                        String value = param.get("value").asText();
+                        
+                        // Remove surrounding quotes from value if present
+                        if (value.startsWith("\"") && value.endsWith("\"")) {
+                            value = value.substring(1, value.length() - 1);
+                        }
+                        
+                        if ("declineCount".equals(name)) {
+                            result.put("declineCount", value);
+                        }
+                    }
                     if (param.has("path") && param.has("value")) {
                         String path = param.get("path").asText();
                         if ("state".equals(path)) {
                             String value = param.get("value").asText();
                             result.put("state", value);
-                            break;
                         }
                     }
                 }
