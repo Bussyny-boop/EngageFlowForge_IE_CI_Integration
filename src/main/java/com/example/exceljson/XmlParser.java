@@ -1284,38 +1284,53 @@ public class XmlParser {
             
             // Second pass: actually add the rule to groups
             for (String alertType : rule.alertTypes) {
-                // Sort units for consistent grouping
-                String unitsKey = rule.units.stream().sorted().collect(java.util.stream.Collectors.joining(","));
+                // Get DataUpdate CREATE rules for this alert type
+                String dataUpdateKey = buildAlertKey(rule.dataset, alertType);
+                List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
                 
-                // NEW: Create separate groups for each facility instead of merging them
+                // Determine facilities to use: inherit from CREATE if SEND rule has none
+                Set<String> facilitiesToUse = new LinkedHashSet<>();
                 if (rule.facilities.isEmpty()) {
-                    // No facilities specified in SEND rule - check DataUpdate CREATE rules for facilities
-                    String dataUpdateKey = buildAlertKey(rule.dataset, alertType);
-                    List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
-                    
-                    // Collect facilities from CREATE rules that have facility filters
-                    Set<String> facilitiesFromDataUpdate = new LinkedHashSet<>();
+                    // No facilities in SEND rule - try to inherit from CREATE rules
                     for (Rule duRule : dataUpdateRules) {
                         if (!duRule.facilities.isEmpty()) {
-                            // Only add facilities from CREATE rules that have explicit facility filters
-                            facilitiesFromDataUpdate.addAll(duRule.facilities);
+                            // Only add facilities from CREATE rules with explicit facility filters (inclusive relations)
+                            facilitiesToUse.addAll(duRule.facilities);
                         }
                     }
-                    
-                    if (facilitiesFromDataUpdate.isEmpty()) {
-                        // No facilities defined for this alert type – keep the All_Facilities row
-                        String key = rule.dataset + "|" + alertType + "||" + unitsKey;
-                        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
-                    } else {
-                        // Use facilities from DataUpdate CREATE rules - create separate group for each
-                        for (String facility : facilitiesFromDataUpdate) {
-                            String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
-                            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
-                        }
-                    }
+                    // If no facilities found in CREATE rules either, facilitiesToUse stays empty (all facilities)
                 } else {
-                    // Create a separate group for each facility in the rule
-                    for (String facility : rule.facilities) {
+                    // Use facilities from SEND rule
+                    facilitiesToUse.addAll(rule.facilities);
+                }
+                
+                // Determine units to use: inherit from CREATE if SEND rule has none
+                Set<String> unitsToUse = new LinkedHashSet<>();
+                if (rule.units.isEmpty()) {
+                    // No units in SEND rule - try to inherit from CREATE rules
+                    for (Rule duRule : dataUpdateRules) {
+                        if (!duRule.units.isEmpty()) {
+                            // Only add units from CREATE rules with explicit unit filters (inclusive relations)
+                            unitsToUse.addAll(duRule.units);
+                        }
+                    }
+                    // If no units found in CREATE rules either, unitsToUse stays empty (all units)
+                } else {
+                    // Use units from SEND rule
+                    unitsToUse.addAll(rule.units);
+                }
+                
+                // Sort units for consistent grouping
+                String unitsKey = unitsToUse.stream().sorted().collect(java.util.stream.Collectors.joining(","));
+                
+                // Create groups based on determined facilities and units
+                if (facilitiesToUse.isEmpty()) {
+                    // No facilities - single group for all facilities
+                    String key = rule.dataset + "|" + alertType + "||" + unitsKey;
+                    grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
+                } else {
+                    // Create separate group for each facility
+                    for (String facility : facilitiesToUse) {
                         String key = rule.dataset + "|" + alertType + "|" + facility + "|" + unitsKey;
                         grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
                     }
