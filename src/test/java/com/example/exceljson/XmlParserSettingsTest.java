@@ -308,6 +308,67 @@ class XmlParserSettingsTest {
     }
 
     @Test
+    void testResponsesArrayStructure(@TempDir Path tempDir) throws Exception {
+        File xmlFile = tempDir.resolve("test.xml").toFile();
+        
+        // Create test XML with responses array structure (from north_western_cdh_test.xml)
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<package version-major=\"1\" version-minor=\"0\">\n" +
+            "  <contents>\n" +
+            "    <datasets>\n" +
+            "      <dataset active=\"true\">\n" +
+            "        <name>NurseCalls</name>\n" +
+            "        <view>\n" +
+            "          <name>Test_View</name>\n" +
+            "          <filter relation=\"in\">\n" +
+            "            <path>alert_type</path>\n" +
+            "            <value>Nurse</value>\n" +
+            "          </filter>\n" +
+            "        </view>\n" +
+            "      </dataset>\n" +
+            "    </datasets>\n" +
+            "    <interfaces>\n" +
+            "      <interface component=\"DataUpdate\">\n" +
+            "        <rule active=\"true\" dataset=\"NurseCalls\">\n" +
+            "          <purpose>CREATE TRIGGER | Nurse</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "      <interface component=\"VMP\">\n" +
+            "        <rule active=\"true\" dataset=\"NurseCalls\">\n" +
+            "          <purpose>SEND PRIMARY | Nurse | VMP</purpose>\n" +
+            "          <trigger-on create=\"true\"/>\n" +
+            "          <condition><view>Test_View</view></condition>\n" +
+            "          <settings>{\"destination\":\"test\",\"priority\":\"2\",\"ttl\":10," +
+            "\"responseAction\":\"responses.action\",\"responses\":[" +
+            "{\"$$hashKey\":\"00I\",\"displayValue\":\"Acknowledge\",\"storedValue\":\"Accepted\"}," +
+            "{\"displayValue\":\"Escalate\",\"storedValue\":\"Decline Primary\",\"$$hashKey\":\"00S\"}" +
+            "]}</settings>\n" +
+            "        </rule>\n" +
+            "      </interface>\n" +
+            "    </interfaces>\n" +
+            "  </contents>\n" +
+            "</package>";
+        
+        try (FileWriter writer = new FileWriter(xmlFile)) {
+            writer.write(xmlContent);
+        }
+        
+        XmlParser parser = new XmlParser();
+        parser.load(xmlFile);
+        
+        List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
+        assertEquals(1, nurseCalls.size(), "Should have 1 nurse call row");
+        
+        ExcelParserV5.FlowRow flow = nurseCalls.get(0);
+        
+        // Verify response options were extracted from responses array
+        assertEquals("Acknowledge,Escalate", flow.responseOptions,
+            "Response options should be extracted from responses array displayValue fields");
+    }
+
+    @Test
     void testAllFieldsTogether(@TempDir Path tempDir) throws Exception {
         File xmlFile = tempDir.resolve("test.xml").toFile();
         
