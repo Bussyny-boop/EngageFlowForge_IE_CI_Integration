@@ -920,21 +920,6 @@ public class XmlParser {
             // Group by dataset + alert types + facility + units (for config group separation)
             // NEW: Separate by individual facility instead of grouping all facilities together
             
-            // First pass: check if this rule should be added to ANY facility-specific groups
-            boolean hasAnyFacilitySpecificGroups = false;
-            if (rule.facilities.isEmpty()) {
-                for (String alertType : rule.alertTypes) {
-                    String dataUpdateKey = rule.dataset + "|" + alertType;
-                    List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
-                    boolean hasFacilitySpecificCreateRule = dataUpdateRules.stream()
-                        .anyMatch(duRule -> !duRule.facilities.isEmpty());
-                    if (hasFacilitySpecificCreateRule) {
-                        hasAnyFacilitySpecificGroups = true;
-                        break;
-                    }
-                }
-            }
-            
             // Second pass: actually add the rule to groups
             for (String alertType : rule.alertTypes) {
                 // Sort units for consistent grouping
@@ -956,12 +941,9 @@ public class XmlParser {
                     }
                     
                     if (facilitiesFromDataUpdate.isEmpty()) {
-                        // No facilities from DataUpdate for THIS alert type
-                        // Only create All_Facilities group if the rule doesn't belong to ANY facility-specific groups
-                        if (!hasAnyFacilitySpecificGroups) {
-                            String key = rule.dataset + "|" + alertType + "||" + unitsKey;
-                            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
-                        }
+                        // No facilities defined for this alert type – keep the All_Facilities row
+                        String key = rule.dataset + "|" + alertType + "||" + unitsKey;
+                        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rule);
                     } else {
                         // Use facilities from DataUpdate CREATE rules - create separate group for each
                         for (String facility : facilitiesFromDataUpdate) {
