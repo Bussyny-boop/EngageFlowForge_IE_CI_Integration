@@ -2373,10 +2373,26 @@ public class XmlParser {
             if (root.has("overrideDND")) result.put("overrideDND", root.get("overrideDND").asBoolean());
             if (root.has("destination")) result.put("destination", root.get("destination").asText());
             
+            // Handle displayValues array (original format)
             if (root.has("displayValues") && root.get("displayValues").isArray()) {
                 List<String> values = new ArrayList<>();
                 root.get("displayValues").forEach(n -> values.add(n.asText()));
                 result.put("displayValues", String.join(",", values));
+            }
+            
+            // Handle responses array (alternative format from north_western_cdh_test.xml)
+            // Extract displayValue from each response object
+            if (root.has("responses") && root.get("responses").isArray()) {
+                List<String> displayValues = new ArrayList<>();
+                for (JsonNode response : root.get("responses")) {
+                    if (response.has("displayValue")) {
+                        displayValues.add(response.get("displayValue").asText());
+                    }
+                }
+                if (!displayValues.isEmpty()) {
+                    // Store comma-delimited displayValues same as displayValues array
+                    result.put("displayValues", String.join(",", displayValues));
+                }
             }
             
             // Extract state from DataUpdate CREATE rule parameters
