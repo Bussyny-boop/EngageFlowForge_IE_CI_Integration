@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test CREATE View Partial Match Alert Filtering</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>NurseCalls</name>
+        
+        <!-- View for CREATE rule - has VENT ALARM and EQUIPMENT only -->
+        <view>
+          <name>Alert_type_CREATE</name>
+          <description>Alerts in CREATE rule</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>VENT ALARM,EQUIPMENT</value>
+          </filter>
+        </view>
+        
+        <!-- View for SEND rule - has VENT ALARM, VENT OUT, and EQUIPMENT -->
+        <view>
+          <name>Alert_type_SEND</name>
+          <description>Alerts in SEND rule including some not in CREATE</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>VENT ALARM,VENT OUT,EQUIPMENT</value>
+          </filter>
+        </view>
+        
+        <!-- View for state Primary -->
+        <view>
+          <name>State_Primary</name>
+          <description>State is Primary</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- View for role -->
+        <view>
+          <name>Role_NURSE</name>
+          <description>Role NURSE</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>NURSE</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- CREATE rule with VENT ALARM and EQUIPMENT in its view -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SET TO PRIMARY | VENT ALARM | EQUIPMENT</purpose>
+          <trigger-on create="true"/>
+          <condition>
+            <view>Alert_type_CREATE</view>
+            <view>State_Primary</view>
+          </condition>
+          <settings>
+            <state>Primary</state>
+          </settings>
+        </rule>
+      </interface>
+      
+      <!-- SEND rule with VENT ALARM, VENT OUT, and EQUIPMENT -->
+      <!-- Only VENT ALARM and EQUIPMENT should be processed (they're in CREATE) -->
+      <!-- VENT OUT should NOT be processed (it's not in CREATE) -->
+      <interface component="VMP">
+        <name>VMP Interface</name>
+        <rule active="true" dataset="NurseCalls">
+          <purpose>SEND PRIMARY | VENT ALARM | VENT OUT | EQUIPMENT | VMP | NURSE</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alert_type_SEND</view>
+            <view>State_Primary</view>
+            <view>Role_NURSE</view>
+          </condition>
+          <settings>
+            {"destination":"#{bed.locs.assignments.usr.devices.lines.number}"}
+          </settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
