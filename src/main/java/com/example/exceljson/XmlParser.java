@@ -742,9 +742,10 @@ public class XmlParser {
             }
         }
         
-        // If no alert type filters found, rule doesn't specifically target any alerts
+        // If no alert type filters found, rule applies to ALL alert types
+        // This means it covers any target alerts (universal coverage)
         if (alertFilters.isEmpty()) {
-            return false;
+            return true;
         }
         
         // ALL filters must agree that they cover at least one of the target alerts
@@ -1046,6 +1047,9 @@ public class XmlParser {
                 View view = views.get(viewName);
                 if (view == null) continue;
                 
+                // Extract role/group information from view name
+                extractRoleOrGroupFromViewName(rule, viewName);
+                
                 for (Filter filter : view.filters) {
                     extractFilterData(rule, filter);
                 }
@@ -1152,6 +1156,55 @@ public class XmlParser {
     }
     
     /**
+     * Extract role or group information from view name.
+     * Examples:
+     * - "Role_PCT_Online_VMP" -> role = "PCT"
+     * - "Role_RN_Online_VMP" -> role = "RN"
+     * - "Role_Charge_Nurse_Online_VMP" -> role = "Charge Nurse"
+     * - "Groups_1_caregiver_is_online_with_a_VMP_phone" -> role = "Group 1"
+     * - "Groups_first_caregiver_is_online_with_a_VMP_phone" -> role = "Group first"
+     */
+    private void extractRoleOrGroupFromViewName(Rule rule, String viewName) {
+        if (viewName == null || viewName.isEmpty()) return;
+        
+        // Pattern: Role_<RoleName>_Online_VMP or similar
+        if (viewName.startsWith("Role_") && viewName.contains("_Online")) {
+            String[] parts = viewName.split("_");
+            if (parts.length >= 3) {
+                // Extract the role name between "Role_" and "_Online"
+                StringBuilder roleName = new StringBuilder();
+                for (int i = 1; i < parts.length; i++) {
+                    if (parts[i].equals("Online") || parts[i].equals("VMP") || 
+                        parts[i].equals("XMPP") || parts[i].equals("Offline")) {
+                        break;
+                    }
+                    if (roleName.length() > 0) {
+                        roleName.append(" ");
+                    }
+                    roleName.append(parts[i]);
+                }
+                if (roleName.length() > 0 && rule.role == null) {
+                    rule.role = roleName.toString();
+                    rule.roleFromView = true;
+                }
+            }
+        }
+        
+        // Pattern: Groups_<number>_caregiver_is_online or Groups_<name>_caregiver_is_online
+        if (viewName.startsWith("Groups_") && viewName.contains("_caregiver")) {
+            String[] parts = viewName.split("_");
+            if (parts.length >= 2) {
+                // Extract the group identifier (number or name)
+                String groupId = parts[1];
+                if (rule.role == null) {
+                    rule.role = "Group " + groupId;
+                    rule.roleFromView = false; // Mark as group, not role
+                }
+            }
+        }
+    }
+    
+    /**
      * Extract data from filter into rule
      */
     private void extractFilterData(Rule rule, Filter filter) {
@@ -1223,18 +1276,33 @@ public class XmlParser {
         }
         
         // Role - extract from various role-related filter paths
+        // For "in" relation, only take the first value from comma-separated lists
+        // For "equal" relation, keep all values (represents multiple recipients)
         if (filter.path.contains("role.name") || 
             filter.path.contains("assignments.role") || 
             filter.path.equals("role")) {
-            // Store the role value directly from the filter
-            rule.role = filter.value.trim();
-            rule.roleFromView = true;
+            // If role hasn't been set yet (from view name), extract from filter
+            if (rule.role == null) {
+                String roleValue = filter.value.trim();
+                // For "in" relation, handle comma-separated values - take only the first one
+                // This handles cases like "PCT,TECH" where PCT is the primary role
+                if ("in".equalsIgnoreCase(relation) && roleValue.contains(",")) {
+                    String[] parts = roleValue.split(",");
+                    rule.role = parts[0].trim();
+                } else {
+                    // For "equal" or other relations, keep the full value (may include multiple roles)
+                    rule.role = roleValue;
+                }
+                rule.roleFromView = true;
+            }
         }
         
         // Also try to extract role from assignment level description paths
         if (filter.path.contains("assignment_level") && filter.path.contains("description")) {
-            rule.role = filter.value.trim();
-            rule.roleFromView = true;
+            if (rule.role == null) {
+                rule.role = filter.value.trim();
+                rule.roleFromView = true;
+            }
         }
     }
     
@@ -2122,7 +2190,38 @@ public class XmlParser {
             return destination;
         }
         
-        // Otherwise, prefer role name from view filters over raw destination template
+        // Check if destination path indicates a group (e.g., groups_1, groups_2, etc.)
+        if (destination != null && destination.contains("groups_")) {
+            // Extract group name from path like #{bed.room.unit.groups_1.users...}
+            int groupsIndex = destination.indexOf("groups_");
+            if (groupsIndex >= 0) {
+                int dotIndex = destination.indexOf(".", groupsIndex);
+                if (dotIndex > groupsIndex) {
+                    String groupPart = destination.substring(groupsIndex, dotIndex);
+                    // Convert groups_1 to "Group 1", groups_first to "Group first", etc.
+                    String groupId = groupPart.substring(7); // Skip "groups_"
+                    rule.roleFromView = false; // Mark as group, not role assignment
+                    return "Group " + groupId;
+                }
+            }
+        }
+        
+        // Check if destination path indicates a named group (e.g., .first., .second., .third.)
+        // ONLY if we also have a matching Groups_ view name, otherwise keep raw destination
+        if (destination != null && rule.role != null && rule.role.startsWith("Group ")) {
+            String[] groupNames = {".first.", ".second.", ".third.", ".fourth.", ".fifth."};
+            for (String groupName : groupNames) {
+                if (destination.contains(groupName)) {
+                    String name = groupName.substring(1, groupName.length() - 1); // Remove dots
+                    // Only use this if the role was set from a view (Groups_first, etc.)
+                    if (!rule.roleFromView) {
+                        return rule.role; // Use the role from view, not parsed from destination
+                    }
+                }
+            }
+        }
+        
+        // Otherwise, prefer role name from view filters/names over raw destination template
         if (rule.role != null && !rule.role.isEmpty()) {
             return rule.role;
         }
