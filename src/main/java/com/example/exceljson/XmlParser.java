@@ -742,9 +742,10 @@ public class XmlParser {
             }
         }
         
-        // If no alert type filters found, rule doesn't specifically target any alerts
+        // If no alert type filters found, rule applies to ALL alert types
+        // This means it covers any target alerts (universal coverage)
         if (alertFilters.isEmpty()) {
-            return false;
+            return true;
         }
         
         // ALL filters must agree that they cover at least one of the target alerts
@@ -1092,16 +1093,6 @@ public class XmlParser {
             return;
         }
         
-        // Debug output for Battery Low rules
-        boolean isBatteryLow = rule.purpose != null && rule.purpose.toLowerCase().contains("battery low") &&
-            rule.purpose.toLowerCase().contains("bbb cdh");
-        
-        if (isBatteryLow) {
-            System.out.println("DEBUG filterUncoveredAlertTypes BEFORE: Purpose=" + 
-                rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
-                ", AlertTypes=" + rule.alertTypes + ", NumDataUpdateRules=" + dataUpdateRules.size());
-        }
-        
         // Keep only alert types that are covered by at least one DataUpdate rule
         Set<String> coveredAlertTypes = new HashSet<>();
         for (String alertType : rule.alertTypes) {
@@ -1115,10 +1106,6 @@ public class XmlParser {
         
         // Replace the alert types set with only covered ones
         rule.alertTypes = coveredAlertTypes;
-        
-        if (isBatteryLow) {
-            System.out.println("DEBUG filterUncoveredAlertTypes AFTER: AlertTypes=" + rule.alertTypes);
-        }
     }
     
     /**
@@ -1228,27 +1215,14 @@ public class XmlParser {
         
         // Alert types - keep user-friendly casing for display while matching case-insensitively
         if (filter.path.equals("alert_type")) {
-            // Debug for Battery Low extraction
-            if (filter.value != null && filter.value.contains("Battery Low")) {
-                System.out.println("DEBUG extractFilterData: Extracting alert_type, Value=" + filter.value + 
-                    ", Purpose=" + (rule.purpose != null ? rule.purpose.substring(0, Math.min(80, rule.purpose.length())) : "null"));
-            }
-            
             for (String type : filter.value.split(",")) {
                 String trimmed = type.trim();
                 if (!trimmed.isEmpty()) {
                     String canonical = canonicalizeAlertName(rule.dataset, trimmed, canonicalAlertNames);
                     if (canonical != null && !canonical.isEmpty()) {
                         rule.alertTypes.add(canonical);
-                    } else if (filter.value != null && filter.value.contains("Battery Low")) {
-                        System.out.println("DEBUG extractFilterData: canonical returned null/empty for trimmed=" + trimmed);
                     }
                 }
-            }
-            
-            // Debug after extraction
-            if (filter.value != null && filter.value.contains("Battery Low")) {
-                System.out.println("DEBUG extractFilterData: After extraction, alertTypes=" + rule.alertTypes);
             }
         }
         
@@ -1302,18 +1276,21 @@ public class XmlParser {
         }
         
         // Role - extract from various role-related filter paths
-        // Only take the first value from comma-separated lists
+        // For "in" relation, only take the first value from comma-separated lists
+        // For "equal" relation, keep all values (represents multiple recipients)
         if (filter.path.contains("role.name") || 
             filter.path.contains("assignments.role") || 
             filter.path.equals("role")) {
             // If role hasn't been set yet (from view name), extract from filter
             if (rule.role == null) {
                 String roleValue = filter.value.trim();
-                // Handle comma-separated values - take only the first one
-                if (roleValue.contains(",")) {
+                // For "in" relation, handle comma-separated values - take only the first one
+                // This handles cases like "PCT,TECH" where PCT is the primary role
+                if ("in".equalsIgnoreCase(relation) && roleValue.contains(",")) {
                     String[] parts = roleValue.split(",");
                     rule.role = parts[0].trim();
                 } else {
+                    // For "equal" or other relations, keep the full value (may include multiple roles)
                     rule.role = roleValue;
                 }
                 rule.roleFromView = true;
@@ -1343,14 +1320,6 @@ public class XmlParser {
         Map<String, List<Rule>> dataUpdateRulesByAlertType = new HashMap<>();
         
         for (Rule rule : allRules) {
-            // Debug for CDH Battery Low PRIMARY SEND
-            if (rule.purpose != null && rule.purpose.contains("bbb CDH") && rule.purpose.contains("Battery Low") && 
-                rule.purpose.contains("SEND") && rule.purpose.contains("PRIMARY")) {
-                System.out.println("DEBUG START of loop: Purpose=" + rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
-                    ", AlertTypes=" + rule.alertTypes + ", Component=" + rule.component + 
-                    ", HasDest=" + hasDestination(rule) + ", State=" + rule.state);
-            }
-            
             // Track facilities/units
             for (String facility : rule.facilities) {
                 // If facility is a placeholder (e.g. "#{bed.room.facility.name}"), skip adding to facilityUnits
@@ -1387,11 +1356,6 @@ public class XmlParser {
             }
             
             // Skip other rules without alert types
-            // Debug for CDH Battery Low PRIMARY
-            if (rule.purpose != null && rule.purpose.contains("bbb CDH") && rule.purpose.contains("Battery Low") && rule.purpose.contains("PRIMARY")) {
-                System.out.println("DEBUG Before skip check: Purpose=" + rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
-                    ", AlertTypes=" + rule.alertTypes + ", AlertTypes.isEmpty=" + rule.alertTypes.isEmpty());
-            }
             if (rule.alertTypes.isEmpty()) continue;
             
             // Group by dataset + alert types + facility + units (for config group separation)
@@ -1483,15 +1447,6 @@ public class XmlParser {
             String facilityFromKey = parts.length > 2 ? parts[2] : ""; // Extract facility from group key
             List<Rule> rules = entry.getValue();
             
-            // Debug output for Battery Low groups
-            if (alertType != null && alertType.toLowerCase().contains("battery low")) {
-                System.out.println("DEBUG GROUP: Key=" + entry.getKey() + ", NumRules=" + rules.size());
-                for (Rule r : rules) {
-                    System.out.println("  - State=" + r.state + ", HasDest=" + hasDestination(r) + 
-                        ", Purpose=" + (r.purpose != null ? r.purpose.substring(0, Math.min(100, r.purpose.length())) : "null"));
-                }
-            }
-            
             // Get corresponding CREATE DATAUPDATE rules for this alert type
             String dataUpdateKey = buildAlertKey(dataset, alertType);
             List<Rule> dataUpdateRules = dataUpdateRulesByAlertType.getOrDefault(dataUpdateKey, Collections.emptyList());
@@ -1547,14 +1502,6 @@ public class XmlParser {
             if (rule.state == null || rule.state.isEmpty()) continue;
             
             String state = normalizeState(rule.state);
-            
-            // Debug output for Battery Low
-            if (alertType != null && alertType.toLowerCase().contains("battery low")) {
-                System.out.println("DEBUG createEscalationFlow: Alert=" + alertType + 
-                    ", State=" + state + ", HasDest=" + hasDestination(rule) + 
-                    ", Defer=" + rule.deferDeliveryBy + ", Role=" + rule.role +
-                    ", Purpose=" + (rule.purpose != null ? rule.purpose.substring(0, Math.min(80, rule.purpose.length())) : "null"));
-            }
             
             // If has destination, it's a send rule
             if (hasDestination(rule)) {
@@ -1667,14 +1614,6 @@ public class XmlParser {
                 // Use first rule for this state
                 Rule sendRule = sendRules.get(0);
                 String recipient = extractDestination(sendRule);
-                
-                // Debug output for Battery Low and Desat
-                if (alertType != null && (alertType.toLowerCase().contains("battery") || alertType.toLowerCase().contains("desat"))) {
-                    System.out.println("DEBUG: Alert=" + alertType + ", State=" + state + 
-                        ", Recipient=" + recipient + ", RoleFromView=" + sendRule.roleFromView + 
-                        ", Role=" + sendRule.role);
-                }
-                
                 setRecipient(template, i + 1, recipient, sendRule.roleFromView);
 
                 // Apply settings from first send rule at Primary state
@@ -2268,13 +2207,16 @@ public class XmlParser {
         }
         
         // Check if destination path indicates a named group (e.g., .first., .second., .third.)
-        if (destination != null) {
+        // ONLY if we also have a matching Groups_ view name, otherwise keep raw destination
+        if (destination != null && rule.role != null && rule.role.startsWith("Group ")) {
             String[] groupNames = {".first.", ".second.", ".third.", ".fourth.", ".fifth."};
             for (String groupName : groupNames) {
                 if (destination.contains(groupName)) {
                     String name = groupName.substring(1, groupName.length() - 1); // Remove dots
-                    rule.roleFromView = false; // Mark as group, not role assignment
-                    return "Group " + name;
+                    // Only use this if the role was set from a view (Groups_first, etc.)
+                    if (!rule.roleFromView) {
+                        return rule.role; // Use the role from view, not parsed from destination
+                    }
                 }
             }
         }
