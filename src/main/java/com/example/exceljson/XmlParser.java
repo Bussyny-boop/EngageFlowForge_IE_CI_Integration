@@ -2315,14 +2315,6 @@ public class XmlParser {
         if (settings.containsKey("displayValues")) {
             flow.responseOptions = settings.get("displayValues").toString();
         }
-        
-        // Set EMDAN Compliant field based on dataset
-        // "Yes" for Clinicals dataset, "No" for all other datasets (NurseCalls, Orders, etc.)
-        if (rule.dataset != null && rule.dataset.equalsIgnoreCase("Clinicals")) {
-            flow.emdan = "Yes";
-        } else {
-            flow.emdan = "No";
-        }
     }
     
     private String normalizeEnunciate(String enunciate) {
