@@ -1988,7 +1988,8 @@ public class ExcelParserV5 {
       
       String name = nvl(r.alarmName, r.sendingName);
       if (isBlank(name)) continue;
-      String key = name + "|" + flowType;
+      // Use lowercase key to combine alert types with same name but different cases
+      String key = name.toLowerCase() + "|" + flowType;
       if (byKey.containsKey(key)) continue;
 
       Map<String,Object> def = new LinkedHashMap<>();
