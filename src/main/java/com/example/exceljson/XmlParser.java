@@ -1092,11 +1092,11 @@ public class XmlParser {
             return;
         }
         
-        // Debug output for PRIMARY Battery Low or ANY Battery Low
-        boolean isBatteryLowPrimary = rule.purpose != null && rule.purpose.toLowerCase().contains("battery low") && 
-            rule.purpose.toLowerCase().contains("primary");
+        // Debug output for Battery Low rules
+        boolean isBatteryLow = rule.purpose != null && rule.purpose.toLowerCase().contains("battery low") &&
+            rule.purpose.toLowerCase().contains("bbb cdh");
         
-        if (isBatteryLowPrimary) {
+        if (isBatteryLow) {
             System.out.println("DEBUG filterUncoveredAlertTypes BEFORE: Purpose=" + 
                 rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
                 ", AlertTypes=" + rule.alertTypes + ", NumDataUpdateRules=" + dataUpdateRules.size());
@@ -1116,7 +1116,7 @@ public class XmlParser {
         // Replace the alert types set with only covered ones
         rule.alertTypes = coveredAlertTypes;
         
-        if (isBatteryLowPrimary) {
+        if (isBatteryLow) {
             System.out.println("DEBUG filterUncoveredAlertTypes AFTER: AlertTypes=" + rule.alertTypes);
         }
     }
@@ -1228,14 +1228,27 @@ public class XmlParser {
         
         // Alert types - keep user-friendly casing for display while matching case-insensitively
         if (filter.path.equals("alert_type")) {
+            // Debug for Battery Low extraction
+            if (filter.value != null && filter.value.contains("Battery Low")) {
+                System.out.println("DEBUG extractFilterData: Extracting alert_type, Value=" + filter.value + 
+                    ", Purpose=" + (rule.purpose != null ? rule.purpose.substring(0, Math.min(80, rule.purpose.length())) : "null"));
+            }
+            
             for (String type : filter.value.split(",")) {
                 String trimmed = type.trim();
                 if (!trimmed.isEmpty()) {
                     String canonical = canonicalizeAlertName(rule.dataset, trimmed, canonicalAlertNames);
                     if (canonical != null && !canonical.isEmpty()) {
                         rule.alertTypes.add(canonical);
+                    } else if (filter.value != null && filter.value.contains("Battery Low")) {
+                        System.out.println("DEBUG extractFilterData: canonical returned null/empty for trimmed=" + trimmed);
                     }
                 }
+            }
+            
+            // Debug after extraction
+            if (filter.value != null && filter.value.contains("Battery Low")) {
+                System.out.println("DEBUG extractFilterData: After extraction, alertTypes=" + rule.alertTypes);
             }
         }
         
@@ -1330,6 +1343,14 @@ public class XmlParser {
         Map<String, List<Rule>> dataUpdateRulesByAlertType = new HashMap<>();
         
         for (Rule rule : allRules) {
+            // Debug for CDH Battery Low PRIMARY SEND
+            if (rule.purpose != null && rule.purpose.contains("bbb CDH") && rule.purpose.contains("Battery Low") && 
+                rule.purpose.contains("SEND") && rule.purpose.contains("PRIMARY")) {
+                System.out.println("DEBUG START of loop: Purpose=" + rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
+                    ", AlertTypes=" + rule.alertTypes + ", Component=" + rule.component + 
+                    ", HasDest=" + hasDestination(rule) + ", State=" + rule.state);
+            }
+            
             // Track facilities/units
             for (String facility : rule.facilities) {
                 // If facility is a placeholder (e.g. "#{bed.room.facility.name}"), skip adding to facilityUnits
@@ -1366,6 +1387,11 @@ public class XmlParser {
             }
             
             // Skip other rules without alert types
+            // Debug for CDH Battery Low PRIMARY
+            if (rule.purpose != null && rule.purpose.contains("bbb CDH") && rule.purpose.contains("Battery Low") && rule.purpose.contains("PRIMARY")) {
+                System.out.println("DEBUG Before skip check: Purpose=" + rule.purpose.substring(0, Math.min(100, rule.purpose.length())) + 
+                    ", AlertTypes=" + rule.alertTypes + ", AlertTypes.isEmpty=" + rule.alertTypes.isEmpty());
+            }
             if (rule.alertTypes.isEmpty()) continue;
             
             // Group by dataset + alert types + facility + units (for config group separation)
