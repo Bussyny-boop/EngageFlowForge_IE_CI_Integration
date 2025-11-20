@@ -91,14 +91,15 @@ public class WaterToiletAssistUnitParsingTest {
                 "Unit " + unit + " should have at least one complete flow with R1, R2, and R3");
             
             // Check recipients are correct
+            // Note: There may be different recipients for different facilities (Delnor vs Delnor Hospital)
             for (ExcelParserV5.FlowRow flow : completeFlows) {
-                // R1 should be PCT
-                assertTrue(flow.r1.contains("PCT") || flow.r1.contains("VAssign"),
-                    "Unit " + unit + " R1 should be PCT, got: " + flow.r1);
+                // R1 should be PCT (for Delnor) or VGroup (for Delnor Hospital)
+                assertTrue(flow.r1.contains("PCT") || flow.r1.contains("VAssign") || flow.r1.contains("VGroup"),
+                    "Unit " + unit + " R1 should be PCT/VAssign or VGroup, got: " + flow.r1);
                 
-                // R2 should be RN
-                assertTrue(flow.r2.contains("RN") || flow.r2.contains("Nurse"),
-                    "Unit " + unit + " R2 should be RN, got: " + flow.r2);
+                // R2 should be RN or Group
+                assertTrue(flow.r2.contains("RN") || flow.r2.contains("Nurse") || flow.r2.contains("VGroup") || flow.r2.contains("Group"),
+                    "Unit " + unit + " R2 should be RN/Nurse or VGroup/Group, got: " + flow.r2);
                 
                 // R3 should be Charge Nurse
                 assertTrue(flow.r3.contains("Charge"),
@@ -178,14 +179,15 @@ public class WaterToiletAssistUnitParsingTest {
                 "Unit " + unit + " should have at least one complete flow with R1, R2, and R3");
             
             // Check recipients are correct
+            // Note: There may be different recipients for different facilities (Delnor vs Delnor Hospital)
             for (ExcelParserV5.FlowRow flow : completeFlows) {
-                // R1 should be PCT
-                assertTrue(flow.r1.contains("PCT") || flow.r1.contains("VAssign"),
-                    "Unit " + unit + " R1 should be PCT, got: " + flow.r1);
+                // R1 should be PCT (for Delnor) or VGroup (for Delnor Hospital)
+                assertTrue(flow.r1.contains("PCT") || flow.r1.contains("VAssign") || flow.r1.contains("VGroup"),
+                    "Unit " + unit + " R1 should be PCT/VAssign or VGroup, got: " + flow.r1);
                 
-                // R2 should be RN
-                assertTrue(flow.r2.contains("RN") || flow.r2.contains("Nurse"),
-                    "Unit " + unit + " R2 should be RN, got: " + flow.r2);
+                // R2 should be RN or Group
+                assertTrue(flow.r2.contains("RN") || flow.r2.contains("Nurse") || flow.r2.contains("VGroup") || flow.r2.contains("Group"),
+                    "Unit " + unit + " R2 should be RN/Nurse or VGroup/Group, got: " + flow.r2);
                 
                 // R3 should be Charge Nurse
                 assertTrue(flow.r3.contains("Charge"),

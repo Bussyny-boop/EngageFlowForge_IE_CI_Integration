@@ -99,6 +99,9 @@ public class XmlParser {
         // Step 4: Create flow rows
         createFlowRows();
         
+        // Step 4.5: Merge flows with overlapping units in escalation chains
+        mergeOverlappingEscalationFlows();
+        
         // Step 5: Create unit rows
         createUnitRows();
     }
@@ -1466,6 +1469,170 @@ public class XmlParser {
                 createSimpleFlow(dataset, alertType, facilityFromKey, rules, dataUpdateRules);
             }
         }
+    }
+    
+    /**
+     * Merge flows with the same facility, alert, but different unit sets that overlap.
+     * This handles cases where PRIMARY/SECONDARY rules have one unit set (e.g., 2600,3600,2N,3S,3N,3100)
+     * and TERTIARY rules have an overlapping but different unit set (e.g., 3600,2N,3S,3N,3100).
+     * For overlapping units, we should have a single flow with all recipients, not multiple flows.
+     */
+    private void mergeOverlappingEscalationFlows() {
+        mergeOverlappingFlowsInList(nurseCalls);
+        mergeOverlappingFlowsInList(clinicals);
+        mergeOverlappingFlowsInList(orders);
+    }
+    
+    /**
+     * Merge overlapping flows within a single list
+     */
+    private void mergeOverlappingFlowsInList(List<ExcelParserV5.FlowRow> flows) {
+        // Group flows by (facility, unit, alarmName)
+        Map<String, List<ExcelParserV5.FlowRow>> flowsByKey = new HashMap<>();
+        
+        for (ExcelParserV5.FlowRow flow : flows) {
+            String key = flow.configGroup + "|" + flow.alarmName;
+            flowsByKey.computeIfAbsent(key, k -> new ArrayList<>()).add(flow);
+        }
+        
+        // For each group, check if we have flows that should be merged
+        List<ExcelParserV5.FlowRow> flowsToRemove = new ArrayList<>();
+        List<ExcelParserV5.FlowRow> flowsToAdd = new ArrayList<>();
+        
+        for (List<ExcelParserV5.FlowRow> group : flowsByKey.values()) {
+            if (group.size() < 2) continue; // Nothing to merge
+            
+            // Keep merging until no more complementary pairs found
+            boolean merged = true;
+            while (merged) {
+                merged = false;
+                // Look for pairs of flows where one has partial recipients and another has different partial recipients
+                for (int i = 0; i < group.size(); i++) {
+                    for (int j = i + 1; j < group.size(); j++) {
+                        ExcelParserV5.FlowRow flow1 = group.get(i);
+                        ExcelParserV5.FlowRow flow2 = group.get(j);
+                        
+                        // Check if these flows are complementary (one has some recipients, the other has different ones)
+                        if (areComplementaryFlows(flow1, flow2)) {
+                            // Merge them
+                            ExcelParserV5.FlowRow mergedFlow = mergeFlows(flow1, flow2);
+                            flowsToRemove.add(flow1);
+                            flowsToRemove.add(flow2);
+                            flowsToAdd.add(mergedFlow);
+                            // Remove from group
+                            group.remove(flow1);
+                            group.remove(flow2);
+                            // Add merged back to group for potential further merging
+                            group.add(mergedFlow);
+                            merged = true; // Found a merge, try again
+                            break; // Restart the loop
+                        }
+                    }
+                    if (merged) break; // Restart outer loop
+                }
+            }
+        }
+        
+        // Apply changes
+        flows.removeAll(flowsToRemove);
+        flows.addAll(flowsToAdd);
+    }
+    
+    /**
+     * Check if two flows are complementary (should be merged).
+     * Complementary flows have:
+     * - Same config group and alarm name
+     * - Different recipient patterns that don't conflict
+     */
+    private boolean areComplementaryFlows(ExcelParserV5.FlowRow f1, ExcelParserV5.FlowRow f2) {
+        // Must have same config group and alarm
+        if (!f1.configGroup.equals(f2.configGroup)) return false;
+        if (!f1.alarmName.equals(f2.alarmName)) return false;
+        
+        // Check if they have non-conflicting recipient patterns
+        // One flow might have R1, R2 but not R3
+        // Another flow might have R3 but not R1, R2
+        // These are complementary
+        
+        boolean f1HasR1 = f1.r1 != null && !f1.r1.isEmpty();
+        boolean f1HasR2 = f1.r2 != null && !f1.r2.isEmpty();
+        boolean f1HasR3 = f1.r3 != null && !f1.r3.isEmpty();
+        
+        boolean f2HasR1 = f2.r1 != null && !f2.r1.isEmpty();
+        boolean f2HasR2 = f2.r2 != null && !f2.r2.isEmpty();
+        boolean f2HasR3 = f2.r3 != null && !f2.r3.isEmpty();
+        
+        // They're complementary if:
+        // 1. One has earlier recipients (R1/R2) and the other has later recipients (R3)
+        // 2. OR they have different timing patterns
+        boolean f1HasEarly = f1HasR1 || f1HasR2;
+        boolean f1HasLate = f1HasR3;
+        boolean f2HasEarly = f2HasR1 || f2HasR2;
+        boolean f2HasLate = f2HasR3;
+        
+        // Complementary if one has early and the other has late
+        if (f1HasEarly && !f1HasLate && !f2HasEarly && f2HasLate) return true;
+        if (!f1HasEarly && f1HasLate && f2HasEarly && !f2HasLate) return true;
+        
+        // Also check timing - one might have T2, T3 and the other might not
+        boolean f1HasTiming = (f1.t2 != null && !f1.t2.isEmpty()) || (f1.t3 != null && !f1.t3.isEmpty());
+        boolean f2HasTiming = (f2.t2 != null && !f2.t2.isEmpty()) || (f2.t3 != null && !f2.t3.isEmpty());
+        
+        // If one has R3 with timing and the other has R1/R2 without timing
+        if (f1HasLate && f1HasTiming && f2HasEarly && !f2HasTiming) return true;
+        if (f2HasLate && f2HasTiming && f1HasEarly && !f1HasTiming) return true;
+        
+        return false;
+    }
+    
+    /**
+     * Merge two complementary flows into one.
+     * Takes non-empty values from both flows, preferring non-empty over empty.
+     */
+    private ExcelParserV5.FlowRow mergeFlows(ExcelParserV5.FlowRow f1, ExcelParserV5.FlowRow f2) {
+        ExcelParserV5.FlowRow merged = new ExcelParserV5.FlowRow();
+        
+        // Copy common fields from f1
+        merged.inScope = f1.inScope;
+        merged.type = f1.type;
+        merged.alarmName = f1.alarmName;
+        merged.sendingName = f1.sendingName;
+        merged.configGroup = f1.configGroup;
+        merged.priorityRaw = f1.priorityRaw;
+        merged.deviceA = f1.deviceA;
+        merged.deviceB = f1.deviceB;
+        merged.ringtone = f1.ringtone;
+        merged.responseOptions = f1.responseOptions;
+        merged.breakThroughDND = f1.breakThroughDND;
+        merged.multiUserAccept = f1.multiUserAccept;
+        merged.escalateAfter = f1.escalateAfter;
+        merged.ttlValue = f1.ttlValue;
+        merged.enunciate = f1.enunciate;
+        merged.emdan = f1.emdan;
+        
+        // Merge recipients and timing - take non-empty values
+        merged.r1 = mergeField(f1.r1, f2.r1);
+        merged.r2 = mergeField(f1.r2, f2.r2);
+        merged.r3 = mergeField(f1.r3, f2.r3);
+        merged.r4 = mergeField(f1.r4, f2.r4);
+        merged.r5 = mergeField(f1.r5, f2.r5);
+        
+        merged.t1 = mergeField(f1.t1, f2.t1);
+        merged.t2 = mergeField(f1.t2, f2.t2);
+        merged.t3 = mergeField(f1.t3, f2.t3);
+        merged.t4 = mergeField(f1.t4, f2.t4);
+        merged.t5 = mergeField(f1.t5, f2.t5);
+        
+        return merged;
+    }
+    
+    /**
+     * Merge a field by taking the non-empty value
+     */
+    private String mergeField(String v1, String v2) {
+        if (v1 != null && !v1.isEmpty()) return v1;
+        if (v2 != null && !v2.isEmpty()) return v2;
+        return "";
     }
     
     /**
