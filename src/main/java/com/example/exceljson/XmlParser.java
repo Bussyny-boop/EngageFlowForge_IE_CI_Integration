@@ -1519,11 +1519,15 @@ public class XmlParser {
         }
         
         // For each group, check if we have flows that should be merged
-        List<ExcelParserV5.FlowRow> flowsToRemove = new ArrayList<>();
-        List<ExcelParserV5.FlowRow> flowsToAdd = new ArrayList<>();
+        // Track ORIGINAL flows to remove and FINAL merged flows to add
+        Set<ExcelParserV5.FlowRow> originalFlowsToRemove = new HashSet<>();
+        List<ExcelParserV5.FlowRow> finalMergedFlows = new ArrayList<>();
         
         for (List<ExcelParserV5.FlowRow> group : flowsByKey.values()) {
             if (group.size() < 2) continue; // Nothing to merge
+            
+            // Track original flows in this group before any merging
+            Set<ExcelParserV5.FlowRow> originalFlowsInGroup = new HashSet<>(group);
             
             // Keep merging until no more complementary pairs found
             boolean merged = true;
@@ -1539,9 +1543,6 @@ public class XmlParser {
                         if (areComplementaryFlows(flow1, flow2)) {
                             // Merge them
                             ExcelParserV5.FlowRow mergedFlow = mergeFlows(flow1, flow2);
-                            flowsToRemove.add(flow1);
-                            flowsToRemove.add(flow2);
-                            flowsToAdd.add(mergedFlow);
                             // Remove from group
                             group.remove(flow1);
                             group.remove(flow2);
@@ -1554,11 +1555,18 @@ public class XmlParser {
                     if (merged) break; // Restart outer loop
                 }
             }
+            
+            // After all merging, if the group size changed, we need to remove the originals and add the finals
+            if (group.size() < originalFlowsInGroup.size()) {
+                // Merging happened - remove all original flows and add the final merged result(s)
+                originalFlowsToRemove.addAll(originalFlowsInGroup);
+                finalMergedFlows.addAll(group);
+            }
         }
         
         // Apply changes
-        flows.removeAll(flowsToRemove);
-        flows.addAll(flowsToAdd);
+        flows.removeAll(originalFlowsToRemove);
+        flows.addAll(finalMergedFlows);
     }
     
     /**
@@ -1566,46 +1574,83 @@ public class XmlParser {
      * Complementary flows have:
      * - Same config group and alarm name
      * - Different recipient patterns that don't conflict
+     * - OR they're duplicates (identical flows that should be deduplicated)
      */
     private boolean areComplementaryFlows(ExcelParserV5.FlowRow f1, ExcelParserV5.FlowRow f2) {
         // Must have same config group and alarm
         if (!f1.configGroup.equals(f2.configGroup)) return false;
         if (!f1.alarmName.equals(f2.alarmName)) return false;
         
-        // Check if they have non-conflicting recipient patterns
-        // One flow might have R1, R2 but not R3
-        // Another flow might have R3 but not R1, R2
-        // These are complementary
+        // Check if the flows have complementary data - i.e., one has data the other doesn't
+        // Count how many recipient/timing slots have conflicting data (both have values)
+        int conflicts = 0;
+        int complements = 0;
+        int duplicates = 0;  // Count of identical values in same slot
+        int bothEmpty = 0;    // Count of slots where both are empty
         
-        boolean f1HasR1 = f1.r1 != null && !f1.r1.isEmpty();
-        boolean f1HasR2 = f1.r2 != null && !f1.r2.isEmpty();
-        boolean f1HasR3 = f1.r3 != null && !f1.r3.isEmpty();
+        // Check each recipient and timing field
+        int[] r1 = checkField(f1.r1, f2.r1);
+        complements += r1[0]; duplicates += r1[1]; bothEmpty += r1[2]; conflicts += r1[3];
         
-        boolean f2HasR1 = f2.r1 != null && !f2.r1.isEmpty();
-        boolean f2HasR2 = f2.r2 != null && !f2.r2.isEmpty();
-        boolean f2HasR3 = f2.r3 != null && !f2.r3.isEmpty();
+        int[] r2 = checkField(f1.r2, f2.r2);
+        complements += r2[0]; duplicates += r2[1]; bothEmpty += r2[2]; conflicts += r2[3];
+        
+        int[] r3 = checkField(f1.r3, f2.r3);
+        complements += r3[0]; duplicates += r3[1]; bothEmpty += r3[2]; conflicts += r3[3];
+        
+        int[] r4 = checkField(f1.r4, f2.r4);
+        complements += r4[0]; duplicates += r4[1]; bothEmpty += r4[2]; conflicts += r4[3];
+        
+        int[] r5 = checkField(f1.r5, f2.r5);
+        complements += r5[0]; duplicates += r5[1]; bothEmpty += r5[2]; conflicts += r5[3];
+        
+        int[] t1 = checkField(f1.t1, f2.t1);
+        complements += t1[0]; duplicates += t1[1]; bothEmpty += t1[2]; conflicts += t1[3];
+        
+        int[] t2 = checkField(f1.t2, f2.t2);
+        complements += t2[0]; duplicates += t2[1]; bothEmpty += t2[2]; conflicts += t2[3];
+        
+        int[] t3 = checkField(f1.t3, f2.t3);
+        complements += t3[0]; duplicates += t3[1]; bothEmpty += t3[2]; conflicts += t3[3];
+        
+        int[] t4 = checkField(f1.t4, f2.t4);
+        complements += t4[0]; duplicates += t4[1]; bothEmpty += t4[2]; conflicts += t4[3];
+        
+        int[] t5 = checkField(f1.t5, f2.t5);
+        complements += t5[0]; duplicates += t5[1]; bothEmpty += t5[2]; conflicts += t5[3];
         
         // They're complementary if:
-        // 1. One has earlier recipients (R1/R2) and the other has later recipients (R3)
-        // 2. OR they have different timing patterns
-        boolean f1HasEarly = f1HasR1 || f1HasR2;
-        boolean f1HasLate = f1HasR3;
-        boolean f2HasEarly = f2HasR1 || f2HasR2;
-        boolean f2HasLate = f2HasR3;
+        // 1. There are complementary fields (one has data the other doesn't) and no more than 2 conflicts
+        // 2. OR they're duplicates (all filled fields are identical) - these should be merged to eliminate duplicates
+        //    Duplicates are flows where all non-empty fields match and there are no conflicts
+        //    Note: Empty fields in both flows don't prevent duplicate detection
+        boolean isDuplicate = duplicates > 0 && conflicts == 0;
+        boolean isComplementary = complements > 0 && conflicts <= 2;
         
-        // Complementary if one has early and the other has late
-        if (f1HasEarly && !f1HasLate && !f2HasEarly && f2HasLate) return true;
-        if (!f1HasEarly && f1HasLate && f2HasEarly && !f2HasLate) return true;
+        return isDuplicate || isComplementary;
+    }
+    
+    /**
+     * Check a pair of string fields and return counts: [complements, duplicates, bothEmpty, conflicts]
+     */
+    private int[] checkField(String v1, String v2) {
+        boolean has1 = v1 != null && !v1.isEmpty();
+        boolean has2 = v2 != null && !v2.isEmpty();
+        int complements = 0, duplicates = 0, bothEmpty = 0, conflicts = 0;
         
-        // Also check timing - one might have T2, T3 and the other might not
-        boolean f1HasTiming = (f1.t2 != null && !f1.t2.isEmpty()) || (f1.t3 != null && !f1.t3.isEmpty());
-        boolean f2HasTiming = (f2.t2 != null && !f2.t2.isEmpty()) || (f2.t3 != null && !f2.t3.isEmpty());
+        if (has1 && has2) {
+            if (v1.equals(v2)) {
+                duplicates = 1;
+            } else {
+                conflicts = 1;
+            }
+        } else if (has1 || has2) {
+            complements = 1;
+        } else {
+            bothEmpty = 1;
+        }
         
-        // If one has R3 with timing and the other has R1/R2 without timing
-        if (f1HasLate && f1HasTiming && f2HasEarly && !f2HasTiming) return true;
-        if (f2HasLate && f2HasTiming && f1HasEarly && !f1HasTiming) return true;
-        
-        return false;
+        return new int[]{complements, duplicates, bothEmpty, conflicts};
     }
     
     /**
@@ -1615,23 +1660,23 @@ public class XmlParser {
     private ExcelParserV5.FlowRow mergeFlows(ExcelParserV5.FlowRow f1, ExcelParserV5.FlowRow f2) {
         ExcelParserV5.FlowRow merged = new ExcelParserV5.FlowRow();
         
-        // Copy common fields from f1
-        merged.inScope = f1.inScope;
-        merged.type = f1.type;
-        merged.alarmName = f1.alarmName;
-        merged.sendingName = f1.sendingName;
-        merged.configGroup = f1.configGroup;
-        merged.priorityRaw = f1.priorityRaw;
-        merged.deviceA = f1.deviceA;
-        merged.deviceB = f1.deviceB;
-        merged.ringtone = f1.ringtone;
-        merged.responseOptions = f1.responseOptions;
-        merged.breakThroughDND = f1.breakThroughDND;
-        merged.multiUserAccept = f1.multiUserAccept;
-        merged.escalateAfter = f1.escalateAfter;
-        merged.ttlValue = f1.ttlValue;
-        merged.enunciate = f1.enunciate;
-        merged.emdan = f1.emdan;
+        // Merge common fields - take non-empty values from either flow
+        merged.inScope = f1.inScope || f2.inScope;
+        merged.type = mergeField(f1.type, f2.type);
+        merged.alarmName = mergeField(f1.alarmName, f2.alarmName);
+        merged.sendingName = mergeField(f1.sendingName, f2.sendingName);
+        merged.configGroup = mergeField(f1.configGroup, f2.configGroup);
+        merged.priorityRaw = mergeField(f1.priorityRaw, f2.priorityRaw);
+        merged.deviceA = mergeField(f1.deviceA, f2.deviceA);
+        merged.deviceB = mergeField(f1.deviceB, f2.deviceB);
+        merged.ringtone = mergeField(f1.ringtone, f2.ringtone);
+        merged.responseOptions = mergeField(f1.responseOptions, f2.responseOptions);
+        merged.breakThroughDND = mergeField(f1.breakThroughDND, f2.breakThroughDND);
+        merged.multiUserAccept = mergeField(f1.multiUserAccept, f2.multiUserAccept);
+        merged.escalateAfter = mergeField(f1.escalateAfter, f2.escalateAfter);
+        merged.ttlValue = mergeField(f1.ttlValue, f2.ttlValue);
+        merged.enunciate = mergeField(f1.enunciate, f2.enunciate);
+        merged.emdan = mergeField(f1.emdan, f2.emdan);
         
         // Merge recipients and timing - take non-empty values
         merged.r1 = mergeField(f1.r1, f2.r1);
@@ -1650,12 +1695,38 @@ public class XmlParser {
     }
     
     /**
-     * Merge a field by taking the non-empty value
+     * Merge a field by taking the non-empty value.
+     * For timing fields with different values, combine them with comma separation.
      */
     private String mergeField(String v1, String v2) {
-        if (v1 != null && !v1.isEmpty()) return v1;
-        if (v2 != null && !v2.isEmpty()) return v2;
-        return "";
+        if (v1 == null || v1.isEmpty()) return v2 != null ? v2 : "";
+        if (v2 == null || v2.isEmpty()) return v1;
+        
+        // Both have values - check if they're the same
+        if (v1.equals(v2)) return v1;
+        
+        // Different values - for timing fields (numeric or "Immediate"), combine with comma
+        // This handles cases where rules have different timing that should be merged
+        if (isTimingValue(v1) && isTimingValue(v2)) {
+            return v1 + "," + v2;
+        }
+        
+        // For non-timing fields, prefer the first non-empty value
+        return v1;
+    }
+    
+    /**
+     * Check if a value is a timing value (numeric seconds or "Immediate")
+     */
+    private boolean isTimingValue(String value) {
+        if (value == null || value.isEmpty()) return false;
+        if ("Immediate".equalsIgnoreCase(value.trim())) return true;
+        try {
+            Integer.parseInt(value.trim());
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     /**
