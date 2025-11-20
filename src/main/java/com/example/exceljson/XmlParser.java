@@ -1285,24 +1285,47 @@ public class XmlParser {
         }
         
         // Role - extract from various role-related filter paths
-        // For "in" relation, only take the first value from comma-separated lists
-        // For "equal" relation, keep all values (represents multiple recipients)
-        if (filter.path.contains("role.name") || 
+        // Extract ALL values when path ends with "role.name" with inclusive relations
+        // Use exclusion notation for exclusive relations (not_in, not_like, not_equal)
+        // ALWAYS prefer filter values over view name extraction for paths ending in "role.name"
+        if (filter.path.endsWith("role.name") || 
             filter.path.contains("assignments.role") || 
             filter.path.equals("role")) {
-            // If role hasn't been set yet (from view name), extract from filter
-            if (rule.role == null) {
-                String roleValue = filter.value.trim();
-                // For "in" relation, handle comma-separated values - take only the first one
-                // This handles cases like "PCT,TECH" where PCT is the primary role
-                if ("in".equalsIgnoreCase(relation) && roleValue.contains(",")) {
+            
+            String roleValue = filter.value.trim();
+            
+            // Check if this is an exclusion relation
+            boolean isExclusionRelation = "not_in".equalsIgnoreCase(relation) || 
+                                        "not_like".equalsIgnoreCase(relation) || 
+                                        "not_equal".equalsIgnoreCase(relation);
+            
+            // For paths ending with "role.name", ALWAYS use filter value (ignore view name extraction)
+            if (filter.path.endsWith("role.name")) {
+                // For exclusion relations, use "AllRoles_except_X" notation
+                if (isExclusionRelation) {
+                    rule.role = "AllRoles_except_" + roleValue;
+                    rule.roleFromView = true;
+                } else {
+                    // For inclusive relations (in, like, equal, contains), keep ALL comma-separated values
+                    rule.role = roleValue;
+                    rule.roleFromView = true;
+                }
+            }
+            // For non-role.name paths, only set if not already set (preserve view name extraction)
+            else if (rule.role == null) {
+                if (isExclusionRelation) {
+                    rule.role = "AllRoles_except_" + roleValue;
+                    rule.roleFromView = true;
+                }
+                // For non-role.name paths (legacy behavior for backwards compatibility)
+                else if ("in".equalsIgnoreCase(relation) && roleValue.contains(",")) {
                     String[] parts = roleValue.split(",");
                     rule.role = parts[0].trim();
+                    rule.roleFromView = true;
                 } else {
-                    // For "equal" or other relations, keep the full value (may include multiple roles)
                     rule.role = roleValue;
+                    rule.roleFromView = true;
                 }
-                rule.roleFromView = true;
             }
         }
         
@@ -2405,6 +2428,12 @@ public class XmlParser {
     
     private String formatRecipient(String recipient, boolean isFromRole) {
         if (recipient == null || recipient.isEmpty()) return "";
+        
+        // Check if this is an exclusion notation (AllRoles_except_X)
+        if (recipient.startsWith("AllRoles_except_")) {
+            // Return as-is without prefix - this is exclusion notation
+            return recipient;
+        }
         
         // Check if recipient contains comma-separated values
         if (recipient.contains(",")) {
