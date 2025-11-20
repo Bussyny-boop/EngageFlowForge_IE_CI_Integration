@@ -1519,11 +1519,15 @@ public class XmlParser {
         }
         
         // For each group, check if we have flows that should be merged
-        List<ExcelParserV5.FlowRow> flowsToRemove = new ArrayList<>();
-        List<ExcelParserV5.FlowRow> flowsToAdd = new ArrayList<>();
+        // Track ORIGINAL flows to remove and FINAL merged flows to add
+        Set<ExcelParserV5.FlowRow> originalFlowsToRemove = new HashSet<>();
+        List<ExcelParserV5.FlowRow> finalMergedFlows = new ArrayList<>();
         
         for (List<ExcelParserV5.FlowRow> group : flowsByKey.values()) {
             if (group.size() < 2) continue; // Nothing to merge
+            
+            // Track original flows in this group before any merging
+            Set<ExcelParserV5.FlowRow> originalFlowsInGroup = new HashSet<>(group);
             
             // Keep merging until no more complementary pairs found
             boolean merged = true;
@@ -1539,9 +1543,6 @@ public class XmlParser {
                         if (areComplementaryFlows(flow1, flow2)) {
                             // Merge them
                             ExcelParserV5.FlowRow mergedFlow = mergeFlows(flow1, flow2);
-                            flowsToRemove.add(flow1);
-                            flowsToRemove.add(flow2);
-                            flowsToAdd.add(mergedFlow);
                             // Remove from group
                             group.remove(flow1);
                             group.remove(flow2);
@@ -1554,11 +1555,18 @@ public class XmlParser {
                     if (merged) break; // Restart outer loop
                 }
             }
+            
+            // After all merging, if the group size changed, we need to remove the originals and add the finals
+            if (group.size() < originalFlowsInGroup.size()) {
+                // Merging happened - remove all original flows and add the final merged result(s)
+                originalFlowsToRemove.addAll(originalFlowsInGroup);
+                finalMergedFlows.addAll(group);
+            }
         }
         
         // Apply changes
-        flows.removeAll(flowsToRemove);
-        flows.addAll(flowsToAdd);
+        flows.removeAll(originalFlowsToRemove);
+        flows.addAll(finalMergedFlows);
     }
     
     /**
@@ -1615,17 +1623,9 @@ public class XmlParser {
         // 1. There are complementary fields (one has data the other doesn't) and no more than 2 conflicts
         // 2. OR they're duplicates (all filled fields are identical) - these should be merged to eliminate duplicates
         //    Duplicates are flows where all non-empty fields match and there are no conflicts
-        boolean isDuplicate = duplicates > 0 && conflicts == 0 && complements == 0;
+        //    Note: bothEmpty fields don't matter for duplicate detection
+        boolean isDuplicate = duplicates > 0 && conflicts == 0;  // Removed: && complements == 0
         boolean isComplementary = complements > 0 && conflicts <= 2;
-        
-        // Debug output for Toilet Finished / CDH_3S
-        if (f1.alarmName != null && f1.alarmName.equals("Toilet Finished") && 
-            f1.configGroup != null && f1.configGroup.contains("CDH_3S")) {
-            System.out.println("DEBUG areComplementaryFlows for Toilet Finished / CDH_3S:");
-            System.out.println("  duplicates=" + duplicates + ", conflicts=" + conflicts + ", complements=" + complements + ", bothEmpty=" + bothEmpty);
-            System.out.println("  isDuplicate=" + isDuplicate + ", isComplementary=" + isComplementary);
-            System.out.println("  Result: " + (isDuplicate || isComplementary));
-        }
         
         return isDuplicate || isComplementary;
     }
@@ -1695,12 +1695,38 @@ public class XmlParser {
     }
     
     /**
-     * Merge a field by taking the non-empty value
+     * Merge a field by taking the non-empty value.
+     * For timing fields with different values, combine them with comma separation.
      */
     private String mergeField(String v1, String v2) {
-        if (v1 != null && !v1.isEmpty()) return v1;
-        if (v2 != null && !v2.isEmpty()) return v2;
-        return "";
+        if (v1 == null || v1.isEmpty()) return v2 != null ? v2 : "";
+        if (v2 == null || v2.isEmpty()) return v1;
+        
+        // Both have values - check if they're the same
+        if (v1.equals(v2)) return v1;
+        
+        // Different values - for timing fields (numeric or "Immediate"), combine with comma
+        // This handles cases where rules have different timing that should be merged
+        if (isTimingValue(v1) && isTimingValue(v2)) {
+            return v1 + "," + v2;
+        }
+        
+        // For non-timing fields, prefer the first non-empty value
+        return v1;
+    }
+    
+    /**
+     * Check if a value is a timing value (numeric seconds or "Immediate")
+     */
+    private boolean isTimingValue(String value) {
+        if (value == null || value.isEmpty()) return false;
+        if ("Immediate".equalsIgnoreCase(value.trim())) return true;
+        try {
+            Integer.parseInt(value.trim());
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     /**
