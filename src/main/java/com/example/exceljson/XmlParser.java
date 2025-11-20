@@ -1861,39 +1861,39 @@ public class XmlParser {
         if (facs.isEmpty()) facs.add("");
         if (uns.isEmpty()) uns.add("");
 
-        // Emit flows per facility with ALL units grouped together for proper config group naming
+        // Emit one flow per (facility, unit) pair for accurate Units tab population
         for (String fac : facs) {
-            ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
-            // Copy from template
-            flow.inScope = template.inScope;
-            flow.type = template.type;
-            flow.alarmName = template.alarmName;
-            flow.sendingName = template.sendingName;
-            flow.priorityRaw = template.priorityRaw;
-            flow.deviceA = template.deviceA;
-            flow.deviceB = template.deviceB;
-            flow.ringtone = template.ringtone;
-            flow.responseOptions = template.responseOptions;
-            flow.breakThroughDND = template.breakThroughDND;
-            flow.multiUserAccept = template.multiUserAccept;
-            flow.escalateAfter = template.escalateAfter;
-            flow.ttlValue = template.ttlValue;
-            flow.enunciate = template.enunciate;
-            flow.emdan = template.emdan;
-            flow.t1 = template.t1; flow.r1 = template.r1;
-            flow.t2 = template.t2; flow.r2 = template.r2;
-            flow.t3 = template.t3; flow.r3 = template.r3;
-            flow.t4 = template.t4; flow.r4 = template.r4;
-            flow.t5 = template.t5; flow.r5 = template.r5;
-
-            // Config group built from explicit facility and ALL units in the set
-            Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
-            flow.configGroup = createConfigGroup(dataset, fset, uns, excludedUnits);
-
-            addToList(flow);
-            // Track config group per (facility, unit) and type for Unit rows
-            // Emit one entry per individual unit for Units tab population
             for (String un : uns) {
+                ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+                // Copy from template
+                flow.inScope = template.inScope;
+                flow.type = template.type;
+                flow.alarmName = template.alarmName;
+                flow.sendingName = template.sendingName;
+                flow.priorityRaw = template.priorityRaw;
+                flow.deviceA = template.deviceA;
+                flow.deviceB = template.deviceB;
+                flow.ringtone = template.ringtone;
+                flow.responseOptions = template.responseOptions;
+                flow.breakThroughDND = template.breakThroughDND;
+                flow.multiUserAccept = template.multiUserAccept;
+                flow.escalateAfter = template.escalateAfter;
+                flow.ttlValue = template.ttlValue;
+                flow.enunciate = template.enunciate;
+                flow.emdan = template.emdan;
+                flow.t1 = template.t1; flow.r1 = template.r1;
+                flow.t2 = template.t2; flow.r2 = template.r2;
+                flow.t3 = template.t3; flow.r3 = template.r3;
+                flow.t4 = template.t4; flow.r4 = template.r4;
+                flow.t5 = template.t5; flow.r5 = template.r5;
+
+                // Config group built from explicit facility/unit
+                Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
+                Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
+                flow.configGroup = createConfigGroup(dataset, fset, uset, excludedUnits);
+
+                addToList(flow);
+                // Track config group per (facility, unit) and type for Unit rows
                 trackConfigGroupForUnit(flow.type, fac, un, flow.configGroup);
             }
         }
@@ -1985,39 +1985,38 @@ public class XmlParser {
         if (facs.isEmpty()) facs.add("");
         if (uns.isEmpty()) uns.add("");
 
-        // Emit flows per facility with ALL units grouped together for proper config group naming
         for (String fac : facs) {
-            ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
-            // Copy from template
-            flow.inScope = template.inScope;
-            flow.type = template.type;
-            flow.alarmName = template.alarmName;
-            flow.sendingName = template.sendingName;
-            flow.priorityRaw = template.priorityRaw;
-            flow.deviceA = template.deviceA;
-            flow.deviceB = template.deviceB;
-            flow.ringtone = template.ringtone;
-            flow.responseOptions = template.responseOptions;
-            flow.breakThroughDND = template.breakThroughDND;
-            flow.multiUserAccept = template.multiUserAccept;
-            flow.escalateAfter = template.escalateAfter;
-            flow.ttlValue = template.ttlValue;
-            flow.enunciate = template.enunciate;
-            flow.emdan = template.emdan;
-            flow.t1 = template.t1; flow.r1 = template.r1;
-            flow.t2 = template.t2; flow.r2 = template.r2;
-            flow.t3 = template.t3; flow.r3 = template.r3;
-            flow.t4 = template.t4; flow.r4 = template.r4;
-            flow.t5 = template.t5; flow.r5 = template.r5;
-
-            // Config group built from explicit facility and ALL units in the set
-            Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
-            flow.configGroup = createConfigGroup(dataset, fset, uns, excludedUnits);
-
-            addToList(flow);
-            // Track config group per (facility, unit) and type for Unit rows
-            // Emit one entry per individual unit for Units tab population
             for (String un : uns) {
+                ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+                // Copy from template
+                flow.inScope = template.inScope;
+                flow.type = template.type;
+                flow.alarmName = template.alarmName;
+                flow.sendingName = template.sendingName;
+                flow.priorityRaw = template.priorityRaw;
+                flow.deviceA = template.deviceA;
+                flow.deviceB = template.deviceB;
+                flow.ringtone = template.ringtone;
+                flow.responseOptions = template.responseOptions;
+                flow.breakThroughDND = template.breakThroughDND;
+                flow.multiUserAccept = template.multiUserAccept;
+                flow.escalateAfter = template.escalateAfter;
+                flow.ttlValue = template.ttlValue;
+                flow.enunciate = template.enunciate;
+                flow.emdan = template.emdan;
+                flow.t1 = template.t1; flow.r1 = template.r1;
+                flow.t2 = template.t2; flow.r2 = template.r2;
+                flow.t3 = template.t3; flow.r3 = template.r3;
+                flow.t4 = template.t4; flow.r4 = template.r4;
+                flow.t5 = template.t5; flow.r5 = template.r5;
+
+                // Config group per facility/unit
+                Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
+                Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
+                flow.configGroup = createConfigGroup(dataset, fset, uset, excludedUnits);
+
+                addToList(flow);
+                // Track config group per (facility, unit) and type for Unit rows
                 trackConfigGroupForUnit(flow.type, fac, un, flow.configGroup);
             }
         }
@@ -2155,39 +2154,38 @@ public class XmlParser {
         if (facs.isEmpty()) facs.add("");
         if (uns.isEmpty()) uns.add("");
 
-        // Emit flows per facility with ALL units grouped together for proper config group naming
         for (String fac : facs) {
-            ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
-            // Copy from template
-            flow.inScope = template.inScope;
-            flow.type = template.type;
-            flow.alarmName = template.alarmName;
-            flow.sendingName = template.sendingName;
-            flow.priorityRaw = template.priorityRaw;
-            flow.deviceA = template.deviceA;
-            flow.deviceB = template.deviceB;
-            flow.ringtone = template.ringtone;
-            flow.responseOptions = template.responseOptions;
-            flow.breakThroughDND = template.breakThroughDND;
-            flow.multiUserAccept = template.multiUserAccept;
-            flow.escalateAfter = template.escalateAfter;
-            flow.ttlValue = template.ttlValue;
-            flow.enunciate = template.enunciate;
-            flow.emdan = template.emdan;
-            flow.t1 = template.t1; flow.r1 = template.r1;
-            flow.t2 = template.t2; flow.r2 = template.r2;
-            flow.t3 = template.t3; flow.r3 = template.r3;
-            flow.t4 = template.t4; flow.r4 = template.r4;
-            flow.t5 = template.t5; flow.r5 = template.r5;
-
-            // Config group built from explicit facility and ALL units in the set
-            Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
-            flow.configGroup = createConfigGroup(dataset, fset, uns, excludedUnits);
-
-            addToList(flow);
-            // Track config group per (facility, unit) and type for Unit rows
-            // Emit one entry per individual unit for Units tab population
             for (String un : uns) {
+                ExcelParserV5.FlowRow flow = new ExcelParserV5.FlowRow();
+                // Copy from template
+                flow.inScope = template.inScope;
+                flow.type = template.type;
+                flow.alarmName = template.alarmName;
+                flow.sendingName = template.sendingName;
+                flow.priorityRaw = template.priorityRaw;
+                flow.deviceA = template.deviceA;
+                flow.deviceB = template.deviceB;
+                flow.ringtone = template.ringtone;
+                flow.responseOptions = template.responseOptions;
+                flow.breakThroughDND = template.breakThroughDND;
+                flow.multiUserAccept = template.multiUserAccept;
+                flow.escalateAfter = template.escalateAfter;
+                flow.ttlValue = template.ttlValue;
+                flow.enunciate = template.enunciate;
+                flow.emdan = template.emdan;
+                flow.t1 = template.t1; flow.r1 = template.r1;
+                flow.t2 = template.t2; flow.r2 = template.r2;
+                flow.t3 = template.t3; flow.r3 = template.r3;
+                flow.t4 = template.t4; flow.r4 = template.r4;
+                flow.t5 = template.t5; flow.r5 = template.r5;
+
+                // Config group per facility/unit
+                Set<String> fset = fac.isEmpty() ? Collections.emptySet() : Set.of(fac);
+                Set<String> uset = un.isEmpty() ? Collections.emptySet() : Set.of(un);
+                flow.configGroup = createConfigGroup(dataset, fset, uset, excludedUnits);
+
+                addToList(flow);
+                // Track config group per (facility, unit) and type for Unit rows
                 trackConfigGroupForUnit(flow.type, fac, un, flow.configGroup);
             }
         }
@@ -2302,6 +2300,7 @@ public class XmlParser {
     
     private String createConfigGroup(String dataset, Set<String> facilities, Set<String> units, Set<String> excludedUnits) {
         String facility = facilities.isEmpty() ? "" : facilities.iterator().next();
+        String unit = units.isEmpty() ? "" : units.iterator().next();
         // Always place dataset last. Use "All_Facilities" and "AllUnits" when they cannot be determined
         List<String> parts = new ArrayList<>();
         // Treat placeholder as missing facility
@@ -2322,24 +2321,8 @@ public class XmlParser {
                 unitPart.append("_").append(excluded);
             }
             parts.add(unitPart.toString());
-        } else if (units != null && !units.isEmpty()) {
-            // Handle multiple units - join them with underscore
-            // Filter out empty strings first
-            List<String> nonEmptyUnits = units.stream()
-                .filter(u -> u != null && !u.isEmpty())
-                .collect(java.util.stream.Collectors.toList());
-            
-            if (nonEmptyUnits.isEmpty()) {
-                // All units were empty strings - treat as "AllUnits"
-                parts.add("AllUnits");
-            } else if (nonEmptyUnits.size() == 1) {
-                // Single non-empty unit - use it directly
-                parts.add(nonEmptyUnits.get(0));
-            } else {
-                // Multiple units - sort and join with underscore for consistent naming
-                Collections.sort(nonEmptyUnits);
-                parts.add(String.join("_", nonEmptyUnits));
-            }
+        } else if (unit != null && !unit.isEmpty()) {
+            parts.add(unit);
         } else {
             // Hardcode "AllUnits" when unit name is not found
             parts.add("AllUnits");
