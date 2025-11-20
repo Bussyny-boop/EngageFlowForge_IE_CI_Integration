@@ -1229,7 +1229,13 @@ public class XmlParser {
         // Facilities
         if (filter.path.contains("facility.name")) {
             if (!isExclusion) {
-                rule.facilities.add(filter.value.trim());
+                // Split comma-separated facility names, just like units
+                for (String facility : filter.value.split(",")) {
+                    String trimmed = facility.trim();
+                    if (!trimmed.isEmpty()) {
+                        rule.facilities.add(trimmed);
+                    }
+                }
             }
         }
         
