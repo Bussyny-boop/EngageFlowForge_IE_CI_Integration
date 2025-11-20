@@ -1623,8 +1623,8 @@ public class XmlParser {
         // 1. There are complementary fields (one has data the other doesn't) and no more than 2 conflicts
         // 2. OR they're duplicates (all filled fields are identical) - these should be merged to eliminate duplicates
         //    Duplicates are flows where all non-empty fields match and there are no conflicts
-        //    Note: bothEmpty fields don't matter for duplicate detection
-        boolean isDuplicate = duplicates > 0 && conflicts == 0;  // Removed: && complements == 0
+        //    Note: Empty fields in both flows don't prevent duplicate detection
+        boolean isDuplicate = duplicates > 0 && conflicts == 0;
         boolean isComplementary = complements > 0 && conflicts <= 2;
         
         return isDuplicate || isComplementary;
