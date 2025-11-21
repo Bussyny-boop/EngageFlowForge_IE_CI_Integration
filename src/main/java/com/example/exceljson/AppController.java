@@ -1245,6 +1245,9 @@ public class AppController {
                     setButtonLoaded(loadNdwButton, true);
                     autoClearLoaded(loadNdwButton, loadedTimeoutSeconds);
 
+                    // Reapply sidebar state to restore icons if collapsed
+                    applySidebarState();
+
                     // Build success message
                     StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
 
@@ -1381,6 +1384,9 @@ public class AppController {
                         setButtonLoaded(loadXmlButton, true);
                         autoClearLoaded(loadXmlButton, loadedTimeoutSeconds);
 
+                        // Reapply sidebar state to restore icons if collapsed
+                        applySidebarState();
+
                         // Success message
                         int nurseFlows = parser.nurseCalls.size();
                         int clinicalFlows = parser.clinicals.size();
@@ -1508,6 +1514,9 @@ public class AppController {
                     setButtonLoading(loadJsonButton, false);
                     setButtonLoaded(loadJsonButton, true);
                     autoClearLoaded(loadJsonButton, loadedTimeoutSeconds);
+
+                    // Reapply sidebar state to restore icons if collapsed
+                    applySidebarState();
 
                     showInfo("✅ JSON loaded successfully\n\n" +
                         "Loaded " + parser.nurseCalls.size() + " Nurse Calls, " +
@@ -2928,6 +2937,9 @@ public class AppController {
                 updateStatusLabel();
                 statusLabel.setText("✅ All data cleared successfully");
                 
+                // Reapply sidebar state to restore icons if collapsed
+                applySidebarState();
+                
                 showInfo("All data has been cleared successfully.\n\nYou can now load a new Excel file.");
             } catch (Exception ex) {
                 showError("Failed to clear data: " + ex.getMessage());
@@ -3144,19 +3156,24 @@ public class AppController {
             for (int i = 0; i < steps.size(); i++) {
                 int idx = steps.get(i);
                 String stageId = "Stop_" + rowCounter + "_" + (i + 1);
-                String recipientLabel = sanitizeForPlantUml(recipients[idx]);
-
+                
                 // Split multiple recipients and display each on a separate line
                 List<String> stageLabelLines = new ArrayList<>();
                 stageLabelLines.add("Alarm Stop " + (i + 1));
                 
-                // Split recipients by comma, semicolon, or newline - consistent with ExcelParserV5
-                if (recipientLabel != null && !recipientLabel.isEmpty()) {
-                    String[] recipientParts = recipientLabel.split("[,;\\n]");
+                // Split recipients by comma, semicolon, or newline BEFORE sanitizing to preserve formatting
+                String rawRecipient = recipients[idx];
+                if (rawRecipient != null && !rawRecipient.isEmpty()) {
+                    // Split by comma, semicolon, newline, or carriage return to handle both Unix and Windows line endings
+                    String[] recipientParts = rawRecipient.split("[,;\\n\\r]+");
                     for (String part : recipientParts) {
                         String trimmed = part.trim();
                         if (!trimmed.isEmpty()) {
-                            stageLabelLines.add(trimmed);
+                            // Sanitize each individual recipient part
+                            String sanitizedPart = sanitizeForPlantUml(trimmed);
+                            if (!sanitizedPart.isEmpty() && !"-".equals(sanitizedPart)) {
+                                stageLabelLines.add(sanitizedPart);
+                            }
                         }
                     }
                 }
