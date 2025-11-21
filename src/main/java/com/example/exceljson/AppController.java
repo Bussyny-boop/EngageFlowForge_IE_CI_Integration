@@ -3132,6 +3132,8 @@ public class AppController {
         plantuml.append("together {\n");
 
         int rowCounter = 1;
+        int rowsWithData = 0; // Track rows that have actual recipient data
+        
         for (ExcelParserV5.FlowRow row : flows) {
             String[] recipients = { row.r1, row.r2, row.r3, row.r4, row.r5 };
             String[] times = { row.t1, row.t2, row.t3, row.t4, row.t5 };
@@ -3144,8 +3146,12 @@ public class AppController {
             }
 
             if (steps.isEmpty()) {
+                // Log warning for flows without recipients
+                System.err.println("WARNING: Flow '" + row.alarmName + "' has no recipients defined!");
                 continue;
             }
+            
+            rowsWithData++;
 
             List<String> headerLines = new ArrayList<>();
             headerLines.add("🔔 " + sanitizeForPlantUml(row.alarmName));
@@ -3235,6 +3241,15 @@ public class AppController {
 
             plantuml.append("\n");
             rowCounter++;
+        }
+        
+        // Log diagnostic information
+        if (rowsWithData == 0) {
+            System.err.println("WARNING: Generated diagram for '" + tabLabel + " — " + configLabel + 
+                             "' contains NO flows with recipients!");
+        } else {
+            System.out.println("INFO: Generated diagram for '" + tabLabel + " — " + configLabel + 
+                             "' with " + rowsWithData + " flow(s) containing recipient data");
         }
 
         plantuml.append("}\n");
@@ -4028,8 +4043,34 @@ public class AppController {
                 checkedRows.addAll(ordersFullList.stream().filter(r -> r.inScope).collect(Collectors.toList()));
             }
             if (checkedRows.isEmpty()) {
-                showError("No rows are checked (in scope). Please check some rows first.");
+                showError("No rows are checked (in scope). Please check some rows first.\n\n" +
+                         "To export visual callflow diagrams:\n" +
+                         "1. Check the box in the 'Scope' column for rows you want to include\n" +
+                         "2. Click 'Visual CallFlow' button\n" +
+                         "3. Save the PDF file");
                 return;
+            }
+            
+            // Diagnostic: Count how many flows have recipients
+            int flowsWithRecipients = 0;
+            int flowsWithoutRecipients = 0;
+            for (ExcelParserV5.FlowRow row : checkedRows) {
+                boolean hasRecipient = (row.r1 != null && !row.r1.trim().isEmpty()) ||
+                                      (row.r2 != null && !row.r2.trim().isEmpty()) ||
+                                      (row.r3 != null && !row.r3.trim().isEmpty()) ||
+                                      (row.r4 != null && !row.r4.trim().isEmpty()) ||
+                                      (row.r5 != null && !row.r5.trim().isEmpty());
+                if (hasRecipient) {
+                    flowsWithRecipients++;
+                } else {
+                    flowsWithoutRecipients++;
+                }
+            }
+            
+            if (flowsWithRecipients == 0) {
+                showWarning("Warning: None of the checked flows have recipients defined.\n\n" +
+                           "The generated diagrams may appear incomplete.\n" +
+                           "Please ensure recipient columns (R1, R2, etc.) are filled in.");
             }
             final String groupDelimiter = "||";
             Map<String, List<ExcelParserV5.FlowRow>> grouped = checkedRows.stream()
