@@ -3146,13 +3146,13 @@ public class AppController {
                 String stageId = "Stop_" + rowCounter + "_" + (i + 1);
                 String recipientLabel = sanitizeForPlantUml(recipients[idx]);
 
-                // Split multiple recipients by comma and display each on a separate line
+                // Split multiple recipients and display each on a separate line
                 List<String> stageLabelLines = new ArrayList<>();
                 stageLabelLines.add("Alarm Stop " + (i + 1));
                 
-                // Split recipients by comma and add each on a new line
+                // Split recipients by comma, semicolon, or newline - consistent with ExcelParserV5
                 if (recipientLabel != null && !recipientLabel.isEmpty()) {
-                    String[] recipientParts = recipientLabel.split(",");
+                    String[] recipientParts = recipientLabel.split("[,;\\n]");
                     for (String part : recipientParts) {
                         String trimmed = part.trim();
                         if (!trimmed.isEmpty()) {
