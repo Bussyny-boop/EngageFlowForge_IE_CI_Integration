@@ -3655,24 +3655,7 @@ public class ExcelParserV5 {
           ? cell.getLocalDateTimeCellValue().toString()
           : String.valueOf(cell.getNumericCellValue());
         case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-        case FORMULA -> {
-          // For formulas, evaluate and get the cached/calculated value instead of the formula text
-          try {
-            CellType cachedType = cell.getCachedFormulaResultType();
-            yield switch (cachedType) {
-              case STRING -> cell.getStringCellValue().trim();
-              case NUMERIC -> DateUtil.isCellDateFormatted(cell)
-                ? cell.getLocalDateTimeCellValue().toString()
-                : String.valueOf(cell.getNumericCellValue());
-              case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-              case BLANK, ERROR, _NONE -> "";  // Explicitly handle these cases
-              default -> "";  // Fallback for any unexpected types
-            };
-          } catch (Exception e) {
-            // Fallback to empty string if evaluation fails
-            yield "";
-          }
-        }
+        case FORMULA -> cell.getCellFormula();
         default -> "";
       };
       if (val.equalsIgnoreCase("N/A") || val.equalsIgnoreCase("NA") || val.isBlank()) return "";
