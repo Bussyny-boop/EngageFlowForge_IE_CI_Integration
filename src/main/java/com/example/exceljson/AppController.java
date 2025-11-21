@@ -24,6 +24,8 @@ import javafx.util.Duration;
 import javafx.concurrent.Task;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -3396,23 +3398,23 @@ public class AppController {
             exportJsonLabel.setManaged(false);
         }
         
-        // Set distinct icons for collapsed mode
-        setCollapsedButton(loadNdwButton, "📄", "Load NDW");
-        setCollapsedButton(loadXmlButton, "📋", "Load Engage XML");
-        setCollapsedButton(loadJsonButton, "📥", "Load Engage Rules");
-        setCollapsedButton(clearAllButton, "🗑️", "Clear All");
-        setCollapsedButton(generateJsonButton, "👁️", "Preview JSON");
+        // Set distinct icons for collapsed mode - use PNG icons instead of emojis
+        setCollapsedButton(loadNdwButton, "/icons/load-ndw.png", "Load NDW");
+        setCollapsedButton(loadXmlButton, "/icons/load-xml.png", "Load Engage XML");
+        setCollapsedButton(loadJsonButton, "/icons/load-json.png", "Load Engage Rules");
+        setCollapsedButton(clearAllButton, "/icons/clear.png", "Clear All");
+        setCollapsedButton(generateJsonButton, "/icons/preview.png", "Preview JSON");
         // Export JSON: use distinct icons
-        setCollapsedButton(exportNurseJsonButton, "🩺", "Nursecall");
-        setCollapsedButton(exportClinicalJsonButton, "🧬", "Clinicals");
-        setCollapsedButton(exportOrdersJsonButton, "📦", "Orders");
-        setCollapsedButton(visualFlowButton, "🔀", "Visual CallFlow");
+        setCollapsedButton(exportNurseJsonButton, "/icons/export-nurse.png", "Nursecall");
+        setCollapsedButton(exportClinicalJsonButton, "/icons/export-clinical.png", "Clinicals");
+        setCollapsedButton(exportOrdersJsonButton, "/icons/export-orders.png", "Orders");
+        setCollapsedButton(visualFlowButton, "/icons/visual-flow.png", "Visual CallFlow");
 
-        // Table tabs: keep icons only
-        setCollapsedTab(navUnits, "📊", "Units");
-        setCollapsedTab(navNurseCalls, "🔔", "Nurse Calls");
-        setCollapsedTab(navClinicals, "🏥", "Clinicals");
-        setCollapsedTab(navOrders, "💊", "Orders");
+        // Table tabs: use PNG icons instead of emojis
+        setCollapsedTab(navUnits, "/icons/unit.png", "Units");
+        setCollapsedTab(navNurseCalls, "/icons/nurse.png", "Nurse Calls");
+        setCollapsedTab(navClinicals, "/icons/clinical.png", "Clinicals");
+        setCollapsedTab(navOrders, "/icons/orders.png", "Orders");
     }
     
     /**
@@ -3463,11 +3465,35 @@ public class AppController {
     }
     
     /**
-     * Set a button to collapsed mode with short text and tooltip
+     * Load an icon from resources and create an ImageView
      */
-    private void setCollapsedButton(Button button, String shortText, String tooltip) {
+    private ImageView loadIcon(String iconPath) {
+        try {
+            var iconStream = getClass().getResourceAsStream(iconPath);
+            if (iconStream != null) {
+                Image image = new Image(iconStream);
+                ImageView imageView = new ImageView(image);
+                imageView.setFitWidth(16);
+                imageView.setFitHeight(16);
+                imageView.setPreserveRatio(true);
+                return imageView;
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load icon: " + iconPath + " - " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Set a button to collapsed mode with icon and tooltip
+     */
+    private void setCollapsedButton(Button button, String iconPath, String tooltip) {
         if (button != null) {
-            button.setText(shortText);
+            ImageView icon = loadIcon(iconPath);
+            if (icon != null) {
+                button.setGraphic(icon);
+                button.setText("");
+            }
             button.setTooltip(new Tooltip(tooltip));
         }
     }
@@ -3475,9 +3501,13 @@ public class AppController {
     /**
      * Set a toggle button (tab) to collapsed mode (icon only, tooltip for full name)
      */
-    private void setCollapsedTab(ToggleButton button, String icon, String tooltip) {
+    private void setCollapsedTab(ToggleButton button, String iconPath, String tooltip) {
         if (button != null) {
-            if (!icon.isEmpty()) button.setText(icon);
+            ImageView icon = loadIcon(iconPath);
+            if (icon != null) {
+                button.setGraphic(icon);
+                button.setText("");
+            }
             button.setTooltip(new Tooltip(tooltip));
         }
     }
@@ -3533,6 +3563,7 @@ public class AppController {
             String originalText = originalButtonTexts.get(button);
             if (originalText != null) {
                 button.setText(originalText);
+                button.setGraphic(null);  // Clear the icon graphic
                 button.setTooltip(null);
             }
         }
@@ -3546,6 +3577,7 @@ public class AppController {
             String originalText = originalToggleTexts.get(button);
             if (originalText != null) {
                 button.setText(originalText);
+                button.setGraphic(null);  // Clear the icon graphic
                 button.setTooltip(null);
             }
         }
