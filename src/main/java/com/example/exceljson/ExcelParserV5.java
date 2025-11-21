@@ -3665,7 +3665,8 @@ public class ExcelParserV5 {
                 ? cell.getLocalDateTimeCellValue().toString()
                 : String.valueOf(cell.getNumericCellValue());
               case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-              default -> "";
+              case BLANK, ERROR, _NONE -> "";  // Explicitly handle these cases
+              default -> "";  // Fallback for any unexpected types
             };
           } catch (Exception e) {
             // Fallback to empty string if evaluation fails
