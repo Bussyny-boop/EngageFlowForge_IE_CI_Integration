@@ -190,8 +190,8 @@
                     <top>
                         <VBox fx:id="settingsDrawer" managed="false" visible="false" spacing="0" styleClass="settings-drawer">
                             <!-- Fixed Header -->
-                            <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
-                                <Label text="⚙️ SETTINGS" style="-fx-font-size:14; -fx-font-weight:bold;" />
+                            <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 6 8;">
+                                <Label text="⚙️ SETTINGS" style="-fx-font-size:13; -fx-font-weight:bold;" />
                                 <Region HBox.hgrow="ALWAYS" />
                                 <Button fx:id="closeSettingsButton" text="✕" styleClass="close-button" />
                             </HBox>
@@ -202,38 +202,39 @@
                             <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" 
                                         style="-fx-background-color: transparent; -fx-background: transparent;"
                                         VBox.vgrow="ALWAYS">
-                                <VBox spacing="10" style="-fx-padding: 15;">
+                                <VBox spacing="6" style="-fx-padding: 8 12;">
                                     <!-- Merge Engage Rules Options (Mutually Exclusive) -->
-                                    <Label text="Merge Engage Rules" style="-fx-font-weight:bold;">
+                                    <Label text="Merge Engage Rules" style="-fx-font-weight:bold; -fx-font-size:11;">
                                         <tooltip>
                                             <Tooltip text="Choose how to merge flows with identical delivery parameters. Only one option can be selected at a time." />
                                         </tooltip>
                                     </Label>
-                                    
-                                    <CheckBox fx:id="noMergeCheckbox" text="Standard (No Merge)">
-                                        <tooltip>
-                                            <Tooltip text="Standard Mode: Each alarm/alert gets its own separate delivery flow. This is the default behavior and creates the most granular output." />
-                                        </tooltip>
-                                    </CheckBox>
-                                    
-                                    <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Multiple Config Groups">
-                                        <tooltip>
-                                            <Tooltip text="Merge Multiple Config Groups: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across MULTIPLE Config Groups. All involved Config Group names are listed in the flow name. Flows with different No Caregiver Groups will remain separate." />
-                                        </tooltip>
-                                    </CheckBox>
-                                    
-                                    <CheckBox fx:id="mergeAcrossConfigGroupCheckbox" text="Merge by Single Config Group" selected="true">
-                                        <tooltip>
-                                            <Tooltip text="Merge by Single Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
-                                        </tooltip>
-                                    </CheckBox>
+                                    <VBox spacing="3" style="-fx-padding: 0 0 0 8;">
+                                        <CheckBox fx:id="noMergeCheckbox" text="Standard (No Merge)" style="-fx-font-size:10;">
+                                            <tooltip>
+                                                <Tooltip text="Standard Mode: Each alarm/alert gets its own separate delivery flow. This is the default behavior and creates the most granular output." />
+                                            </tooltip>
+                                        </CheckBox>
+                                        
+                                        <CheckBox fx:id="mergeByConfigGroupCheckbox" text="Merge Multiple Config Groups" style="-fx-font-size:10;">
+                                            <tooltip>
+                                                <Tooltip text="Merge Multiple Config Groups: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing across MULTIPLE Config Groups. All involved Config Group names are listed in the flow name. Flows with different No Caregiver Groups will remain separate." />
+                                            </tooltip>
+                                        </CheckBox>
+                                        
+                                        <CheckBox fx:id="mergeAcrossConfigGroupCheckbox" text="Merge by Single Config Group" selected="true" style="-fx-font-size:10;">
+                                            <tooltip>
+                                                <Tooltip text="Merge by Single Config Group: Combines flows with identical Priority, Device, Ringtone, Recipients, and Timing ONLY within the same Config Group. Flows in different Config Groups will remain separate, even if their delivery parameters match." />
+                                            </tooltip>
+                                        </CheckBox>
+                                    </VBox>
                                     
                                     <Separator />
                                     
                                     <!-- Combine Config Group Toggle -->
-                                    <HBox spacing="10" alignment="CENTER_LEFT">
-                                        <Label text="Combine Config Group" style="-fx-font-weight:bold;" />
-                                        <CheckBox fx:id="combineConfigGroupCheckbox">
+                                    <HBox spacing="8" alignment="CENTER_LEFT">
+                                        <Label text="Combine Config Group" style="-fx-font-weight:bold; -fx-font-size:11;" />
+                                        <CheckBox fx:id="combineConfigGroupCheckbox" style="-fx-font-size:10;">
                                             <tooltip>
                                                 <Tooltip text="When enabled, rows with identical columns (except Config Group) will be merged into one, with unique Config Group values combined. Toggle off to revert the merge." />
                                             </tooltip>
@@ -243,38 +244,38 @@
                                     <Separator />
                                     
                                     <!-- Custom Tab Mappings (MOVED UP) -->
-                                    <Label text="Custom Tab Mappings" style="-fx-font-weight:bold;">
+                                    <Label text="Custom Tab Mappings" style="-fx-font-weight:bold; -fx-font-size:11;">
                                         <tooltip>
                                             <Tooltip text="Map custom Excel tab names to flow types (case-insensitive)" />
                                         </tooltip>
                                     </Label>
-                                    <GridPane hgap="10" vgap="8">
-                                        <Label text="Custom Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                        <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <GridPane hgap="8" vgap="4">
+                                        <Label text="Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-size:10;" />
+                                        <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="130" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-font-size:10;">
                                             <tooltip>
                                                 <Tooltip text="Enter the exact name of a custom Excel tab (case-insensitive)" />
                                             </tooltip>
                                         </TextField>
                                         
-                                        <Label text="Maps To:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                        <ComboBox fx:id="customTabFlowTypeCombo" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <Label text="Maps To:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-size:10;" />
+                                        <ComboBox fx:id="customTabFlowTypeCombo" prefWidth="130" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-font-size:10;">
                                             <tooltip>
                                                 <Tooltip text="Select which flow type this custom tab should map to" />
                                             </tooltip>
                                         </ComboBox>
                                         
-                                        <Button fx:id="addCustomTabButton" text="Add Mapping" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="button-secondary" />
+                                        <Button fx:id="addCustomTabButton" text="Add Mapping" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="button-secondary" style="-fx-font-size:10; -fx-padding: 2 6;" />
                                     </GridPane>
                                     
-                                    <Label text="Current Mappings:" style="-fx-font-size: 11; -fx-text-fill: gray;" />
-                                    <ListView fx:id="customTabMappingsList" prefHeight="80" styleClass="custom-tab-list">
+                                    <Label text="Current Mappings:" style="-fx-font-size: 10; -fx-text-fill: gray;" />
+                                    <ListView fx:id="customTabMappingsList" prefHeight="60" styleClass="custom-tab-list" style="-fx-font-size:10;">
                                         <tooltip>
                                             <Tooltip text="Current custom tab mappings. Double-click to remove." />
                                         </tooltip>
                                     </ListView>
                                     
                                     <!-- Custom Tab Statistics -->
-                                    <Label fx:id="customTabStatsLabel" text="" style="-fx-font-size: 10; -fx-text-fill: #666;" wrapText="true">
+                                    <Label fx:id="customTabStatsLabel" text="" style="-fx-font-size: 9; -fx-text-fill: #666;" wrapText="true">
                                         <tooltip>
                                             <Tooltip text="Statistics about custom tabs processed from Excel" />
                                         </tooltip>
@@ -283,46 +284,46 @@
                                     <Separator />
                                     
                                     <!-- Adapter References, Vocera Badges Alert Interface, and Room Filters (Side by Side) -->
-                                    <HBox spacing="30" alignment="TOP_LEFT">
+                                    <HBox spacing="15" alignment="TOP_LEFT">
                                         <!-- Left: Adapter References -->
-                                        <VBox spacing="8">
-                                            <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
-                                            <GridPane hgap="10" vgap="8">
-                                                <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                                <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                        <VBox spacing="4">
+                                            <Label text="Adapter Reference Names" style="-fx-font-weight:bold; -fx-font-size:11;" />
+                                            <GridPane hgap="6" vgap="3">
+                                                <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-size:10;" />
+                                                <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="110" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-font-size:10;" />
                                                 
-                                                <Label text="VMP:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                                <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                <Label text="VMP:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-size:10;" />
+                                                <TextField fx:id="vcsRefNameField" promptText="VMP" prefWidth="110" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-font-size:10;" />
                                                 
-                                                <Label text="Vocera:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                                <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                <Label text="Vocera:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-size:10;" />
+                                                <TextField fx:id="voceraRefNameField" promptText="Vocera" prefWidth="110" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-font-size:10;" />
                                                 
-                                                <Label text="XMPP:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                                <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                <Label text="XMPP:" GridPane.columnIndex="0" GridPane.rowIndex="3" style="-fx-font-size:10;" />
+                                                <TextField fx:id="xmppRefNameField" promptText="XMPP" prefWidth="110" GridPane.columnIndex="1" GridPane.rowIndex="3" style="-fx-font-size:10;" />
                                             </GridPane>
-                                            <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" />
+                                            <Button fx:id="resetDefaultsButton" text="Reset to Defaults" styleClass="button-secondary" style="-fx-font-size:9; -fx-padding: 2 6;" />
                                         </VBox>
                                         
                                         <!-- Center: Vocera Badges Alert Interface -->
-                                        <VBox spacing="8">
-                                            <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
-                                            <VBox spacing="5">
-                                                <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
+                                        <VBox spacing="4">
+                                            <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold; -fx-font-size:11;" />
+                                            <VBox spacing="2">
+                                                <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
                                                     </tooltip>
                                                 </CheckBox>
-                                                <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP">
+                                                <CheckBox fx:id="defaultVmpCheckbox" text="Via VMP" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Use VMP interface as default when Device A/B are blank" />
                                                     </tooltip>
                                                 </CheckBox>
-                                                <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera">
+                                                <CheckBox fx:id="defaultVoceraCheckbox" text="Via Vocera" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Use Vocera interface as default when Device A/B are blank" />
                                                     </tooltip>
                                                 </CheckBox>
-                                                <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP">
+                                                <CheckBox fx:id="defaultXmppCheckbox" text="Via XMPP" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Use XMPP interface as default when Device A/B are blank" />
                                                     </tooltip>
@@ -331,25 +332,25 @@
                                         </VBox>
                                         
                                         <!-- Right: Room Filters -->
-                                        <VBox spacing="8">
-                                            <Label text="Room Filters" style="-fx-font-weight:bold;" />
-                                            <GridPane hgap="10" vgap="8">
-                                                <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                                <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                        <VBox spacing="4">
+                                            <Label text="Room Filters" style="-fx-font-weight:bold; -fx-font-size:11;" />
+                                            <GridPane hgap="6" vgap="3">
+                                                <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-size:10;" />
+                                                <TextField fx:id="roomFilterNursecallField" promptText="Room #" prefWidth="80" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Filter Nursecall flows by room number" />
                                                     </tooltip>
                                                 </TextField>
                                                 
-                                                <Label text="Clinical:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                                <TextField fx:id="roomFilterClinicalField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                                <Label text="Clinical:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-size:10;" />
+                                                <TextField fx:id="roomFilterClinicalField" promptText="Room #" prefWidth="80" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Filter Clinical flows by room number" />
                                                     </tooltip>
                                                 </TextField>
                                                 
-                                                <Label text="Orders:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                                <TextField fx:id="roomFilterOrdersField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                                <Label text="Orders:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-size:10;" />
+                                                <TextField fx:id="roomFilterOrdersField" promptText="Room #" prefWidth="80" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-font-size:10;">
                                                     <tooltip>
                                                         <Tooltip text="Filter Orders flows by room number" />
                                                     </tooltip>
@@ -361,26 +362,26 @@
                                     <Separator />
                                     
                                     <!-- UI Feedback Settings -->
-                                    <Label text="UI Feedback" style="-fx-font-weight:bold;" />
-                                    <GridPane hgap="10" vgap="8">
-                                        <Label text="Loaded state timeout:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
-                                            <Slider fx:id="loadedTimeoutSlider" min="3" max="120" blockIncrement="1" majorTickUnit="10" minorTickCount="4" showTickMarks="true" showTickLabels="true" prefWidth="220">
+                                    <Label text="UI Feedback" style="-fx-font-weight:bold; -fx-font-size:11;" />
+                                    <GridPane hgap="8" vgap="4">
+                                        <Label text="Loaded state timeout:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-size:10;" />
+                                        <HBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
+                                            <Slider fx:id="loadedTimeoutSlider" min="3" max="120" blockIncrement="1" majorTickUnit="30" minorTickCount="2" showTickMarks="true" showTickLabels="true" prefWidth="180" style="-fx-font-size:9;">
                                                 <tooltip>
                                                     <Tooltip text="How long a button stays green with a checkmark after a successful load" />
                                                 </tooltip>
                                             </Slider>
-                                            <Label fx:id="loadedTimeoutValueLabel" text="10s" />
+                                            <Label fx:id="loadedTimeoutValueLabel" text="10s" style="-fx-font-size:10;" />
                                         </HBox>
-                                        <Label text="Range (min–max):" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                        <HBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1" alignment="CENTER_LEFT">
-                                            <TextField fx:id="loadedTimeoutMinField" promptText="min" prefWidth="60">
+                                        <Label text="Range (min–max):" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-size:10;" />
+                                        <HBox spacing="4" GridPane.columnIndex="1" GridPane.rowIndex="1" alignment="CENTER_LEFT">
+                                            <TextField fx:id="loadedTimeoutMinField" promptText="min" prefWidth="50" style="-fx-font-size:10;">
                                                 <tooltip>
                                                     <Tooltip text="Minimum seconds (1–600)." />
                                                 </tooltip>
                                             </TextField>
-                                            <Label text="–" />
-                                            <TextField fx:id="loadedTimeoutMaxField" promptText="max" prefWidth="60">
+                                            <Label text="–" style="-fx-font-size:10;" />
+                                            <TextField fx:id="loadedTimeoutMaxField" promptText="max" prefWidth="50" style="-fx-font-size:10;">
                                                 <tooltip>
                                                     <Tooltip text="Maximum seconds (>= min, up to 600)." />
                                                 </tooltip>
@@ -391,7 +392,7 @@
                                     <Separator />
 
                                     <!-- Other Settings -->
-                                    <Button fx:id="resetPathsButton" text="🔄 Reset File Paths" styleClass="button-secondary" />
+                                    <Button fx:id="resetPathsButton" text="🔄 Reset File Paths" styleClass="button-secondary" style="-fx-font-size:10; -fx-padding: 3 8;" />
                                 </VBox>
                             </ScrollPane>
                         </VBox>
