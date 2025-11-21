@@ -3146,11 +3146,22 @@ public class AppController {
                 String stageId = "Stop_" + rowCounter + "_" + (i + 1);
                 String recipientLabel = sanitizeForPlantUml(recipients[idx]);
 
-                String stageLabel = String.join("\\n",
-                    "Alarm Stop " + (i + 1),
-                    "Recipient:",
-                    recipientLabel
-                );
+                // Split multiple recipients by comma and display each on a separate line
+                List<String> stageLabelLines = new ArrayList<>();
+                stageLabelLines.add("Alarm Stop " + (i + 1));
+                
+                // Split recipients by comma and add each on a new line
+                if (recipientLabel != null && !recipientLabel.isEmpty()) {
+                    String[] recipientParts = recipientLabel.split(",");
+                    for (String part : recipientParts) {
+                        String trimmed = part.trim();
+                        if (!trimmed.isEmpty()) {
+                            stageLabelLines.add(trimmed);
+                        }
+                    }
+                }
+                
+                String stageLabel = String.join("\\n", stageLabelLines);
 
                 String stereo = (i % 2 == 0) ? "StopA" : "StopB";
 
