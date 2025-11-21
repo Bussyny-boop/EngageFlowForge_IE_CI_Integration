@@ -761,18 +761,110 @@ public class AppController {
     // ---------- Show Help ----------
     private void showHelp() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("About Engage FlowForge 2.0");
-        alert.setHeaderText("Engage FlowForge 2.0");
-        alert.setContentText("Excel to JSON converter for Vocera Engage configurations.\n\n" +
-                "Features:\n" +
-                "• Load and edit Excel workbooks\n" +
-                "• Generate JSON rules for Nurse Calls, Clinicals, and Orders\n" +
-                "• Filter and manage configuration groups\n" +
-                "• Customize adapter references\n" +
-                "• Light/Dark theme support\n" +
-                "• Custom tab mappings for additional Excel sheets\n\n" +
-                "Version: 2.0");
-        alert.getDialogPane().setStyle("-fx-font-size: 13px;");
+        alert.setTitle("Engage FlowForge 2.0 - Help & Guide");
+        alert.setHeaderText("📖 Engage FlowForge 2.0 - User Guide");
+        
+        String helpContent = 
+                "═══════════════════════════════════════════════════════════\n" +
+                "OVERVIEW\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "Engage FlowForge converts Vocera Engage Excel configuration\n" +
+                "sheets into JSON rule files for nurse call and patient\n" +
+                "monitoring systems.\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "GETTING STARTED\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "1️⃣  Load Data: Click '📄 Load NDW' to import Excel workbook\n" +
+                "   • Also supports XML ('📋 Load Engage XML') and\n" +
+                "     JSON ('📥 Load Engage Rules') imports\n\n" +
+                
+                "2️⃣  Navigate Tabs:\n" +
+                "   📊 Units - View facility, unit, and config group mappings\n" +
+                "   🔔 Nurse Calls - Configure nurse call alarms\n" +
+                "   🏥 Clinicals - Configure clinical/patient monitoring alarms\n" +
+                "   💊 Orders - Configure order-based workflows\n\n" +
+                
+                "3️⃣  Edit Data: Double-click any cell to edit configuration\n\n" +
+                
+                "4️⃣  Generate JSON:\n" +
+                "   • Click '👁️ Preview JSON' to view generated rules\n" +
+                "   • Click export buttons to save:\n" +
+                "     🩺 Export Nursecall\n" +
+                "     🧬 Export Clinicals\n" +
+                "     📦 Export Orders\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "KEY FEATURES\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "📂 Multi-Format Import: Excel (XLSX), XML, and JSON\n" +
+                "✏️  Inline Editing: Double-click cells to edit directly\n" +
+                "🔍 Filtering: Filter by configuration group in each tab\n" +
+                "🔀 Visual CallFlow: Generate PlantUML flow diagrams\n" +
+                "🌓 Dark/Light Themes: Click ⚙️ Settings to toggle themes\n" +
+                "💾 Auto-Save: Changes persist across sessions\n" +
+                "🗑️  Clear All: Reset all data to start fresh\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "SIDEBAR NAVIGATION\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "• Click ◀/▶ at the top to collapse/expand the sidebar\n" +
+                "• When collapsed, icons show:\n" +
+                "  📊 Units  |  🔔 Nurse Calls  |  🏥 Clinicals  |  💊 Orders\n" +
+                "• Hover over icons for tooltips when collapsed\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "ADVANCED OPTIONS (⚙️ Settings)\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "Merge Modes:\n" +
+                "• No Merge: Each alarm generates separate JSON rules\n" +
+                "• Merge by Config Group: Combines flows within same config\n" +
+                "• Merge Across Config Group: Combines flows across all configs\n\n" +
+                
+                "Adapter References:\n" +
+                "• Edge Ref Name: OutgoingWCTP interface (default: OutgoingWCTP)\n" +
+                "• VCS Ref Name: VMP interface (default: VMP)\n" +
+                "• Vocera Ref Name: Custom Vocera reference\n" +
+                "• XMPP Ref Name: XMPP messaging interface\n\n" +
+                
+                "Custom Tab Mappings:\n" +
+                "• Map additional Excel sheets to flow types\n" +
+                "• Dynamically add custom columns to Units table\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "KEYBOARD SHORTCUTS\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "• Double-click: Edit cell\n" +
+                "• Enter: Confirm edit\n" +
+                "• Esc: Cancel edit\n" +
+                "• Tab: Navigate between cells\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "TIPS & BEST PRACTICES\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "✓ Use Config Group filters to focus on specific units\n" +
+                "✓ Preview JSON before exporting to verify rules\n" +
+                "✓ Save Excel files periodically to preserve changes\n" +
+                "✓ Use Clear All to reset if data becomes corrupted\n" +
+                "✓ Check EMDAN Compliant for clinical alarm reclassification\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "TROUBLESHOOTING\n" +
+                "═══════════════════════════════════════════════════════════\n" +
+                "❓ Can't load file? Ensure it's a valid XLSX/XML/JSON format\n" +
+                "❓ Missing data? Check if correct sheets exist in workbook\n" +
+                "❓ Export fails? Verify all required fields are populated\n" +
+                "❓ Need help? Check USER_GUIDE.md in installation folder\n\n" +
+                
+                "═══════════════════════════════════════════════════════════\n" +
+                "Version: 3.0.0 | Java-based application with JavaFX GUI\n" +
+                "For detailed documentation, see USER_GUIDE.md\n" +
+                "═══════════════════════════════════════════════════════════";
+        
+        alert.setContentText(helpContent);
+        alert.getDialogPane().setStyle("-fx-font-size: 12px; -fx-font-family: 'Consolas', 'Monaco', monospace;");
+        alert.getDialogPane().setPrefSize(750, 700);
+        alert.setResizable(true);
         alert.showAndWait();
     }
     
