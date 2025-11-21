@@ -3164,7 +3164,8 @@ public class AppController {
                 // Split recipients by comma, semicolon, or newline BEFORE sanitizing to preserve formatting
                 String rawRecipient = recipients[idx];
                 if (rawRecipient != null && !rawRecipient.isEmpty()) {
-                    String[] recipientParts = rawRecipient.split("[,;\\n]");
+                    // Split by comma, semicolon, newline, or carriage return to handle both Unix and Windows line endings
+                    String[] recipientParts = rawRecipient.split("[,;\\n\\r]+");
                     for (String part : recipientParts) {
                         String trimmed = part.trim();
                         if (!trimmed.isEmpty()) {
