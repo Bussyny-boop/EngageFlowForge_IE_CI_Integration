@@ -7,6 +7,7 @@ target/
 sample.xlsx
 sample.json
 test-output/
+icon-visual-guide.png
 
 # Log files
 *.log
