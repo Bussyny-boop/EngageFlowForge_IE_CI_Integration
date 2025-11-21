@@ -255,6 +255,7 @@ public class AppController {
     private File lastExcelDir = null;
     private File lastJsonDir = null;
 
+    private static final String APP_VERSION = "3.0.0";
     private static final String PREF_KEY_LAST_EXCEL_DIR = "lastExcelDir";
     private static final String PREF_KEY_LAST_JSON_DIR = "lastJsonDir";
     private static final String PREF_KEY_DARK_MODE = "darkMode";
@@ -857,7 +858,7 @@ public class AppController {
                 "❓ Need help? Check USER_GUIDE.md in installation folder\n\n" +
                 
                 "═══════════════════════════════════════════════════════════\n" +
-                "Version: 3.0.0 | Java-based application with JavaFX GUI\n" +
+                "Version: " + APP_VERSION + " | Java-based application with JavaFX GUI\n" +
                 "For detailed documentation, see USER_GUIDE.md\n" +
                 "═══════════════════════════════════════════════════════════";
         
