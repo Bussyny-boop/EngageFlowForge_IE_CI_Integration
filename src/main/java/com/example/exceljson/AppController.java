@@ -3316,10 +3316,10 @@ public class AppController {
         setCollapsedButton(visualFlowButton, "🔀", "Visual CallFlow");
 
         // Table tabs: keep icons only
-        setCollapsedTab(navUnits, "", "Units");
-        setCollapsedTab(navNurseCalls, "", "Nurse Calls");
-        setCollapsedTab(navClinicals, "", "Clinicals");
-        setCollapsedTab(navOrders, "", "Orders");
+        setCollapsedTab(navUnits, "📊", "Units");
+        setCollapsedTab(navNurseCalls, "🔔", "Nurse Calls");
+        setCollapsedTab(navClinicals, "🏥", "Clinicals");
+        setCollapsedTab(navOrders, "💊", "Orders");
     }
     
     /**
