@@ -3085,35 +3085,49 @@ public class AppController {
         StringBuilder plantuml = new StringBuilder();
         plantuml.append("@startuml\n");
         plantuml.append("top to bottom direction\n");
-        plantuml.append("skinparam shadowing false\n");
-        plantuml.append("skinparam backgroundColor #FFFFFF\n");
+        plantuml.append("skinparam shadowing true\n");
+        plantuml.append("skinparam backgroundColor #F8F9FA\n");
         plantuml.append("hide stereotype\n");
         plantuml.append("skinparam rectangle {\n");
-        plantuml.append("  RoundCorner 16\n");
-        plantuml.append("  FontSize 14\n");
-        plantuml.append("  FontColor #111111\n");
+        plantuml.append("  RoundCorner 20\n");
+        plantuml.append("  FontSize 13\n");
+        plantuml.append("  FontStyle bold\n");
+        plantuml.append("  FontColor #1a1a1a\n");
+        plantuml.append("  Padding 10\n");
         plantuml.append("}\n");
         plantuml.append("skinparam rectangle<<GlobalHeader>> {\n");
-        plantuml.append("  BackgroundColor #ffffff\n");
-        plantuml.append("  BorderColor #b5b5b5\n");
+        plantuml.append("  BackgroundColor gradient #4A90E2 #7FB3D5\n");
+        plantuml.append("  BorderColor #2563EB\n");
+        plantuml.append("  BorderThickness 2\n");
+        plantuml.append("  FontColor #FFFFFF\n");
+        plantuml.append("  FontSize 16\n");
+        plantuml.append("  FontStyle bold\n");
         plantuml.append("}\n");
         plantuml.append("skinparam rectangle<<FlowHeader>> {\n");
-        plantuml.append("  BackgroundColor #dcdcdc\n");
-        plantuml.append("  BorderColor #9a9a9a\n");
+        plantuml.append("  BackgroundColor gradient #FFA726 #FFB74D\n");
+        plantuml.append("  BorderColor #F57C00\n");
+        plantuml.append("  BorderThickness 2\n");
+        plantuml.append("  FontColor #FFFFFF\n");
+        plantuml.append("  FontSize 14\n");
         plantuml.append("}\n");
         plantuml.append("skinparam rectangle<<StopA>> {\n");
-        plantuml.append("  BackgroundColor #c8f7c5\n");
-        plantuml.append("  BorderColor #4f9a4f\n");
+        plantuml.append("  BackgroundColor gradient #66BB6A #81C784\n");
+        plantuml.append("  BorderColor #388E3C\n");
+        plantuml.append("  BorderThickness 2\n");
+        plantuml.append("  FontColor #FFFFFF\n");
         plantuml.append("}\n");
         plantuml.append("skinparam rectangle<<StopB>> {\n");
-        plantuml.append("  BackgroundColor #cfe2ff\n");
-        plantuml.append("  BorderColor #4a78c2\n");
+        plantuml.append("  BackgroundColor gradient #42A5F5 #64B5F6\n");
+        plantuml.append("  BorderColor #1976D2\n");
+        plantuml.append("  BorderThickness 2\n");
+        plantuml.append("  FontColor #FFFFFF\n");
         plantuml.append("}\n");
-        plantuml.append("skinparam ArrowColor #333333\n");
-        plantuml.append("skinparam ArrowFontSize 12\n");
-        plantuml.append("skinparam ArrowThickness 1.4\n\n");
+        plantuml.append("skinparam ArrowColor #37474F\n");
+        plantuml.append("skinparam ArrowFontSize 11\n");
+        plantuml.append("skinparam ArrowFontStyle italic\n");
+        plantuml.append("skinparam ArrowThickness 2.5\n\n");
 
-        String globalHeaderLabel = tabLabel + " — " + configLabel;
+        String globalHeaderLabel = "📋 " + tabLabel + " — " + configLabel;
         plantuml.append("rectangle \"").append(globalHeaderLabel).append("\" as GlobalHeader_1 <<GlobalHeader>> {\n");
         plantuml.append("together {\n");
 
@@ -3134,10 +3148,22 @@ public class AppController {
             }
 
             List<String> headerLines = new ArrayList<>();
-            headerLines.add(sanitizeForPlantUml(row.alarmName));
+            headerLines.add("🔔 " + sanitizeForPlantUml(row.alarmName));
             String priority = sanitizeForPlantUml(row.priorityRaw);
-            if (!"-".equals(priority)) {
-                headerLines.add(priority);
+            if (!"-".equals(priority) && !priority.isEmpty()) {
+                headerLines.add("⚡ Priority: " + priority);
+            }
+            // Add device info if available
+            String deviceInfo = "";
+            if (row.deviceA != null && !row.deviceA.trim().isEmpty() && !"-".equals(row.deviceA)) {
+                deviceInfo = sanitizeForPlantUml(row.deviceA);
+            }
+            if (row.deviceB != null && !row.deviceB.trim().isEmpty() && !"-".equals(row.deviceB)) {
+                if (!deviceInfo.isEmpty()) deviceInfo += ", ";
+                deviceInfo += sanitizeForPlantUml(row.deviceB);
+            }
+            if (!deviceInfo.isEmpty()) {
+                headerLines.add("📱 Device: " + deviceInfo);
             }
             String headerLabel = String.join("\\n", headerLines);
             String headerId = "FlowHeader_" + rowCounter;
@@ -3146,9 +3172,12 @@ public class AppController {
 
             String firstArrowLabel;
             if (isImmediateTime(times[0])) {
-                firstArrowLabel = "Immediate";
+                firstArrowLabel = "⚡ Immediate";
             } else {
                 firstArrowLabel = sanitizeLabelOrEmpty(times[0]);
+                if (!firstArrowLabel.isEmpty() && !firstArrowLabel.equals("-")) {
+                    firstArrowLabel = "⏱️ " + firstArrowLabel;
+                }
             }
 
             String previousId = headerId;
@@ -3159,7 +3188,7 @@ public class AppController {
                 
                 // Split multiple recipients and display each on a separate line
                 List<String> stageLabelLines = new ArrayList<>();
-                stageLabelLines.add("Alarm Stop " + (i + 1));
+                stageLabelLines.add("🛑 Stop " + (i + 1) + " of " + steps.size());
                 
                 // Split recipients by comma, semicolon, or newline BEFORE sanitizing to preserve formatting
                 String rawRecipient = recipients[idx];
@@ -3172,7 +3201,7 @@ public class AppController {
                             // Sanitize each individual recipient part
                             String sanitizedPart = sanitizeForPlantUml(trimmed);
                             if (!sanitizedPart.isEmpty() && !"-".equals(sanitizedPart)) {
-                                stageLabelLines.add(sanitizedPart);
+                                stageLabelLines.add("👤 " + sanitizedPart);
                             }
                         }
                     }
@@ -3190,6 +3219,9 @@ public class AppController {
                     arrowLabel = firstArrowLabel;
                 } else {
                     arrowLabel = sanitizeLabelOrEmpty(times[idx]);
+                    if (!arrowLabel.isEmpty() && !arrowLabel.equals("-")) {
+                        arrowLabel = "⏱️ " + arrowLabel;
+                    }
                 }
 
                 plantuml.append("  ").append(previousId).append(" -down-> ").append(stageId);
