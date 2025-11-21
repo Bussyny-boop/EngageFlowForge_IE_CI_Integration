@@ -3099,7 +3099,7 @@ public class AppController {
         plantuml.append("  BackgroundColor gradient #4A90E2 #7FB3D5\n");
         plantuml.append("  BorderColor #2563EB\n");
         plantuml.append("  BorderThickness 2\n");
-        plantuml.append("  FontColor #FFFFFF\n");
+        plantuml.append("  FontColor #000000\n");  // Changed to black for visibility
         plantuml.append("  FontSize 16\n");
         plantuml.append("  FontStyle bold\n");
         plantuml.append("}\n");
@@ -3107,20 +3107,20 @@ public class AppController {
         plantuml.append("  BackgroundColor gradient #FFA726 #FFB74D\n");
         plantuml.append("  BorderColor #F57C00\n");
         plantuml.append("  BorderThickness 2\n");
-        plantuml.append("  FontColor #FFFFFF\n");
+        plantuml.append("  FontColor #000000\n");  // Changed to black for visibility
         plantuml.append("  FontSize 14\n");
         plantuml.append("}\n");
         plantuml.append("skinparam rectangle<<StopA>> {\n");
         plantuml.append("  BackgroundColor gradient #66BB6A #81C784\n");
         plantuml.append("  BorderColor #388E3C\n");
         plantuml.append("  BorderThickness 2\n");
-        plantuml.append("  FontColor #FFFFFF\n");
+        plantuml.append("  FontColor #000000\n");  // Changed to black for visibility
         plantuml.append("}\n");
         plantuml.append("skinparam rectangle<<StopB>> {\n");
         plantuml.append("  BackgroundColor gradient #42A5F5 #64B5F6\n");
         plantuml.append("  BorderColor #1976D2\n");
         plantuml.append("  BorderThickness 2\n");
-        plantuml.append("  FontColor #FFFFFF\n");
+        plantuml.append("  FontColor #000000\n");  // Changed to black for visibility
         plantuml.append("}\n");
         plantuml.append("skinparam ArrowColor #37474F\n");
         plantuml.append("skinparam ArrowFontSize 11\n");
