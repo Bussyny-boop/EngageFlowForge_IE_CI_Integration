@@ -270,9 +270,13 @@ public class AppController {
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
+    private boolean isTopBarCollapsed = false; // Track if top bar buttons show icons only
     private double loadedTimeoutSeconds = 600.0; // Default to persistent (10 minutes = never auto-clear)
     private double loadedTimeoutMin = 3.0;
     private double loadedTimeoutMax = 600.0; // 600 = 10 minutes, acts as "persistent"
+    
+    // Window width threshold for collapsing top bar buttons
+    private static final double TOP_BAR_COLLAPSE_WIDTH = 900.0;
     
     // ---------- Combine Config Group Backup Storage ----------
     private List<ExcelParserV5.FlowRow> originalNurseCalls = null;
@@ -414,6 +418,7 @@ public class AppController {
         setupSettingsDrawer();
         setupCustomTabMappings();
         setupLoadedTimeoutControl();
+        setupTopBarResponsive(); // Setup responsive top bar buttons
         
         // Set combine config group checkbox state from preferences
         if (combineConfigGroupCheckbox != null) {
@@ -608,6 +613,79 @@ public class AppController {
         } catch (Exception ex) {
             return fallback;
         }
+    }
+    
+    // ---------- Top Bar Responsive Setup ----------
+    /**
+     * Sets up responsive behavior for top bar buttons.
+     * When window width is below threshold, buttons show icons only.
+     */
+    private void setupTopBarResponsive() {
+        // Note: Original button texts are stored in storeOriginalButtonTexts() 
+        // which is called during sidebar setup
+        
+        // Setup window width listener when scene becomes available
+        if (contentStack != null) {
+            contentStack.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null && newScene.getWindow() != null) {
+                    setupWindowWidthListener(newScene.getWindow());
+                }
+            });
+            
+            // If scene already exists, setup immediately
+            if (contentStack.getScene() != null && contentStack.getScene().getWindow() != null) {
+                setupWindowWidthListener(contentStack.getScene().getWindow());
+            }
+        }
+    }
+    
+    /**
+     * Sets up listener for window width changes to toggle top bar button display
+     */
+    private void setupWindowWidthListener(javafx.stage.Window window) {
+        window.widthProperty().addListener((obs, oldWidth, newWidth) -> {
+            if (newWidth != null) {
+                updateTopBarButtonDisplay(newWidth.doubleValue());
+            }
+        });
+        
+        // Apply initial state
+        updateTopBarButtonDisplay(window.getWidth());
+    }
+    
+    /**
+     * Updates top bar button display based on window width
+     */
+    private void updateTopBarButtonDisplay(double windowWidth) {
+        boolean shouldCollapse = windowWidth < TOP_BAR_COLLAPSE_WIDTH;
+        
+        if (shouldCollapse && !isTopBarCollapsed) {
+            collapseTopBarButtons();
+            isTopBarCollapsed = true;
+        } else if (!shouldCollapse && isTopBarCollapsed) {
+            expandTopBarButtons();
+            isTopBarCollapsed = false;
+        }
+    }
+    
+    /**
+     * Collapse top bar buttons to show icons only
+     */
+    private void collapseTopBarButtons() {
+        setCollapsedButton(settingsButton, "/icons/settings.png", "Settings");
+        setCollapsedButton(saveExcelButton, "/icons/save.png", "Save");
+        setCollapsedButton(themeToggleButton, "/icons/darkmode.png", isDarkMode ? "Light Mode" : "Dark Mode");
+        setCollapsedButton(helpButton, "/icons/help.png", "Help");
+    }
+    
+    /**
+     * Expand top bar buttons to show full text
+     */
+    private void expandTopBarButtons() {
+        restoreButtonText(settingsButton);
+        restoreButtonText(saveExcelButton);
+        restoreButtonText(themeToggleButton);
+        restoreButtonText(helpButton);
     }
     
     // ---------- Navigation Setup ----------
@@ -1079,6 +1157,17 @@ public class AppController {
             // Default to NONE if noMergeCheckbox is selected or nothing is selected
             return ExcelParserV5.MergeMode.NONE;
         }
+    }
+    
+    /**
+     * Converts merge mode enum to human-readable text
+     */
+    private String getMergeModeText(ExcelParserV5.MergeMode mergeMode) {
+        return switch (mergeMode) {
+            case MERGE_BY_CONFIG_GROUP -> "Merged Multiple Config Groups";
+            case MERGE_ACROSS_CONFIG_GROUP -> "Merged by Single Config Group";
+            case NONE -> "Standard (No Merge)";
+        };
     }
     
     // ---------- Progress Bar Helpers ----------
@@ -1754,38 +1843,127 @@ public class AppController {
             // Remember directory
             rememberDirectory(file, false);
 
-            // Show progress
+            // Show progress with enhanced dialog
             String displayName = switch (flowType) {
                 case "NurseCalls" -> "NurseCall";
                 case "Clinicals" -> "Clinical";
                 case "Orders" -> "Orders";
                 default -> "JSON";
             };
-            showProgressBar("📤 Exporting " + displayName + " JSON...");
             
-            // Create a temporary parser with only filtered data
-            ExcelParserV5 filteredParser = createFilteredParser();
+            // Show export status dialog
+            showExportStatusDialog(displayName, file, mergeMode, () -> {
+                try {
+                    // Create a temporary parser with only filtered data
+                    ExcelParserV5 filteredParser = createFilteredParser();
 
-            switch (flowType) {
-                case "NurseCalls" -> filteredParser.writeNurseCallsJson(file, mergeMode);
-                case "Clinicals" -> filteredParser.writeClinicalsJson(file, mergeMode);
-                case "Orders" -> filteredParser.writeOrdersJson(file, mergeMode);
-            }
+                    switch (flowType) {
+                        case "NurseCalls" -> filteredParser.writeNurseCallsJson(file, mergeMode);
+                        case "Clinicals" -> filteredParser.writeClinicalsJson(file, mergeMode);
+                        case "Orders" -> filteredParser.writeOrdersJson(file, mergeMode);
+                    }
+                    return true;
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
 
-            // Hide progress and show success
-            hideProgressBar();
-            String modeText = switch (mergeMode) {
-                case MERGE_BY_CONFIG_GROUP -> "Merged Multiple Config Groups";
-                case MERGE_ACROSS_CONFIG_GROUP -> "Merged by Single Config Group";
-                case NONE -> "Standard (No Merge)";
-            };
-            statusLabel.setText("✅ Exported " + modeText + " JSON");
-
-            showInfo("✅ JSON saved to:\n" + file.getAbsolutePath());
         } catch (Exception ex) {
             hideProgressBar();
             showError("Error exporting JSON: " + ex.getMessage());
         }
+    }
+    
+    /**
+     * Shows export status dialog with progress indication
+     */
+    private void showExportStatusDialog(String flowType, File destination, ExcelParserV5.MergeMode mergeMode, java.util.concurrent.Callable<Boolean> exportTask) {
+        // Create a modal stage for the export status
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.initOwner(getStage());
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dialog.setTitle("Exporting " + flowType + " JSON");
+        dialog.setResizable(false);
+        
+        // Create content
+        VBox content = new VBox(15);
+        content.setStyle("-fx-padding: 20; -fx-alignment: center;");
+        
+        Label titleLabel = new Label("📤 Exporting " + flowType + " JSON");
+        titleLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold;");
+        
+        Label fileLabel = new Label("Destination: " + destination.getName());
+        fileLabel.setStyle("-fx-font-size: 12;");
+        
+        Label pathLabel = new Label(destination.getParent());
+        pathLabel.setStyle("-fx-font-size: 10; -fx-text-fill: gray;");
+        
+        String modeText = getMergeModeText(mergeMode);
+        Label modeLabel = new Label("Mode: " + modeText);
+        modeLabel.setStyle("-fx-font-size: 11;");
+        
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.setPrefWidth(300);
+        progressBar.setProgress(-1); // Indeterminate
+        
+        Label statusLabel = new Label("Exporting...");
+        statusLabel.setStyle("-fx-font-size: 12;");
+        
+        content.getChildren().addAll(titleLabel, fileLabel, pathLabel, modeLabel, progressBar, statusLabel);
+        
+        javafx.scene.Scene scene = new javafx.scene.Scene(content, 400, 250);
+        dialog.setScene(scene);
+        
+        // Run export in background task
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                updateMessage("Generating JSON...");
+                return exportTask.call();
+            }
+        };
+        
+        statusLabel.textProperty().bind(task.messageProperty());
+        
+        task.setOnSucceeded(e -> {
+            statusLabel.textProperty().unbind();
+            statusLabel.setText("✅ Export completed successfully!");
+            statusLabel.setStyle("-fx-font-size: 12; -fx-text-fill: green; -fx-font-weight: bold;");
+            progressBar.setProgress(1.0);
+            
+            // Auto-close after 1.5 seconds
+            PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
+            pause.setOnFinished(evt -> {
+                dialog.close();
+                this.statusLabel.setText("✅ Exported " + getMergeModeText(mergeMode) + " JSON");
+                hideProgressBar();
+            });
+            pause.play();
+        });
+        
+        task.setOnFailed(e -> {
+            statusLabel.textProperty().unbind();
+            statusLabel.setText("❌ Export failed!");
+            statusLabel.setStyle("-fx-font-size: 12; -fx-text-fill: red; -fx-font-weight: bold;");
+            progressBar.setProgress(0);
+            hideProgressBar();
+            
+            PauseTransition pause = new PauseTransition(Duration.seconds(2));
+            pause.setOnFinished(evt -> {
+                dialog.close();
+                showError("Error exporting JSON: " + task.getException().getMessage());
+            });
+            pause.play();
+        });
+        
+        // Start the task in a background thread
+        new Thread(task).start();
+        
+        // Show progress in status bar too
+        showProgressBar("📤 Exporting " + flowType + " JSON...");
+        
+        // Show dialog
+        dialog.show();
     }
 
     // ---------- Helpers ----------
@@ -3284,7 +3462,14 @@ public class AppController {
     
     private void updateThemeButton() {
         if (themeToggleButton != null) {
-            themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
+            if (isTopBarCollapsed) {
+                // If collapsed, keep the icon and update tooltip
+                setCollapsedButton(themeToggleButton, "/icons/darkmode.png", isDarkMode ? "Light Mode" : "Dark Mode");
+            } else {
+                // If expanded, show full text
+                themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
+                themeToggleButton.setGraphic(null); // Clear icon
+            }
         }
     }
     
@@ -3371,6 +3556,12 @@ public class AppController {
         if (exportClinicalJsonButton != null) originalButtonTexts.put(exportClinicalJsonButton, exportClinicalJsonButton.getText());
         if (exportOrdersJsonButton != null) originalButtonTexts.put(exportOrdersJsonButton, exportOrdersJsonButton.getText());
         if (visualFlowButton != null) originalButtonTexts.put(visualFlowButton, visualFlowButton.getText());
+        
+        // Store top bar button texts
+        if (settingsButton != null) originalButtonTexts.put(settingsButton, settingsButton.getText());
+        if (saveExcelButton != null) originalButtonTexts.put(saveExcelButton, saveExcelButton.getText());
+        if (themeToggleButton != null) originalButtonTexts.put(themeToggleButton, themeToggleButton.getText());
+        if (helpButton != null) originalButtonTexts.put(helpButton, helpButton.getText());
         
         // Store toggle button texts
         if (navUnits != null) originalToggleTexts.put(navUnits, navUnits.getText());
