@@ -773,12 +773,16 @@ public class AppController {
             contentStack.sceneProperty().addListener((obs, oldScene, newScene) -> {
                 if (newScene != null) {
                     setupSettingsAutoClose(newScene);
+                    // Limit settings drawer height to 75% of the window height to ensure bottom buttons are reachable
+                    settingsDrawer.maxHeightProperty().bind(newScene.heightProperty().multiply(0.75));
                 }
             });
             
             // If scene already exists, setup immediately
             if (contentStack.getScene() != null) {
                 setupSettingsAutoClose(contentStack.getScene());
+                // Limit settings drawer height to 75% of the window height to ensure bottom buttons are reachable
+                settingsDrawer.maxHeightProperty().bind(contentStack.getScene().heightProperty().multiply(0.75));
             }
         }
     }
