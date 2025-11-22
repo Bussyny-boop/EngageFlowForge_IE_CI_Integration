@@ -4096,35 +4096,35 @@ public class AppController {
     private Node createValidatedCellGraphic(String text) {
         if (text == null || text.isEmpty()) return null;
         
-        // If no groups loaded, or text doesn't contain keywords, return simple label
-        boolean hasKeywords = false;
-        String lower = text.toLowerCase();
-        if (lower.contains("vgroup") || lower.contains("group")) {
-            hasKeywords = true;
-        }
+        boolean hasKeywords = text.toLowerCase().contains("vgroup") || text.toLowerCase().contains("group");
         
         if (loadedVoiceGroups.isEmpty() || !hasKeywords) {
             return new Label(text);
         }
 
-        TextFlow flow = new TextFlow();
-        List<com.example.exceljson.util.VoiceGroupValidator.Segment> segments;
+        VBox lineBox = new VBox();
+        List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
-            segments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidate(text, loadedVoiceGroups);
+            allLineSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(text, loadedVoiceGroups);
         }
 
-        for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : segments) {
-            Text t = new Text(segment.text);
-            if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
-                t.setFill(Color.RED);
-                t.setStyle("-fx-font-weight: bold;");
-            } else {
-                t.setFill(Color.BLACK);
+        for (List<com.example.exceljson.util.VoiceGroupValidator.Segment> lineSegments : allLineSegments) {
+            TextFlow flow = new TextFlow();
+            for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : lineSegments) {
+                Text t = new Text(segment.text);
+                if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
+                    t.setFill(Color.RED);
+                    t.setStyle("-fx-font-weight: bold;");
+                } else {
+                    // Keyword and valid groups are black
+                    t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                }
+                flow.getChildren().add(t);
             }
-            flow.getChildren().add(t);
+            lineBox.getChildren().add(flow);
         }
         
-        return flow;
+        return lineBox;
     }
 
     private void setupAutoComplete(TextInputControl input) {

@@ -8,11 +8,22 @@ import java.util.regex.Pattern;
 
 public class VoiceGroupValidator {
 
-    // Matches "VGroup: Name" or "Group: Name" or "Group Name"
-    // Updated to allow spaces in names, stopping at comma or semicolon
-    private static final Pattern VGROUP_PATTERN = Pattern.compile("(?i)((?:VGroup|Group)[:\\s]*)([^,;]+)");
+    private static final Pattern VGROUP_PATTERN = Pattern.compile("(?i)((?:VGroup|Group):\\s*)([^,;\\n]+)");
 
-    public static List<Segment> parseAndValidate(String text, Set<String> loadedVoiceGroups) {
+    public static List<List<Segment>> parseAndValidateMultiLine(String text, Set<String> loadedVoiceGroups) {
+        List<List<Segment>> lineSegments = new ArrayList<>();
+        if (text == null) {
+            return lineSegments;
+        }
+
+        String[] lines = text.split("\\n");
+        for (String line : lines) {
+            lineSegments.add(parseAndValidate(line, loadedVoiceGroups));
+        }
+        return lineSegments;
+    }
+    
+    private static List<Segment> parseAndValidate(String text, Set<String> loadedVoiceGroups) {
         List<Segment> segments = new ArrayList<>();
         if (text == null || text.isEmpty()) {
             return segments;
