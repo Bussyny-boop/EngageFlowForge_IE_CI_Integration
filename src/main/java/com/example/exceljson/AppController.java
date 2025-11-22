@@ -131,6 +131,7 @@ public class AppController {
     
     private final Set<String> loadedVoiceGroups = new HashSet<>();
     private ContextMenu suggestionPopup;
+    private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -4114,8 +4115,7 @@ public class AppController {
         if (text == null || text.isEmpty()) return null;
         
         // Only process text that contains VGroup/Group patterns, not just the word anywhere
-        Pattern vgroupPattern = Pattern.compile("(?i)(?:VGroup|Group):");
-        if (loadedVoiceGroups.isEmpty() || !vgroupPattern.matcher(text).find()) {
+        if (loadedVoiceGroups.isEmpty() || !VGROUP_KEYWORD_PATTERN.matcher(text).find()) {
             return new Label(text);
         }
 
@@ -4150,8 +4150,6 @@ public class AppController {
             }
         }
         
-        // Set max width to prevent horizontal expansion
-        flow.setMaxWidth(Double.MAX_VALUE);
         return flow;
     }
 
