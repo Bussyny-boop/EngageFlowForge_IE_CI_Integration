@@ -4382,12 +4382,13 @@ public class AppController {
                         String headerLine = br.readLine();
                         int nameColumn = -1;
                         
-                        // Look for "Name" header (case-insensitive)
+                        // Look for "Name" header (case-insensitive, ignoring trailing "*")
                         if (headerLine != null) {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                if (headers[i].trim().equalsIgnoreCase("Name")) {
+                                String headerValue = headers[i].trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
+                                if (headerValue.equalsIgnoreCase("Name")) {
                                     nameColumn = i;
                                     break;
                                 }
@@ -4410,7 +4411,7 @@ public class AppController {
                         Sheet sheet = workbook.getSheetAt(0);
                         int nameColumn = -1;
                         
-                        // Check first row for "Name" header (case-insensitive)
+                        // Check first row for "Name" header (case-insensitive, ignoring trailing "*")
                         if (sheet.getPhysicalNumberOfRows() > 0) {
                             Row headerRow = sheet.getRow(0);
                             if (headerRow != null) {
@@ -4419,7 +4420,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
                                         if (headerValue.equalsIgnoreCase("Name")) {
                                             nameColumn = i;
                                             break;
@@ -4531,12 +4532,12 @@ public class AppController {
                         String headerLine = br.readLine();
                         int unitColumn = -1;
                         
-                        // Look for "Department" or "Unit" header (case-insensitive)
+                        // Look for "Department" or "Unit" header (case-insensitive, ignoring trailing "*")
                         if (headerLine != null) {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String header = headers[i].trim();
+                                String header = headers[i].trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
                                 if (header.equalsIgnoreCase("Department") || header.equalsIgnoreCase("Unit")) {
                                     unitColumn = i;
                                     break;
@@ -4560,7 +4561,7 @@ public class AppController {
                         Sheet sheet = workbook.getSheetAt(0);
                         int unitColumn = -1;
                         
-                        // Check first row for "Department" or "Unit" header (case-insensitive)
+                        // Check first row for "Department" or "Unit" header (case-insensitive, ignoring trailing "*")
                         if (sheet.getPhysicalNumberOfRows() > 0) {
                             Row headerRow = sheet.getRow(0);
                             if (headerRow != null) {
@@ -4569,7 +4570,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
                                         if (headerValue.equalsIgnoreCase("Department") || headerValue.equalsIgnoreCase("Unit")) {
                                             unitColumn = i;
                                             break;
@@ -4679,8 +4680,10 @@ public class AppController {
         // Set max width to prevent horizontal expansion and enable proper wrapping
         flow.setMaxWidth(Region.USE_PREF_SIZE);
         flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
-        // Allow vertical expansion based on content, but limit to reasonable max height
-        flow.setMaxHeight(150); // Reasonable max to show ~6-7 lines without excessive expansion
+        // Constrain height to prevent row expansion when validation data is loaded
+        // Use a fixed preferred height that matches typical single-line row height
+        flow.setPrefHeight(24); // Fixed height to prevent expansion
+        flow.setMaxHeight(24);  // Prevent vertical expansion beyond single line
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments = null;
         List<List<com.example.exceljson.util.AssignmentRoleValidator.Segment>> assignmentRoleSegments = null;
