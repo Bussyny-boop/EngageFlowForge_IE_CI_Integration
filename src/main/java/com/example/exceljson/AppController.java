@@ -2800,6 +2800,13 @@ public class AppController {
                 setButtonLoading(loadVoiceGroupButton, false);
                 if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
                 
+                // Also clear the Clear Voice Group button state
+                if (clearVoiceGroupButton != null) {
+                    setButtonLoaded(clearVoiceGroupButton, false);
+                    setButtonLoading(clearVoiceGroupButton, false);
+                    clearVoiceGroupButton.setTooltip(null);
+                }
+                
                 // Reset all settings to defaults
                 // Reset interface reference names to defaults (reusing existing logic)
                 if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
@@ -4150,6 +4157,8 @@ public class AppController {
         // Remove padding and spacing to prevent cell height expansion
         flow.setPadding(new Insets(0));
         flow.setLineSpacing(0);
+        // Constrain max height to prevent cell expansion
+        flow.setMaxHeight(Control.USE_PREF_SIZE);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
@@ -4279,7 +4288,7 @@ public class AppController {
                 } else {
                     // Voice Group Validation Logic
                     boolean hasVoiceGroups = !loadedVoiceGroups.isEmpty();
-                    boolean hasKeywords = item != null && (item.toLowerCase().contains("vgroup") || item.toLowerCase().contains("group"));
+                    boolean hasKeywords = item != null && VGROUP_KEYWORD_PATTERN.matcher(item).find();
                     
                     if (hasVoiceGroups && hasKeywords) {
                         setText(null);
