@@ -17,6 +17,7 @@ import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -34,6 +35,7 @@ import java.io.FileReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.geometry.Side;
+import javafx.geometry.Insets;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
@@ -2800,7 +2802,7 @@ public class AppController {
                 if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
                 
                 // Reset all settings to defaults
-                // Reset interface reference names
+                // Reset interface reference names to defaults (reusing existing logic)
                 if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
                 if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
                 if (voceraRefNameField != null) voceraRefNameField.setText("Vocera");
@@ -4146,6 +4148,10 @@ public class AppController {
 
         // Use a single TextFlow to avoid cell height expansion
         TextFlow flow = new TextFlow();
+        // Remove padding and spacing to prevent cell height expansion
+        flow.setPadding(new javafx.geometry.Insets(0));
+        flow.setLineSpacing(0);
+        
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
             allLineSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(text, loadedVoiceGroups);
