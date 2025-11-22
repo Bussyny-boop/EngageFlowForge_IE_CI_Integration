@@ -17,50 +17,52 @@ public class JsonParserEnhancedTest {
     @Test
     public void testJsonParserExtractsRecipients(@TempDir Path tempDir) throws Exception {
         // Create JSON with destinations containing recipients
-        String json = "{\n" +
-                "  \"nurseCalls\": {\n" +
-                "    \"version\": \"1.1.0\",\n" +
-                "    \"deliveryFlows\": [{\n" +
-                "      \"name\": \"SEND NURSECALL | URGENT | Code Blue | Config1 | \",\n" +
-                "      \"priority\": \"urgent\",\n" +
-                "      \"alarmsAlerts\": [\"Code Blue\"],\n" +
-                "      \"interfaces\": [{\n" +
-                "        \"referenceName\": \"OutgoingWCTP\",\n" +
-                "        \"componentName\": \"OutgoingWCTP\"\n" +
-                "      }],\n" +
-                "      \"destinations\": [\n" +
-                "        {\n" +
-                "          \"order\": 0,\n" +
-                "          \"delayTime\": 0,\n" +
-                "          \"functionalRoles\": [{\n" +
-                "            \"facilityName\": \"Main\",\n" +
-                "            \"name\": \"Charge Nurse\"\n" +
-                "          }],\n" +
-                "          \"groups\": []\n" +
-                "        },\n" +
-                "        {\n" +
-                "          \"order\": 1,\n" +
-                "          \"delayTime\": 60,\n" +
-                "          \"functionalRoles\": [],\n" +
-                "          \"groups\": [{\n" +
-                "            \"facilityName\": \"Main\",\n" +
-                "            \"name\": \"RN Group\"\n" +
-                "          }]\n" +
-                "        },\n" +
-                "        {\n" +
-                "          \"order\": 2,\n" +
-                "          \"delayTime\": 120,\n" +
-                "          \"functionalRoles\": [{\n" +
-                "            \"facilityName\": \"Main\",\n" +
-                "            \"name\": \"Supervisor\"\n" +
-                "          }],\n" +
-                "          \"groups\": []\n" +
-                "        }\n" +
-                "      ],\n" +
-                "      \"units\": []\n" +
-                "    }]\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "nurseCalls": {
+                    "version": "1.1.0",
+                    "deliveryFlows": [{
+                      "name": "SEND NURSECALL | URGENT | Code Blue | Config1 | ",
+                      "priority": "urgent",
+                      "alarmsAlerts": ["Code Blue"],
+                      "interfaces": [{
+                        "referenceName": "OutgoingWCTP",
+                        "componentName": "OutgoingWCTP"
+                      }],
+                      "destinations": [
+                        {
+                          "order": 0,
+                          "delayTime": 0,
+                          "functionalRoles": [{
+                            "facilityName": "Main",
+                            "name": "Charge Nurse"
+                          }],
+                          "groups": []
+                        },
+                        {
+                          "order": 1,
+                          "delayTime": 60,
+                          "functionalRoles": [],
+                          "groups": [{
+                            "facilityName": "Main",
+                            "name": "RN Group"
+                          }]
+                        },
+                        {
+                          "order": 2,
+                          "delayTime": 120,
+                          "functionalRoles": [{
+                            "facilityName": "Main",
+                            "name": "Supervisor"
+                          }],
+                          "groups": []
+                        }
+                      ],
+                      "units": []
+                    }]
+                  }
+                }\
+                """;
 
         File jsonFile = tempDir.resolve("test.json").toFile();
         Files.writeString(jsonFile.toPath(), json);
@@ -69,7 +71,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty(), "Should have parsed nurse calls");
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
 
         assertEquals("VAssign:[Room] Charge Nurse", flow.r1, "First recipient should be Charge Nurse with VAssign prefix");
         assertEquals("", flow.t1, "First delay should be 0 (empty)");
@@ -84,33 +86,35 @@ public class JsonParserEnhancedTest {
     @Test
     public void testJsonParserExtractsMultipleRecipientsPerDestination(@TempDir Path tempDir) throws Exception {
         // Test multiple recipients in a single destination (should be newline-separated)
-        String json = "{\n" +
-                "  \"clinicals\": {\n" +
-                "    \"version\": \"1.1.0\",\n" +
-                "    \"deliveryFlows\": [{\n" +
-                "      \"name\": \"SEND CLINICAL | HIGH | Alert | Config1 | \",\n" +
-                "      \"priority\": \"high\",\n" +
-                "      \"alarmsAlerts\": [\"Alert\"],\n" +
-                "      \"interfaces\": [{\n" +
-                "        \"referenceName\": \"Vocera\",\n" +
-                "        \"componentName\": \"Vocera\"\n" +
-                "      }],\n" +
-                "      \"destinations\": [{\n" +
-                "        \"order\": 0,\n" +
-                "        \"delayTime\": 0,\n" +
-                "        \"functionalRoles\": [\n" +
-                "          {\"facilityName\": \"East\", \"name\": \"Nurse\"},\n" +
-                "          {\"facilityName\": \"East\", \"name\": \"Tech\"}\n" +
-                "        ],\n" +
-                "        \"groups\": [\n" +
-                "          {\"facilityName\": \"East\", \"name\": \"Team A\"},\n" +
-                "          {\"facilityName\": \"East\", \"name\": \"Team B\"}\n" +
-                "        ]\n" +
-                "      }],\n" +
-                "      \"units\": []\n" +
-                "    }]\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "clinicals": {
+                    "version": "1.1.0",
+                    "deliveryFlows": [{
+                      "name": "SEND CLINICAL | HIGH | Alert | Config1 | ",
+                      "priority": "high",
+                      "alarmsAlerts": ["Alert"],
+                      "interfaces": [{
+                        "referenceName": "Vocera",
+                        "componentName": "Vocera"
+                      }],
+                      "destinations": [{
+                        "order": 0,
+                        "delayTime": 0,
+                        "functionalRoles": [
+                          {"facilityName": "East", "name": "Nurse"},
+                          {"facilityName": "East", "name": "Tech"}
+                        ],
+                        "groups": [
+                          {"facilityName": "East", "name": "Team A"},
+                          {"facilityName": "East", "name": "Team B"}
+                        ]
+                      }],
+                      "units": []
+                    }]
+                  }
+                }\
+                """;
 
         File jsonFile = tempDir.resolve("test.json").toFile();
         Files.writeString(jsonFile.toPath(), json);
@@ -119,7 +123,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.clinicals.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.clinicals.get(0);
+        ExcelParserV5.FlowRow flow = parser.clinicals.getFirst();
 
         // Should have all recipients newline-separated
         String expected = "VAssign:[Room] Nurse\nVAssign:[Room] Tech\nVGroup: Team A\nVGroup: Team B";
@@ -129,22 +133,24 @@ public class JsonParserEnhancedTest {
     @Test
     public void testJsonParserExtractsUnitsAndConfigGroup(@TempDir Path tempDir) throws Exception {
         // Test units extraction and Facility+Unit+Dataset config group
-        String json = "{\n" +
-                "  \"nurseCalls\": {\n" +
-                "    \"version\": \"1.1.0\",\n" +
-                "    \"deliveryFlows\": [{\n" +
-                "      \"name\": \"SEND NURSECALL | NORMAL | Test | OldConfig | \",\n" +
-                "      \"priority\": \"normal\",\n" +
-                "      \"alarmsAlerts\": [\"Test\"],\n" +
-                "      \"interfaces\": [{\"referenceName\": \"VMP\", \"componentName\": \"VMP\"}],\n" +
-                "      \"destinations\": [],\n" +
-                "      \"units\": [\n" +
-                "        {\"facilityName\": \"Hospital\", \"name\": \"ICU\"},\n" +
-                "        {\"facilityName\": \"Hospital\", \"name\": \"ER\"}\n" +
-                "      ]\n" +
-                "    }]\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "nurseCalls": {
+                    "version": "1.1.0",
+                    "deliveryFlows": [{
+                      "name": "SEND NURSECALL | NORMAL | Test | OldConfig | ",
+                      "priority": "normal",
+                      "alarmsAlerts": ["Test"],
+                      "interfaces": [{"referenceName": "VMP", "componentName": "VMP"}],
+                      "destinations": [],
+                      "units": [
+                        {"facilityName": "Hospital", "name": "ICU"},
+                        {"facilityName": "Hospital", "name": "ER"}
+                      ]
+                    }]
+                  }
+                }\
+                """;
 
         File jsonFile = tempDir.resolve("test.json").toFile();
         Files.writeString(jsonFile.toPath(), json);
@@ -153,7 +159,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
 
         assertEquals("Hospital_ICU_OldConfig", flow.configGroup,
                 "Config group should use Facility_Unit_Dataset format");
@@ -162,25 +168,27 @@ public class JsonParserEnhancedTest {
     @Test
     public void testJsonParserExtractsParameterAttributes(@TempDir Path tempDir) throws Exception {
         // Test parameter attributes extraction
-        String json = "{\n" +
-                "  \"nurseCalls\": {\n" +
-                "    \"version\": \"1.1.0\",\n" +
-                "    \"deliveryFlows\": [{\n" +
-                "      \"name\": \"SEND NURSECALL | URGENT | Alarm | Config | \",\n" +
-                "      \"priority\": \"urgent\",\n" +
-                "      \"alarmsAlerts\": [\"Alarm\"],\n" +
-                "      \"interfaces\": [{\"referenceName\": \"Edge\", \"componentName\": \"Edge\"}],\n" +
-                "      \"parameterAttributes\": [\n" +
-                "        {\"name\": \"breakThrough\", \"value\": \"voceraAndDevice\"},\n" +
-                "        {\"name\": \"enunciate\", \"value\": \"true\"},\n" +
-                "        {\"name\": \"badgeAlertSound\", \"value\": \"Alert.wav\"},\n" +
-                "        {\"name\": \"ttl\", \"value\": \"300\"}\n" +
-                "      ],\n" +
-                "      \"destinations\": [],\n" +
-                "      \"units\": []\n" +
-                "    }]\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "nurseCalls": {
+                    "version": "1.1.0",
+                    "deliveryFlows": [{
+                      "name": "SEND NURSECALL | URGENT | Alarm | Config | ",
+                      "priority": "urgent",
+                      "alarmsAlerts": ["Alarm"],
+                      "interfaces": [{"referenceName": "Edge", "componentName": "Edge"}],
+                      "parameterAttributes": [
+                        {"name": "breakThrough", "value": "voceraAndDevice"},
+                        {"name": "enunciate", "value": "true"},
+                        {"name": "badgeAlertSound", "value": "Alert.wav"},
+                        {"name": "ttl", "value": "300"}
+                      ],
+                      "destinations": [],
+                      "units": []
+                    }]
+                  }
+                }\
+                """;
 
         File jsonFile = tempDir.resolve("test.json").toFile();
         Files.writeString(jsonFile.toPath(), json);
@@ -189,7 +197,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
 
         // Reverse-mapped values should reflect GUI inputs
         assertEquals("Yes", flow.breakThroughDND);
@@ -201,25 +209,27 @@ public class JsonParserEnhancedTest {
     @Test
     public void testJsonParserHandlesAllFiveRecipients(@TempDir Path tempDir) throws Exception {
         // Test all 5 recipient/timing slots (r1-r5, t1-t5)
-        String json = "{\n" +
-                "  \"nurseCalls\": {\n" +
-                "    \"version\": \"1.1.0\",\n" +
-                "    \"deliveryFlows\": [{\n" +
-                "      \"name\": \"SEND NURSECALL | URGENT | Escalation Test | Config | \",\n" +
-                "      \"priority\": \"urgent\",\n" +
-                "      \"alarmsAlerts\": [\"Escalation Test\"],\n" +
-                "      \"interfaces\": [{\"referenceName\": \"XMPP\", \"componentName\": \"XMPP\"}],\n" +
-                "      \"destinations\": [\n" +
-                "        {\"order\": 0, \"delayTime\": 0, \"groups\": [{\"name\": \"Team1\"}], \"functionalRoles\": []},\n" +
-                "        {\"order\": 1, \"delayTime\": 30, \"groups\": [{\"name\": \"Team2\"}], \"functionalRoles\": []},\n" +
-                "        {\"order\": 2, \"delayTime\": 60, \"groups\": [{\"name\": \"Team3\"}], \"functionalRoles\": []},\n" +
-                "        {\"order\": 3, \"delayTime\": 90, \"groups\": [{\"name\": \"Team4\"}], \"functionalRoles\": []},\n" +
-                "        {\"order\": 4, \"delayTime\": 120, \"groups\": [{\"name\": \"Team5\"}], \"functionalRoles\": []}\n" +
-                "      ],\n" +
-                "      \"units\": []\n" +
-                "    }]\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "nurseCalls": {
+                    "version": "1.1.0",
+                    "deliveryFlows": [{
+                      "name": "SEND NURSECALL | URGENT | Escalation Test | Config | ",
+                      "priority": "urgent",
+                      "alarmsAlerts": ["Escalation Test"],
+                      "interfaces": [{"referenceName": "XMPP", "componentName": "XMPP"}],
+                      "destinations": [
+                        {"order": 0, "delayTime": 0, "groups": [{"name": "Team1"}], "functionalRoles": []},
+                        {"order": 1, "delayTime": 30, "groups": [{"name": "Team2"}], "functionalRoles": []},
+                        {"order": 2, "delayTime": 60, "groups": [{"name": "Team3"}], "functionalRoles": []},
+                        {"order": 3, "delayTime": 90, "groups": [{"name": "Team4"}], "functionalRoles": []},
+                        {"order": 4, "delayTime": 120, "groups": [{"name": "Team5"}], "functionalRoles": []}
+                      ],
+                      "units": []
+                    }]
+                  }
+                }\
+                """;
 
         File jsonFile = tempDir.resolve("test.json").toFile();
         Files.writeString(jsonFile.toPath(), json);
@@ -228,7 +238,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
 
         assertEquals("VGroup: Team1", flow.r1);
         assertEquals("", flow.t1);
@@ -249,25 +259,27 @@ public class JsonParserEnhancedTest {
     @Test
     public void testJsonParserRoundTripWithRecipientsAndUnits(@TempDir Path tempDir) throws Exception {
         // Test that JSON can be loaded and re-exported with recipients and units intact
-        String json = "{\n" +
-                "  \"nurseCalls\": {\n" +
-                "    \"version\": \"1.1.0\",\n" +
-                "    \"deliveryFlows\": [{\n" +
-                "      \"name\": \"SEND NURSECALL | HIGH | Round Trip | TestConfig | \",\n" +
-                "      \"priority\": \"high\",\n" +
-                "      \"alarmsAlerts\": [\"Round Trip\"],\n" +
-                "      \"interfaces\": [{\"referenceName\": \"Vocera\", \"componentName\": \"Vocera\"}],\n" +
-                "      \"parameterAttributes\": [{\"name\": \"enunciate\", \"value\": \"true\"}],\n" +
-                "      \"destinations\": [{\n" +
-                "        \"order\": 0,\n" +
-                "        \"delayTime\": 0,\n" +
-                "        \"functionalRoles\": [{\"facilityName\": \"West\", \"name\": \"Nurse\"}],\n" +
-                "        \"groups\": []\n" +
-                "      }],\n" +
-                "      \"units\": [{\"facilityName\": \"West\", \"name\": \"3North\"}]\n" +
-                "    }]\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "nurseCalls": {
+                    "version": "1.1.0",
+                    "deliveryFlows": [{
+                      "name": "SEND NURSECALL | HIGH | Round Trip | TestConfig | ",
+                      "priority": "high",
+                      "alarmsAlerts": ["Round Trip"],
+                      "interfaces": [{"referenceName": "Vocera", "componentName": "Vocera"}],
+                      "parameterAttributes": [{"name": "enunciate", "value": "true"}],
+                      "destinations": [{
+                        "order": 0,
+                        "delayTime": 0,
+                        "functionalRoles": [{"facilityName": "West", "name": "Nurse"}],
+                        "groups": []
+                      }],
+                      "units": [{"facilityName": "West", "name": "3North"}]
+                    }]
+                  }
+                }\
+                """;
 
         File jsonFile = tempDir.resolve("test.json").toFile();
         Files.writeString(jsonFile.toPath(), json);
@@ -276,7 +288,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
 
         // Verify all fields were parsed
         assertEquals("Round Trip", flow.alarmName);

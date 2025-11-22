@@ -1565,13 +1565,12 @@ public class AppController {
 
                     StringBuilder loadSummary = new StringBuilder();
                     loadSummary.append("✅ JSON loaded successfully\n\n");
-                    loadSummary.append(String.format("Loaded:\n"));
-                    loadSummary.append(String.format("  • %d Nurse Call flows\n", parser.nurseCalls.size()));
-                    loadSummary.append(String.format("  • %d Clinical flows\n", parser.clinicals.size()));
-                    loadSummary.append(String.format("  • %d Orders flows\n", parser.orders.size()));
-                    loadSummary.append(String.format("  • %d Units\n", parser.getUnitsCount()));
-                    loadSummary.append(String.format(
-                        "  • Config Groups: %d (Nurse), %d (Clinical), %d (Orders) — Total %d\n",
+                    loadSummary.append("Loaded:\n".formatted());
+                    loadSummary.append("  • %d Nurse Call flows\n".formatted(parser.nurseCalls.size()));
+                    loadSummary.append("  • %d Clinical flows\n".formatted(parser.clinicals.size()));
+                    loadSummary.append("  • %d Orders flows\n".formatted(parser.orders.size()));
+                    loadSummary.append("  • %d Units\n".formatted(parser.getUnitsCount()));
+                    loadSummary.append("  • Config Groups: %d (Nurse), %d (Clinical), %d (Orders) — Total %d\n".formatted(
                         parser.getNurseConfigGroupCount(),
                         parser.getClinicalConfigGroupCount(),
                         parser.getOrdersConfigGroupCount(),
@@ -2075,8 +2074,8 @@ public class AppController {
         var scene = jsonPreview.getScene();
         if (scene == null) return null;
         var window = scene.getWindow();
-        if (window instanceof Stage) {
-            return (Stage) window;
+        if (window instanceof Stage stage) {
+            return stage;
         }
         return null;
     }
@@ -3003,7 +3002,7 @@ public class AppController {
         int ordersShown = ordersFilteredList != null ? ordersFilteredList.size() : 0;
         int ordersTotal = ordersFullList != null ? ordersFullList.size() : 0;
         
-        String status = String.format("Units: %d/%d | Nurse Calls: %d/%d | Clinicals: %d/%d | Orders: %d/%d", 
+        String status = "Units: %d/%d | Nurse Calls: %d/%d | Clinicals: %d/%d | Orders: %d/%d".formatted(
             unitsShown, unitsTotal, nurseShown, nurseTotal, clinicalShown, clinicalTotal, ordersShown, ordersTotal);
         
         if (currentExcelFile != null) {
@@ -3861,8 +3860,7 @@ public class AppController {
         // Find the horizontal scroll bar
         javafx.scene.control.ScrollBar horizontalScrollBar = null;
         for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
-            if (node instanceof javafx.scene.control.ScrollBar) {
-                javafx.scene.control.ScrollBar sb = (javafx.scene.control.ScrollBar) node;
+            if (node instanceof javafx.scene.control.ScrollBar sb) {
                 if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
                     horizontalScrollBar = sb;
                     break;
@@ -3913,8 +3911,7 @@ public class AppController {
         // Find and translate the column cells
         java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
         for (javafx.scene.Node cell : cells) {
-            if (cell instanceof javafx.scene.control.TableCell) {
-                javafx.scene.control.TableCell<?, ?> tableCell = (javafx.scene.control.TableCell<?, ?>) cell;
+            if (cell instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
                 if (tableCell.getTableColumn() == column) {
                     cell.setTranslateX(hScrollValue);
                     cell.setMouseTransparent(false);
@@ -3934,8 +3931,7 @@ public class AppController {
         
         javafx.scene.layout.Region region = (javafx.scene.layout.Region) header;
         for (javafx.scene.Node child : region.getChildrenUnmodifiable()) {
-            if (child instanceof javafx.scene.control.Label) {
-                javafx.scene.control.Label label = (javafx.scene.control.Label) child;
+            if (child instanceof javafx.scene.control.Label label) {
                 if (column.getText() != null && column.getText().equals(label.getText())) {
                     return true;
                 }
@@ -4046,12 +4042,12 @@ public class AppController {
         for (List<ExcelParserV5.FlowRow> group : groupedRows.values()) {
             if (group.size() == 1) {
                 // No duplicates, add as is
-                combinedRows.add(group.get(0));
+                combinedRows.add(group.getFirst());
             } else {
                 // Multiple rows with same fields but different config groups
                 // Combine them into one row
                 ExcelParserV5.FlowRow combined = new ExcelParserV5.FlowRow();
-                ExcelParserV5.FlowRow first = group.get(0);
+                ExcelParserV5.FlowRow first = group.getFirst();
                 
                 // Copy all fields from first row
                 copyFlowRow(first, combined);

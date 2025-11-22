@@ -35,7 +35,7 @@ class WavExtensionTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Find alertSound parameter
@@ -66,7 +66,7 @@ class WavExtensionTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Find alertSound parameter
@@ -97,12 +97,12 @@ class WavExtensionTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
         assertEquals(1, interfaces.size(), "Should have 1 interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("Vocera", iface.get("componentName"), "Should be Vocera interface");
         
         // Check that dynamicParameters is NOT present
@@ -138,10 +138,10 @@ class WavExtensionTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         var dynamicParams = (List<?>) iface.get("dynamicParameters");
         assertNull(dynamicParams, "Should NOT have dynamicParameters");
         
@@ -174,10 +174,10 @@ class WavExtensionTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("Vocera", iface.get("componentName"), "Should be Vocera interface");
         
         // When no ringtone, dynamicParameters should not be present
@@ -206,7 +206,7 @@ class WavExtensionTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // XMPP should have VMP parameters plus XMPP-specific ones

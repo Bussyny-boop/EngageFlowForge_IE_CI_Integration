@@ -68,15 +68,15 @@ class RoomParsingTest {
         assertEquals(1, flows.size(), "Should have one flow");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.getFirst().get("destinations");
         assertEquals(1, destinations.size(), "Should have one destination");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> functionalRoles = (List<Map<String, String>>) destinations.get(0).get("functionalRoles");
+        List<Map<String, String>> functionalRoles = (List<Map<String, String>>) destinations.getFirst().get("functionalRoles");
         
         assertNotNull(functionalRoles, "Should have functional roles");
         assertEquals(1, functionalRoles.size(), "Should have one functional role");
-        assertEquals("Nurse", functionalRoles.get(0).get("name"), 
+        assertEquals("Nurse", functionalRoles.getFirst().get("name"), 
             "Should extract 'Nurse' from '[ROOM] Nurse' without bracket or spaces");
     }
 
@@ -136,15 +136,15 @@ class RoomParsingTest {
         assertEquals(1, flows.size(), "Should have one flow");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.getFirst().get("destinations");
         assertEquals(3, destinations.size(), "Should have three destinations (one per recipient)");
         
         // Test destination 1: "Room]  Charge Nurse" should extract "Charge Nurse"
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> functionalRoles0 = (List<Map<String, String>>) destinations.get(0).get("functionalRoles");
+        List<Map<String, String>> functionalRoles0 = (List<Map<String, String>>) destinations.getFirst().get("functionalRoles");
         assertNotNull(functionalRoles0, "Should have functional roles");
         assertEquals(1, functionalRoles0.size(), "Should have one functional role in first destination");
-        assertEquals("Charge Nurse", functionalRoles0.get(0).get("name"), 
+        assertEquals("Charge Nurse", functionalRoles0.getFirst().get("name"), 
             "Should extract 'Charge Nurse' from 'Room]  Charge Nurse'");
         
         // Test destination 2: "Room)PCT" should extract "PCT"
@@ -152,7 +152,7 @@ class RoomParsingTest {
         List<Map<String, String>> functionalRoles1 = (List<Map<String, String>>) destinations.get(1).get("functionalRoles");
         assertNotNull(functionalRoles1, "Should have functional roles");
         assertEquals(1, functionalRoles1.size(), "Should have one functional role in second destination");
-        assertEquals("PCT", functionalRoles1.get(0).get("name"), 
+        assertEquals("PCT", functionalRoles1.getFirst().get("name"), 
             "Should extract 'PCT' from 'Room)PCT'");
         
         // Test destination 3: "Room - CNA" should extract "CNA"
@@ -160,7 +160,7 @@ class RoomParsingTest {
         List<Map<String, String>> functionalRoles2 = (List<Map<String, String>>) destinations.get(2).get("functionalRoles");
         assertNotNull(functionalRoles2, "Should have functional roles");
         assertEquals(1, functionalRoles2.size(), "Should have one functional role in third destination");
-        assertEquals("CNA", functionalRoles2.get(0).get("name"), 
+        assertEquals("CNA", functionalRoles2.getFirst().get("name"), 
             "Should extract 'CNA' from 'Room - CNA'");
     }
 }

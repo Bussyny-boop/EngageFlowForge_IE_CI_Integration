@@ -45,7 +45,7 @@ public class DeviceBValidationTest {
         assertTrue(flows.size() > 0);
 
         // Find the flow with Device-A = "Edge" and Device-B = "Invalid"
-        Map<?, ?> flow = (Map<?, ?>) flows.get(0);
+        Map<?, ?> flow = (Map<?, ?>) flows.getFirst();
         assertNotNull(flow, "Should find the test flow");
 
         // Check interfaces - should have both Edge (from Device-A) and VMP (from default checkbox)
@@ -82,7 +82,7 @@ public class DeviceBValidationTest {
         assertTrue(flows.size() > 0);
 
         // Find the flow with Device-A = "Edge" and Device-B = "VCS"
-        Map<?, ?> flow = (Map<?, ?>) flows.get(0);
+        Map<?, ?> flow = (Map<?, ?>) flows.getFirst();
         assertNotNull(flow, "Should find the test flow");
 
         // Check interfaces - should have both Edge and VMP from devices, NOT from default checkbox
@@ -119,7 +119,7 @@ public class DeviceBValidationTest {
         assertTrue(flows.size() > 0);
 
         // Find the flow with Device-A = "Edge" and Device-B = empty
-        Map<?, ?> flow = (Map<?, ?>) flows.get(0);
+        Map<?, ?> flow = (Map<?, ?>) flows.getFirst();
         assertNotNull(flow, "Should find the test flow");
 
         // Check interfaces - should have only Edge from Device-A, no default VMP

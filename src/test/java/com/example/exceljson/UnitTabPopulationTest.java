@@ -167,7 +167,7 @@ public class UnitTabPopulationTest {
         assertFalse(parser.getUnits().isEmpty(), "Units list should not be empty");
         
         // Should have ICU unit
-        ExcelParserV5.UnitRow unit = parser.getUnits().get(0);
+        ExcelParserV5.UnitRow unit = parser.getUnits().getFirst();
         
         assertEquals("BCH", unit.facility, "Unit should have facility 'BCH'");
         assertEquals("ICU", unit.unitNames, "Unit should have name 'ICU'");
@@ -214,7 +214,7 @@ public class UnitTabPopulationTest {
         // Should have only 1 unit (4North)
         assertEquals(1, parser.units.size(), "Should have exactly 1 unit");
         
-        ExcelParserV5.UnitRow unit = parser.units.get(0);
+        ExcelParserV5.UnitRow unit = parser.units.getFirst();
         assertEquals("Hospital", unit.facility);
         assertEquals("4North", unit.unitNames);
         
@@ -263,7 +263,7 @@ public class UnitTabPopulationTest {
         // Should have 1 unit with all three config group types
         assertEquals(1, parser.units.size(), "Should have exactly 1 unit");
         
-        ExcelParserV5.UnitRow unit = parser.units.get(0);
+        ExcelParserV5.UnitRow unit = parser.units.getFirst();
         assertEquals("Fac1", unit.facility);
         assertEquals("Unit1", unit.unitNames);
         

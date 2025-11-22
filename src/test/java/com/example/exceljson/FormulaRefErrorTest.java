@@ -68,7 +68,7 @@ public class FormulaRefErrorTest {
     
     // Verify that the error formula returns empty string, NOT the formula string
     assertEquals(1, parser.nurseCalls.size(), "Should have one nurse call");
-    ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+    ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
     
     // The sending name should be empty, not the formula string
     assertNotNull(flow.sendingName, "Sending name should not be null");
@@ -133,7 +133,7 @@ public class FormulaRefErrorTest {
     parser.load(excelFile);
     
     assertEquals(1, parser.nurseCalls.size(), "Should have one nurse call");
-    ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+    ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
     
     // Should not contain formula text
     assertFalse(flow.sendingName.contains("INDIRECT"), 
@@ -188,7 +188,7 @@ public class FormulaRefErrorTest {
     parser.load(excelFile);
     
     assertEquals(1, parser.units.size(), "Should have one unit");
-    ExcelParserV5.UnitRow unit = parser.units.get(0);
+    ExcelParserV5.UnitRow unit = parser.units.getFirst();
     
     // The formula should be evaluated by the parser's formula evaluator
     assertEquals("Test Unit", unit.unitNames, 
@@ -278,7 +278,7 @@ public class FormulaRefErrorTest {
     }
     
     // Specific checks
-    assertEquals("", parser.nurseCalls.get(0).sendingName, "Error formula should be empty");
+    assertEquals("", parser.nurseCalls.getFirst().sendingName, "Error formula should be empty");
     assertEquals("Device A", parser.nurseCalls.get(1).sendingName, "Valid formula should evaluate");
     assertEquals("", parser.nurseCalls.get(2).sendingName, "ISERROR formula should evaluate to empty");
   }

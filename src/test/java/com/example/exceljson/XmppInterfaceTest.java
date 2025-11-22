@@ -40,11 +40,11 @@ class XmppInterfaceTest {
         
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(1, interfaces.size(), "XMPP device should have 1 interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("XMPP", iface.get("componentName"), "Device 'XMPP' should use XMPP component");
         assertEquals("XMPP", iface.get("referenceName"), "XMPP should use default XMPP reference");
 
@@ -64,9 +64,9 @@ class XmppInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         
         assertEquals("XMPP", iface.get("componentName"), "Lowercase 'xmpp' should be detected");
 
@@ -88,7 +88,7 @@ class XmppInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify alertSound = ringtone (no .wav extension)
@@ -177,7 +177,7 @@ class XmppInterfaceTest {
 
         var ordersJson = parser.buildOrdersJson();
         var flows = (List<?>) ordersJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify alertSound = ringtone (no .wav extension)
@@ -232,9 +232,9 @@ class XmppInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         
         assertEquals("XMPP", iface.get("componentName"), "Component name should stay 'XMPP'");
         assertEquals("CustomXMPP", iface.get("referenceName"), "Should use custom reference name");
@@ -255,7 +255,7 @@ class XmppInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         boolean foundMultipleAccepts = false;
@@ -286,7 +286,7 @@ class XmppInterfaceTest {
 
         var clinicalJson = parser.buildClinicalsJson();
         var flows = (List<?>) clinicalJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify additionalContent contains Clinicals-specific template (for regular destination, not NoCaregivers)

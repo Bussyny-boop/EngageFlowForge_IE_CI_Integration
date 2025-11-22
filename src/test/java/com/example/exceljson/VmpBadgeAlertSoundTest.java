@@ -36,12 +36,12 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
         assertEquals(1, interfaces.size(), "Should have 1 interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("VMP", iface.get("componentName"), "Should be VMP interface");
         
         // Check parameterAttributes
@@ -80,10 +80,10 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("VMP", iface.get("componentName"), "Should be VMP interface");
         
         var params = (List<?>) flow.get("parameterAttributes");
@@ -121,10 +121,10 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("VMP", iface.get("componentName"), "Should be VMP interface");
         
         var params = (List<?>) flow.get("parameterAttributes");
@@ -155,7 +155,7 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         
         var params = (List<?>) flow.get("parameterAttributes");
         
@@ -180,10 +180,10 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("VMP", iface.get("componentName"), "Should be VMP interface");
         
         // When no ringtone, VMP should not have badgeAlertSound
@@ -208,10 +208,10 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("Vocera", iface.get("componentName"), "Should be Vocera interface");
         
         var params = (List<?>) flow.get("parameterAttributes");
@@ -252,10 +252,10 @@ class VmpBadgeAlertSoundTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("OutgoingWCTP", iface.get("componentName"), "Should be Edge interface");
         
         var params = (List<?>) flow.get("parameterAttributes");

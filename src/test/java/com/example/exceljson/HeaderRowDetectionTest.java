@@ -30,7 +30,7 @@ class HeaderRowDetectionTest {
         // Verify data was loaded correctly
         assertEquals(1, parser.units.size(), "Should have loaded 1 unit");
         assertEquals(1, parser.nurseCalls.size(), "Should have loaded 1 nurse call");
-        assertEquals("Test Alarm", parser.nurseCalls.get(0).alarmName);
+        assertEquals("Test Alarm", parser.nurseCalls.getFirst().alarmName);
     }
 
     @Test
@@ -46,7 +46,7 @@ class HeaderRowDetectionTest {
         // Verify data was loaded correctly
         assertEquals(1, parser.units.size(), "Should have loaded 1 unit");
         assertEquals(1, parser.nurseCalls.size(), "Should have loaded 1 nurse call");
-        assertEquals("Test Alarm", parser.nurseCalls.get(0).alarmName);
+        assertEquals("Test Alarm", parser.nurseCalls.getFirst().alarmName);
     }
 
     @Test
@@ -62,7 +62,7 @@ class HeaderRowDetectionTest {
         // Verify data was loaded correctly
         assertEquals(1, parser.units.size(), "Should have loaded 1 unit");
         assertEquals(1, parser.nurseCalls.size(), "Should have loaded 1 nurse call");
-        assertEquals("Test Alarm", parser.nurseCalls.get(0).alarmName);
+        assertEquals("Test Alarm", parser.nurseCalls.getFirst().alarmName);
     }
 
     @Test
@@ -79,7 +79,7 @@ class HeaderRowDetectionTest {
         // Verify data was loaded correctly
         assertEquals(1, parser.units.size(), "Should have loaded 1 unit");
         assertEquals(1, parser.nurseCalls.size(), "Should have loaded 1 nurse call");
-        assertEquals("Test Alarm", parser.nurseCalls.get(0).alarmName);
+        assertEquals("Test Alarm", parser.nurseCalls.getFirst().alarmName);
     }
 
     @Test
@@ -98,7 +98,7 @@ class HeaderRowDetectionTest {
         // In this case, it loads: "First Header Alarm" (row 1), "Second header" row as data (row 2), "Second Header Alarm" (row 3)
         assertTrue(parser.nurseCalls.size() >= 1, "Should have loaded at least 1 nurse call");
         // Verify the first row is from the first header's data
-        assertEquals("First Header Alarm", parser.nurseCalls.get(0).alarmName);
+        assertEquals("First Header Alarm", parser.nurseCalls.getFirst().alarmName);
     }
 
     // Helper methods to create test workbooks

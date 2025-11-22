@@ -45,13 +45,13 @@ class NewFieldsTest {
 
         // Verify nurse calls have the new fields
         assertEquals(1, parser.nurseCalls.size(), "Should have 1 nurse call row");
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
         assertEquals("All declines", nurseCall.escalateAfter, "Escalate After should be parsed");
         assertEquals("15", nurseCall.ttlValue, "TTL Value should be parsed");
 
         // Verify clinicals have the new fields
         assertEquals(1, parser.clinicals.size(), "Should have 1 clinical row");
-        ExcelParserV5.FlowRow clinical = parser.clinicals.get(0);
+        ExcelParserV5.FlowRow clinical = parser.clinicals.getFirst();
         assertEquals("1 decline", clinical.escalateAfter, "Escalate After should be parsed for clinicals");
         assertEquals("20", clinical.ttlValue, "TTL Value should be parsed for clinicals");
 
@@ -77,7 +77,7 @@ class NewFieldsTest {
         assertNotNull(flows, "Delivery flows should not be null");
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
         assertNotNull(params, "Parameter attributes should not be null");
 
@@ -90,7 +90,7 @@ class NewFieldsTest {
         assertNotNull(clinicalFlows, "Delivery flows should not be null");
         assertEquals(1, clinicalFlows.size(), "Should have 1 clinical flow");
 
-        var clinicalFlow = (Map<?, ?>) clinicalFlows.get(0);
+        var clinicalFlow = (Map<?, ?>) clinicalFlows.getFirst();
         var clinicalParams = (List<?>) clinicalFlow.get("parameterAttributes");
         assertNotNull(clinicalParams, "Parameter attributes should not be null");
 
@@ -116,7 +116,7 @@ class NewFieldsTest {
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify TTL defaults to 10
@@ -147,7 +147,7 @@ class NewFieldsTest {
 
         // Verify fields are preserved
         assertEquals(1, parser2.nurseCalls.size());
-        ExcelParserV5.FlowRow nurseCall = parser2.nurseCalls.get(0);
+        ExcelParserV5.FlowRow nurseCall = parser2.nurseCalls.getFirst();
         assertEquals("All declines", nurseCall.escalateAfter, "Escalate After should be preserved");
         assertEquals("15", nurseCall.ttlValue, "TTL Value should be preserved");
 
@@ -314,7 +314,7 @@ class NewFieldsTest {
         assertNotNull(flows, "Delivery flows should not be null");
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
         assertNotNull(params, "Parameter attributes should not be null");
 
@@ -327,7 +327,7 @@ class NewFieldsTest {
         assertNotNull(clinicalFlows, "Delivery flows should not be null");
         assertEquals(1, clinicalFlows.size(), "Should have 1 clinical flow");
 
-        var clinicalFlow = (Map<?, ?>) clinicalFlows.get(0);
+        var clinicalFlow = (Map<?, ?>) clinicalFlows.getFirst();
         var clinicalParams = (List<?>) clinicalFlow.get("parameterAttributes");
         assertNotNull(clinicalParams, "Parameter attributes should not be null");
 

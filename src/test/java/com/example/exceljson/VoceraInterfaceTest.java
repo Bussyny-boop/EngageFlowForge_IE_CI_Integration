@@ -39,11 +39,11 @@ class VoceraInterfaceTest {
         
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(1, interfaces.size(), "Vocera device should have 1 interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("Vocera", iface.get("componentName"), "Device 'Vocera' should use Vocera component");
         assertEquals("Vocera", iface.get("referenceName"), "Vocera should use default Vocera reference");
 
@@ -64,11 +64,11 @@ class VoceraInterfaceTest {
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
         
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(1, interfaces.size(), "VMI device should have 1 interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("Vocera", iface.get("componentName"), "Device 'VMI' should use Vocera component");
 
         Files.deleteIfExists(excelFile.toPath());
@@ -88,11 +88,11 @@ class VoceraInterfaceTest {
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
         
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(1, interfaces.size(), "Vocera VCS device should have 1 interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("VMP", iface.get("componentName"), "Device 'Vocera VCS' should use VMP component (not Vocera)");
         assertEquals("VMP", iface.get("referenceName"), "Vocera VCS should use VMP reference");
 
@@ -113,10 +113,10 @@ class VoceraInterfaceTest {
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
         
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("VMP", iface.get("componentName"), "Device 'VoceraVCS' should use VMP component (not Vocera)");
 
         Files.deleteIfExists(excelFile.toPath());
@@ -194,9 +194,9 @@ class VoceraInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         
         assertEquals("Vocera", iface.get("componentName"), "Component name should stay 'Vocera'");
         assertEquals("CustomVocera", iface.get("referenceName"), "Should use custom reference name");
@@ -217,9 +217,9 @@ class VoceraInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         
         assertEquals("Vocera", iface.get("componentName"), "Uppercase 'VOCERA' should be detected");
 
@@ -239,9 +239,9 @@ class VoceraInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         
         assertEquals("Vocera", iface.get("componentName"), "Device-B with 'VMI' should use Vocera component");
 
@@ -261,12 +261,12 @@ class VoceraInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
         assertEquals(2, interfaces.size(), "Should have both Edge and Vocera interfaces");
         
-        var iface1 = (Map<?, ?>) interfaces.get(0);
+        var iface1 = (Map<?, ?>) interfaces.getFirst();
         var iface2 = (Map<?, ?>) interfaces.get(1);
         
         // Order: Edge first, then Vocera
@@ -293,12 +293,12 @@ class VoceraInterfaceTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var interfaces = (List<?>) flow.get("interfaces");
         
         assertEquals(1, interfaces.size(), "Should have default Vocera interface");
         
-        var iface = (Map<?, ?>) interfaces.get(0);
+        var iface = (Map<?, ?>) interfaces.getFirst();
         assertEquals("Vocera", iface.get("componentName"), "Default interface should be Vocera");
 
         Files.deleteIfExists(excelFile.toPath());

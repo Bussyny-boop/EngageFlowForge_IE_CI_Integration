@@ -91,7 +91,7 @@ class ClinicalParameterAttributesTest {
         assertTrue(flows.size() > 0);
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
         assertNotNull(params);
         
         // Find shortMessage parameter
@@ -123,7 +123,7 @@ class ClinicalParameterAttributesTest {
         assertTrue(flows.size() > 0);
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
         assertNotNull(params);
         
         // Find subject parameter (non-destinationOrder)
@@ -155,7 +155,7 @@ class ClinicalParameterAttributesTest {
         assertTrue(flows.size() > 0);
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
         assertNotNull(params);
         
         // Find NoCaregiver shortMessage parameter (destinationOrder = 1)
@@ -188,7 +188,7 @@ class ClinicalParameterAttributesTest {
         assertTrue(flows.size() > 0);
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
         assertNotNull(params);
         
         // Find NoCaregiver subject parameter (destinationOrder = 1)
@@ -221,7 +221,7 @@ class ClinicalParameterAttributesTest {
         assertTrue(flows.size() > 0);
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.getFirst().get("destinations");
         assertNotNull(destinations);
         
         // Verify that at least one destination has "NoDeliveries" as destinationType

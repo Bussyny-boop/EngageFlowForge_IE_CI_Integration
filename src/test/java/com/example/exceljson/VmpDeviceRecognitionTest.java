@@ -52,7 +52,7 @@ class VmpDeviceRecognitionTest {
         var flows = (java.util.List<java.util.Map<String, Object>>) json.get("deliveryFlows");
         assertFalse(flows.isEmpty(), "Should have at least one delivery flow");
         
-        var firstFlow = flows.get(0);
+        var firstFlow = flows.getFirst();
         
         // Check parameter attributes for badgeAlertSound
         assertTrue(firstFlow.containsKey("parameterAttributes"));
@@ -110,7 +110,7 @@ class VmpDeviceRecognitionTest {
         
         @SuppressWarnings("unchecked")
         var flows = (java.util.List<java.util.Map<String, Object>>) json.get("deliveryFlows");
-        var firstFlow = flows.get(0);
+        var firstFlow = flows.getFirst();
         
         @SuppressWarnings("unchecked")
         var params = (java.util.List<java.util.Map<String, Object>>) firstFlow.get("parameterAttributes");
@@ -153,7 +153,7 @@ class VmpDeviceRecognitionTest {
         
         @SuppressWarnings("unchecked")
         var flows = (java.util.List<java.util.Map<String, Object>>) json.get("deliveryFlows");
-        var firstFlow = flows.get(0);
+        var firstFlow = flows.getFirst();
         
         @SuppressWarnings("unchecked")
         var params = (java.util.List<java.util.Map<String, Object>>) firstFlow.get("parameterAttributes");
@@ -196,7 +196,7 @@ class VmpDeviceRecognitionTest {
         
         @SuppressWarnings("unchecked")
         var flows = (java.util.List<java.util.Map<String, Object>>) json.get("deliveryFlows");
-        var firstFlow = flows.get(0);
+        var firstFlow = flows.getFirst();
         
         @SuppressWarnings("unchecked")
         var params = (java.util.List<java.util.Map<String, Object>>) firstFlow.get("parameterAttributes");
@@ -248,7 +248,7 @@ class VmpDeviceRecognitionTest {
             
             @SuppressWarnings("unchecked")
             var flows = (java.util.List<java.util.Map<String, Object>>) json.get("deliveryFlows");
-            var firstFlow = flows.get(0);
+            var firstFlow = flows.getFirst();
             
             @SuppressWarnings("unchecked")
             var params = (java.util.List<java.util.Map<String, Object>>) firstFlow.get("parameterAttributes");

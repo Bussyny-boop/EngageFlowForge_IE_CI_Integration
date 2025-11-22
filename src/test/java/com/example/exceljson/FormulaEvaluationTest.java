@@ -61,7 +61,7 @@ public class FormulaEvaluationTest {
     
     // Verify that formulas were evaluated, not returned as strings
     assertEquals(1, parser.units.size(), "Should have one unit");
-    ExcelParserV5.UnitRow unit = parser.units.get(0);
+    ExcelParserV5.UnitRow unit = parser.units.getFirst();
     
     // Check that the unit name is the evaluated result, not the formula string
     assertEquals("Unit A", unit.unitNames, 
@@ -73,7 +73,7 @@ public class FormulaEvaluationTest {
     
     // Check the nurse call data
     assertEquals(1, parser.nurseCalls.size(), "Should have one nurse call");
-    ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+    ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
     
     assertEquals("Nurse Group 1", flow.configGroup,
         "Config group should be evaluated formula result 'Nurse Group 1', not the formula string");
@@ -124,7 +124,7 @@ public class FormulaEvaluationTest {
     
     // Verify that the error formula returns empty string, not the formula string or error
     assertEquals(1, parser.units.size(), "Should have one unit");
-    ExcelParserV5.UnitRow unit = parser.units.get(0);
+    ExcelParserV5.UnitRow unit = parser.units.getFirst();
     
     // Error formulas should return empty string
     assertEquals("", unit.nurseGroup, 
@@ -173,7 +173,7 @@ public class FormulaEvaluationTest {
     
     // Verify numeric formula result
     assertEquals(1, parser.units.size(), "Should have one unit");
-    ExcelParserV5.UnitRow unit = parser.units.get(0);
+    ExcelParserV5.UnitRow unit = parser.units.getFirst();
     
     // Numeric formula should be converted to string
     assertEquals("8.0", unit.unitNames, 

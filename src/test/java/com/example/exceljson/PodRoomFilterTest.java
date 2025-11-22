@@ -81,7 +81,7 @@ class PodRoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -90,7 +90,7 @@ class PodRoomFilterTest {
         assertEquals(2, conditions.size());
         
         // Check that NurseCallsCondition exists
-        Map<String, Object> nurseCallsCond = conditions.get(0);
+        Map<String, Object> nurseCallsCond = conditions.getFirst();
         assertEquals("NurseCallsCondition", nurseCallsCond.get("name"));
         
         // Check that POD room filter condition exists
@@ -101,7 +101,7 @@ class PodRoomFilterTest {
         List<Map<String, Object>> filters = (List<Map<String, Object>>) podFilterCond.get("filters");
         assertEquals(1, filters.size());
         
-        Map<String, Object> filter = filters.get(0);
+        Map<String, Object> filter = filters.getFirst();
         assertEquals("bed.room.room_number", filter.get("attributePath"));
         assertEquals("in", filter.get("operator"));
         assertEquals("POD 1", filter.get("value"));
@@ -168,7 +168,7 @@ class PodRoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -177,14 +177,14 @@ class PodRoomFilterTest {
         assertEquals(1, conditions.size());
         
         // Check that POD room filter condition exists
-        Map<String, Object> podFilterCond = conditions.get(0);
+        Map<String, Object> podFilterCond = conditions.getFirst();
         assertEquals("POD rooms filter", podFilterCond.get("name"));
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> filters = (List<Map<String, Object>>) podFilterCond.get("filters");
         assertEquals(1, filters.size());
         
-        Map<String, Object> filter = filters.get(0);
+        Map<String, Object> filter = filters.getFirst();
         assertEquals("bed.room.room_number", filter.get("attributePath"));
         assertEquals("in", filter.get("operator"));
         // Comma-separated values should be preserved
@@ -252,7 +252,7 @@ class PodRoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -261,7 +261,7 @@ class PodRoomFilterTest {
         assertEquals(1, conditions.size());
         
         // Check that NurseCallsCondition exists
-        Map<String, Object> nurseCallsCond = conditions.get(0);
+        Map<String, Object> nurseCallsCond = conditions.getFirst();
         assertEquals("NurseCallsCondition", nurseCallsCond.get("name"));
     }
 
@@ -326,7 +326,7 @@ class PodRoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -341,7 +341,7 @@ class PodRoomFilterTest {
         List<Map<String, Object>> filters = (List<Map<String, Object>>) podFilterCond.get("filters");
         assertEquals(1, filters.size());
         
-        Map<String, Object> filter = filters.get(0);
+        Map<String, Object> filter = filters.getFirst();
         assertEquals("bed.room.room_number", filter.get("attributePath"));
         assertEquals("in", filter.get("operator"));
         // Special characters should be stripped, leaving only alphanumeric, spaces, and commas
@@ -407,7 +407,7 @@ class PodRoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -416,7 +416,7 @@ class PodRoomFilterTest {
         assertEquals(1, conditions.size());
         
         // Check that NurseCallsCondition exists
-        Map<String, Object> nurseCallsCond = conditions.get(0);
+        Map<String, Object> nurseCallsCond = conditions.getFirst();
         assertEquals("NurseCallsCondition", nurseCallsCond.get("name"));
     }
 }

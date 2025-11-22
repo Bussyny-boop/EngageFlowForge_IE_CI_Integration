@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * Test to verify that the warning dialog behavior is correct.
@@ -21,7 +22,7 @@ public class WarningDialogTest {
         showWarningMethod.setAccessible(true);
         
         // Verify the method is private
-        assertTrue(java.lang.reflect.Modifier.isPrivate(showWarningMethod.getModifiers()),
+        assertTrue(Modifier.isPrivate(showWarningMethod.getModifiers()),
                 "showWarning should be private");
     }
 
@@ -35,7 +36,7 @@ public class WarningDialogTest {
         checkMethod.setAccessible(true);
         
         // Verify the method is private
-        assertTrue(java.lang.reflect.Modifier.isPrivate(checkMethod.getModifiers()),
+        assertTrue(Modifier.isPrivate(checkMethod.getModifiers()),
                 "checkBothDefaultInterfacesSelected should be private");
     }
     

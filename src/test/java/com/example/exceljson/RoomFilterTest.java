@@ -78,7 +78,7 @@ class RoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -94,7 +94,7 @@ class RoomFilterTest {
         List<Map<String, Object>> filters = (List<Map<String, Object>>) roomFilterCond.get("filters");
         assertEquals(1, filters.size());
         
-        Map<String, Object> filter = filters.get(0);
+        Map<String, Object> filter = filters.getFirst();
         assertEquals("bed.room.room_number", filter.get("attributePath"));
         assertEquals("equal", filter.get("operator"));
         assertEquals("123", filter.get("value"));
@@ -160,14 +160,14 @@ class RoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
         assertNotNull(conditions);
         // Should have only NurseCallsCondition (no room filter)
         assertEquals(1, conditions.size());
-        assertEquals("NurseCallsCondition", conditions.get(0).get("name"));
+        assertEquals("NurseCallsCondition", conditions.getFirst().get("name"));
     }
 
     @Test
@@ -231,7 +231,7 @@ class RoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -239,14 +239,14 @@ class RoomFilterTest {
         // Clinicals should have the room filter condition (no default condition)
         assertEquals(1, conditions.size());
         
-        Map<String, Object> roomFilterCond = conditions.get(0);
+        Map<String, Object> roomFilterCond = conditions.getFirst();
         assertEquals("Room Filter For TT", roomFilterCond.get("name"));
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> filters = (List<Map<String, Object>>) roomFilterCond.get("filters");
         assertEquals(1, filters.size());
         
-        Map<String, Object> filter = filters.get(0);
+        Map<String, Object> filter = filters.getFirst();
         assertEquals("bed.room.room_number", filter.get("attributePath"));
         assertEquals("equal", filter.get("operator"));
         assertEquals("456", filter.get("value"));
@@ -312,7 +312,7 @@ class RoomFilterTest {
         assertNotNull(flows);
         assertEquals(1, flows.size());
         
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -321,7 +321,7 @@ class RoomFilterTest {
         assertEquals(2, conditions.size());
         
         // Check Global Condition
-        Map<String, Object> globalCond = conditions.get(0);
+        Map<String, Object> globalCond = conditions.getFirst();
         assertEquals("Global Condition", globalCond.get("name"));
         
         // Check Room Filter
@@ -332,7 +332,7 @@ class RoomFilterTest {
         List<Map<String, Object>> filters = (List<Map<String, Object>>) roomFilterCond.get("filters");
         assertEquals(1, filters.size());
         
-        Map<String, Object> filter = filters.get(0);
+        Map<String, Object> filter = filters.getFirst();
         assertEquals("patient.current_place.locs.units.rooms.room_number", filter.get("attributePath"));
         assertEquals("in", filter.get("operator"));
         assertEquals("789", filter.get("value"));

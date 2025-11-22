@@ -121,16 +121,16 @@ class EmdanTest {
         assertEquals(1, parser.clinicals.size(), "One alarm should be moved to Clinicals");
 
         // Verify the correct alarms are in the right lists
-        assertEquals("Test Alarm 2", parser.nurseCalls.get(0).alarmName, "Non-EMDAN alarm should be in NurseCalls");
-        assertEquals("Test Alarm 1", parser.clinicals.get(0).alarmName, "EMDAN alarm should be in Clinicals");
+        assertEquals("Test Alarm 2", parser.nurseCalls.getFirst().alarmName, "Non-EMDAN alarm should be in NurseCalls");
+        assertEquals("Test Alarm 1", parser.clinicals.getFirst().alarmName, "EMDAN alarm should be in Clinicals");
 
         // Verify EMDAN values are stored
-        assertEquals("Y", parser.clinicals.get(0).emdan, "EMDAN value should be stored");
-        assertEquals("N", parser.nurseCalls.get(0).emdan, "EMDAN value should be stored");
+        assertEquals("Y", parser.clinicals.getFirst().emdan, "EMDAN value should be stored");
+        assertEquals("N", parser.nurseCalls.getFirst().emdan, "EMDAN value should be stored");
 
         // Verify type is set correctly
-        assertEquals("Clinicals", parser.clinicals.get(0).type, "Type should be Clinicals for EMDAN alarm");
-        assertEquals("NurseCalls", parser.nurseCalls.get(0).type, "Type should be NurseCalls for non-EMDAN alarm");
+        assertEquals("Clinicals", parser.clinicals.getFirst().type, "Type should be Clinicals for EMDAN alarm");
+        assertEquals("NurseCalls", parser.nurseCalls.getFirst().type, "Type should be NurseCalls for non-EMDAN alarm");
     }
 
     @Test
@@ -146,7 +146,7 @@ class EmdanTest {
 
         assertEquals(1, parser.nurseCalls.size(), "One alarm should remain in NurseCalls");
         assertEquals(1, parser.clinicals.size(), "One alarm should be moved to Clinicals");
-        assertEquals("Test Alarm 1", parser.clinicals.get(0).alarmName, "EMDAN=Yes alarm should be in Clinicals");
+        assertEquals("Test Alarm 1", parser.clinicals.getFirst().alarmName, "EMDAN=Yes alarm should be in Clinicals");
     }
 
     @Test
@@ -201,8 +201,8 @@ class EmdanTest {
         // Verify data is preserved
         assertEquals(1, parser2.nurseCalls.size(), "Nurse calls should be preserved");
         assertEquals(1, parser2.clinicals.size(), "Clinicals should be preserved");
-        assertEquals("Y", parser2.clinicals.get(0).emdan, "EMDAN value should be preserved in clinicals");
-        assertEquals("N", parser2.nurseCalls.get(0).emdan, "EMDAN value should be preserved in nurse calls");
+        assertEquals("Y", parser2.clinicals.getFirst().emdan, "EMDAN value should be preserved in clinicals");
+        assertEquals("N", parser2.nurseCalls.getFirst().emdan, "EMDAN value should be preserved in nurse calls");
     }
     
     @Test
@@ -234,10 +234,10 @@ class EmdanTest {
         // Verify the EMDAN alarm was moved and facility was resolved
         // The facility should be resolved from the Unit Breakdown mapping
         assertEquals(1, parser.clinicals.size(), "One alarm should be in Clinicals");
-        assertEquals("Test Alarm 1", parser.clinicals.get(0).alarmName, "EMDAN alarm should be in Clinicals");
+        assertEquals("Test Alarm 1", parser.clinicals.getFirst().alarmName, "EMDAN alarm should be in Clinicals");
         
         // Verify configuration group is preserved (needed for facility resolution)
-        assertEquals("Nurse Group 1", parser.clinicals.get(0).configGroup, 
+        assertEquals("Nurse Group 1", parser.clinicals.getFirst().configGroup, 
                     "Configuration group should be preserved for facility resolution");
     }
 }

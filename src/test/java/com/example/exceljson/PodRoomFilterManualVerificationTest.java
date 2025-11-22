@@ -91,7 +91,7 @@ class PodRoomFilterManualVerificationTest {
         // Verify the conditions structure
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) json.get("deliveryFlows");
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         
@@ -180,7 +180,7 @@ class PodRoomFilterManualVerificationTest {
         // Verify the conditions structure
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) json.get("deliveryFlows");
-        Map<String, Object> flow = flows.get(0);
+        Map<String, Object> flow = flows.getFirst();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
         

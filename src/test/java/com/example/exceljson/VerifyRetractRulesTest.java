@@ -28,7 +28,7 @@ class VerifyRetractRulesTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify that retractRules is NOT in XMPP parameters
@@ -52,7 +52,7 @@ class VerifyRetractRulesTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.get(0);
+        var flow = (Map<?, ?>) flows.getFirst();
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify that retractRules IS in VMP/Edge parameters

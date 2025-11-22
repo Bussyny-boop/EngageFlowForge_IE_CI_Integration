@@ -78,7 +78,7 @@ public class PodRoomFilterIntegrationTest {
         // Verify the POD Room Filter was parsed correctly
         assertEquals(2, parser.units.size(), "Should have 2 units");
         
-        ExcelParserV5.UnitRow unit1 = parser.units.get(0);
+        ExcelParserV5.UnitRow unit1 = parser.units.getFirst();
         assertEquals("Test Hospital", unit1.facility);
         assertEquals("ICU", unit1.unitNames);
         assertEquals("POD 1", unit1.podRoomFilter, "First unit should have POD 1 filter");
@@ -143,7 +143,7 @@ public class PodRoomFilterIntegrationTest {
         // Verify the unit was parsed and POD Room Filter defaults to empty
         assertEquals(1, parser.units.size(), "Should have 1 unit");
         
-        ExcelParserV5.UnitRow unit = parser.units.get(0);
+        ExcelParserV5.UnitRow unit = parser.units.getFirst();
         assertEquals("Test Hospital", unit.facility);
         assertEquals("ICU", unit.unitNames);
         assertEquals("", unit.podRoomFilter, "POD Room Filter should default to empty when column is missing");
