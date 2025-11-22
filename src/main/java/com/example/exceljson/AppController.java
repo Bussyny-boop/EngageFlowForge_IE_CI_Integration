@@ -13,7 +13,6 @@ import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.control.cell.TextFieldTableCell;
 import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -26,6 +25,17 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.text.TextFlow;
+import javafx.scene.text.Text;
+import javafx.scene.paint.Color;
+import org.apache.poi.ss.usermodel.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javafx.geometry.Side;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -114,6 +124,14 @@ public class AppController {
     @FXML private TextArea jsonPreview;
     @FXML private Label statusLabel;
     
+    // ---------- Voice Group Validation ----------
+    @FXML private Button loadVoiceGroupButton;
+    @FXML private Button clearVoiceGroupButton;
+    @FXML private Label voiceGroupStatsLabel;
+    
+    private final Set<String> loadedVoiceGroups = new HashSet<>();
+    private ContextMenu suggestionPopup;
+
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
     @FXML private ComboBox<String> customTabFlowTypeCombo;
@@ -338,6 +356,10 @@ public class AppController {
         if (visualFlowButton != null) visualFlowButton.setOnAction(e -> generateVisualFlow());
         if (resetDefaultsButton != null) resetDefaultsButton.setOnAction(e -> resetDefaults());
         if (resetPathsButton != null) resetPathsButton.setOnAction(e -> resetPaths());
+        
+        // ---------- Voice Group Validation ----------
+        if (loadVoiceGroupButton != null) loadVoiceGroupButton.setOnAction(e -> loadVoiceGroups());
+        if (clearVoiceGroupButton != null) clearVoiceGroupButton.setOnAction(e -> clearVoiceGroups());
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
             updateThemeButton();
@@ -2257,74 +2279,8 @@ public class AppController {
      * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera, VMP, OutgoingWCTP
      */
     private void setupDeviceAColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
-        if (col == null) return;
-        col.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().deviceA)));
-        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
-            private final TextField textField = new TextField();
-            
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                    setStyle("");
-                } else {
-                    // Show empty string for null items
-                    String displayValue = (item == null) ? "" : item;
-                    setText(displayValue);
-                    setGraphic(null);
-                    
-                    // Apply light orange background if:
-                    // The cell is NOT blank AND no valid recipient keyword is found
-                    if (parser != null && !parser.hasValidRecipientKeyword(item)) {
-                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
-                    } else {
-                        setStyle("");
-                    }
-                }
-            }
-            
-            @Override
-            public void startEdit() {
-                super.startEdit();
-                String value = getItem();
-                textField.setText(value == null ? "" : value);
-                setText(null);
-                setGraphic(textField);
-                textField.selectAll();
-                textField.requestFocus();
-                
-                // Add Enter key handler to commit edit
-                textField.setOnAction(event -> {
-                    commitEdit(textField.getText());
-                });
-            }
-            
-            @Override
-            public void cancelEdit() {
-                super.cancelEdit();
-                setText(getItem());
-                setGraphic(null);
-            }
-            
-            @Override
-            public void commitEdit(String newValue) {
-                super.commitEdit(newValue);
-                ExcelParserV5.FlowRow row = getTableRow().getItem();
-                if (row != null) {
-                    row.deviceA = newValue;
-                    if (getTableView() != null) getTableView().refresh();
-                }
-            }
-        });
-        col.setEditable(true);
-        col.setOnEditCommit(ev -> {
-            ExcelParserV5.FlowRow row = ev.getRowValue();
-            row.deviceA = ev.getNewValue();
-            if (col.getTableView() != null) col.getTableView().refresh();
-        });
+        setupValidatedColumn(col, f -> f.deviceA, (f, v) -> f.deviceA = v, false, 
+            item -> parser != null && parser.hasValidRecipientKeyword(item));
     }
     
     /**
@@ -2334,74 +2290,8 @@ public class AppController {
      * Valid keywords (case-insensitive): VCS, Edge, XMPP, Vocera
      */
     private void setupDeviceBColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
-        if (col == null) return;
-        col.setCellValueFactory(d -> new SimpleStringProperty(safe(d.getValue().deviceB)));
-        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
-            private final TextField textField = new TextField();
-            
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                    setStyle("");
-                } else {
-                    // Show empty string for null items
-                    String displayValue = (item == null) ? "" : item;
-                    setText(displayValue);
-                    setGraphic(null);
-                    
-                    // Apply light orange background if:
-                    // The cell is NOT blank AND no valid recipient keyword is found
-                    if (parser != null && !parser.hasValidRecipientKeyword(item)) {
-                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
-                    } else {
-                        setStyle("");
-                    }
-                }
-            }
-            
-            @Override
-            public void startEdit() {
-                super.startEdit();
-                String value = getItem();
-                textField.setText(value == null ? "" : value);
-                setText(null);
-                setGraphic(textField);
-                textField.selectAll();
-                textField.requestFocus();
-                
-                // Add Enter key handler to commit edit
-                textField.setOnAction(event -> {
-                    commitEdit(textField.getText());
-                });
-            }
-            
-            @Override
-            public void cancelEdit() {
-                super.cancelEdit();
-                setText(getItem());
-                setGraphic(null);
-            }
-            
-            @Override
-            public void commitEdit(String newValue) {
-                super.commitEdit(newValue);
-                ExcelParserV5.FlowRow row = getTableRow().getItem();
-                if (row != null) {
-                    row.deviceB = newValue;
-                    if (getTableView() != null) getTableView().refresh();
-                }
-            }
-        });
-        col.setEditable(true);
-        col.setOnEditCommit(ev -> {
-            ExcelParserV5.FlowRow row = ev.getRowValue();
-            row.deviceB = ev.getNewValue();
-            if (col.getTableView() != null) col.getTableView().refresh();
-        });
+        setupValidatedColumn(col, f -> f.deviceB, (f, v) -> f.deviceB = v, false, 
+            item -> parser != null && parser.hasValidRecipientKeyword(item));
     }
     
     /**
@@ -2415,112 +2305,8 @@ public class AppController {
     private void setupFirstRecipientColumn(TableColumn<ExcelParserV5.FlowRow, String> col, 
                                            Function<ExcelParserV5.FlowRow, String> getter, 
                                            BiConsumer<ExcelParserV5.FlowRow, String> setter) {
-        if (col == null) return;
-        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
-        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
-            private TextArea textArea;
-            
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                    setStyle("");
-                } else {
-                    // Show empty string for null items
-                    String displayValue = (item == null) ? "" : item;
-                    setText(displayValue);
-                    setGraphic(null);
-                    
-                    // Apply light orange background if:
-                    // The cell is blank OR no valid recipient keyword is found
-                    if (parser != null && !parser.isValidFirstRecipient(item)) {
-                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
-                    } else {
-                        setStyle("");
-                    }
-                }
-            }
-            
-            @Override
-            public void startEdit() {
-                super.startEdit();
-                if (textArea == null) {
-                    createTextArea();
-                }
-                String value = getItem();
-                textArea.setText(value == null ? "" : value);
-                setText(null);
-                setGraphic(textArea);
-                textArea.selectAll();
-                textArea.requestFocus();
-            }
-            
-            @Override
-            public void cancelEdit() {
-                super.cancelEdit();
-                setText(getItem() == null ? "" : getItem());
-                setGraphic(null);
-            }
-            
-            @Override
-            public void commitEdit(String newValue) {
-                super.commitEdit(newValue);
-                ExcelParserV5.FlowRow row = getTableRow().getItem();
-                if (row != null) {
-                    setter.accept(row, newValue);
-                    if (getTableView() != null) getTableView().refresh();
-                }
-            }
-            
-            private void createTextArea() {
-                textArea = new TextArea();
-                textArea.setMinHeight(60);
-                textArea.setPrefRowCount(3);
-                textArea.setWrapText(true);
-                
-                // Handle key events for Shift+Enter support
-                textArea.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, event -> {
-                    if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                        if (event.isShiftDown()) {
-                            // Shift+Enter: Insert newline
-                            event.consume();
-                            int caretPosition = textArea.getCaretPosition();
-                            textArea.insertText(caretPosition, "\n");
-                        } else {
-                            // Plain Enter: Commit the edit
-                            event.consume();
-                            commitEdit(textArea.getText());
-                        }
-                    } else if (event.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
-                        // Escape: Cancel the edit
-                        event.consume();
-                        cancelEdit();
-                    } else if (event.getCode() == javafx.scene.input.KeyCode.TAB) {
-                        // Tab: Commit and move to next cell
-                        event.consume();
-                        commitEdit(textArea.getText());
-                    }
-                });
-                
-                // Auto-commit when focus is lost
-                textArea.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
-                    if (wasFocused && !isNowFocused) {
-                        if (isEditing()) {
-                            commitEdit(textArea.getText());
-                        }
-                    }
-                });
-            }
-        });
-        col.setEditable(true);
-        col.setOnEditCommit(ev -> {
-            ExcelParserV5.FlowRow row = ev.getRowValue();
-            setter.accept(row, ev.getNewValue());
-            if (col.getTableView() != null) col.getTableView().refresh();
-        });
+        setupValidatedColumn(col, getter, setter, true, 
+            item -> parser != null && parser.isValidFirstRecipient(item));
     }
     
     /**
@@ -2534,112 +2320,8 @@ public class AppController {
     private void setupOtherRecipientColumn(TableColumn<ExcelParserV5.FlowRow, String> col, 
                                            Function<ExcelParserV5.FlowRow, String> getter, 
                                            BiConsumer<ExcelParserV5.FlowRow, String> setter) {
-        if (col == null) return;
-        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
-        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
-            private TextArea textArea;
-            
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                    setStyle("");
-                } else {
-                    // Show empty string for null items
-                    String displayValue = (item == null) ? "" : item;
-                    setText(displayValue);
-                    setGraphic(null);
-                    
-                    // Apply light orange background if:
-                    // The cell is NOT blank AND no valid recipient keyword is found
-                    if (parser != null && !parser.isValidOtherRecipient(item)) {
-                        setStyle("-fx-background-color: #FFE4B5;"); // Light orange (moccasin)
-                    } else {
-                        setStyle("");
-                    }
-                }
-            }
-            
-            @Override
-            public void startEdit() {
-                super.startEdit();
-                if (textArea == null) {
-                    createTextArea();
-                }
-                String value = getItem();
-                textArea.setText(value == null ? "" : value);
-                setText(null);
-                setGraphic(textArea);
-                textArea.selectAll();
-                textArea.requestFocus();
-            }
-            
-            @Override
-            public void cancelEdit() {
-                super.cancelEdit();
-                setText(getItem() == null ? "" : getItem());
-                setGraphic(null);
-            }
-            
-            @Override
-            public void commitEdit(String newValue) {
-                super.commitEdit(newValue);
-                ExcelParserV5.FlowRow row = getTableRow().getItem();
-                if (row != null) {
-                    setter.accept(row, newValue);
-                    if (getTableView() != null) getTableView().refresh();
-                }
-            }
-            
-            private void createTextArea() {
-                textArea = new TextArea();
-                textArea.setMinHeight(60);
-                textArea.setPrefRowCount(3);
-                textArea.setWrapText(true);
-                
-                // Handle key events for Shift+Enter support
-                textArea.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, event -> {
-                    if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                        if (event.isShiftDown()) {
-                            // Shift+Enter: Insert newline
-                            event.consume();
-                            int caretPosition = textArea.getCaretPosition();
-                            textArea.insertText(caretPosition, "\n");
-                        } else {
-                            // Plain Enter: Commit the edit
-                            event.consume();
-                            commitEdit(textArea.getText());
-                        }
-                    } else if (event.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
-                        // Escape: Cancel the edit
-                        event.consume();
-                        cancelEdit();
-                    } else if (event.getCode() == javafx.scene.input.KeyCode.TAB) {
-                        // Tab: Commit and move to next cell
-                        event.consume();
-                        commitEdit(textArea.getText());
-                    }
-                });
-                
-                // Auto-commit when focus is lost
-                textArea.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
-                    if (wasFocused && !isNowFocused) {
-                        if (isEditing()) {
-                            commitEdit(textArea.getText());
-                        }
-                    }
-                });
-            }
-        });
-        col.setEditable(true);
-        col.setOnEditCommit(ev -> {
-            ExcelParserV5.FlowRow row = ev.getRowValue();
-            setter.accept(row, ev.getNewValue());
-            if (col.getTableView() != null) col.getTableView().refresh();
-        });
+        setupValidatedColumn(col, getter, setter, true, 
+            item -> parser != null && parser.isValidOtherRecipient(item));
     }
     
     // ---------- Dynamic Custom Unit Columns ----------
@@ -2721,9 +2403,7 @@ public class AppController {
                 for (ExcelParserV5.FlowRow row : filteredList) {
                     row.inScope = newVal;
                 }
-                if (col.getTableView() != null) {
-                    col.getTableView().refresh();
-                }
+                if (col.getTableView() != null) col.getTableView().refresh();
             }
         });
         
@@ -2898,7 +2578,7 @@ public class AppController {
      * @return true if any column contains the search filter
      */
     private boolean matchesAnyColumn(ExcelParserV5.FlowRow flow, String searchFilter) {
-        if (flow == null || searchFilter == null || searchFilter.isEmpty()) {
+        if (flow == null || searchFilter == null || searchFilter.trim().isEmpty()) {
             return true;
         }
         
@@ -3464,6 +3144,8 @@ public class AppController {
             if (isTopBarCollapsed) {
                 // If collapsed, keep the icon and update tooltip
                 setCollapsedButton(themeToggleButton, "/icons/darkmode.png", isDarkMode ? "Light Mode" : "Dark Mode");
+
+
             } else {
                 // If expanded, show full text
                 themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
@@ -3474,6 +3156,7 @@ public class AppController {
     
     // ---------- Sidebar Toggle ----------
     @FXML
+   
     private void toggleSidebar() {
         isSidebarCollapsed = !isSidebarCollapsed;
         
@@ -4092,8 +3775,8 @@ public class AppController {
             nvl(row.multiUserAccept),
             nvl(row.escalateAfter),
             nvl(row.ttlValue),
-            String.valueOf(row.enunciate),
-            String.valueOf(row.emdan),
+            nvl(row.enunciate),
+            nvl(row.emdan),
             nvl(row.t1), nvl(row.r1),
             nvl(row.t2), nvl(row.r2),
             nvl(row.t3), nvl(row.r3),
@@ -4309,5 +3992,315 @@ public class AppController {
             }
             showError("Error generating visual flow: " + errorMsg + "\n\nStack trace:\n" + stackTrace);
         }
+    }
+    
+    // ---------- Voice Group Validation Methods ----------
+
+    private void loadVoiceGroups() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select Voice Group File");
+        chooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Spreadsheets", "*.xlsx", "*.xls", "*.csv"),
+            new FileChooser.ExtensionFilter("All Files", "*.*")
+        );
+        
+        if (lastExcelDir != null && lastExcelDir.exists()) {
+            chooser.setInitialDirectory(lastExcelDir);
+        }
+        
+        File file = chooser.showOpenDialog(getStage());
+        if (file == null) return;
+
+        setButtonLoading(loadVoiceGroupButton, true);
+        
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Set<String> groups = new HashSet<>();
+                String name = file.getName().toLowerCase();
+                
+                if (name.endsWith(".csv")) {
+                    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            String[] parts = line.split(",");
+                            if (parts.length > 0 && !parts[0].trim().isEmpty()) {
+                                groups.add(parts[0].trim());
+                            }
+                        }
+                    }
+                } else {
+                    try (Workbook workbook = WorkbookFactory.create(file)) {
+                        Sheet sheet = workbook.getSheetAt(0);
+                        for (Row row : sheet) {
+                            org.apache.poi.ss.usermodel.Cell cell = row.getCell(0);
+                            if (cell != null) {
+                                String val = new DataFormatter().formatCellValue(cell).trim();
+                                if (!val.isEmpty()) {
+                                    groups.add(val);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                synchronized(loadedVoiceGroups) {
+                    loadedVoiceGroups.clear();
+                    loadedVoiceGroups.addAll(groups);
+                }
+                return null;
+            }
+        };
+        
+        task.setOnSucceeded(e -> {
+            setButtonLoading(loadVoiceGroupButton, false);
+            setButtonLoaded(loadVoiceGroupButton, true);
+            autoClearLoaded(loadVoiceGroupButton, loadedTimeoutSeconds);
+            
+            updateVoiceGroupStats();
+            refreshAllTables(); // Trigger re-validation/repainting
+            showInfo("Loaded " + loadedVoiceGroups.size() + " voice groups.");
+        });
+        
+        task.setOnFailed(e -> {
+            setButtonLoading(loadVoiceGroupButton, false);
+            showError("Failed to load voice groups: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
+        });
+        
+        new Thread(task).start();
+    }
+
+    private void clearVoiceGroups() {
+        synchronized(loadedVoiceGroups) {
+            loadedVoiceGroups.clear();
+        }
+        updateVoiceGroupStats();
+        refreshAllTables();
+        if (statusLabel != null) statusLabel.setText("Voice groups cleared.");
+    }
+
+    private void updateVoiceGroupStats() {
+        if (voiceGroupStatsLabel != null) {
+            if (loadedVoiceGroups.isEmpty()) {
+                voiceGroupStatsLabel.setText("No groups loaded");
+            } else {
+                voiceGroupStatsLabel.setText(loadedVoiceGroups.size() + " groups loaded");
+            }
+        }
+    }
+
+    private Node createValidatedCellGraphic(String text) {
+        if (text == null || text.isEmpty()) return null;
+        
+        // If no groups loaded, or text doesn't contain keywords, return simple label
+        boolean hasKeywords = false;
+        String lower = text.toLowerCase();
+        if (lower.contains("vgroup") || lower.contains("group")) {
+            hasKeywords = true;
+        }
+        
+        if (loadedVoiceGroups.isEmpty() || !hasKeywords) {
+            return new Label(text);
+        }
+
+        TextFlow flow = new TextFlow();
+        List<com.example.exceljson.util.VoiceGroupValidator.Segment> segments;
+        synchronized(loadedVoiceGroups) {
+            segments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidate(text, loadedVoiceGroups);
+        }
+
+        for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : segments) {
+            Text t = new Text(segment.text);
+            if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
+                t.setFill(Color.RED);
+                t.setStyle("-fx-font-weight: bold;");
+            } else {
+                t.setFill(Color.BLACK);
+            }
+            flow.getChildren().add(t);
+        }
+        
+        return flow;
+    }
+
+    private void setupAutoComplete(TextInputControl input) {
+        if (loadedVoiceGroups.isEmpty()) return;
+        
+        suggestionPopup = new ContextMenu();
+        
+        input.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.length() < 3) {
+                suggestionPopup.hide();
+                return;
+            }
+            
+            // Find the word being typed (last token)
+            String text = newVal;
+            
+            // Regex to find the last partial word that looks like a group name
+            Pattern p = Pattern.compile("(?:^|[,;\\n\\s])([a-zA-Z0-9_\\-]{3,})$");
+            Matcher m = p.matcher(text);
+            
+            String partial = null;
+            // Find the last match
+            while (m.find()) {
+                partial = m.group(1);
+            }
+            
+            if (partial != null) {
+                String search = partial.toLowerCase();
+                List<String> matches;
+                synchronized(loadedVoiceGroups) {
+                    matches = loadedVoiceGroups.stream()
+                        .filter(g -> g.toLowerCase().contains(search))
+                        .sorted()
+                        .limit(10)
+                        .collect(Collectors.toList());
+                }
+                
+                if (!matches.isEmpty()) {
+                    populatePopup(matches, input, partial);
+                    if (!suggestionPopup.isShowing()) {
+                        suggestionPopup.show(input, Side.BOTTOM, 0, 0);
+                    }
+                } else {
+                    suggestionPopup.hide();
+                }
+            } else {
+                suggestionPopup.hide();
+            }
+        });
+        
+        // Hide on focus lost
+        input.focusedProperty().addListener((obs, oldV, newV) -> {
+            if (!newV) suggestionPopup.hide();
+        });
+    }
+
+    private void populatePopup(List<String> matches, TextInputControl input, String partial) {
+        suggestionPopup.getItems().clear();
+        for (String match : matches) {
+            MenuItem item = new MenuItem(match);
+            item.setOnAction(e -> {
+                // Replace partial with match
+                String text = input.getText();
+                int lastIndex = text.lastIndexOf(partial);
+                if (lastIndex >= 0) {
+                    String newText = text.substring(0, lastIndex) + match + text.substring(lastIndex + partial.length());
+                    input.setText(newText);
+                    input.positionCaret(lastIndex + match.length());
+                }
+            });
+            suggestionPopup.getItems().add(item);
+        }
+    }
+
+    private void setupValidatedColumn(TableColumn<ExcelParserV5.FlowRow, String> col, 
+                                      Function<ExcelParserV5.FlowRow, String> getter, 
+                                      BiConsumer<ExcelParserV5.FlowRow, String> setter,
+                                      boolean useTextArea,
+                                      java.util.function.Predicate<String> legacyValidator) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
+        
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.FlowRow, String>() {
+            private TextInputControl inputControl;
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Voice Group Validation Logic
+                    boolean hasVoiceGroups = !loadedVoiceGroups.isEmpty();
+                    boolean hasKeywords = item != null && (item.toLowerCase().contains("vgroup") || item.toLowerCase().contains("group"));
+                    
+                    if (hasVoiceGroups && hasKeywords) {
+                        setText(null);
+                        setGraphic(createValidatedCellGraphic(item));
+                        setStyle(""); 
+                    } else {
+                        setText(item);
+                        setGraphic(null);
+                        if (legacyValidator != null && parser != null && !legacyValidator.test(item)) {
+                             setStyle("-fx-background-color: #FFE4B5;");
+                        } else {
+                             setStyle("");
+                        }
+                    }
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                if (inputControl == null) {
+                    if (useTextArea) {
+                        TextArea ta = new TextArea();
+                        ta.setWrapText(true);
+                        ta.setMinHeight(60);
+                        ta.setPrefRowCount(3);
+                        ta.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                            if (event.getCode() == KeyCode.ENTER) {
+                                if (event.isShiftDown()) {
+                                    ta.insertText(ta.getCaretPosition(), "\n");
+                                } else {
+                                    commitEdit(ta.getText());
+                                }
+                                event.consume();
+                            } else if (event.getCode() == KeyCode.ESCAPE) {
+                                cancelEdit();
+                                event.consume();
+                            } else if (event.getCode() == KeyCode.TAB) {
+                                commitEdit(ta.getText());
+                                event.consume();
+                            }
+                        });
+                        ta.focusedProperty().addListener((obs, was, is) -> {
+                            if (!is && isEditing()) commitEdit(ta.getText());
+                        });
+                        inputControl = ta;
+                    } else {
+                        TextField tf = new TextField();
+                        tf.setOnAction(e -> commitEdit(tf.getText()));
+                        tf.focusedProperty().addListener((obs, was, is) -> {
+                            if (!is && isEditing()) commitEdit(tf.getText());
+                        });
+                        inputControl = tf;
+                    }
+                    setupAutoComplete(inputControl);
+                }
+                inputControl.setText(getItem() == null ? "" : getItem());
+                setText(null);
+                setGraphic(inputControl);
+                inputControl.selectAll();
+                inputControl.requestFocus();
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                updateItem(getItem(), false);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.FlowRow row = getTableRow().getItem();
+                if (row != null) {
+                    setter.accept(row, newValue);
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        col.setEditable(true);
+        col.setOnEditCommit(ev -> {
+            ExcelParserV5.FlowRow row = ev.getRowValue();
+            setter.accept(row, ev.getNewValue());
+            if (col.getTableView() != null) col.getTableView().refresh();
+        });
     }
 }

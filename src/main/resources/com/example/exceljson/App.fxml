@@ -390,6 +390,24 @@
 
                                     <Separator />
 
+                                    <!-- Voice Group Validation -->
+                                    <Label text="Voice Group Validation" style="-fx-font-weight:bold;" />
+                                    <HBox spacing="10">
+                                        <Button fx:id="loadVoiceGroupButton" text="Load Voice Group" styleClass="button-secondary">
+                                            <tooltip>
+                                                <Tooltip text="Load valid voice groups from Excel/CSV (Column A)" />
+                                            </tooltip>
+                                        </Button>
+                                        <Button fx:id="clearVoiceGroupButton" text="Clear Loaded Groups" styleClass="button-secondary">
+                                            <tooltip>
+                                                <Tooltip text="Clear loaded voice groups and reset validation" />
+                                            </tooltip>
+                                        </Button>
+                                    </HBox>
+                                    <Label fx:id="voiceGroupStatsLabel" text="No groups loaded" style="-fx-font-size: 10; -fx-text-fill: #666;" />
+
+                                    <Separator />
+
                                     <!-- Other Settings -->
                                     <Button fx:id="resetPathsButton" text="🔄 Reset File Paths" styleClass="button-secondary" />
                                 </VBox>
