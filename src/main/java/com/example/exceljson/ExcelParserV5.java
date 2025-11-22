@@ -3668,8 +3668,13 @@ public class ExcelParserV5 {
               default -> "";
             };
             yield result;
+          } catch (IllegalStateException e) {
+            // Formula cell exists but has no cached result (not yet evaluated)
+            // This can happen if the workbook was saved without evaluating formulas
+            yield "";
           } catch (Exception e) {
-            // If no cached result or evaluation fails, return empty string
+            // Other formula evaluation errors - log for debugging but continue processing
+            System.err.println("Warning: Could not evaluate formula in cell at column " + col + ": " + e.getMessage());
             yield "";
           }
         }
