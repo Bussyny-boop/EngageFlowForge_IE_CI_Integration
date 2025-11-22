@@ -4142,8 +4142,9 @@ public class AppController {
         if (loadedVoiceGroups.isEmpty()) return;
         
         suggestionPopup = new ContextMenu();
-        // Make the popup semi-transparent
-        suggestionPopup.setStyle("-fx-background-color: rgba(255, 255, 255, 0.95); -fx-background-radius: 5;");
+        // Make the popup semi-transparent with dark/light mode support
+        String bgColor = isDarkMode ? "rgba(50, 50, 50, 0.95)" : "rgba(255, 255, 255, 0.95)";
+        suggestionPopup.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 5;");
         
         input.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null || newVal.length() < 3) {
