@@ -38,15 +38,36 @@
 - Prioritizes matches that start with the search term
 - Works on current line being edited in multi-line text
 
+### Issue 4: Clear Buttons for Each Validation Type (New Requirement)
+**Problem**: Each Load button needs a clear button, and the Clear All needs to be able to clear all validation buttons.
+
+**Solution**: Added individual clear buttons for each validation type:
+- Assignment Roles: Added `clearAssignmentRolesButton` and `clearAssignmentRoles()` method
+- Bed List: Added `clearBedListButton` and `clearBedList()` method
+- Voice Groups: Already had `clearVoiceGroupButton` and `clearVoiceGroups()` method
+- Updated `clearAllData()` to call all three clear methods
+
+**Functionality**:
+- Each clear button clears its respective validation data
+- Updates stats label to show "No [type] loaded"
+- Refreshes all tables to remove validation styling
+- Resets load button state (removes checkmark/loading indicator)
+- Clear All button now clears all three validation types at once
+
 ## Files Modified
 
 ### 1. `src/main/java/com/example/exceljson/AppController.java`
 **Changes**:
 - Line 20: Added `import javafx.scene.layout.Region`
 - Line 139: Updated `VASSIGN_KEYWORD_PATTERN` to support both VAssign and VAssigned
+- Lines 144, 151: Added `clearAssignmentRolesButton` and `clearBedListButton` FXML fields
+- Lines 388, 391: Added action handlers for new clear buttons in initialize()
 - Lines 2392-2393: Added autocomplete to bed list editing
 - Lines 2319-2325: Added TextFlow height constraints for bed list validation
+- Lines 2954-2958: Updated clearAllData() to call all clear methods
+- Lines 4497-4513: Added `clearAssignmentRoles()` method
 - Lines 4638-4643: Added TextFlow height constraints for recipient validation
+- Lines 4650-4668: Added `clearBedList()` method
 - Lines 4843-4920: Added new `setupBedListAutoComplete()` method
 
 ### 2. `src/main/java/com/example/exceljson/util/AssignmentRoleValidator.java`
@@ -121,14 +142,31 @@ This allows content to wrap properly and display all data without making rows ex
 ## Testing
 
 ### Manual Testing Checklist
+
+**Pattern Validation:**
 - [ ] Load assignment roles file
 - [ ] Type "VAssign: Room 101" in recipient column → verify validation
 - [ ] Type "VAssigned: Room 101" in recipient column → verify validation
 - [ ] Verify autocomplete shows correct suggestions for both formats
+
+**Row Expansion:**
+- [ ] Enter multi-line data in validated cells → verify rows don't over-expand
+- [ ] Verify all content is visible without clipping
+- [ ] Check that max 6-7 lines display properly
+
+**Bed List Autocomplete:**
 - [ ] Load bed list file
 - [ ] Edit Unit Names in Units tab → verify autocomplete shows units
-- [ ] Enter multi-line data → verify rows don't over-expand
-- [ ] Verify all content is visible without clipping
+- [ ] Type partial unit name → verify top 5 matches appear
+- [ ] Verify matches prioritize those starting with search term
+
+**Clear Buttons:**
+- [ ] Load voice groups → click "Clear Voice Group" → verify groups cleared
+- [ ] Load assignment roles → click "Clear Assignment Roles" → verify roles cleared
+- [ ] Load bed list → click "Clear Bed List" → verify bed list cleared
+- [ ] Load all three validation types → click "Clear All" → verify all cleared
+- [ ] After clearing, verify stats labels show "No [type] loaded"
+- [ ] After clearing, verify tables no longer show validation colors
 
 ### Unit Tests
 All new tests pass (verified in code review):
