@@ -4096,41 +4096,54 @@ public class AppController {
     private Node createValidatedCellGraphic(String text) {
         if (text == null || text.isEmpty()) return null;
         
-        boolean hasKeywords = text.toLowerCase().contains("vgroup") || text.toLowerCase().contains("group");
-        
-        if (loadedVoiceGroups.isEmpty() || !hasKeywords) {
+        // Only process text that contains VGroup/Group patterns, not just the word anywhere
+        Pattern vgroupPattern = Pattern.compile("(?i)(?:VGroup|Group):");
+        if (loadedVoiceGroups.isEmpty() || !vgroupPattern.matcher(text).find()) {
             return new Label(text);
         }
 
-        VBox lineBox = new VBox();
+        // Use a single TextFlow to avoid cell height expansion
+        TextFlow flow = new TextFlow();
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
             allLineSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(text, loadedVoiceGroups);
         }
 
+        // Flatten all segments into a single TextFlow with newline text nodes
+        boolean firstLine = true;
         for (List<com.example.exceljson.util.VoiceGroupValidator.Segment> lineSegments : allLineSegments) {
-            TextFlow flow = new TextFlow();
+            // Add newline between lines (but not before the first line)
+            if (!firstLine) {
+                Text newline = new Text("\n");
+                newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                flow.getChildren().add(newline);
+            }
+            firstLine = false;
+            
             for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : lineSegments) {
                 Text t = new Text(segment.text);
                 if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
                     t.setFill(Color.RED);
-                    t.setStyle("-fx-font-weight: bold;");
+                    // Don't make bold to keep cell height consistent
                 } else {
-                    // Keyword and valid groups are black
+                    // Keyword and valid groups use normal color
                     t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
                 }
                 flow.getChildren().add(t);
             }
-            lineBox.getChildren().add(flow);
         }
         
-        return lineBox;
+        // Set max width to prevent horizontal expansion
+        flow.setMaxWidth(Double.MAX_VALUE);
+        return flow;
     }
 
     private void setupAutoComplete(TextInputControl input) {
         if (loadedVoiceGroups.isEmpty()) return;
         
         suggestionPopup = new ContextMenu();
+        // Make the popup semi-transparent
+        suggestionPopup.setStyle("-fx-background-color: rgba(255, 255, 255, 0.95); -fx-background-radius: 5;");
         
         input.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null || newVal.length() < 3) {
