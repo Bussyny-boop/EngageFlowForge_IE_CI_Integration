@@ -4199,7 +4199,7 @@ public class AppController {
         suggestionPopup.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 5;");
         
         input.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal == null || newVal.length() < 3) {
+            if (newVal == null || newVal.length() < 2) {
                 suggestionPopup.hide();
                 return;
             }
@@ -4208,13 +4208,18 @@ public class AppController {
             String text = newVal;
             
             // Regex to find the last partial word that looks like a group name
-            Pattern p = Pattern.compile("(?:^|[,;\\n\\s])([a-zA-Z0-9_\\-]{3,})$");
+            // Pattern explanation: (?:^|[,;\\n\\s:]\\s*) matches start of line or delimiter followed by optional space
+            // ([a-zA-Z0-9_\\-\\s]{2,})$ captures 2+ chars (letters, numbers, underscore, hyphen, spaces) at end
+            // This allows multi-word group names like "Code Blue" or "OB Nurse"
+            // Note: Spaces are allowed to match VoiceGroupValidator.VGROUP_PATTERN which uses [^,;\\n]+
+            // Reduced minimum from 3 to 2 characters for better UX (e.g., "OB ")
+            Pattern p = Pattern.compile("(?:^|[,;\\n\\s:]\\s*)([a-zA-Z0-9_\\-\\s]{2,})$");
             Matcher m = p.matcher(text);
             
             String partial = null;
             // Find the last match
             while (m.find()) {
-                partial = m.group(1);
+                partial = m.group(1).trim();  // Trim to handle extra spaces
             }
             
             if (partial != null) {
@@ -4223,8 +4228,17 @@ public class AppController {
                 synchronized(loadedVoiceGroups) {
                     matches = loadedVoiceGroups.stream()
                         .filter(g -> g.toLowerCase().contains(search))
-                        .sorted()
-                        .limit(10)
+                        // Prioritize matches that start with the search term
+                        .sorted((a, b) -> {
+                            String aLower = a.toLowerCase();
+                            String bLower = b.toLowerCase();
+                            boolean aStarts = aLower.startsWith(search);
+                            boolean bStarts = bLower.startsWith(search);
+                            if (aStarts && !bStarts) return -1;
+                            if (!aStarts && bStarts) return 1;
+                            return a.compareTo(b);  // Alphabetical if both start or both don't start
+                        })
+                        .limit(5)  // TOP 5 matches as requested
                         .collect(Collectors.toList());
                 }
                 
