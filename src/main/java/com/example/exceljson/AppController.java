@@ -134,6 +134,8 @@ public class AppController {
     private ContextMenu suggestionPopup;
     // Lightweight pattern for quick keyword detection (full parsing done by VoiceGroupValidator)
     private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
+    // Standard cell height for validated cells to prevent expansion
+    private static final double VALIDATED_CELL_HEIGHT = 24.0;
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -4218,13 +4220,13 @@ public class AppController {
         flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
         // Constrain the TextFlow to prevent cell expansion
-        flow.setMaxHeight(24);
-        flow.setPrefHeight(24);
-        flow.setMinHeight(24);
+        flow.setMaxHeight(VALIDATED_CELL_HEIGHT);
+        flow.setPrefHeight(VALIDATED_CELL_HEIGHT);
+        flow.setMinHeight(VALIDATED_CELL_HEIGHT);
         // Clip content that exceeds the height to prevent cell expansion
         javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
         clip.widthProperty().bind(flow.widthProperty());
-        clip.setHeight(24);
+        clip.setHeight(VALIDATED_CELL_HEIGHT);
         flow.setClip(clip);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
@@ -4376,8 +4378,8 @@ public class AppController {
                         // Wrap in a constrained container to prevent cell height expansion
                         if (graphic != null) {
                             StackPane container = new StackPane(graphic);
-                            container.setMaxHeight(24); // Match default cell height
-                            container.setPrefHeight(24);
+                            container.setMaxHeight(VALIDATED_CELL_HEIGHT); // Match default cell height
+                            container.setPrefHeight(VALIDATED_CELL_HEIGHT);
                             setGraphic(container);
                         } else {
                             setGraphic(graphic);
