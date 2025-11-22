@@ -139,6 +139,10 @@ public class AppController {
     // Pattern for assignment role validation - supports both "VAssign:" and "VAssigned"
     private static final Pattern VASSIGN_KEYWORD_PATTERN = Pattern.compile("(?i)VAssign(?:ed)?:?");
     
+    // Constants for data validation
+    private static final String TRAILING_ASTERISK_REGEX = "\\*+$";
+    private static final double VALIDATED_CELL_HEIGHT = 24.0; // Fixed height to prevent row expansion
+    
     // ---------- Assignment Role Validation ----------
     @FXML private Button loadAssignmentRolesButton;
     @FXML private Button clearAssignmentRolesButton;
@@ -4387,7 +4391,7 @@ public class AppController {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String headerValue = headers[i].trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
                                 if (headerValue.equalsIgnoreCase("Name")) {
                                     nameColumn = i;
                                     break;
@@ -4420,7 +4424,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
                                         if (headerValue.equalsIgnoreCase("Name")) {
                                             nameColumn = i;
                                             break;
@@ -4537,7 +4541,7 @@ public class AppController {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String header = headers[i].trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
+                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
                                 if (header.equalsIgnoreCase("Department") || header.equalsIgnoreCase("Unit")) {
                                     unitColumn = i;
                                     break;
@@ -4570,7 +4574,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll("\\*+$", ""); // Remove trailing asterisks
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
                                         if (headerValue.equalsIgnoreCase("Department") || headerValue.equalsIgnoreCase("Unit")) {
                                             unitColumn = i;
                                             break;
@@ -4682,8 +4686,8 @@ public class AppController {
         flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
         // Constrain height to prevent row expansion when validation data is loaded
         // Use a fixed preferred height that matches typical single-line row height
-        flow.setPrefHeight(24); // Fixed height to prevent expansion
-        flow.setMaxHeight(24);  // Prevent vertical expansion beyond single line
+        flow.setPrefHeight(VALIDATED_CELL_HEIGHT); // Fixed height to prevent expansion
+        flow.setMaxHeight(VALIDATED_CELL_HEIGHT);  // Prevent vertical expansion beyond single line
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments = null;
         List<List<com.example.exceljson.util.AssignmentRoleValidator.Segment>> assignmentRoleSegments = null;
