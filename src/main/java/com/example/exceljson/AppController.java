@@ -17,7 +17,6 @@ import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -4149,7 +4148,7 @@ public class AppController {
         // Use a single TextFlow to avoid cell height expansion
         TextFlow flow = new TextFlow();
         // Remove padding and spacing to prevent cell height expansion
-        flow.setPadding(new javafx.geometry.Insets(0));
+        flow.setPadding(new Insets(0));
         flow.setLineSpacing(0);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
