@@ -3681,27 +3681,57 @@ public class ExcelParserV5 {
               yield result;
             } else {
               // Fallback to cached result if no evaluator available
-              CellType cachedType = cell.getCachedFormulaResultType();
-              String result = switch (cachedType) {
-                case STRING -> cell.getStringCellValue().trim();
-                case NUMERIC -> DateUtil.isCellDateFormatted(cell)
-                  ? cell.getLocalDateTimeCellValue().toString()
-                  : String.valueOf(cell.getNumericCellValue());
-                case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-                default -> "";
-              };
-              yield result;
+              // IMPORTANT: For FORMULA cells, we must NOT use cell.getStringCellValue() directly
+              // as it may return the formula text instead of the cached result value
+              try {
+                CellType cachedType = cell.getCachedFormulaResultType();
+                String result = switch (cachedType) {
+                  case STRING -> {
+                    // Use getRichStringCellValue() to get the cached result, not the formula
+                    String cachedValue = cell.getRichStringCellValue().getString();
+                    yield cachedValue != null ? cachedValue.trim() : "";
+                  }
+                  case NUMERIC -> DateUtil.isCellDateFormatted(cell)
+                    ? cell.getLocalDateTimeCellValue().toString()
+                    : String.valueOf(cell.getNumericCellValue());
+                  case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+                  case ERROR -> ""; // Return empty for error formulas
+                  default -> "";
+                };
+                yield result;
+              } catch (Exception fallbackEx) {
+                // If we can't get cached result, return empty string
+                // This ensures we never accidentally return the formula text
+                System.err.println("Warning: Could not get cached formula result at column " + col + ": " + fallbackEx.getMessage());
+                yield "";
+              }
             }
           } catch (Exception e) {
             // Formula evaluation errors - return empty string
-            System.err.println("Warning: Could not evaluate formula in cell at column " + col + ": " + e.getMessage());
+            // Log the formula for debugging but NEVER return it
+            try {
+              String formulaText = cell.getCellFormula();
+              System.err.println("Warning: Could not evaluate formula in cell at column " + col + 
+                  " (Formula: =" + formulaText + "): " + e.getMessage());
+            } catch (Exception logEx) {
+              System.err.println("Warning: Could not evaluate formula in cell at column " + col + ": " + e.getMessage());
+            }
             yield "";
           }
         }
         default -> "";
       };
       if (val.equalsIgnoreCase("N/A") || val.equalsIgnoreCase("NA") || val.isBlank()) return "";
-      return val.trim();
+      
+      // Final safety check: Never return Excel formula strings (starting with =)
+      // This is a defensive measure to catch any edge cases where formula text might leak through
+      String trimmed = val.trim();
+      if (trimmed.startsWith("=")) {
+        System.err.println("Warning: Detected formula string in cell value at column " + col + ". Returning empty string instead.");
+        return "";
+      }
+      
+      return trimmed;
     } catch (Exception e) {
       return "";
     }
