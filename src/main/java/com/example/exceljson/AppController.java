@@ -2740,8 +2740,8 @@ public class AppController {
         // Show confirmation dialog with warning message
         Alert confirmAlert = new Alert(Alert.AlertType.WARNING);
         confirmAlert.setTitle("Clear All Data");
-        confirmAlert.setHeaderText("⚠️ You are about to delete all currently loaded data");
-        confirmAlert.setContentText("This action cannot be undone. All loaded units, nurse calls, clinicals, and orders will be cleared.\n\nDo you want to continue?");
+        confirmAlert.setHeaderText("⚠️ You are about to reset the application");
+        confirmAlert.setContentText("This action cannot be undone. All loaded data (units, nurse calls, clinicals, orders), voice groups, and settings will be cleared and reset to defaults.\n\nDo you want to continue?");
         confirmAlert.getDialogPane().setStyle("-fx-font-size: 13px;");
         
         // Add Continue and Cancel buttons
@@ -2799,6 +2799,30 @@ public class AppController {
                 setButtonLoading(loadVoiceGroupButton, false);
                 if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
                 
+                // Reset all settings to defaults
+                // Reset interface reference names
+                if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
+                if (vcsRefNameField != null) vcsRefNameField.setText("VMP");
+                if (voceraRefNameField != null) voceraRefNameField.setText("Vocera");
+                if (xmppRefNameField != null) xmppRefNameField.setText("XMPP");
+                
+                // Clear default interface checkboxes
+                if (defaultEdgeCheckbox != null) defaultEdgeCheckbox.setSelected(false);
+                if (defaultVmpCheckbox != null) defaultVmpCheckbox.setSelected(false);
+                if (defaultVoceraCheckbox != null) defaultVoceraCheckbox.setSelected(false);
+                if (defaultXmppCheckbox != null) defaultXmppCheckbox.setSelected(false);
+                
+                // Clear merge-related checkboxes
+                if (noMergeCheckbox != null) noMergeCheckbox.setSelected(false);
+                if (mergeByConfigGroupCheckbox != null) mergeByConfigGroupCheckbox.setSelected(false);
+                if (mergeAcrossConfigGroupCheckbox != null) mergeAcrossConfigGroupCheckbox.setSelected(false);
+                if (combineConfigGroupCheckbox != null) combineConfigGroupCheckbox.setSelected(false);
+                
+                // Clear room filter fields
+                if (roomFilterNursecallField != null) roomFilterNursecallField.setText("");
+                if (roomFilterClinicalField != null) roomFilterClinicalField.setText("");
+                if (roomFilterOrdersField != null) roomFilterOrdersField.setText("");
+                
                 // Refresh tables
                 if (tableUnits != null) tableUnits.refresh();
                 if (tableNurseCalls != null) tableNurseCalls.refresh();
@@ -2812,7 +2836,7 @@ public class AppController {
                 // Reapply sidebar state to restore icons if collapsed
                 applySidebarState();
                 
-                showInfo("All data has been cleared successfully.\n\nYou can now load a new Excel file.");
+                showInfo("All data and settings have been cleared and reset successfully.\n\nYou can now load a new Excel file.");
             } catch (Exception ex) {
                 showError("Failed to clear data: " + ex.getMessage());
             }
