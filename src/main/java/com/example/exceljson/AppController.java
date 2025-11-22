@@ -131,6 +131,7 @@ public class AppController {
     
     private final Set<String> loadedVoiceGroups = new HashSet<>();
     private ContextMenu suggestionPopup;
+    // Lightweight pattern for quick keyword detection (full parsing done by VoiceGroupValidator)
     private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
 
     // ---------- Custom Tab Mappings ----------
