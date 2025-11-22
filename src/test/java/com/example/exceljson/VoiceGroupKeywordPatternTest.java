@@ -12,7 +12,10 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class VoiceGroupKeywordPatternTest {
     
-    // This is the same pattern used in AppController
+    // NOTE: This pattern is intentionally duplicated from AppController for testing purposes.
+    // It allows us to verify the pattern's behavior independently and ensures the test
+    // remains valid even if the AppController implementation changes.
+    // Pattern definition: (?i)(?:VGroup|Group): matches "VGroup:" or "Group:" case-insensitively
     private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
     
     @Test
