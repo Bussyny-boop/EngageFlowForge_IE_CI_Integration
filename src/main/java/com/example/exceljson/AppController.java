@@ -2788,6 +2788,15 @@ public class AppController {
                 if (loadXmlButton != null) loadXmlButton.setTooltip(null);
                 if (loadJsonButton != null) loadJsonButton.setTooltip(null);
                 
+                // Clear voice groups data and button state
+                synchronized(loadedVoiceGroups) {
+                    loadedVoiceGroups.clear();
+                }
+                updateVoiceGroupStats();
+                setButtonLoaded(loadVoiceGroupButton, false);
+                setButtonLoading(loadVoiceGroupButton, false);
+                if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
+                
                 // Refresh tables
                 if (tableUnits != null) tableUnits.refresh();
                 if (tableNurseCalls != null) tableNurseCalls.refresh();
@@ -4080,6 +4089,14 @@ public class AppController {
         }
         updateVoiceGroupStats();
         refreshAllTables();
+        
+        // Clear the loaded state and checkmark from the Load Voice Group button
+        if (loadVoiceGroupButton != null) {
+            setButtonLoaded(loadVoiceGroupButton, false);
+            setButtonLoading(loadVoiceGroupButton, false);
+            loadVoiceGroupButton.setTooltip(null);
+        }
+        
         if (statusLabel != null) statusLabel.setText("Voice groups cleared.");
     }
 
