@@ -621,11 +621,8 @@ public class AppController {
      * When window width is below threshold, buttons show icons only.
      */
     private void setupTopBarResponsive() {
-        // Store original button texts
-        if (settingsButton != null) originalButtonTexts.putIfAbsent(settingsButton, settingsButton.getText());
-        if (saveExcelButton != null) originalButtonTexts.putIfAbsent(saveExcelButton, saveExcelButton.getText());
-        if (themeToggleButton != null) originalButtonTexts.putIfAbsent(themeToggleButton, themeToggleButton.getText());
-        if (helpButton != null) originalButtonTexts.putIfAbsent(helpButton, helpButton.getText());
+        // Note: Original button texts are stored in storeOriginalButtonTexts() 
+        // which is called during sidebar setup
         
         // Setup window width listener when scene becomes available
         if (contentStack != null) {
@@ -1160,6 +1157,17 @@ public class AppController {
             // Default to NONE if noMergeCheckbox is selected or nothing is selected
             return ExcelParserV5.MergeMode.NONE;
         }
+    }
+    
+    /**
+     * Converts merge mode enum to human-readable text
+     */
+    private String getMergeModeText(ExcelParserV5.MergeMode mergeMode) {
+        return switch (mergeMode) {
+            case MERGE_BY_CONFIG_GROUP -> "Merged Multiple Config Groups";
+            case MERGE_ACROSS_CONFIG_GROUP -> "Merged by Single Config Group";
+            case NONE -> "Standard (No Merge)";
+        };
     }
     
     // ---------- Progress Bar Helpers ----------
@@ -1890,11 +1898,7 @@ public class AppController {
         Label pathLabel = new Label(destination.getParent());
         pathLabel.setStyle("-fx-font-size: 10; -fx-text-fill: gray;");
         
-        String modeText = switch (mergeMode) {
-            case MERGE_BY_CONFIG_GROUP -> "Merged Multiple Config Groups";
-            case MERGE_ACROSS_CONFIG_GROUP -> "Merged by Single Config Group";
-            case NONE -> "Standard (No Merge)";
-        };
+        String modeText = getMergeModeText(mergeMode);
         Label modeLabel = new Label("Mode: " + modeText);
         modeLabel.setStyle("-fx-font-size: 11;");
         
@@ -1931,12 +1935,7 @@ public class AppController {
             PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
             pause.setOnFinished(evt -> {
                 dialog.close();
-                String finalModeText = switch (mergeMode) {
-                    case MERGE_BY_CONFIG_GROUP -> "Merged Multiple Config Groups";
-                    case MERGE_ACROSS_CONFIG_GROUP -> "Merged by Single Config Group";
-                    case NONE -> "Standard (No Merge)";
-                };
-                this.statusLabel.setText("✅ Exported " + finalModeText + " JSON");
+                this.statusLabel.setText("✅ Exported " + getMergeModeText(mergeMode) + " JSON");
                 hideProgressBar();
             });
             pause.play();
