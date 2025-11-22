@@ -28,6 +28,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.text.TextFlow;
 import javafx.scene.text.Text;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -134,6 +135,8 @@ public class AppController {
     private ContextMenu suggestionPopup;
     // Lightweight pattern for quick keyword detection (full parsing done by VoiceGroupValidator)
     private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
+    // Standard cell height for validated cells to prevent expansion
+    private static final double VALIDATED_CELL_HEIGHT = 24.0;
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -2820,10 +2823,11 @@ public class AppController {
                 if (defaultVoceraCheckbox != null) defaultVoceraCheckbox.setSelected(false);
                 if (defaultXmppCheckbox != null) defaultXmppCheckbox.setSelected(false);
                 
-                // Clear merge-related checkboxes
+                // Restore merge-related checkboxes to their default settings (not cleared)
+                // Default: mergeAcrossConfigGroupCheckbox is selected (as per FXML)
                 if (noMergeCheckbox != null) noMergeCheckbox.setSelected(false);
                 if (mergeByConfigGroupCheckbox != null) mergeByConfigGroupCheckbox.setSelected(false);
-                if (mergeAcrossConfigGroupCheckbox != null) mergeAcrossConfigGroupCheckbox.setSelected(false);
+                if (mergeAcrossConfigGroupCheckbox != null) mergeAcrossConfigGroupCheckbox.setSelected(true);
                 if (combineConfigGroupCheckbox != null) combineConfigGroupCheckbox.setSelected(false);
                 
                 // Clear room filter fields
@@ -4065,23 +4069,84 @@ public class AppController {
                 
                 if (name.endsWith(".csv")) {
                     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                        String headerLine = br.readLine();
+                        int groupNameColumn = 0; // Default to column 0 (Column A)
+                        
+                        // Check if first line contains "Group Name" header (case-insensitive)
+                        if (headerLine != null) {
+                            String[] headers = headerLine.split(",");
+                            boolean hasGroupNameHeader = false;
+                            
+                            for (int i = 0; i < headers.length; i++) {
+                                if (headers[i].trim().equalsIgnoreCase("Group Name")) {
+                                    groupNameColumn = i;
+                                    hasGroupNameHeader = true;
+                                    break;
+                                }
+                            }
+                            
+                            // If no "Group Name" header found, treat first line as data
+                            if (!hasGroupNameHeader) {
+                                String[] parts = headerLine.split(",");
+                                if (parts.length > groupNameColumn && !parts[groupNameColumn].trim().isEmpty()) {
+                                    groups.add(parts[groupNameColumn].trim());
+                                }
+                            }
+                        }
+                        
+                        // Read remaining lines
                         String line;
                         while ((line = br.readLine()) != null) {
                             String[] parts = line.split(",");
-                            if (parts.length > 0 && !parts[0].trim().isEmpty()) {
-                                groups.add(parts[0].trim());
+                            if (parts.length > groupNameColumn && !parts[groupNameColumn].trim().isEmpty()) {
+                                groups.add(parts[groupNameColumn].trim());
                             }
                         }
                     }
                 } else {
                     try (Workbook workbook = WorkbookFactory.create(file)) {
                         Sheet sheet = workbook.getSheetAt(0);
-                        for (Row row : sheet) {
-                            org.apache.poi.ss.usermodel.Cell cell = row.getCell(0);
-                            if (cell != null) {
-                                String val = new DataFormatter().formatCellValue(cell).trim();
-                                if (!val.isEmpty()) {
-                                    groups.add(val);
+                        int groupNameColumn = 0; // Default to column 0 (Column A)
+                        int startRow = 0;
+                        
+                        // Check first row for "Group Name" header (case-insensitive)
+                        if (sheet.getPhysicalNumberOfRows() > 0) {
+                            Row headerRow = sheet.getRow(0);
+                            if (headerRow != null) {
+                                boolean hasGroupNameHeader = false;
+                                DataFormatter formatter = new DataFormatter();
+                                
+                                for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                                    org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
+                                    if (cell != null) {
+                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        if (headerValue.equalsIgnoreCase("Group Name")) {
+                                            groupNameColumn = i;
+                                            hasGroupNameHeader = true;
+                                            startRow = 1; // Skip header row
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                // If no "Group Name" header found, start from row 0
+                                if (!hasGroupNameHeader) {
+                                    startRow = 0;
+                                }
+                            }
+                        }
+                        
+                        // Read data from the determined column
+                        DataFormatter formatter = new DataFormatter();
+                        for (int i = startRow; i < sheet.getPhysicalNumberOfRows(); i++) {
+                            Row row = sheet.getRow(i);
+                            if (row != null) {
+                                org.apache.poi.ss.usermodel.Cell cell = row.getCell(groupNameColumn);
+                                if (cell != null) {
+                                    String val = formatter.formatCellValue(cell).trim();
+                                    if (!val.isEmpty()) {
+                                        groups.add(val);
+                                    }
                                 }
                             }
                         }
@@ -4156,8 +4221,14 @@ public class AppController {
         flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
         // Constrain the TextFlow to prevent cell expansion
-        flow.setMaxHeight(24);
-        flow.setPrefHeight(24);
+        flow.setMaxHeight(VALIDATED_CELL_HEIGHT);
+        flow.setPrefHeight(VALIDATED_CELL_HEIGHT);
+        flow.setMinHeight(VALIDATED_CELL_HEIGHT);
+        // Clip content that exceeds the height to prevent cell expansion
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(flow.widthProperty());
+        clip.setHeight(VALIDATED_CELL_HEIGHT);
+        flow.setClip(clip);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
@@ -4308,8 +4379,8 @@ public class AppController {
                         // Wrap in a constrained container to prevent cell height expansion
                         if (graphic != null) {
                             StackPane container = new StackPane(graphic);
-                            container.setMaxHeight(24); // Match default cell height
-                            container.setPrefHeight(24);
+                            container.setMaxHeight(VALIDATED_CELL_HEIGHT); // Match default cell height
+                            container.setPrefHeight(VALIDATED_CELL_HEIGHT);
                             setGraphic(container);
                         } else {
                             setGraphic(graphic);
