@@ -230,12 +230,15 @@
                                     
                                     <Separator />
 
+                                    <!-- Data Validation Section -->
+                                    <Label text="Data Validation" style="-fx-font-weight:bold;" />
+                                    
                                     <!-- Voice Group Validation -->
-                                    <Label text="Voice Group Validation" style="-fx-font-weight:bold;" />
+                                    <Label text="Voice Group Validation" style="-fx-font-size: 11; -fx-text-fill: #888;" />
                                     <HBox spacing="10">
                                         <Button fx:id="loadVoiceGroupButton" text="Load Voice Group" styleClass="button-secondary">
                                             <tooltip>
-                                                <Tooltip text="Load valid voice groups from Excel/CSV (Column A)" />
+                                                <Tooltip text="Load valid voice groups from Excel/CSV (Column A or 'Group Name' column)" />
                                             </tooltip>
                                         </Button>
                                         <Button fx:id="clearVoiceGroupButton" text="Clear Loaded Groups" styleClass="button-secondary">
@@ -245,6 +248,24 @@
                                         </Button>
                                     </HBox>
                                     <Label fx:id="voiceGroupStatsLabel" text="No groups loaded" style="-fx-font-size: 10; -fx-text-fill: #666;" />
+                                    
+                                    <!-- Assignment Roles Validation -->
+                                    <Label text="Assignment Roles Validation" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                                    <Button fx:id="loadAssignmentRolesButton" text="Load AssignmentRoles" styleClass="button-secondary">
+                                        <tooltip>
+                                            <Tooltip text="Load valid assignment roles from Excel/CSV ('Name' column)" />
+                                        </tooltip>
+                                    </Button>
+                                    <Label fx:id="assignmentRolesStatsLabel" text="No roles loaded" style="-fx-font-size: 10; -fx-text-fill: #666;" />
+                                    
+                                    <!-- Bed List Validation -->
+                                    <Label text="Bed List Validation" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                                    <Button fx:id="loadBedListButton" text="Load Bed List" styleClass="button-secondary">
+                                        <tooltip>
+                                            <Tooltip text="Load valid bed list from Excel/CSV ('Department' or 'Unit' column)" />
+                                        </tooltip>
+                                    </Button>
+                                    <Label fx:id="bedListStatsLabel" text="No bed list loaded" style="-fx-font-size: 10; -fx-text-fill: #666;" />
 
                                     <Separator />
                                     

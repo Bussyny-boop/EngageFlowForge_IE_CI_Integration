@@ -135,8 +135,20 @@ public class AppController {
     private ContextMenu suggestionPopup;
     // Lightweight pattern for quick keyword detection (full parsing done by VoiceGroupValidator)
     private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
-    // Standard cell height for validated cells to prevent expansion
-    private static final double VALIDATED_CELL_HEIGHT = 24.0;
+    // Pattern for assignment role validation
+    private static final Pattern VASSIGN_KEYWORD_PATTERN = Pattern.compile("(?i)VAssign:");
+    
+    // ---------- Assignment Role Validation ----------
+    @FXML private Button loadAssignmentRolesButton;
+    @FXML private Label assignmentRolesStatsLabel;
+    
+    private final Set<String> loadedAssignmentRoles = new HashSet<>();
+    
+    // ---------- Bed List Validation ----------
+    @FXML private Button loadBedListButton;
+    @FXML private Label bedListStatsLabel;
+    
+    private final Set<String> loadedBedList = new HashSet<>();
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -366,6 +378,13 @@ public class AppController {
         // ---------- Voice Group Validation ----------
         if (loadVoiceGroupButton != null) loadVoiceGroupButton.setOnAction(e -> loadVoiceGroups());
         if (clearVoiceGroupButton != null) clearVoiceGroupButton.setOnAction(e -> clearVoiceGroups());
+        
+        // ---------- Assignment Roles Validation ----------
+        if (loadAssignmentRolesButton != null) loadAssignmentRolesButton.setOnAction(e -> loadAssignmentRoles());
+        
+        // ---------- Bed List Validation ----------
+        if (loadBedListButton != null) loadBedListButton.setOnAction(e -> loadBedList());
+        
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
             updateThemeButton();
@@ -2117,7 +2136,7 @@ public class AppController {
         if (tableUnits != null) tableUnits.setEditable(true);
         // Preserve commas in Facility; no newline conversion
         setupEditable(unitFacilityCol, r -> r.facility, (r, v) -> r.facility = v);
-        setupEditableUnit(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
+        setupEditableUnitWithBedListValidation(unitNamesCol, r -> r.unitNames, (r, v) -> r.unitNames = v);
         setupEditableUnit(unitPodRoomFilterCol, r -> r.podRoomFilter, (r, v) -> r.podRoomFilter = v);
         setupEditableUnit(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
         setupEditableUnit(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
@@ -2265,6 +2284,134 @@ public class AppController {
             setter.accept(row, newVal);
             if (col.getTableView() != null) col.getTableView().refresh();
         });
+    }
+
+    /**
+     * Sets up an editable unit column with bed list validation.
+     * Unit names are validated against the loaded bed list if available.
+     * Invalid units are displayed with red text.
+     */
+    private void setupEditableUnitWithBedListValidation(TableColumn<ExcelParserV5.UnitRow, String> col,
+                                   Function<ExcelParserV5.UnitRow, String> getter,
+                                   BiConsumer<ExcelParserV5.UnitRow, String> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
+        
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.UnitRow, String>() {
+            private TextArea textArea;
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Bed List Validation Logic
+                    if (!loadedBedList.isEmpty()) {
+                        // Split by newlines to validate each unit name separately
+                        String[] unitNames = item.split("\\n");
+                        TextFlow flow = new TextFlow();
+                        flow.setPadding(new Insets(2, 5, 2, 5));
+                        
+                        boolean firstLine = true;
+                        for (String unitName : unitNames) {
+                            if (!firstLine) {
+                                Text newline = new Text("\n");
+                                newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                                flow.getChildren().add(newline);
+                            }
+                            firstLine = false;
+                            
+                            String trimmedName = unitName.trim();
+                            if (!trimmedName.isEmpty()) {
+                                // Check if unit name is in the loaded bed list (case-insensitive)
+                                boolean isValid = false;
+                                synchronized(loadedBedList) {
+                                    for (String validUnit : loadedBedList) {
+                                        if (validUnit.equalsIgnoreCase(trimmedName)) {
+                                            isValid = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                Text t = new Text(trimmedName);
+                                if (isValid) {
+                                    t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                                } else {
+                                    t.setFill(Color.RED);
+                                }
+                                flow.getChildren().add(t);
+                            }
+                        }
+                        
+                        setText(null);
+                        setGraphic(flow);
+                    } else {
+                        // No bed list loaded, display as plain text
+                        setText(item);
+                        setGraphic(null);
+                    }
+                    setStyle("");
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                if (textArea == null) {
+                    textArea = new TextArea();
+                    textArea.setWrapText(true);
+                    textArea.setMinHeight(60);
+                    textArea.setPrefRowCount(3);
+                    textArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                        if (event.getCode() == KeyCode.ENTER) {
+                            if (event.isShiftDown()) {
+                                textArea.insertText(textArea.getCaretPosition(), "\n");
+                            } else {
+                                commitEdit(textArea.getText());
+                            }
+                            event.consume();
+                        } else if (event.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                            event.consume();
+                        } else if (event.getCode() == KeyCode.TAB) {
+                            commitEdit(textArea.getText());
+                            event.consume();
+                        }
+                    });
+                    textArea.focusedProperty().addListener((obs, was, is) -> {
+                        if (!is && isEditing()) commitEdit(textArea.getText());
+                    });
+                }
+                textArea.setText(getItem() == null ? "" : getItem());
+                setText(null);
+                setGraphic(textArea);
+                textArea.selectAll();
+                textArea.requestFocus();
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                updateItem(getItem(), false);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.UnitRow row = getTableRow().getItem();
+                if (row != null) {
+                    String converted = commaToNewlines(newValue);
+                    setter.accept(row, converted);
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        
+        col.setEditable(true);
     }
 
     private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter) {
@@ -4206,55 +4353,355 @@ public class AppController {
         }
     }
 
+    // ---------- Assignment Roles Validation Methods ----------
+    
+    private void loadAssignmentRoles() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select Assignment Roles File");
+        chooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Spreadsheets", "*.xlsx", "*.xls", "*.csv"),
+            new FileChooser.ExtensionFilter("All Files", "*.*")
+        );
+        
+        if (lastExcelDir != null && lastExcelDir.exists()) {
+            chooser.setInitialDirectory(lastExcelDir);
+        }
+        
+        File file = chooser.showOpenDialog(getStage());
+        if (file == null) return;
+
+        setButtonLoading(loadAssignmentRolesButton, true);
+        
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Set<String> roles = new HashSet<>();
+                String name = file.getName().toLowerCase();
+                
+                if (name.endsWith(".csv")) {
+                    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                        String headerLine = br.readLine();
+                        int nameColumn = -1;
+                        
+                        // Look for "Name" header (case-insensitive)
+                        if (headerLine != null) {
+                            String[] headers = headerLine.split(",");
+                            
+                            for (int i = 0; i < headers.length; i++) {
+                                if (headers[i].trim().equalsIgnoreCase("Name")) {
+                                    nameColumn = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // If "Name" column found, read data from it
+                        if (nameColumn >= 0) {
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                String[] parts = line.split(",");
+                                if (parts.length > nameColumn && !parts[nameColumn].trim().isEmpty()) {
+                                    roles.add(parts[nameColumn].trim());
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    try (Workbook workbook = WorkbookFactory.create(file)) {
+                        Sheet sheet = workbook.getSheetAt(0);
+                        int nameColumn = -1;
+                        
+                        // Check first row for "Name" header (case-insensitive)
+                        if (sheet.getPhysicalNumberOfRows() > 0) {
+                            Row headerRow = sheet.getRow(0);
+                            if (headerRow != null) {
+                                DataFormatter formatter = new DataFormatter();
+                                
+                                for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                                    org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
+                                    if (cell != null) {
+                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        if (headerValue.equalsIgnoreCase("Name")) {
+                                            nameColumn = i;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // If "Name" column found, read data from it
+                        if (nameColumn >= 0) {
+                            DataFormatter formatter = new DataFormatter();
+                            for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) { // Start from row 1 (skip header)
+                                Row row = sheet.getRow(i);
+                                if (row != null) {
+                                    org.apache.poi.ss.usermodel.Cell cell = row.getCell(nameColumn);
+                                    if (cell != null) {
+                                        String val = formatter.formatCellValue(cell).trim();
+                                        if (!val.isEmpty()) {
+                                            roles.add(val);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                synchronized(loadedAssignmentRoles) {
+                    loadedAssignmentRoles.clear();
+                    loadedAssignmentRoles.addAll(roles);
+                }
+                return null;
+            }
+        };
+        
+        task.setOnSucceeded(e -> {
+            setButtonLoading(loadAssignmentRolesButton, false);
+            setButtonLoaded(loadAssignmentRolesButton, true);
+            autoClearLoaded(loadAssignmentRolesButton, loadedTimeoutSeconds);
+            
+            updateAssignmentRolesStats();
+            refreshAllTables(); // Trigger re-validation/repainting
+            showInfo("Loaded " + loadedAssignmentRoles.size() + " assignment roles.");
+        });
+        
+        task.setOnFailed(e -> {
+            setButtonLoading(loadAssignmentRolesButton, false);
+            showError("Failed to load assignment roles: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
+        });
+        
+        new Thread(task).start();
+    }
+    
+    private void updateAssignmentRolesStats() {
+        if (assignmentRolesStatsLabel != null) {
+            if (loadedAssignmentRoles.isEmpty()) {
+                assignmentRolesStatsLabel.setText("No roles loaded");
+            } else {
+                assignmentRolesStatsLabel.setText(loadedAssignmentRoles.size() + " roles loaded");
+            }
+        }
+    }
+
+    // ---------- Bed List Validation Methods ----------
+    
+    private void loadBedList() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select Bed List File");
+        chooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Spreadsheets", "*.xlsx", "*.xls", "*.csv"),
+            new FileChooser.ExtensionFilter("All Files", "*.*")
+        );
+        
+        if (lastExcelDir != null && lastExcelDir.exists()) {
+            chooser.setInitialDirectory(lastExcelDir);
+        }
+        
+        File file = chooser.showOpenDialog(getStage());
+        if (file == null) return;
+
+        setButtonLoading(loadBedListButton, true);
+        
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Set<String> bedList = new HashSet<>();
+                String name = file.getName().toLowerCase();
+                
+                if (name.endsWith(".csv")) {
+                    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                        String headerLine = br.readLine();
+                        int unitColumn = -1;
+                        
+                        // Look for "Department" or "Unit" header (case-insensitive)
+                        if (headerLine != null) {
+                            String[] headers = headerLine.split(",");
+                            
+                            for (int i = 0; i < headers.length; i++) {
+                                String header = headers[i].trim();
+                                if (header.equalsIgnoreCase("Department") || header.equalsIgnoreCase("Unit")) {
+                                    unitColumn = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // If "Department" or "Unit" column found, read data from it
+                        if (unitColumn >= 0) {
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                String[] parts = line.split(",");
+                                if (parts.length > unitColumn && !parts[unitColumn].trim().isEmpty()) {
+                                    bedList.add(parts[unitColumn].trim());
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    try (Workbook workbook = WorkbookFactory.create(file)) {
+                        Sheet sheet = workbook.getSheetAt(0);
+                        int unitColumn = -1;
+                        
+                        // Check first row for "Department" or "Unit" header (case-insensitive)
+                        if (sheet.getPhysicalNumberOfRows() > 0) {
+                            Row headerRow = sheet.getRow(0);
+                            if (headerRow != null) {
+                                DataFormatter formatter = new DataFormatter();
+                                
+                                for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                                    org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
+                                    if (cell != null) {
+                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        if (headerValue.equalsIgnoreCase("Department") || headerValue.equalsIgnoreCase("Unit")) {
+                                            unitColumn = i;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // If "Department" or "Unit" column found, read data from it
+                        if (unitColumn >= 0) {
+                            DataFormatter formatter = new DataFormatter();
+                            for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) { // Start from row 1 (skip header)
+                                Row row = sheet.getRow(i);
+                                if (row != null) {
+                                    org.apache.poi.ss.usermodel.Cell cell = row.getCell(unitColumn);
+                                    if (cell != null) {
+                                        String val = formatter.formatCellValue(cell).trim();
+                                        if (!val.isEmpty()) {
+                                            bedList.add(val);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                synchronized(loadedBedList) {
+                    loadedBedList.clear();
+                    loadedBedList.addAll(bedList);
+                }
+                return null;
+            }
+        };
+        
+        task.setOnSucceeded(e -> {
+            setButtonLoading(loadBedListButton, false);
+            setButtonLoaded(loadBedListButton, true);
+            autoClearLoaded(loadBedListButton, loadedTimeoutSeconds);
+            
+            updateBedListStats();
+            refreshAllTables(); // Trigger re-validation/repainting
+            showInfo("Loaded " + loadedBedList.size() + " units from bed list.");
+        });
+        
+        task.setOnFailed(e -> {
+            setButtonLoading(loadBedListButton, false);
+            showError("Failed to load bed list: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"));
+        });
+        
+        new Thread(task).start();
+    }
+    
+    private void updateBedListStats() {
+        if (bedListStatsLabel != null) {
+            if (loadedBedList.isEmpty()) {
+                bedListStatsLabel.setText("No bed list loaded");
+            } else {
+                bedListStatsLabel.setText(loadedBedList.size() + " units loaded");
+            }
+        }
+    }
+
     private Node createValidatedCellGraphic(String text) {
         if (text == null || text.isEmpty()) return null;
         
-        // Only process text that contains VGroup/Group patterns, not just the word anywhere
-        if (loadedVoiceGroups.isEmpty() || !VGROUP_KEYWORD_PATTERN.matcher(text).find()) {
+        // Check for VGroup/Group patterns
+        boolean hasVGroupPattern = !loadedVoiceGroups.isEmpty() && VGROUP_KEYWORD_PATTERN.matcher(text).find();
+        // Check for VAssign patterns
+        boolean hasVAssignPattern = !loadedAssignmentRoles.isEmpty() && VASSIGN_KEYWORD_PATTERN.matcher(text).find();
+        
+        // If no validation patterns are present or no data is loaded, just display as plain text
+        if (!hasVGroupPattern && !hasVAssignPattern) {
             Label label = new Label(text);
             label.setWrapText(true);
             return label;
         }
 
-        // Use a single TextFlow constrained to cell height
+        // Use a single TextFlow that can expand to show all content
         TextFlow flow = new TextFlow();
         flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
-        // Constrain the TextFlow to prevent cell expansion
-        flow.setMaxHeight(VALIDATED_CELL_HEIGHT);
-        flow.setPrefHeight(VALIDATED_CELL_HEIGHT);
-        flow.setMinHeight(VALIDATED_CELL_HEIGHT);
-        // Clip content that exceeds the height to prevent cell expansion
-        Rectangle clip = new Rectangle();
-        clip.widthProperty().bind(flow.widthProperty());
-        clip.setHeight(VALIDATED_CELL_HEIGHT);
-        flow.setClip(clip);
+        // Allow the TextFlow to expand based on content
         
-        List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
-        synchronized(loadedVoiceGroups) {
-            allLineSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(text, loadedVoiceGroups);
-        }
-
-        // Flatten all segments into a single TextFlow with newline text nodes
-        boolean firstLine = true;
-        for (List<com.example.exceljson.util.VoiceGroupValidator.Segment> lineSegments : allLineSegments) {
-            // Add newline between lines (but not before the first line)
-            if (!firstLine) {
-                Text newline = new Text("\n");
-                newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
-                flow.getChildren().add(newline);
+        List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments = null;
+        List<List<com.example.exceljson.util.AssignmentRoleValidator.Segment>> assignmentRoleSegments = null;
+        
+        // Parse for VGroup validation if applicable
+        if (hasVGroupPattern) {
+            synchronized(loadedVoiceGroups) {
+                voiceGroupSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(text, loadedVoiceGroups);
             }
-            firstLine = false;
-            
-            for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : lineSegments) {
-                Text t = new Text(segment.text);
-                if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
-                    t.setFill(Color.RED);
-                } else {
-                    // Keyword and valid groups use normal color
-                    t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+        }
+        
+        // Parse for VAssign validation if applicable
+        if (hasVAssignPattern) {
+            synchronized(loadedAssignmentRoles) {
+                assignmentRoleSegments = com.example.exceljson.util.AssignmentRoleValidator.parseAndValidateMultiLine(text, loadedAssignmentRoles);
+            }
+        }
+        
+        // Determine which validation to use (prioritize VAssign if both are present)
+        if (assignmentRoleSegments != null) {
+            // Render assignment role segments
+            boolean firstLine = true;
+            for (List<com.example.exceljson.util.AssignmentRoleValidator.Segment> lineSegments : assignmentRoleSegments) {
+                // Add newline between lines (but not before the first line)
+                if (!firstLine) {
+                    Text newline = new Text("\n");
+                    newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                    flow.getChildren().add(newline);
                 }
-                flow.getChildren().add(t);
+                firstLine = false;
+                
+                for (com.example.exceljson.util.AssignmentRoleValidator.Segment segment : lineSegments) {
+                    Text t = new Text(segment.text);
+                    if (segment.status == com.example.exceljson.util.AssignmentRoleValidator.ValidationStatus.INVALID) {
+                        t.setFill(Color.RED);
+                    } else {
+                        // Keyword and valid roles use normal color
+                        t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                    }
+                    flow.getChildren().add(t);
+                }
+            }
+        } else if (voiceGroupSegments != null) {
+            // Render voice group segments
+            boolean firstLine = true;
+            for (List<com.example.exceljson.util.VoiceGroupValidator.Segment> lineSegments : voiceGroupSegments) {
+                // Add newline between lines (but not before the first line)
+                if (!firstLine) {
+                    Text newline = new Text("\n");
+                    newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                    flow.getChildren().add(newline);
+                }
+                firstLine = false;
+                
+                for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : lineSegments) {
+                    Text t = new Text(segment.text);
+                    if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
+                        t.setFill(Color.RED);
+                    } else {
+                        // Keyword and valid groups use normal color
+                        t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                    }
+                    flow.getChildren().add(t);
+                }
             }
         }
         
@@ -4262,7 +4709,7 @@ public class AppController {
     }
 
     private void setupAutoComplete(TextInputControl input) {
-        if (loadedVoiceGroups.isEmpty()) return;
+        if (loadedVoiceGroups.isEmpty() && loadedAssignmentRoles.isEmpty()) return;
         
         suggestionPopup = new ContextMenu();
         // Make the popup semi-transparent with dark/light mode support
@@ -4278,7 +4725,10 @@ public class AppController {
             // Find the word being typed (last token)
             String text = newVal;
             
-            // Regex to find the last partial word that looks like a group name
+            // Check if we're typing after "VAssign:" for assignment roles
+            boolean isVAssignContext = VASSIGN_KEYWORD_PATTERN.matcher(text).find();
+            
+            // Regex to find the last partial word that looks like a group/role name
             // Pattern explanation: (?:^|[,;\\n\\s:]\\s*) matches start of line or delimiter followed by optional space
             // ([a-zA-Z0-9_\\-\\s]{2,})$ captures 2+ chars (letters, numbers, underscore, hyphen, spaces) at end
             // This allows multi-word group names like "Code Blue" or "OB Nurse"
@@ -4296,21 +4746,45 @@ public class AppController {
             if (partial != null) {
                 String search = partial.toLowerCase();
                 List<String> matches;
-                synchronized(loadedVoiceGroups) {
-                    matches = loadedVoiceGroups.stream()
-                        .filter(g -> g.toLowerCase().contains(search))
-                        // Prioritize matches that start with the search term
-                        .sorted((a, b) -> {
-                            String aLower = a.toLowerCase();
-                            String bLower = b.toLowerCase();
-                            boolean aStarts = aLower.startsWith(search);
-                            boolean bStarts = bLower.startsWith(search);
-                            if (aStarts && !bStarts) return -1;
-                            if (!aStarts && bStarts) return 1;
-                            return a.compareTo(b);  // Alphabetical if both start or both don't start
-                        })
-                        .limit(5)  // TOP 5 matches as requested
-                        .collect(Collectors.toList());
+                
+                // If in VAssign context, use assignment roles; otherwise use voice groups
+                if (isVAssignContext && !loadedAssignmentRoles.isEmpty()) {
+                    synchronized(loadedAssignmentRoles) {
+                        matches = loadedAssignmentRoles.stream()
+                            .filter(r -> r.toLowerCase().contains(search))
+                            // Prioritize matches that start with the search term
+                            .sorted((a, b) -> {
+                                String aLower = a.toLowerCase();
+                                String bLower = b.toLowerCase();
+                                boolean aStarts = aLower.startsWith(search);
+                                boolean bStarts = bLower.startsWith(search);
+                                if (aStarts && !bStarts) return -1;
+                                if (!aStarts && bStarts) return 1;
+                                return a.compareTo(b);  // Alphabetical if both start or both don't start
+                            })
+                            .limit(5)  // TOP 5 matches as requested
+                            .collect(Collectors.toList());
+                    }
+                } else if (!loadedVoiceGroups.isEmpty()) {
+                    synchronized(loadedVoiceGroups) {
+                        matches = loadedVoiceGroups.stream()
+                            .filter(g -> g.toLowerCase().contains(search))
+                            // Prioritize matches that start with the search term
+                            .sorted((a, b) -> {
+                                String aLower = a.toLowerCase();
+                                String bLower = b.toLowerCase();
+                                boolean aStarts = aLower.startsWith(search);
+                                boolean bStarts = bLower.startsWith(search);
+                                if (aStarts && !bStarts) return -1;
+                                if (!aStarts && bStarts) return 1;
+                                return a.compareTo(b);  // Alphabetical if both start or both don't start
+                            })
+                            .limit(5)  // TOP 5 matches as requested
+                            .collect(Collectors.toList());
+                    }
+                } else {
+                    suggestionPopup.hide();
+                    return;
                 }
                 
                 if (!matches.isEmpty()) {
@@ -4369,22 +4843,18 @@ public class AppController {
                     setGraphic(null);
                     setStyle("");
                 } else {
-                    // Voice Group Validation Logic
+                    // Voice Group and Assignment Role Validation Logic
                     boolean hasVoiceGroups = !loadedVoiceGroups.isEmpty();
-                    boolean hasKeywords = item != null && VGROUP_KEYWORD_PATTERN.matcher(item).find();
+                    boolean hasVGroupKeywords = item != null && VGROUP_KEYWORD_PATTERN.matcher(item).find();
+                    boolean hasAssignmentRoles = !loadedAssignmentRoles.isEmpty();
+                    boolean hasVAssignKeywords = item != null && VASSIGN_KEYWORD_PATTERN.matcher(item).find();
                     
-                    if (hasVoiceGroups && hasKeywords) {
+                    // If any validation should be applied
+                    if ((hasVoiceGroups && hasVGroupKeywords) || (hasAssignmentRoles && hasVAssignKeywords)) {
                         setText(null);
                         Node graphic = createValidatedCellGraphic(item);
-                        // Wrap in a constrained container to prevent cell height expansion
-                        if (graphic != null) {
-                            StackPane container = new StackPane(graphic);
-                            container.setMaxHeight(VALIDATED_CELL_HEIGHT); // Match default cell height
-                            container.setPrefHeight(VALIDATED_CELL_HEIGHT);
-                            setGraphic(container);
-                        } else {
-                            setGraphic(graphic);
-                        }
+                        // Allow the graphic to expand to show all content
+                        setGraphic(graphic);
                         setStyle(""); 
                     } else {
                         setText(item);
