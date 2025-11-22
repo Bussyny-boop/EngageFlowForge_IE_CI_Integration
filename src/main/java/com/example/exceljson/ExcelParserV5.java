@@ -3655,7 +3655,29 @@ public class ExcelParserV5 {
           ? cell.getLocalDateTimeCellValue().toString()
           : String.valueOf(cell.getNumericCellValue());
         case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-        case FORMULA -> cell.getCellFormula();
+        case FORMULA -> {
+          // Evaluate formula and return the calculated value, not the formula string
+          try {
+            CellType cachedType = cell.getCachedFormulaResultType();
+            String result = switch (cachedType) {
+              case STRING -> cell.getStringCellValue().trim();
+              case NUMERIC -> DateUtil.isCellDateFormatted(cell)
+                ? cell.getLocalDateTimeCellValue().toString()
+                : String.valueOf(cell.getNumericCellValue());
+              case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+              default -> "";
+            };
+            yield result;
+          } catch (IllegalStateException e) {
+            // Formula cell exists but has no cached result (not yet evaluated)
+            // This can happen if the workbook was saved without evaluating formulas
+            yield "";
+          } catch (Exception e) {
+            // Other formula evaluation errors - log for debugging but continue processing
+            System.err.println("Warning: Could not evaluate formula in cell at column " + col + ": " + e.getMessage());
+            yield "";
+          }
+        }
         default -> "";
       };
       if (val.equalsIgnoreCase("N/A") || val.equalsIgnoreCase("NA") || val.isBlank()) return "";
