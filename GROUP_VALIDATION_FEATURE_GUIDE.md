@@ -72,8 +72,8 @@ Suggestions (TOP 5):
 1. OB Nurse          ← Starts with "OB" (priority)
 2. OB Tech
 3. OB Anesthesia
-4. Lobby             ← Contains "OB" (lower priority)
-5. Mobile Team
+4. Lobby             ← Contains "ob" (lower priority)
+5. Global Team       ← Contains "ob" (lower priority)
 ```
 
 **Typing "Code":**

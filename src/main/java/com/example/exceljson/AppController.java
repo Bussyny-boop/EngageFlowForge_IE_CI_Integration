@@ -4208,7 +4208,10 @@ public class AppController {
             String text = newVal;
             
             // Regex to find the last partial word that looks like a group name
-            // Handles "VGroup: <partial>", "Group: <partial>", or standalone words
+            // Pattern explanation: (?:^|[,;\\n\\s:]\\s*) matches start of line or delimiter followed by optional space
+            // ([a-zA-Z0-9_\\-\\s]{2,})$ captures 2+ chars (letters, numbers, underscore, hyphen, spaces) at end
+            // This allows multi-word group names like "Code Blue" or "OB Nurse"
+            // Note: Spaces are allowed to match VoiceGroupValidator.VGROUP_PATTERN which uses [^,;\\n]+
             // Reduced minimum from 3 to 2 characters for better UX (e.g., "OB ")
             Pattern p = Pattern.compile("(?:^|[,;\\n\\s:]\\s*)([a-zA-Z0-9_\\-\\s]{2,})$");
             Matcher m = p.matcher(text);

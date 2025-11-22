@@ -138,7 +138,7 @@ public class VoiceGroupValidationTest {
         Set<String> loadedGroups = new HashSet<>();
         loadedGroups.add("Code Blue");
         loadedGroups.add("Acute Care");
-        loadedGroups.add("OB Nurse");  // Note: "OB Nurse" is valid, but "OB" alone is not
+        loadedGroups.add("OB Nurse");  // Loaded group is "OB Nurse" - partial match "OB" should be invalid
         
         String input = "VGroup: Code Blue\nVGroup: Acute Care\nVGroup: OB";
         
