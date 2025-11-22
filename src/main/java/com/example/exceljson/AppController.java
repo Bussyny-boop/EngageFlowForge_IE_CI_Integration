@@ -141,12 +141,14 @@ public class AppController {
     
     // ---------- Assignment Role Validation ----------
     @FXML private Button loadAssignmentRolesButton;
+    @FXML private Button clearAssignmentRolesButton;
     @FXML private Label assignmentRolesStatsLabel;
     
     private final Set<String> loadedAssignmentRoles = new HashSet<>();
     
     // ---------- Bed List Validation ----------
     @FXML private Button loadBedListButton;
+    @FXML private Button clearBedListButton;
     @FXML private Label bedListStatsLabel;
     
     private final Set<String> loadedBedList = new HashSet<>();
@@ -384,9 +386,11 @@ public class AppController {
         
         // ---------- Assignment Roles Validation ----------
         if (loadAssignmentRolesButton != null) loadAssignmentRolesButton.setOnAction(e -> loadAssignmentRoles());
+        if (clearAssignmentRolesButton != null) clearAssignmentRolesButton.setOnAction(e -> clearAssignmentRoles());
         
         // ---------- Bed List Validation ----------
         if (loadBedListButton != null) loadBedListButton.setOnAction(e -> loadBedList());
+        if (clearBedListButton != null) clearBedListButton.setOnAction(e -> clearBedList());
         
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
@@ -2947,21 +2951,10 @@ public class AppController {
                 if (loadXmlButton != null) loadXmlButton.setTooltip(null);
                 if (loadJsonButton != null) loadJsonButton.setTooltip(null);
                 
-                // Clear voice groups data and button state
-                synchronized(loadedVoiceGroups) {
-                    loadedVoiceGroups.clear();
-                }
-                updateVoiceGroupStats();
-                setButtonLoaded(loadVoiceGroupButton, false);
-                setButtonLoading(loadVoiceGroupButton, false);
-                if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
-                
-                // Also clear the Clear Voice Group button state
-                if (clearVoiceGroupButton != null) {
-                    setButtonLoaded(clearVoiceGroupButton, false);
-                    setButtonLoading(clearVoiceGroupButton, false);
-                    clearVoiceGroupButton.setTooltip(null);
-                }
+                // Clear voice groups, assignment roles, and bed list data and button states
+                clearVoiceGroups();
+                clearAssignmentRoles();
+                clearBedList();
                 
                 // Reset all settings to defaults
                 // Reset interface reference names to defaults (reusing existing logic)
@@ -4491,6 +4484,23 @@ public class AppController {
         }
     }
 
+    private void clearAssignmentRoles() {
+        synchronized(loadedAssignmentRoles) {
+            loadedAssignmentRoles.clear();
+        }
+        updateAssignmentRolesStats();
+        refreshAllTables();
+        
+        // Clear the loaded state and checkmark from the Load Assignment Roles button
+        if (loadAssignmentRolesButton != null) {
+            setButtonLoaded(loadAssignmentRolesButton, false);
+            setButtonLoading(loadAssignmentRolesButton, false);
+            loadAssignmentRolesButton.setTooltip(null);
+        }
+        
+        if (statusLabel != null) statusLabel.setText("Assignment roles cleared.");
+    }
+
     // ---------- Bed List Validation Methods ----------
     
     private void loadBedList() {
@@ -4625,6 +4635,26 @@ public class AppController {
                 bedListStatsLabel.setText(loadedBedList.size() + " units loaded");
             }
         }
+    }
+
+    private void clearBedList() {
+        synchronized(loadedBedList) {
+            loadedBedList.clear();
+        }
+        synchronized(loadedBedListLower) {
+            loadedBedListLower.clear();
+        }
+        updateBedListStats();
+        refreshAllTables();
+        
+        // Clear the loaded state and checkmark from the Load Bed List button
+        if (loadBedListButton != null) {
+            setButtonLoaded(loadBedListButton, false);
+            setButtonLoading(loadBedListButton, false);
+            loadBedListButton.setTooltip(null);
+        }
+        
+        if (statusLabel != null) statusLabel.setText("Bed list cleared.");
     }
 
     private Node createValidatedCellGraphic(String text) {
