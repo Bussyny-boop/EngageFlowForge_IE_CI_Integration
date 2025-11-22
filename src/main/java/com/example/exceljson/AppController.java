@@ -28,6 +28,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.text.TextFlow;
 import javafx.scene.text.Text;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -4224,7 +4225,7 @@ public class AppController {
         flow.setPrefHeight(VALIDATED_CELL_HEIGHT);
         flow.setMinHeight(VALIDATED_CELL_HEIGHT);
         // Clip content that exceeds the height to prevent cell expansion
-        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        Rectangle clip = new Rectangle();
         clip.widthProperty().bind(flow.widthProperty());
         clip.setHeight(VALIDATED_CELL_HEIGHT);
         flow.setClip(clip);
