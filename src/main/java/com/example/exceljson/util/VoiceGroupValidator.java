@@ -23,7 +23,7 @@ public class VoiceGroupValidator {
         return lineSegments;
     }
     
-    private static List<Segment> parseAndValidate(String text, Set<String> loadedVoiceGroups) {
+    public static List<Segment> parseAndValidate(String text, Set<String> loadedVoiceGroups) {
         List<Segment> segments = new ArrayList<>();
         if (text == null || text.isEmpty()) {
             return segments;
