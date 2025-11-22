@@ -131,6 +131,8 @@ public class AppController {
     
     private final Set<String> loadedVoiceGroups = new HashSet<>();
     private ContextMenu suggestionPopup;
+    // Lightweight pattern for quick keyword detection (full parsing done by VoiceGroupValidator)
+    private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -2788,6 +2790,15 @@ public class AppController {
                 if (loadXmlButton != null) loadXmlButton.setTooltip(null);
                 if (loadJsonButton != null) loadJsonButton.setTooltip(null);
                 
+                // Clear voice groups data and button state
+                synchronized(loadedVoiceGroups) {
+                    loadedVoiceGroups.clear();
+                }
+                updateVoiceGroupStats();
+                setButtonLoaded(loadVoiceGroupButton, false);
+                setButtonLoading(loadVoiceGroupButton, false);
+                if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
+                
                 // Refresh tables
                 if (tableUnits != null) tableUnits.refresh();
                 if (tableNurseCalls != null) tableNurseCalls.refresh();
@@ -4080,6 +4091,14 @@ public class AppController {
         }
         updateVoiceGroupStats();
         refreshAllTables();
+        
+        // Clear the loaded state and checkmark from the Load Voice Group button
+        if (loadVoiceGroupButton != null) {
+            setButtonLoaded(loadVoiceGroupButton, false);
+            setButtonLoading(loadVoiceGroupButton, false);
+            loadVoiceGroupButton.setTooltip(null);
+        }
+        
         if (statusLabel != null) statusLabel.setText("Voice groups cleared.");
     }
 
@@ -4096,41 +4115,52 @@ public class AppController {
     private Node createValidatedCellGraphic(String text) {
         if (text == null || text.isEmpty()) return null;
         
-        boolean hasKeywords = text.toLowerCase().contains("vgroup") || text.toLowerCase().contains("group");
-        
-        if (loadedVoiceGroups.isEmpty() || !hasKeywords) {
+        // Only process text that contains VGroup/Group patterns, not just the word anywhere
+        if (loadedVoiceGroups.isEmpty() || !VGROUP_KEYWORD_PATTERN.matcher(text).find()) {
             return new Label(text);
         }
 
-        VBox lineBox = new VBox();
+        // Use a single TextFlow to avoid cell height expansion
+        TextFlow flow = new TextFlow();
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
             allLineSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(text, loadedVoiceGroups);
         }
 
+        // Flatten all segments into a single TextFlow with newline text nodes
+        boolean firstLine = true;
         for (List<com.example.exceljson.util.VoiceGroupValidator.Segment> lineSegments : allLineSegments) {
-            TextFlow flow = new TextFlow();
+            // Add newline between lines (but not before the first line)
+            if (!firstLine) {
+                Text newline = new Text("\n");
+                newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                flow.getChildren().add(newline);
+            }
+            firstLine = false;
+            
             for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : lineSegments) {
                 Text t = new Text(segment.text);
                 if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
                     t.setFill(Color.RED);
-                    t.setStyle("-fx-font-weight: bold;");
+                    // Don't make bold to keep cell height consistent
                 } else {
-                    // Keyword and valid groups are black
+                    // Keyword and valid groups use normal color
                     t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
                 }
                 flow.getChildren().add(t);
             }
-            lineBox.getChildren().add(flow);
         }
         
-        return lineBox;
+        return flow;
     }
 
     private void setupAutoComplete(TextInputControl input) {
         if (loadedVoiceGroups.isEmpty()) return;
         
         suggestionPopup = new ContextMenu();
+        // Make the popup semi-transparent with dark/light mode support
+        String bgColor = isDarkMode ? "rgba(50, 50, 50, 0.95)" : "rgba(255, 255, 255, 0.95)";
+        suggestionPopup.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 5;");
         
         input.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null || newVal.length() < 3) {
