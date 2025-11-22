@@ -105,6 +105,77 @@ public class AssignmentRoleValidatorTest {
     }
 
     @Test
+    public void testVAssignedKeyword() {
+        Set<String> roles = new HashSet<>();
+        roles.add("Room 101");
+        roles.add("ICU Pod A");
+
+        String text = "VAssigned: Room 101";
+        List<AssignmentRoleValidator.Segment> segments = AssignmentRoleValidator.parseAndValidate(text, roles);
+
+        assertEquals(2, segments.size());
+        assertEquals("VAssigned: ", segments.get(0).text);
+        assertEquals(AssignmentRoleValidator.ValidationStatus.PLAIN, segments.get(0).status);
+        assertEquals("Room 101", segments.get(1).text);
+        assertEquals(AssignmentRoleValidator.ValidationStatus.VALID, segments.get(1).status);
+    }
+
+    @Test
+    public void testVAssignedCaseInsensitive() {
+        Set<String> roles = new HashSet<>();
+        roles.add("Nurse");
+
+        String text = "vassigned: nurse";
+        List<AssignmentRoleValidator.Segment> segments = AssignmentRoleValidator.parseAndValidate(text, roles);
+
+        assertEquals(2, segments.size());
+        assertEquals("vassigned: ", segments.get(0).text);
+        assertEquals("nurse", segments.get(1).text);
+        assertEquals(AssignmentRoleValidator.ValidationStatus.VALID, segments.get(1).status);
+    }
+
+    @Test
+    public void testVAssignedWithInvalidRole() {
+        Set<String> roles = new HashSet<>();
+        roles.add("Nurse");
+
+        String text = "VAssigned: Doctor";
+        List<AssignmentRoleValidator.Segment> segments = AssignmentRoleValidator.parseAndValidate(text, roles);
+
+        assertEquals(2, segments.size());
+        assertEquals("VAssigned: ", segments.get(0).text);
+        assertEquals("Doctor", segments.get(1).text);
+        assertEquals(AssignmentRoleValidator.ValidationStatus.INVALID, segments.get(1).status);
+    }
+
+    @Test
+    public void testMixedVAssignAndVAssigned() {
+        Set<String> roles = new HashSet<>();
+        roles.add("Nurse");
+        roles.add("Doctor");
+
+        String text = "VAssign: Nurse\nVAssigned: Doctor";
+        List<List<AssignmentRoleValidator.Segment>> allLineSegments = 
+            AssignmentRoleValidator.parseAndValidateMultiLine(text, roles);
+
+        assertEquals(2, allLineSegments.size());
+        
+        // First line with VAssign - valid
+        List<AssignmentRoleValidator.Segment> line1 = allLineSegments.get(0);
+        assertEquals(2, line1.size());
+        assertEquals("VAssign: ", line1.get(0).text);
+        assertEquals("Nurse", line1.get(1).text);
+        assertEquals(AssignmentRoleValidator.ValidationStatus.VALID, line1.get(1).status);
+        
+        // Second line with VAssigned - valid
+        List<AssignmentRoleValidator.Segment> line2 = allLineSegments.get(1);
+        assertEquals(2, line2.size());
+        assertEquals("VAssigned: ", line2.get(0).text);
+        assertEquals("Doctor", line2.get(1).text);
+        assertEquals(AssignmentRoleValidator.ValidationStatus.VALID, line2.get(1).status);
+    }
+
+    @Test
     public void testMixedContentWithVAssign() {
         Set<String> roles = new HashSet<>();
         roles.add("Nurse");
