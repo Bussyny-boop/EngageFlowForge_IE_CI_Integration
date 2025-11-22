@@ -2807,6 +2807,22 @@ public class AppController {
                     clearVoiceGroupButton.setTooltip(null);
                 }
                 
+                // Clear voice groups data and button state
+                synchronized(loadedVoiceGroups) {
+                    loadedVoiceGroups.clear();
+                }
+                updateVoiceGroupStats();
+                setButtonLoaded(loadVoiceGroupButton, false);
+                setButtonLoading(loadVoiceGroupButton, false);
+                if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
+                
+                // Also clear the Clear Voice Group button state
+                if (clearVoiceGroupButton != null) {
+                    setButtonLoaded(clearVoiceGroupButton, false);
+                    setButtonLoading(clearVoiceGroupButton, false);
+                    clearVoiceGroupButton.setTooltip(null);
+                }
+                
                 // Reset all settings to defaults
                 // Reset interface reference names to defaults (reusing existing logic)
                 if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
@@ -4149,16 +4165,15 @@ public class AppController {
         
         // Only process text that contains VGroup/Group patterns, not just the word anywhere
         if (loadedVoiceGroups.isEmpty() || !VGROUP_KEYWORD_PATTERN.matcher(text).find()) {
-            return new Label(text);
+            Label label = new Label(text);
+            label.setWrapText(true);
+            return label;
         }
 
-        // Use a single TextFlow to avoid cell height expansion
+        // Use a single TextFlow constrained to cell height
         TextFlow flow = new TextFlow();
-        // Remove padding and spacing to prevent cell height expansion
-        flow.setPadding(new Insets(0));
+        flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
-        // Constrain max height to prevent cell expansion
-        flow.setMaxHeight(Control.USE_PREF_SIZE);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
@@ -4180,7 +4195,6 @@ public class AppController {
                 Text t = new Text(segment.text);
                 if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
                     t.setFill(Color.RED);
-                    // Don't make bold to keep cell height consistent
                 } else {
                     // Keyword and valid groups use normal color
                     t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
@@ -4292,7 +4306,16 @@ public class AppController {
                     
                     if (hasVoiceGroups && hasKeywords) {
                         setText(null);
-                        setGraphic(createValidatedCellGraphic(item));
+                        Node graphic = createValidatedCellGraphic(item);
+                        // Wrap in a constrained container to prevent cell height expansion
+                        if (graphic != null) {
+                            StackPane container = new StackPane(graphic);
+                            container.setMaxHeight(24); // Match default cell height
+                            container.setPrefHeight(24);
+                            setGraphic(container);
+                        } else {
+                            setGraphic(graphic);
+                        }
                         setStyle(""); 
                     } else {
                         setText(item);

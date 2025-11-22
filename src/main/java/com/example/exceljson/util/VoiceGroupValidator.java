@@ -38,24 +38,28 @@ public class VoiceGroupValidator {
                 segments.add(new Segment(text.substring(lastEnd, m.start()), ValidationStatus.PLAIN));
             }
             
-            // The prefix (e.g. "VGroup: ")
+            // The prefix (e.g. "VGroup: " or "Group: ")
             String prefix = m.group(1);
             segments.add(new Segment(prefix, ValidationStatus.PLAIN));
             
-            // The group name
-            String groupName = m.group(2);
+            // The group name - this is what we validate
+            String groupName = m.group(2).trim();
             
             // Clean group name for validation (remove trailing special chars like #)
-            String nameToValidate = groupName.replaceAll("[^a-zA-Z0-9_\\-]+$", "");
+            String nameToValidate = groupName.replaceAll("[^a-zA-Z0-9_\\-]+$", "").trim();
             
+            // Check if this specific group name exists in loaded groups (case-insensitive)
             boolean isValid = false;
-            for (String validGroup : loadedVoiceGroups) {
-                if (validGroup.equalsIgnoreCase(nameToValidate) || validGroup.equalsIgnoreCase(groupName)) {
-                    isValid = true;
-                    break;
+            if (!nameToValidate.isEmpty()) {
+                for (String validGroup : loadedVoiceGroups) {
+                    if (validGroup.equalsIgnoreCase(nameToValidate)) {
+                        isValid = true;
+                        break;
+                    }
                 }
             }
             
+            // Only the group name is colored red if invalid, not the entire text
             segments.add(new Segment(groupName, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
             lastEnd = m.end();
         }
