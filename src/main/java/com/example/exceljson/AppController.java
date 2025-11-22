@@ -2807,22 +2807,6 @@ public class AppController {
                     clearVoiceGroupButton.setTooltip(null);
                 }
                 
-                // Clear voice groups data and button state
-                synchronized(loadedVoiceGroups) {
-                    loadedVoiceGroups.clear();
-                }
-                updateVoiceGroupStats();
-                setButtonLoaded(loadVoiceGroupButton, false);
-                setButtonLoading(loadVoiceGroupButton, false);
-                if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
-                
-                // Also clear the Clear Voice Group button state
-                if (clearVoiceGroupButton != null) {
-                    setButtonLoaded(clearVoiceGroupButton, false);
-                    setButtonLoading(clearVoiceGroupButton, false);
-                    clearVoiceGroupButton.setTooltip(null);
-                }
-                
                 // Reset all settings to defaults
                 // Reset interface reference names to defaults (reusing existing logic)
                 if (edgeRefNameField != null) edgeRefNameField.setText("OutgoingWCTP");
@@ -2847,11 +2831,8 @@ public class AppController {
                 if (roomFilterClinicalField != null) roomFilterClinicalField.setText("");
                 if (roomFilterOrdersField != null) roomFilterOrdersField.setText("");
                 
-                // Refresh tables
-                if (tableUnits != null) tableUnits.refresh();
-                if (tableNurseCalls != null) tableNurseCalls.refresh();
-                if (tableClinicals != null) tableClinicals.refresh();
-                if (tableOrders != null) tableOrders.refresh();
+                // Refresh tables properly by recreating filtered lists
+                refreshTables();
                 
                 // Update status
                 updateStatusLabel();
@@ -4174,6 +4155,9 @@ public class AppController {
         TextFlow flow = new TextFlow();
         flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
+        // Constrain the TextFlow to prevent cell expansion
+        flow.setMaxHeight(24);
+        flow.setPrefHeight(24);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> allLineSegments;
         synchronized(loadedVoiceGroups) {
