@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 public class AssignmentRoleValidator {
 
     // Pattern to match "VAssign: [Room]" or "VAssign:"
+    // Uses [^,;\n]+ to capture everything until delimiter (consistent with VoiceGroupValidator)
+    // This allows multi-word role names like "Room 101" or "ICU Pod A"
     private static final Pattern VASSIGN_PATTERN = Pattern.compile("(?i)(VAssign:\\s*)([^,;\\n]+)?");
 
     public static List<List<Segment>> parseAndValidateMultiLine(String text, Set<String> loadedAssignmentRoles) {

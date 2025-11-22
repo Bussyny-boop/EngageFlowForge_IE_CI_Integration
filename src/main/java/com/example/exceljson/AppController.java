@@ -149,6 +149,8 @@ public class AppController {
     @FXML private Label bedListStatsLabel;
     
     private final Set<String> loadedBedList = new HashSet<>();
+    // Lowercase version for O(1) case-insensitive lookup performance
+    private final Set<String> loadedBedListLower = new HashSet<>();
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -2326,15 +2328,10 @@ public class AppController {
                             
                             String trimmedName = unitName.trim();
                             if (!trimmedName.isEmpty()) {
-                                // Check if unit name is in the loaded bed list (case-insensitive)
-                                boolean isValid = false;
-                                synchronized(loadedBedList) {
-                                    for (String validUnit : loadedBedList) {
-                                        if (validUnit.equalsIgnoreCase(trimmedName)) {
-                                            isValid = true;
-                                            break;
-                                        }
-                                    }
+                                // O(1) case-insensitive lookup using pre-computed lowercase set
+                                boolean isValid;
+                                synchronized(loadedBedListLower) {
+                                    isValid = loadedBedListLower.contains(trimmedName.toLowerCase());
                                 }
                                 
                                 Text t = new Text(trimmedName);
@@ -4585,6 +4582,9 @@ public class AppController {
                 synchronized(loadedBedList) {
                     loadedBedList.clear();
                     loadedBedList.addAll(bedList);
+                    // Build lowercase version for O(1) case-insensitive lookups
+                    loadedBedListLower.clear();
+                    bedList.forEach(unit -> loadedBedListLower.add(unit.toLowerCase()));
                 }
                 return null;
             }
@@ -4656,7 +4656,11 @@ public class AppController {
             }
         }
         
-        // Determine which validation to use (prioritize VAssign if both are present)
+        // Determine which validation to use
+        // Priority: VAssign > VGroup
+        // Rationale: VAssign is more specific (room/location assignment) and should take
+        // precedence over general voice group assignment when both keywords appear in the same cell.
+        // This prevents ambiguity when a cell contains both types of assignments.
         if (assignmentRoleSegments != null) {
             // Render assignment role segments
             boolean firstLine = true;
