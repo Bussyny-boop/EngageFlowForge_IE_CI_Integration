@@ -202,7 +202,7 @@
                             <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" 
                                         style="-fx-background-color: transparent; -fx-background: transparent;"
                                         VBox.vgrow="ALWAYS">
-                                <VBox spacing="10" style="-fx-padding: 15;">
+                                <VBox spacing="8" style="-fx-padding: 12;">
                                     <!-- Merge Engage Rules Options (Mutually Exclusive) -->
                                     <Label text="Merge Engage Rules" style="-fx-font-weight:bold;">
                                         <tooltip>
@@ -248,7 +248,7 @@
                                             <Tooltip text="Map custom Excel tab names to flow types (case-insensitive)" />
                                         </tooltip>
                                     </Label>
-                                    <GridPane hgap="10" vgap="8">
+                                    <GridPane hgap="8" vgap="6">
                                         <Label text="Custom Tab Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                         <TextField fx:id="customTabNameField" promptText="e.g., IV Pump" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
                                             <tooltip>
@@ -267,7 +267,7 @@
                                     </GridPane>
                                     
                                     <Label text="Current Mappings:" style="-fx-font-size: 11; -fx-text-fill: gray;" />
-                                    <ListView fx:id="customTabMappingsList" prefHeight="80" styleClass="custom-tab-list">
+                                    <ListView fx:id="customTabMappingsList" prefHeight="60" styleClass="custom-tab-list">
                                         <tooltip>
                                             <Tooltip text="Current custom tab mappings. Double-click to remove." />
                                         </tooltip>
@@ -283,11 +283,11 @@
                                     <Separator />
                                     
                                     <!-- Adapter References, Vocera Badges Alert Interface, and Room Filters (Side by Side) -->
-                                    <HBox spacing="30" alignment="TOP_LEFT">
+                                    <HBox spacing="20" alignment="TOP_LEFT">
                                         <!-- Left: Adapter References -->
-                                        <VBox spacing="8">
+                                        <VBox spacing="6">
                                             <Label text="Adapter Reference Names" style="-fx-font-weight:bold;" />
-                                            <GridPane hgap="10" vgap="8">
+                                            <GridPane hgap="8" vgap="6">
                                                 <Label text="Edge:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                                 <TextField fx:id="edgeRefNameField" promptText="OutgoingWCTP" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                                                 
@@ -304,9 +304,9 @@
                                         </VBox>
                                         
                                         <!-- Center: Vocera Badges Alert Interface -->
-                                        <VBox spacing="8">
+                                        <VBox spacing="6">
                                             <Label text="Vocera Badges Alert Interface" style="-fx-font-weight:bold;" />
-                                            <VBox spacing="5">
+                                            <VBox spacing="4">
                                                 <CheckBox fx:id="defaultEdgeCheckbox" text="Via Edge">
                                                     <tooltip>
                                                         <Tooltip text="Use OutgoingWCTP interface as default when Device A/B are blank" />
@@ -331,9 +331,9 @@
                                         </VBox>
                                         
                                         <!-- Right: Room Filters -->
-                                        <VBox spacing="8">
+                                        <VBox spacing="6">
                                             <Label text="Room Filters" style="-fx-font-weight:bold;" />
-                                            <GridPane hgap="10" vgap="8">
+                                            <GridPane hgap="8" vgap="6">
                                                 <Label text="Nursecall:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                                 <TextField fx:id="roomFilterNursecallField" promptText="Room number" prefWidth="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
                                                     <tooltip>
@@ -362,10 +362,10 @@
                                     
                                     <!-- UI Feedback Settings -->
                                     <Label text="UI Feedback" style="-fx-font-weight:bold;" />
-                                    <GridPane hgap="10" vgap="8">
+                                    <GridPane hgap="8" vgap="6">
                                         <Label text="Loaded state timeout:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                        <HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
-                                            <Slider fx:id="loadedTimeoutSlider" min="3" max="120" blockIncrement="1" majorTickUnit="10" minorTickCount="4" showTickMarks="true" showTickLabels="true" prefWidth="220">
+                                        <HBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0" alignment="CENTER_LEFT">
+                                            <Slider fx:id="loadedTimeoutSlider" min="3" max="120" blockIncrement="1" majorTickUnit="10" minorTickCount="4" showTickMarks="true" showTickLabels="true" prefWidth="200">
                                                 <tooltip>
                                                     <Tooltip text="How long a button stays green with a checkmark after a successful load" />
                                                 </tooltip>
