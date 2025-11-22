@@ -88,6 +88,9 @@ public class ExcelParserV5 {
   // Load warnings and errors (collected instead of throwing exceptions)
   private final List<String> loadWarnings = new ArrayList<>();
   
+  // Formula evaluator for processing Excel formulas
+  private FormulaEvaluator formulaEvaluator = null;
+  
   // Default interface reference names (editable via GUI)
   private String edgeReferenceName = "OutgoingWCTP";
   private String vcsReferenceName = "VMP";
@@ -264,6 +267,9 @@ public class ExcelParserV5 {
     clear();
     try (FileInputStream fis = new FileInputStream(excelFile);
          Workbook wb = new XSSFWorkbook(fis)) {
+      // Create formula evaluator for this workbook
+      formulaEvaluator = wb.getCreationHelper().createFormulaEvaluator();
+      
       parseUnitBreakdown(wb);
       parseFlowSheet(wb, SHEET_NURSE, true, false);
       parseFlowSheet(wb, SHEET_CLINICAL, false, false);
@@ -271,6 +277,9 @@ public class ExcelParserV5 {
       
       // Process custom tab mappings
       processCustomTabs(wb);
+    } finally {
+      // Clear the evaluator after loading
+      formulaEvaluator = null;
     }
   }
   
@@ -3444,7 +3453,7 @@ public class ExcelParserV5 {
     return null;
   }
   
-  private static Row findHeaderRow(Sheet sh) {
+  private Row findHeaderRow(Sheet sh) {
     if (sh == null) return null;
 
     // Common header keywords to look for across all sheet types
@@ -3543,7 +3552,7 @@ public class ExcelParserV5 {
     }
     return first;
   }
-  private static Map<String,Integer> headerMap(Row header) {
+  private Map<String,Integer> headerMap(Row header) {
     Map<String,Integer> map = new LinkedHashMap<>();
     if (header == null) return map;
     for (int c=0;c<header.getLastCellNum();c++) {
@@ -3644,7 +3653,7 @@ public class ExcelParserV5 {
     return -1;
   }
   
-  private static String getCell(Row row, int col) {
+  private String getCell(Row row, int col) {
     if (row == null || col < 0) return "";
     try {
       Cell cell = row.getCell(col);
@@ -3656,24 +3665,35 @@ public class ExcelParserV5 {
           : String.valueOf(cell.getNumericCellValue());
         case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
         case FORMULA -> {
-          // Evaluate formula and return the calculated value, not the formula string
+          // Use FormulaEvaluator to properly evaluate formulas
           try {
-            CellType cachedType = cell.getCachedFormulaResultType();
-            String result = switch (cachedType) {
-              case STRING -> cell.getStringCellValue().trim();
-              case NUMERIC -> DateUtil.isCellDateFormatted(cell)
-                ? cell.getLocalDateTimeCellValue().toString()
-                : String.valueOf(cell.getNumericCellValue());
-              case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-              default -> "";
-            };
-            yield result;
-          } catch (IllegalStateException e) {
-            // Formula cell exists but has no cached result (not yet evaluated)
-            // This can happen if the workbook was saved without evaluating formulas
-            yield "";
+            if (formulaEvaluator != null) {
+              CellValue cellValue = formulaEvaluator.evaluate(cell);
+              String result = switch (cellValue.getCellType()) {
+                case STRING -> cellValue.getStringValue().trim();
+                case NUMERIC -> DateUtil.isCellDateFormatted(cell)
+                  ? cell.getLocalDateTimeCellValue().toString()
+                  : String.valueOf(cellValue.getNumberValue());
+                case BOOLEAN -> String.valueOf(cellValue.getBooleanValue());
+                case ERROR -> ""; // Return empty for error cells like #REF!, #VALUE!, etc.
+                default -> "";
+              };
+              yield result;
+            } else {
+              // Fallback to cached result if no evaluator available
+              CellType cachedType = cell.getCachedFormulaResultType();
+              String result = switch (cachedType) {
+                case STRING -> cell.getStringCellValue().trim();
+                case NUMERIC -> DateUtil.isCellDateFormatted(cell)
+                  ? cell.getLocalDateTimeCellValue().toString()
+                  : String.valueOf(cell.getNumericCellValue());
+                case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+                default -> "";
+              };
+              yield result;
+            }
           } catch (Exception e) {
-            // Other formula evaluation errors - log for debugging but continue processing
+            // Formula evaluation errors - return empty string
             System.err.println("Warning: Could not evaluate formula in cell at column " + col + ": " + e.getMessage());
             yield "";
           }
@@ -3694,7 +3714,7 @@ public class ExcelParserV5 {
    * @param columns List of column indices to check
    * @return The first non-empty value found, or empty string if none found
    */
-  private static String getFirstNonEmptyValue(Row row, List<Integer> columns) {
+  private String getFirstNonEmptyValue(Row row, List<Integer> columns) {
     if (row == null || columns == null || columns.isEmpty()) return "";
     for (int col : columns) {
       String value = getCell(row, col);
