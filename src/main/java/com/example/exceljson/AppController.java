@@ -17,6 +17,7 @@ import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -135,17 +136,19 @@ public class AppController {
     private ContextMenu suggestionPopup;
     // Lightweight pattern for quick keyword detection (full parsing done by VoiceGroupValidator)
     private static final Pattern VGROUP_KEYWORD_PATTERN = Pattern.compile("(?i)(?:VGroup|Group):");
-    // Pattern for assignment role validation
-    private static final Pattern VASSIGN_KEYWORD_PATTERN = Pattern.compile("(?i)VAssign:");
+    // Pattern for assignment role validation - supports both "VAssign:" and "VAssigned"
+    private static final Pattern VASSIGN_KEYWORD_PATTERN = Pattern.compile("(?i)VAssign(?:ed)?:?");
     
     // ---------- Assignment Role Validation ----------
     @FXML private Button loadAssignmentRolesButton;
+    @FXML private Button clearAssignmentRolesButton;
     @FXML private Label assignmentRolesStatsLabel;
     
     private final Set<String> loadedAssignmentRoles = new HashSet<>();
     
     // ---------- Bed List Validation ----------
     @FXML private Button loadBedListButton;
+    @FXML private Button clearBedListButton;
     @FXML private Label bedListStatsLabel;
     
     private final Set<String> loadedBedList = new HashSet<>();
@@ -383,9 +386,11 @@ public class AppController {
         
         // ---------- Assignment Roles Validation ----------
         if (loadAssignmentRolesButton != null) loadAssignmentRolesButton.setOnAction(e -> loadAssignmentRoles());
+        if (clearAssignmentRolesButton != null) clearAssignmentRolesButton.setOnAction(e -> clearAssignmentRoles());
         
         // ---------- Bed List Validation ----------
         if (loadBedListButton != null) loadBedListButton.setOnAction(e -> loadBedList());
+        if (clearBedListButton != null) clearBedListButton.setOnAction(e -> clearBedList());
         
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
@@ -2316,6 +2321,12 @@ public class AppController {
                         String[] unitNames = item.split("\\n");
                         TextFlow flow = new TextFlow();
                         flow.setPadding(new Insets(2, 5, 2, 5));
+                        flow.setLineSpacing(0);
+                        // Set max width to prevent horizontal expansion and enable proper wrapping
+                        flow.setMaxWidth(Region.USE_PREF_SIZE);
+                        flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+                        // Allow vertical expansion based on content, but limit to reasonable max height
+                        flow.setMaxHeight(150); // Reasonable max to show ~6-7 lines without excessive expansion
                         
                         boolean firstLine = true;
                         for (String unitName : unitNames) {
@@ -2382,6 +2393,8 @@ public class AppController {
                     textArea.focusedProperty().addListener((obs, was, is) -> {
                         if (!is && isEditing()) commitEdit(textArea.getText());
                     });
+                    // Add autocomplete for bed list
+                    setupBedListAutoComplete(textArea);
                 }
                 textArea.setText(getItem() == null ? "" : getItem());
                 setText(null);
@@ -2938,21 +2951,10 @@ public class AppController {
                 if (loadXmlButton != null) loadXmlButton.setTooltip(null);
                 if (loadJsonButton != null) loadJsonButton.setTooltip(null);
                 
-                // Clear voice groups data and button state
-                synchronized(loadedVoiceGroups) {
-                    loadedVoiceGroups.clear();
-                }
-                updateVoiceGroupStats();
-                setButtonLoaded(loadVoiceGroupButton, false);
-                setButtonLoading(loadVoiceGroupButton, false);
-                if (loadVoiceGroupButton != null) loadVoiceGroupButton.setTooltip(null);
-                
-                // Also clear the Clear Voice Group button state
-                if (clearVoiceGroupButton != null) {
-                    setButtonLoaded(clearVoiceGroupButton, false);
-                    setButtonLoading(clearVoiceGroupButton, false);
-                    clearVoiceGroupButton.setTooltip(null);
-                }
+                // Clear voice groups, assignment roles, and bed list data and button states
+                clearVoiceGroups();
+                clearAssignmentRoles();
+                clearBedList();
                 
                 // Reset all settings to defaults
                 // Reset interface reference names to defaults (reusing existing logic)
@@ -4482,6 +4484,23 @@ public class AppController {
         }
     }
 
+    private void clearAssignmentRoles() {
+        synchronized(loadedAssignmentRoles) {
+            loadedAssignmentRoles.clear();
+        }
+        updateAssignmentRolesStats();
+        refreshAllTables();
+        
+        // Clear the loaded state and checkmark from the Load Assignment Roles button
+        if (loadAssignmentRolesButton != null) {
+            setButtonLoaded(loadAssignmentRolesButton, false);
+            setButtonLoading(loadAssignmentRolesButton, false);
+            loadAssignmentRolesButton.setTooltip(null);
+        }
+        
+        if (statusLabel != null) statusLabel.setText("Assignment roles cleared.");
+    }
+
     // ---------- Bed List Validation Methods ----------
     
     private void loadBedList() {
@@ -4618,6 +4637,26 @@ public class AppController {
         }
     }
 
+    private void clearBedList() {
+        synchronized(loadedBedList) {
+            loadedBedList.clear();
+        }
+        synchronized(loadedBedListLower) {
+            loadedBedListLower.clear();
+        }
+        updateBedListStats();
+        refreshAllTables();
+        
+        // Clear the loaded state and checkmark from the Load Bed List button
+        if (loadBedListButton != null) {
+            setButtonLoaded(loadBedListButton, false);
+            setButtonLoading(loadBedListButton, false);
+            loadBedListButton.setTooltip(null);
+        }
+        
+        if (statusLabel != null) statusLabel.setText("Bed list cleared.");
+    }
+
     private Node createValidatedCellGraphic(String text) {
         if (text == null || text.isEmpty()) return null;
         
@@ -4637,7 +4676,11 @@ public class AppController {
         TextFlow flow = new TextFlow();
         flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
-        // Allow the TextFlow to expand based on content
+        // Set max width to prevent horizontal expansion and enable proper wrapping
+        flow.setMaxWidth(Region.USE_PREF_SIZE);
+        flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        // Allow vertical expansion based on content, but limit to reasonable max height
+        flow.setMaxHeight(150); // Reasonable max to show ~6-7 lines without excessive expansion
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments = null;
         List<List<com.example.exceljson.util.AssignmentRoleValidator.Segment>> assignmentRoleSegments = null;
@@ -4826,6 +4869,72 @@ public class AppController {
             });
             suggestionPopup.getItems().add(item);
         }
+    }
+
+    /**
+     * Sets up autocomplete for bed list/unit names in the Units tab.
+     * Shows suggestions from loaded bed list as user types.
+     */
+    private void setupBedListAutoComplete(TextInputControl input) {
+        if (loadedBedList.isEmpty()) return;
+        
+        suggestionPopup = new ContextMenu();
+        // Make the popup semi-transparent with dark/light mode support
+        String bgColor = isDarkMode ? "rgba(50, 50, 50, 0.95)" : "rgba(255, 255, 255, 0.95)";
+        suggestionPopup.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 5;");
+        
+        input.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.length() < 2) {
+                suggestionPopup.hide();
+                return;
+            }
+            
+            // Find the word being typed on the current line
+            String text = newVal;
+            int caretPos = input.getCaretPosition();
+            
+            // Get the current line being edited
+            String[] lines = text.substring(0, caretPos).split("\\n");
+            String currentLine = lines.length > 0 ? lines[lines.length - 1] : "";
+            
+            if (currentLine.trim().length() >= 2) {
+                String search = currentLine.trim().toLowerCase();
+                List<String> matches;
+                
+                synchronized(loadedBedList) {
+                    matches = loadedBedList.stream()
+                        .filter(u -> u.toLowerCase().contains(search))
+                        // Prioritize matches that start with the search term
+                        .sorted((a, b) -> {
+                            String aLower = a.toLowerCase();
+                            String bLower = b.toLowerCase();
+                            boolean aStarts = aLower.startsWith(search);
+                            boolean bStarts = bLower.startsWith(search);
+                            if (aStarts && !bStarts) return -1;
+                            if (!aStarts && bStarts) return 1;
+                            return a.compareTo(b);  // Alphabetical if both start or both don't start
+                        })
+                        .limit(5)  // TOP 5 matches
+                        .collect(Collectors.toList());
+                }
+                
+                if (!matches.isEmpty()) {
+                    populatePopup(matches, input, currentLine.trim());
+                    if (!suggestionPopup.isShowing()) {
+                        suggestionPopup.show(input, Side.BOTTOM, 0, 0);
+                    }
+                } else {
+                    suggestionPopup.hide();
+                }
+            } else {
+                suggestionPopup.hide();
+            }
+        });
+        
+        // Hide on focus lost
+        input.focusedProperty().addListener((obs, oldV, newV) -> {
+            if (!newV) suggestionPopup.hide();
+        });
     }
 
     private void setupValidatedColumn(TableColumn<ExcelParserV5.FlowRow, String> col, 
