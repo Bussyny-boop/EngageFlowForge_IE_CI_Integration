@@ -31,6 +31,18 @@
                 </HBox>
             </VBox>
             
+            <Separator orientation="VERTICAL" />
+            
+            <!-- Profile Switcher -->
+            <VBox spacing="3" alignment="CENTER">
+                <Label text="Profile:" style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:10;" />
+                <ToggleButton fx:id="profileSwitcher" text="IE" styleClass="app-bar-button" selected="true">
+                    <tooltip>
+                        <Tooltip text="Switch between IE (Implementation Engineer) and CI (Clinical Informatics) profiles" />
+                    </tooltip>
+                </ToggleButton>
+            </VBox>
+            
             <!-- Right: Global Actions -->
             <HBox spacing="8" alignment="CENTER_RIGHT">
                 <Button fx:id="settingsButton" text="⚙️ Settings" styleClass="app-bar-button">
@@ -106,8 +118,8 @@
                                 <userData>🗑️</userData>
                             </Button>
                             
-                            <!-- Save on NDW (CI Mode Only) -->
-                            <Button fx:id="saveOnNdwButton" text="💾 Save on NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
+                            <!-- Save to NDW (CI Mode Only) -->
+                            <Button fx:id="saveOnNdwButton" text="💾 Save to NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
                                 <userData>💾</userData>
                                 <tooltip>
                                     <Tooltip text="Save changes back to the NDW Excel file" />

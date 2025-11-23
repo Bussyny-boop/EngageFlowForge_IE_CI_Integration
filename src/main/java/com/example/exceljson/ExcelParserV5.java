@@ -37,6 +37,11 @@ public class ExcelParserV5 {
     public String comments = "";
     // Dynamic custom group columns (key = custom tab name, value = group name)
     public final Map<String, String> customGroups = new LinkedHashMap<>();
+    
+    // Change tracking fields
+    public int excelRowIndex = -1; // Row index in Excel sheet
+    public final Map<String, String> originalValues = new LinkedHashMap<>(); // Original values from Excel
+    public final Set<String> changedFields = new LinkedHashSet<>(); // Fields that were modified
   }
 
   public static final class FlowRow {
@@ -62,6 +67,11 @@ public class ExcelParserV5 {
     public String t4 = ""; public String r4 = "";
     public String t5 = ""; public String r5 = "";
     public String customTabSource = ""; // Name of the custom tab this flow came from (if any)
+    
+    // Change tracking fields
+    public int excelRowIndex = -1; // Row index in Excel sheet
+    public final Map<String, String> originalValues = new LinkedHashMap<>(); // Original values from Excel
+    public final Set<String> changedFields = new LinkedHashSet<>(); // Fields that were modified
   }
 
   // ---------- Config / parsing helpers ----------
@@ -1240,6 +1250,20 @@ public class ExcelParserV5 {
         u.customGroups.put(customTabName, customGroupValue);
       }
       
+      // Store row index and original values for change tracking
+      u.excelRowIndex = r;
+      u.originalValues.put("facility", facility);
+      u.originalValues.put("unitNames", unitNames);
+      u.originalValues.put("podRoomFilter", podRoomFilter);
+      u.originalValues.put("nurseGroup", nurseGroup);
+      u.originalValues.put("clinGroup", clinGroup);
+      u.originalValues.put("ordersGroup", ordersGroup);
+      u.originalValues.put("noCareGroup", noCare);
+      u.originalValues.put("comments", comments);
+      for (Map.Entry<String, String> entry : u.customGroups.entrySet()) {
+        u.originalValues.put("customGroup_" + entry.getKey(), entry.getValue());
+      }
+      
       units.add(u);
 
       List<String> list = splitUnits(unitNames);
@@ -1506,6 +1530,34 @@ public class ExcelParserV5 {
       f.t5 = getCell(row, cT5); f.r5 = getCell(row, cR5);
 
       if (isBlank(f.alarmName) && isBlank(f.sendingName)) continue;
+      
+      // Store row index and original values for change tracking
+      f.excelRowIndex = r;
+      f.originalValues.put("inScope", String.valueOf(f.inScope));
+      f.originalValues.put("configGroup", f.configGroup);
+      f.originalValues.put("alarmName", f.alarmName);
+      f.originalValues.put("sendingName", f.sendingName);
+      f.originalValues.put("priorityRaw", f.priorityRaw);
+      f.originalValues.put("deviceA", f.deviceA);
+      f.originalValues.put("deviceB", f.deviceB);
+      f.originalValues.put("ringtone", f.ringtone);
+      f.originalValues.put("responseOptions", f.responseOptions);
+      f.originalValues.put("breakThroughDND", f.breakThroughDND);
+      f.originalValues.put("multiUserAccept", f.multiUserAccept);
+      f.originalValues.put("escalateAfter", f.escalateAfter);
+      f.originalValues.put("ttlValue", f.ttlValue);
+      f.originalValues.put("enunciate", f.enunciate);
+      f.originalValues.put("emdan", f.emdan);
+      f.originalValues.put("t1", f.t1);
+      f.originalValues.put("r1", f.r1);
+      f.originalValues.put("t2", f.t2);
+      f.originalValues.put("r2", f.r2);
+      f.originalValues.put("t3", f.t3);
+      f.originalValues.put("r3", f.r3);
+      f.originalValues.put("t4", f.t4);
+      f.originalValues.put("r4", f.r4);
+      f.originalValues.put("t5", f.t5);
+      f.originalValues.put("r5", f.r5);
 
       // EMDAN Reclassification: if reading from Nurse Call sheet and EMDAN is Y/Yes, move to Clinicals
       if (nurseSide && isEmdanCompliant(f.emdan)) {
@@ -3193,75 +3245,72 @@ public class ExcelParserV5 {
   
   /**
    * Updates the Unit Breakdown sheet with current unit data.
-   * Only updates cell values, preserving formatting.
+   * Only updates cells that have been changed, and marks them with bold, italic, red formatting.
    * @param sheet The sheet to update
    * @param startRow The row index where data starts (after headers)
    */
   private void updateUnitSheet(Sheet sheet, int startRow) {
-    // Start from the detected data row
-    int rowIndex = startRow;
+    // Use row index from UnitRow if available, otherwise use sequential index
     for (UnitRow unit : units) {
+      int rowIndex = unit.excelRowIndex >= 0 ? unit.excelRowIndex : startRow++;
       Row row = sheet.getRow(rowIndex);
       if (row == null) {
         row = sheet.createRow(rowIndex);
       }
       
-      // Update each cell, preserving cell type and formatting
-      updateCell(row, 0, unit.facility);
-      updateCell(row, 1, unit.unitNames);
-      updateCell(row, 2, unit.nurseGroup);
-      updateCell(row, 3, unit.clinGroup);
-      updateCell(row, 4, unit.ordersGroup);
-      updateCell(row, 5, unit.noCareGroup);
-      updateCell(row, 6, unit.comments);
-      
-      rowIndex++;
+      // Update each cell only if it was changed
+      updateCellIfChanged(row, 0, unit.facility, "facility", unit);
+      updateCellIfChanged(row, 1, unit.unitNames, "unitNames", unit);
+      updateCellIfChanged(row, 2, unit.podRoomFilter, "podRoomFilter", unit);
+      updateCellIfChanged(row, 3, unit.nurseGroup, "nurseGroup", unit);
+      updateCellIfChanged(row, 4, unit.clinGroup, "clinGroup", unit);
+      updateCellIfChanged(row, 5, unit.ordersGroup, "ordersGroup", unit);
+      updateCellIfChanged(row, 6, unit.noCareGroup, "noCareGroup", unit);
+      updateCellIfChanged(row, 7, unit.comments, "comments", unit);
     }
   }
   
   /**
    * Updates a flow sheet (Nurse Call, Patient Monitoring, or Orders) with current flow data.
-   * Only updates cell values, preserving formatting.
+   * Only updates cells that have been changed, and marks them with bold, italic, red formatting.
    * @param sheet The sheet to update
    * @param flows The list of flow rows to write
    * @param startRow The row index where data starts (after headers)
    */
   private void updateFlowSheet(Sheet sheet, List<FlowRow> flows, int startRow) {
-    // Start from the detected data row
-    int rowIndex = startRow;
+    // Use row index from FlowRow if available, otherwise use sequential index  
     for (FlowRow flow : flows) {
+      int rowIndex = flow.excelRowIndex >= 0 ? flow.excelRowIndex : startRow++;
       Row row = sheet.getRow(rowIndex);
       if (row == null) {
         row = sheet.createRow(rowIndex);
       }
       
-      // Update each cell with flow data
-      updateCell(row, 0, flow.inScope ? "TRUE" : "FALSE");
-      updateCell(row, 1, flow.configGroup);
-      updateCell(row, 2, flow.alarmName);
-      updateCell(row, 3, flow.sendingName);
-      updateCell(row, 4, flow.priorityRaw);
-      updateCell(row, 5, flow.deviceA);
-      updateCell(row, 6, flow.deviceB);
-      updateCell(row, 7, flow.ringtone);
-      updateCell(row, 8, flow.responseOptions);
-      updateCell(row, 9, flow.breakThroughDND);
-      updateCell(row, 10, flow.escalateAfter);
-      updateCell(row, 11, flow.ttlValue);
-      updateCell(row, 12, flow.enunciate);
-      updateCell(row, 13, flow.emdan);
-      updateCell(row, 14, flow.t1);
-      updateCell(row, 15, flow.r1);
-      updateCell(row, 16, flow.t2);
-      updateCell(row, 17, flow.r2);
-      updateCell(row, 18, flow.t3);
-      updateCell(row, 19, flow.r3);
-      updateCell(row, 20, flow.t4);
-      updateCell(row, 21, flow.r4);
-      updateCell(row, 22, flow.t5);
-      updateCell(row, 23, flow.r5);
-      
-      rowIndex++;
+      // Update each cell with flow data only if changed
+      updateCellIfChanged(row, 0, flow.inScope ? "TRUE" : "FALSE", "inScope", flow);
+      updateCellIfChanged(row, 1, flow.configGroup, "configGroup", flow);
+      updateCellIfChanged(row, 2, flow.alarmName, "alarmName", flow);
+      updateCellIfChanged(row, 3, flow.sendingName, "sendingName", flow);
+      updateCellIfChanged(row, 4, flow.priorityRaw, "priorityRaw", flow);
+      updateCellIfChanged(row, 5, flow.deviceA, "deviceA", flow);
+      updateCellIfChanged(row, 6, flow.deviceB, "deviceB", flow);
+      updateCellIfChanged(row, 7, flow.ringtone, "ringtone", flow);
+      updateCellIfChanged(row, 8, flow.responseOptions, "responseOptions", flow);
+      updateCellIfChanged(row, 9, flow.breakThroughDND, "breakThroughDND", flow);
+      updateCellIfChanged(row, 10, flow.escalateAfter, "escalateAfter", flow);
+      updateCellIfChanged(row, 11, flow.ttlValue, "ttlValue", flow);
+      updateCellIfChanged(row, 12, flow.enunciate, "enunciate", flow);
+      updateCellIfChanged(row, 13, flow.emdan, "emdan", flow);
+      updateCellIfChanged(row, 14, flow.t1, "t1", flow);
+      updateCellIfChanged(row, 15, flow.r1, "r1", flow);
+      updateCellIfChanged(row, 16, flow.t2, "t2", flow);
+      updateCellIfChanged(row, 17, flow.r2, "r2", flow);
+      updateCellIfChanged(row, 18, flow.t3, "t3", flow);
+      updateCellIfChanged(row, 19, flow.r3, "r3", flow);
+      updateCellIfChanged(row, 20, flow.t4, "t4", flow);
+      updateCellIfChanged(row, 21, flow.r4, "r4", flow);
+      updateCellIfChanged(row, 22, flow.t5, "t5", flow);
+      updateCellIfChanged(row, 23, flow.r5, "r5", flow);
     }
   }
   
@@ -3285,6 +3334,79 @@ public class ExcelParserV5 {
     
     // Update the cell value
     cell.setCellValue(value == null ? "" : value);
+  }
+  
+  /**
+   * Updates a cell's value only if it has been changed from its original value.
+   * Changed cells are formatted with bold, italic, and red text.
+   * @param row The row containing the cell
+   * @param columnIndex The column index of the cell
+   * @param value The new value to set
+   * @param fieldName The field name for tracking changes
+   * @param dataRow The UnitRow or FlowRow object containing change tracking info
+   */
+  private void updateCellIfChanged(Row row, int columnIndex, String value, String fieldName, Object dataRow) {
+    Set<String> changedFields = null;
+    
+    // Extract changed fields set from the data row
+    if (dataRow instanceof UnitRow unitRow) {
+      changedFields = unitRow.changedFields;
+    } else if (dataRow instanceof FlowRow flowRow) {
+      changedFields = flowRow.changedFields;
+    }
+    
+    // Only update if this field was changed
+    if (changedFields != null && changedFields.contains(fieldName)) {
+      Cell cell = row.getCell(columnIndex);
+      if (cell == null) {
+        cell = row.createCell(columnIndex, CellType.STRING);
+      }
+      
+      // Skip formula cells to preserve them
+      if (cell.getCellType() == CellType.FORMULA) {
+        return;
+      }
+      
+      // Update the cell value
+      cell.setCellValue(value == null ? "" : value);
+      
+      // Apply bold, italic, red formatting to indicate change
+      applyChangedCellFormatting(cell);
+    }
+    // If not changed, don't update the cell (preserve original value and formatting)
+  }
+  
+  /**
+   * Applies formatting to a changed cell: bold, italic, and red text.
+   * Creates a new cell style based on the existing style to preserve other formatting.
+   */
+  private void applyChangedCellFormatting(Cell cell) {
+    Workbook wb = cell.getSheet().getWorkbook();
+    
+    // Create or get a cached style for changed cells
+    CellStyle changedStyle = wb.createCellStyle();
+    
+    // Copy existing cell style if it exists
+    CellStyle existingStyle = cell.getCellStyle();
+    if (existingStyle != null) {
+      changedStyle.cloneStyleFrom(existingStyle);
+    }
+    
+    // Create or get font for changed cells (bold, italic, red)
+    Font changedFont = wb.createFont();
+    if (existingStyle != null && existingStyle.getFontIndexAsInt() >= 0) {
+      Font existingFont = wb.getFontAt(existingStyle.getFontIndexAsInt());
+      changedFont.setFontName(existingFont.getFontName());
+      changedFont.setFontHeightInPoints(existingFont.getFontHeightInPoints());
+    }
+    
+    // Set bold, italic, and red color
+    changedFont.setBold(true);
+    changedFont.setItalic(true);
+    changedFont.setColor(IndexedColors.RED.getIndex());
+    
+    changedStyle.setFont(changedFont);
+    cell.setCellStyle(changedStyle);
   }
 
   private static String[] flowHeaders() {
