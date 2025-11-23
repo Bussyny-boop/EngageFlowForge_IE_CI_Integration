@@ -2224,7 +2224,7 @@ public class AppController {
         setupEditableUnit(unitNurseGroupCol, r -> r.nurseGroup, (r, v) -> r.nurseGroup = v);
         setupEditableUnit(unitClinicalGroupCol, r -> r.clinGroup, (r, v) -> r.clinGroup = v);
         setupEditableUnit(unitOrdersGroupCol, r -> r.ordersGroup, (r, v) -> r.ordersGroup = v);
-        setupEditableUnit(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
+        setupNoCaregiverGroupColumn(unitNoCareGroupCol, r -> r.noCareGroup, (r, v) -> r.noCareGroup = v);
         setupEditableUnit(unitCommentsCol, r -> r.comments, (r, v) -> r.comments = v);
     }
 
@@ -2479,6 +2479,147 @@ public class AppController {
                     });
                     // Add autocomplete for bed list
                     setupBedListAutoComplete(textArea);
+                }
+                textArea.setText(getItem() == null ? "" : getItem());
+                setText(null);
+                setGraphic(textArea);
+                textArea.selectAll();
+                textArea.requestFocus();
+            }
+            
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                updateItem(getItem(), false);
+            }
+            
+            @Override
+            public void commitEdit(String newValue) {
+                super.commitEdit(newValue);
+                ExcelParserV5.UnitRow row = getTableRow().getItem();
+                if (row != null) {
+                    String converted = commaToNewlines(newValue);
+                    setter.accept(row, converted);
+                    if (getTableView() != null) getTableView().refresh();
+                }
+            }
+        });
+        
+        col.setEditable(true);
+    }
+
+    /**
+     * Sets up an editable unit column for "No Caregiver Group" with Voice Group validation.
+     * When Voice Groups are loaded, validates group names and highlights invalid ones in red.
+     * Also provides autocomplete functionality for loaded Voice Groups.
+     */
+    private void setupNoCaregiverGroupColumn(TableColumn<ExcelParserV5.UnitRow, String> col,
+                                   Function<ExcelParserV5.UnitRow, String> getter,
+                                   BiConsumer<ExcelParserV5.UnitRow, String> setter) {
+        if (col == null) return;
+        col.setCellValueFactory(d -> new SimpleStringProperty(safe(getter.apply(d.getValue()))));
+        
+        col.setCellFactory(column -> new TableCell<ExcelParserV5.UnitRow, String>() {
+            private TextArea textArea;
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    // Voice Group Validation Logic
+                    boolean hasVGroupKeywords = VGROUP_KEYWORD_PATTERN.matcher(item).find();
+                    
+                    if (!loadedVoiceGroups.isEmpty() && hasVGroupKeywords) {
+                        // Parse and validate Voice Groups
+                        List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments;
+                        synchronized(loadedVoiceGroups) {
+                            voiceGroupSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(item, loadedVoiceGroups);
+                        }
+                        
+                        TextFlow flow = new TextFlow();
+                        flow.setPadding(new Insets(2, 5, 2, 5));
+                        flow.setLineSpacing(0);
+                        // Set max width to prevent horizontal expansion and enable proper wrapping
+                        flow.setMaxWidth(Region.USE_PREF_SIZE);
+                        flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+                        // Constrain height to prevent row expansion
+                        flow.setPrefHeight(UNIT_CELL_HEIGHT);
+                        flow.setMaxHeight(UNIT_CELL_HEIGHT);
+                        flow.setMinHeight(UNIT_CELL_HEIGHT);
+                        
+                        // Enable clipping to hide overflow content beyond the fixed height
+                        Rectangle clip = new Rectangle();
+                        clip.widthProperty().bind(flow.widthProperty());
+                        clip.setHeight(UNIT_CELL_HEIGHT);
+                        flow.setClip(clip);
+                        
+                        // Render voice group segments
+                        boolean firstLine = true;
+                        for (List<com.example.exceljson.util.VoiceGroupValidator.Segment> lineSegments : voiceGroupSegments) {
+                            // Add newline between lines (but not before the first line)
+                            if (!firstLine) {
+                                Text newline = new Text("\n");
+                                newline.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                                flow.getChildren().add(newline);
+                            }
+                            firstLine = false;
+                            
+                            for (com.example.exceljson.util.VoiceGroupValidator.Segment segment : lineSegments) {
+                                Text t = new Text(segment.text);
+                                if (segment.status == com.example.exceljson.util.VoiceGroupValidator.ValidationStatus.INVALID) {
+                                    t.setFill(Color.RED);
+                                } else {
+                                    // Keyword and valid groups use normal color
+                                    t.setFill(isDarkMode ? Color.WHITE : Color.BLACK);
+                                }
+                                flow.getChildren().add(t);
+                            }
+                        }
+                        
+                        setText(null);
+                        setGraphic(flow);
+                    } else {
+                        // No voice groups loaded or no VGroup keywords, display as plain text
+                        setText(item);
+                        setGraphic(null);
+                    }
+                    setStyle("");
+                }
+            }
+            
+            @Override
+            public void startEdit() {
+                super.startEdit();
+                if (textArea == null) {
+                    textArea = new TextArea();
+                    textArea.setWrapText(true);
+                    textArea.setMinHeight(60);
+                    textArea.setPrefRowCount(3);
+                    textArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                        if (event.getCode() == KeyCode.ENTER) {
+                            if (event.isShiftDown()) {
+                                textArea.insertText(textArea.getCaretPosition(), "\n");
+                            } else {
+                                commitEdit(textArea.getText());
+                            }
+                            event.consume();
+                        } else if (event.getCode() == KeyCode.ESCAPE) {
+                            cancelEdit();
+                            event.consume();
+                        } else if (event.getCode() == KeyCode.TAB) {
+                            commitEdit(textArea.getText());
+                            event.consume();
+                        }
+                    });
+                    textArea.focusedProperty().addListener((obs, was, is) -> {
+                        if (!is && isEditing()) commitEdit(textArea.getText());
+                    });
+                    // Add autocomplete for voice groups - same as recipient columns
+                    setupAutoComplete(textArea);
                 }
                 textArea.setText(getItem() == null ? "" : getItem());
                 setText(null);
