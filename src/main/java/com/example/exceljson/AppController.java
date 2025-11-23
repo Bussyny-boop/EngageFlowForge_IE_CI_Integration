@@ -104,6 +104,7 @@ public class AppController {
     @FXML private Button exportOrdersJsonButton;
     @FXML private Button visualFlowButton;
     @FXML private Button themeToggleButton;
+    @FXML private ToggleButton profileSwitcher;  // Profile switcher for IE/CI modes
     @FXML private CheckBox noMergeCheckbox;
     @FXML private CheckBox mergeByConfigGroupCheckbox;  // "Merge by Config Group" checkbox
     @FXML private CheckBox mergeAcrossConfigGroupCheckbox;  // "Merge Across Config Group" checkbox
@@ -422,6 +423,15 @@ public class AppController {
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
             updateThemeButton();
+        }
+        
+        // Setup profile switcher
+        if (profileSwitcher != null) {
+            profileSwitcher.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                toggleProfile(newVal);
+            });
+            // Initialize profile switcher text based on current profile
+            updateProfileSwitcherText();
         }
         
         // Setup sidebar toggle
@@ -1859,7 +1869,7 @@ public class AppController {
         }
     }
     
-    // ---------- Save on NDW (CI Mode Only) ----------
+    // ---------- Save to NDW (CI Mode Only) ----------
     /**
      * Saves modified data back to the originally loaded NDW Excel file.
      * Only updates values that were changed by the user.
@@ -1879,7 +1889,7 @@ public class AppController {
             
             // Confirm overwrite
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Save on NDW");
+            confirm.setTitle("Save to NDW");
             confirm.setHeaderText("Save changes to NDW file?");
             confirm.setContentText(
                 "This will update the data in the original NDW file\n" +
@@ -2242,7 +2252,7 @@ public class AppController {
         if (saveExcelAsButton != null) saveExcelAsButton.setDisable(!enabled);
         if (clearAllButton != null) clearAllButton.setDisable(!enabled);
         
-        // Save on NDW is only enabled in CI mode when data is loaded
+        // Save to NDW is only enabled in CI mode when data is loaded
         if (saveOnNdwButton != null && userProfile == UserProfile.CI) {
             saveOnNdwButton.setDisable(!enabled);
         }
@@ -2286,6 +2296,132 @@ public class AppController {
         alert.setContentText(msg);
         alert.getDialogPane().setStyle("-fx-font-size: 13px;");
         alert.showAndWait();
+    }
+    
+    // ---------- Change Tracking Helpers ----------
+    
+    /**
+     * Tracks when a field has been changed from its original value.
+     * This is used to mark cells for formatting when saving to NDW.
+     */
+    private <R> void trackFieldChange(R row, String fieldName, String oldValue, String newValue) {
+        if (row instanceof ExcelParserV5.UnitRow unitRow) {
+            String originalValue = unitRow.originalValues.get(fieldName);
+            if (originalValue != null) {
+                // Compare with original value from Excel
+                if (!Objects.equals(originalValue, newValue)) {
+                    unitRow.changedFields.add(fieldName);
+                } else {
+                    // Value was changed back to original, remove from changed fields
+                    unitRow.changedFields.remove(fieldName);
+                }
+            }
+        } else if (row instanceof ExcelParserV5.FlowRow flowRow) {
+            String originalValue = flowRow.originalValues.get(fieldName);
+            if (originalValue != null) {
+                // Compare with original value from Excel
+                if (!Objects.equals(originalValue, newValue)) {
+                    flowRow.changedFields.add(fieldName);
+                } else {
+                    // Value was changed back to original, remove from changed fields
+                    flowRow.changedFields.remove(fieldName);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Extracts the field name from a TableColumn.
+     * This is used to identify which field was changed.
+     */
+    private <R> String getFieldName(TableColumn<R, String> col) {
+        if (col == null) return "";
+        
+        // Map column references to field names
+        // UnitRow columns
+        if (col == unitFacilityCol) return "facility";
+        if (col == unitNamesCol) return "unitNames";
+        if (col == unitPodRoomFilterCol) return "podRoomFilter";
+        if (col == unitNurseGroupCol) return "nurseGroup";
+        if (col == unitClinicalGroupCol) return "clinGroup";
+        if (col == unitOrdersGroupCol) return "ordersGroup";
+        if (col == unitNoCareGroupCol) return "noCareGroup";
+        if (col == unitCommentsCol) return "comments";
+        
+        // FlowRow columns - Nurse Calls
+        if (col == nurseConfigGroupCol) return "configGroup";
+        if (col == nurseAlarmNameCol) return "alarmName";
+        if (col == nurseSendingNameCol) return "sendingName";
+        if (col == nursePriorityCol) return "priorityRaw";
+        if (col == nurseDeviceACol) return "deviceA";
+        if (col == nurseDeviceBCol) return "deviceB";
+        if (col == nurseRingtoneCol) return "ringtone";
+        if (col == nurseResponseOptionsCol) return "responseOptions";
+        if (col == nurseBreakThroughDNDCol) return "breakThroughDND";
+        if (col == nurseEscalateAfterCol) return "escalateAfter";
+        if (col == nurseTtlValueCol) return "ttlValue";
+        if (col == nurseEnunciateCol) return "enunciate";
+        if (col == nurseT1Col) return "t1";
+        if (col == nurseR1Col) return "r1";
+        if (col == nurseT2Col) return "t2";
+        if (col == nurseR2Col) return "r2";
+        if (col == nurseT3Col) return "t3";
+        if (col == nurseR3Col) return "r3";
+        if (col == nurseT4Col) return "t4";
+        if (col == nurseR4Col) return "r4";
+        if (col == nurseT5Col) return "t5";
+        if (col == nurseR5Col) return "r5";
+        
+        // FlowRow columns - Clinicals
+        if (col == clinicalConfigGroupCol) return "configGroup";
+        if (col == clinicalAlarmNameCol) return "alarmName";
+        if (col == clinicalSendingNameCol) return "sendingName";
+        if (col == clinicalPriorityCol) return "priorityRaw";
+        if (col == clinicalDeviceACol) return "deviceA";
+        if (col == clinicalDeviceBCol) return "deviceB";
+        if (col == clinicalRingtoneCol) return "ringtone";
+        if (col == clinicalResponseOptionsCol) return "responseOptions";
+        if (col == clinicalBreakThroughDNDCol) return "breakThroughDND";
+        if (col == clinicalEscalateAfterCol) return "escalateAfter";
+        if (col == clinicalTtlValueCol) return "ttlValue";
+        if (col == clinicalEnunciateCol) return "enunciate";
+        if (col == clinicalEmdanCol) return "emdan";
+        if (col == clinicalT1Col) return "t1";
+        if (col == clinicalR1Col) return "r1";
+        if (col == clinicalT2Col) return "t2";
+        if (col == clinicalR2Col) return "r2";
+        if (col == clinicalT3Col) return "t3";
+        if (col == clinicalR3Col) return "r3";
+        if (col == clinicalT4Col) return "t4";
+        if (col == clinicalR4Col) return "r4";
+        if (col == clinicalT5Col) return "t5";
+        if (col == clinicalR5Col) return "r5";
+        
+        // FlowRow columns - Orders
+        if (col == ordersConfigGroupCol) return "configGroup";
+        if (col == ordersAlarmNameCol) return "alarmName";
+        if (col == ordersSendingNameCol) return "sendingName";
+        if (col == ordersPriorityCol) return "priorityRaw";
+        if (col == ordersDeviceACol) return "deviceA";
+        if (col == ordersDeviceBCol) return "deviceB";
+        if (col == ordersRingtoneCol) return "ringtone";
+        if (col == ordersResponseOptionsCol) return "responseOptions";
+        if (col == ordersBreakThroughDNDCol) return "breakThroughDND";
+        if (col == ordersEscalateAfterCol) return "escalateAfter";
+        if (col == ordersTtlValueCol) return "ttlValue";
+        if (col == ordersEnunciateCol) return "enunciate";
+        if (col == ordersT1Col) return "t1";
+        if (col == ordersR1Col) return "r1";
+        if (col == ordersT2Col) return "t2";
+        if (col == ordersR2Col) return "r2";
+        if (col == ordersT3Col) return "t3";
+        if (col == ordersR3Col) return "r3";
+        if (col == ordersT4Col) return "t4";
+        if (col == ordersR4Col) return "r4";
+        if (col == ordersT5Col) return "t5";
+        if (col == ordersR5Col) return "r5";
+        
+        return "";
     }
 
     private Stage getStage() {
@@ -2410,7 +2546,13 @@ public class AppController {
         col.setCellFactory(TextAreaTableCell.forTableColumn());
         col.setOnEditCommit(ev -> {
             R row = ev.getRowValue();
-            setter.accept(row, ev.getNewValue());
+            String oldValue = getter.apply(row);
+            String newValue = ev.getNewValue();
+            setter.accept(row, newValue);
+            
+            // Track changes for UnitRow and FlowRow
+            trackFieldChange(row, getFieldName(col), oldValue, newValue);
+            
             if (col.getTableView() != null) col.getTableView().refresh();
         });
     }
@@ -2436,6 +2578,14 @@ public class AppController {
         if (parser == null || parser.units == null) return;
         for (ExcelParserV5.UnitRow r : parser.units) {
             normalizeUnitRow(r);
+            // Update original values after normalization so change tracking works correctly
+            r.originalValues.put("unitNames", r.unitNames);
+            r.originalValues.put("podRoomFilter", r.podRoomFilter);
+            r.originalValues.put("nurseGroup", r.nurseGroup);
+            r.originalValues.put("clinGroup", r.clinGroup);
+            r.originalValues.put("ordersGroup", r.ordersGroup);
+            r.originalValues.put("noCareGroup", r.noCareGroup);
+            r.originalValues.put("comments", r.comments);
         }
     }
 
@@ -2447,9 +2597,14 @@ public class AppController {
         col.setCellFactory(TextAreaTableCell.forTableColumn());
         col.setOnEditCommit(ev -> {
             ExcelParserV5.UnitRow row = ev.getRowValue();
+            String oldValue = getter.apply(row);
             String newVal = ev.getNewValue();
             newVal = commaToNewlines(newVal);
             setter.accept(row, newVal);
+            
+            // Track changes for UnitRow
+            trackFieldChange(row, getFieldName(col), oldValue, newVal);
+            
             if (col.getTableView() != null) col.getTableView().refresh();
         });
     }
@@ -3666,6 +3821,54 @@ public class AppController {
                 themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
                 themeToggleButton.setGraphic(null); // Clear icon
             }
+        }
+    }
+    
+    // ---------- Profile Switcher ----------
+    
+    /**
+     * Toggles between IE and CI profiles while preserving loaded data.
+     * @param isIEMode true if switching to IE mode, false for CI mode
+     */
+    private void toggleProfile(boolean isIEMode) {
+        // Update user profile
+        userProfile = isIEMode ? UserProfile.IE : UserProfile.CI;
+        
+        // Update button text
+        updateProfileSwitcherText();
+        
+        // Apply profile restrictions (show/hide buttons, enable/disable features)
+        applyProfileRestrictions();
+        
+        // Update status
+        if (statusLabel != null) {
+            statusLabel.setText("Switched to " + userProfile.getDisplayName() + " profile");
+        }
+        
+        // Show info about profile switch
+        String profileInfo = isIEMode 
+            ? "Switched to IE (Implementation Engineer) mode:\n" +
+              "• Full access to all features\n" +
+              "• Export JSON functionality enabled\n" +
+              "• Advanced settings available"
+            : "Switched to CI (Clinical Informatics) mode:\n" +
+              "• Guided validation workflows\n" +
+              "• Save to NDW functionality enabled\n" +
+              "• Export JSON functionality disabled";
+        
+        System.out.println("Profile switched: " + userProfile.getDisplayName());
+    }
+    
+    /**
+     * Updates the profile switcher button text based on current profile.
+     */
+    private void updateProfileSwitcherText() {
+        if (profileSwitcher != null) {
+            profileSwitcher.setText(userProfile == UserProfile.IE ? "IE" : "CI");
+            profileSwitcher.setTooltip(new Tooltip(
+                "Current: " + userProfile.getDisplayName() + " mode\n" +
+                "Click to switch to " + (userProfile == UserProfile.IE ? "CI" : "IE") + " mode"
+            ));
         }
     }
     
@@ -5433,7 +5636,7 @@ public class AppController {
      */
     private void applyProfileRestrictions() {
         if (userProfile == UserProfile.CI) {
-            // Show and enable Save on NDW button (CI only)
+            // Show and enable Save to NDW button (CI only)
             if (saveOnNdwButton != null) {
                 saveOnNdwButton.setVisible(true);
                 saveOnNdwButton.setManaged(true);
@@ -5573,7 +5776,7 @@ public class AppController {
             // Note: Data Validation controls (Voice Group, Assignment Roles, Bed List),
             // Combine Config Group checkbox, and Row Height sliders remain visible and enabled
         } else {
-            // IE mode: hide Save on NDW button
+            // IE mode: hide Save to NDW button
             if (saveOnNdwButton != null) {
                 saveOnNdwButton.setVisible(false);
                 saveOnNdwButton.setManaged(false);
@@ -5809,7 +6012,7 @@ public class AppController {
             "   • Invalid entries will be highlighted in RED\n" +
             "   • Edit the data tables as needed\n\n" +
             "3️⃣  Save Your Changes:\n" +
-            "   • Use '💾 Save on NDW' button to save changes\n" +
+            "   • Use '💾 Save to NDW' button to save changes\n" +
             "   • Only modified cells will be updated\n" +
             "   • Original formatting will be preserved"
         );

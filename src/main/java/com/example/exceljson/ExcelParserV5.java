@@ -37,6 +37,11 @@ public class ExcelParserV5 {
     public String comments = "";
     // Dynamic custom group columns (key = custom tab name, value = group name)
     public final Map<String, String> customGroups = new LinkedHashMap<>();
+    
+    // Change tracking fields
+    public int excelRowIndex = -1; // Row index in Excel sheet
+    public final Map<String, String> originalValues = new LinkedHashMap<>(); // Original values from Excel
+    public final Set<String> changedFields = new LinkedHashSet<>(); // Fields that were modified
   }
 
   public static final class FlowRow {
@@ -62,6 +67,11 @@ public class ExcelParserV5 {
     public String t4 = ""; public String r4 = "";
     public String t5 = ""; public String r5 = "";
     public String customTabSource = ""; // Name of the custom tab this flow came from (if any)
+    
+    // Change tracking fields
+    public int excelRowIndex = -1; // Row index in Excel sheet
+    public final Map<String, String> originalValues = new LinkedHashMap<>(); // Original values from Excel
+    public final Set<String> changedFields = new LinkedHashSet<>(); // Fields that were modified
   }
 
   // ---------- Config / parsing helpers ----------
@@ -81,6 +91,10 @@ public class ExcelParserV5 {
   private final Map<String, String> noCaregiverByFacilityAndGroup = new LinkedHashMap<>();
   
   private int emdanMovedCount = 0;
+  
+  // Cache for the changed cell style (to avoid exceeding Excel's 4000 style limit)
+  private CellStyle changedCellStyle = null;
+  private Font changedCellFont = null;
   
   // Custom tab statistics
   private final Map<String, Integer> customTabRowCounts = new LinkedHashMap<>();
@@ -1240,6 +1254,20 @@ public class ExcelParserV5 {
         u.customGroups.put(customTabName, customGroupValue);
       }
       
+      // Store row index and original values for change tracking
+      u.excelRowIndex = r;
+      u.originalValues.put("facility", facility);
+      u.originalValues.put("unitNames", unitNames);
+      u.originalValues.put("podRoomFilter", podRoomFilter);
+      u.originalValues.put("nurseGroup", nurseGroup);
+      u.originalValues.put("clinGroup", clinGroup);
+      u.originalValues.put("ordersGroup", ordersGroup);
+      u.originalValues.put("noCareGroup", noCare);
+      u.originalValues.put("comments", comments);
+      for (Map.Entry<String, String> entry : u.customGroups.entrySet()) {
+        u.originalValues.put("customGroup_" + entry.getKey(), entry.getValue());
+      }
+      
       units.add(u);
 
       List<String> list = splitUnits(unitNames);
@@ -1506,6 +1534,34 @@ public class ExcelParserV5 {
       f.t5 = getCell(row, cT5); f.r5 = getCell(row, cR5);
 
       if (isBlank(f.alarmName) && isBlank(f.sendingName)) continue;
+      
+      // Store row index and original values for change tracking
+      f.excelRowIndex = r;
+      f.originalValues.put("inScope", String.valueOf(f.inScope));
+      f.originalValues.put("configGroup", f.configGroup);
+      f.originalValues.put("alarmName", f.alarmName);
+      f.originalValues.put("sendingName", f.sendingName);
+      f.originalValues.put("priorityRaw", f.priorityRaw);
+      f.originalValues.put("deviceA", f.deviceA);
+      f.originalValues.put("deviceB", f.deviceB);
+      f.originalValues.put("ringtone", f.ringtone);
+      f.originalValues.put("responseOptions", f.responseOptions);
+      f.originalValues.put("breakThroughDND", f.breakThroughDND);
+      f.originalValues.put("multiUserAccept", f.multiUserAccept);
+      f.originalValues.put("escalateAfter", f.escalateAfter);
+      f.originalValues.put("ttlValue", f.ttlValue);
+      f.originalValues.put("enunciate", f.enunciate);
+      f.originalValues.put("emdan", f.emdan);
+      f.originalValues.put("t1", f.t1);
+      f.originalValues.put("r1", f.r1);
+      f.originalValues.put("t2", f.t2);
+      f.originalValues.put("r2", f.r2);
+      f.originalValues.put("t3", f.t3);
+      f.originalValues.put("r3", f.r3);
+      f.originalValues.put("t4", f.t4);
+      f.originalValues.put("r4", f.r4);
+      f.originalValues.put("t5", f.t5);
+      f.originalValues.put("r5", f.r5);
 
       // EMDAN Reclassification: if reading from Nurse Call sheet and EMDAN is Y/Yes, move to Clinicals
       if (nurseSide && isEmdanCompliant(f.emdan)) {
@@ -3193,75 +3249,114 @@ public class ExcelParserV5 {
   
   /**
    * Updates the Unit Breakdown sheet with current unit data.
-   * Only updates cell values, preserving formatting.
+   * Only updates cells that have been changed, and marks them with bold, italic, red formatting.
    * @param sheet The sheet to update
    * @param startRow The row index where data starts (after headers)
    */
   private void updateUnitSheet(Sheet sheet, int startRow) {
-    // Start from the detected data row
-    int rowIndex = startRow;
+    // Get header mapping to find correct column indices
+    Row header = findHeaderRow(sheet);
+    Map<String, Integer> hm = headerMap(header);
+    
+    int cFacility = getCol(hm, "Facility");
+    int cUnitName = getCol(hm, "Common Unit Name");
+    int cPodRoomFilter = getCol(hm, "Filter for POD Rooms (Optional)", "Filter for POD Rooms");
+    int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call", "Nurse Call Configuration Group");
+    int cClinGroup = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring", "Patient Monitoring Configuration Group");
+    int cOrdersGroup = getCol(hm, "Orders", "Configuration Group", "Order", "Med Order", "STAT MED", "Orders Configuration Group");
+    int cNoCare = getCol(hm, "No Caregiver Alert Number or Group", "No Caregiver Group");
+    int cComments = getCol(hm, "Comments");
+    
+    // Use row index from UnitRow if available, otherwise use sequential index
     for (UnitRow unit : units) {
+      int rowIndex = unit.excelRowIndex >= 0 ? unit.excelRowIndex : startRow++;
       Row row = sheet.getRow(rowIndex);
       if (row == null) {
         row = sheet.createRow(rowIndex);
       }
       
-      // Update each cell, preserving cell type and formatting
-      updateCell(row, 0, unit.facility);
-      updateCell(row, 1, unit.unitNames);
-      updateCell(row, 2, unit.nurseGroup);
-      updateCell(row, 3, unit.clinGroup);
-      updateCell(row, 4, unit.ordersGroup);
-      updateCell(row, 5, unit.noCareGroup);
-      updateCell(row, 6, unit.comments);
-      
-      rowIndex++;
+      // Update each cell only if it was changed
+      if (cFacility >= 0) updateCellIfChanged(row, cFacility, unit.facility, "facility", unit);
+      if (cUnitName >= 0) updateCellIfChanged(row, cUnitName, unit.unitNames, "unitNames", unit);
+      if (cPodRoomFilter >= 0) updateCellIfChanged(row, cPodRoomFilter, unit.podRoomFilter, "podRoomFilter", unit);
+      if (cNurseGroup >= 0) updateCellIfChanged(row, cNurseGroup, unit.nurseGroup, "nurseGroup", unit);
+      if (cClinGroup >= 0) updateCellIfChanged(row, cClinGroup, unit.clinGroup, "clinGroup", unit);
+      if (cOrdersGroup >= 0) updateCellIfChanged(row, cOrdersGroup, unit.ordersGroup, "ordersGroup", unit);
+      if (cNoCare >= 0) updateCellIfChanged(row, cNoCare, unit.noCareGroup, "noCareGroup", unit);
+      if (cComments >= 0) updateCellIfChanged(row, cComments, unit.comments, "comments", unit);
     }
   }
   
   /**
    * Updates a flow sheet (Nurse Call, Patient Monitoring, or Orders) with current flow data.
-   * Only updates cell values, preserving formatting.
+   * Only updates cells that have been changed, and marks them with bold, italic, red formatting.
    * @param sheet The sheet to update
    * @param flows The list of flow rows to write
    * @param startRow The row index where data starts (after headers)
    */
   private void updateFlowSheet(Sheet sheet, List<FlowRow> flows, int startRow) {
-    // Start from the detected data row
-    int rowIndex = startRow;
+    // Get header mapping to find correct column indices
+    Row header = findHeaderRow(sheet);
+    Map<String, Integer> hm = headerMap(header);
+    
+    int cInScope = getCol(hm, "In scope", "In Scope");
+    int cCfg = getCol(hm, "Configuration Group");
+    int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
+    int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
+    int cPriority = getCol(hm, "Priority");
+    int cDevice = getCol(hm, "Device - A", "Device");
+    int cDeviceB = getCol(hm, "Device - B");
+    int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
+    int cResp = getCol(hm, "Response Options", "Response Option");
+    int cBreakDND = getCol(hm, "Break Through DND");
+    int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
+    int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
+    int cEnunciate = getCol(hm, "Genie Enunciation");
+    int cEmdan = getColLoose(hm, "emdan");
+    int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
+    int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
+    int cT2 = getCol(hm, "Time to 2nd Recipient", "Delay to 2nd");
+    int cR2 = getCol(hm, "2nd Recipient", "Second Recipient");
+    int cT3 = getCol(hm, "Time to 3rd Recipient", "Delay to 3rd");
+    int cR3 = getCol(hm, "3rd Recipient", "Third Recipient");
+    int cT4 = getCol(hm, "Time to 4th Recipient");
+    int cR4 = getCol(hm, "4th Recipient");
+    int cT5 = getCol(hm, "Time to 5th Recipient");
+    int cR5 = getCol(hm, "5th Recipient");
+    
+    // Use row index from FlowRow if available, otherwise use sequential index  
     for (FlowRow flow : flows) {
+      int rowIndex = flow.excelRowIndex >= 0 ? flow.excelRowIndex : startRow++;
       Row row = sheet.getRow(rowIndex);
       if (row == null) {
         row = sheet.createRow(rowIndex);
       }
       
-      // Update each cell with flow data
-      updateCell(row, 0, flow.inScope ? "TRUE" : "FALSE");
-      updateCell(row, 1, flow.configGroup);
-      updateCell(row, 2, flow.alarmName);
-      updateCell(row, 3, flow.sendingName);
-      updateCell(row, 4, flow.priorityRaw);
-      updateCell(row, 5, flow.deviceA);
-      updateCell(row, 6, flow.deviceB);
-      updateCell(row, 7, flow.ringtone);
-      updateCell(row, 8, flow.responseOptions);
-      updateCell(row, 9, flow.breakThroughDND);
-      updateCell(row, 10, flow.escalateAfter);
-      updateCell(row, 11, flow.ttlValue);
-      updateCell(row, 12, flow.enunciate);
-      updateCell(row, 13, flow.emdan);
-      updateCell(row, 14, flow.t1);
-      updateCell(row, 15, flow.r1);
-      updateCell(row, 16, flow.t2);
-      updateCell(row, 17, flow.r2);
-      updateCell(row, 18, flow.t3);
-      updateCell(row, 19, flow.r3);
-      updateCell(row, 20, flow.t4);
-      updateCell(row, 21, flow.r4);
-      updateCell(row, 22, flow.t5);
-      updateCell(row, 23, flow.r5);
-      
-      rowIndex++;
+      // Update each cell with flow data only if changed
+      if (cInScope >= 0) updateCellIfChanged(row, cInScope, flow.inScope ? "TRUE" : "FALSE", "inScope", flow);
+      if (cCfg >= 0) updateCellIfChanged(row, cCfg, flow.configGroup, "configGroup", flow);
+      if (cAlarm >= 0) updateCellIfChanged(row, cAlarm, flow.alarmName, "alarmName", flow);
+      if (cSend >= 0) updateCellIfChanged(row, cSend, flow.sendingName, "sendingName", flow);
+      if (cPriority >= 0) updateCellIfChanged(row, cPriority, flow.priorityRaw, "priorityRaw", flow);
+      if (cDevice >= 0) updateCellIfChanged(row, cDevice, flow.deviceA, "deviceA", flow);
+      if (cDeviceB >= 0) updateCellIfChanged(row, cDeviceB, flow.deviceB, "deviceB", flow);
+      if (cRing >= 0) updateCellIfChanged(row, cRing, flow.ringtone, "ringtone", flow);
+      if (cResp >= 0) updateCellIfChanged(row, cResp, flow.responseOptions, "responseOptions", flow);
+      if (cBreakDND >= 0) updateCellIfChanged(row, cBreakDND, flow.breakThroughDND, "breakThroughDND", flow);
+      if (cEscalateAfter >= 0) updateCellIfChanged(row, cEscalateAfter, flow.escalateAfter, "escalateAfter", flow);
+      if (cTTL >= 0) updateCellIfChanged(row, cTTL, flow.ttlValue, "ttlValue", flow);
+      if (cEnunciate >= 0) updateCellIfChanged(row, cEnunciate, flow.enunciate, "enunciate", flow);
+      if (cEmdan >= 0) updateCellIfChanged(row, cEmdan, flow.emdan, "emdan", flow);
+      if (cT1 >= 0) updateCellIfChanged(row, cT1, flow.t1, "t1", flow);
+      if (cR1 >= 0) updateCellIfChanged(row, cR1, flow.r1, "r1", flow);
+      if (cT2 >= 0) updateCellIfChanged(row, cT2, flow.t2, "t2", flow);
+      if (cR2 >= 0) updateCellIfChanged(row, cR2, flow.r2, "r2", flow);
+      if (cT3 >= 0) updateCellIfChanged(row, cT3, flow.t3, "t3", flow);
+      if (cR3 >= 0) updateCellIfChanged(row, cR3, flow.r3, "r3", flow);
+      if (cT4 >= 0) updateCellIfChanged(row, cT4, flow.t4, "t4", flow);
+      if (cR4 >= 0) updateCellIfChanged(row, cR4, flow.r4, "r4", flow);
+      if (cT5 >= 0) updateCellIfChanged(row, cT5, flow.t5, "t5", flow);
+      if (cR5 >= 0) updateCellIfChanged(row, cR5, flow.r5, "r5", flow);
     }
   }
   
@@ -3285,6 +3380,70 @@ public class ExcelParserV5 {
     
     // Update the cell value
     cell.setCellValue(value == null ? "" : value);
+  }
+  
+  /**
+   * Updates a cell's value only if it has been changed from its original value.
+   * Changed cells are formatted with bold, italic, and red text.
+   * @param row The row containing the cell
+   * @param columnIndex The column index of the cell
+   * @param value The new value to set
+   * @param fieldName The field name for tracking changes
+   * @param dataRow The UnitRow or FlowRow object containing change tracking info
+   */
+  private void updateCellIfChanged(Row row, int columnIndex, String value, String fieldName, Object dataRow) {
+    Set<String> changedFields = null;
+    
+    // Extract changed fields set from the data row
+    if (dataRow instanceof UnitRow unitRow) {
+      changedFields = unitRow.changedFields;
+    } else if (dataRow instanceof FlowRow flowRow) {
+      changedFields = flowRow.changedFields;
+    }
+    
+    // Only update if this field was changed
+    if (changedFields != null && changedFields.contains(fieldName)) {
+      Cell cell = row.getCell(columnIndex);
+      if (cell == null) {
+        cell = row.createCell(columnIndex, CellType.STRING);
+      }
+      
+      // Skip formula cells to preserve them
+      if (cell.getCellType() == CellType.FORMULA) {
+        return;
+      }
+      
+      // Update the cell value
+      cell.setCellValue(value == null ? "" : value);
+      
+      // Apply bold, italic, red formatting to indicate change
+      applyChangedCellFormatting(cell);
+    }
+    // If not changed, don't update the cell (preserve original value and formatting)
+  }
+  
+  /**
+   * Applies formatting to a changed cell: bold, italic, and red text.
+   * Uses a cached style to avoid exceeding Excel's 4000 style limit per workbook.
+   */
+  private void applyChangedCellFormatting(Cell cell) {
+    Workbook wb = cell.getSheet().getWorkbook();
+    
+    // Create cached style and font if not already created
+    if (changedCellStyle == null) {
+      changedCellStyle = wb.createCellStyle();
+      changedCellFont = wb.createFont();
+      
+      // Set bold, italic, and red color
+      changedCellFont.setBold(true);
+      changedCellFont.setItalic(true);
+      changedCellFont.setColor(IndexedColors.RED.getIndex());
+      
+      changedCellStyle.setFont(changedCellFont);
+    }
+    
+    // Apply the cached style to the cell
+    cell.setCellStyle(changedCellStyle);
   }
 
   private static String[] flowHeaders() {
