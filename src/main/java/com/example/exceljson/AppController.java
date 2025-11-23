@@ -2238,7 +2238,7 @@ public class AppController {
         setupDeviceAColumn(nurseDeviceACol);
         setupDeviceBColumn(nurseDeviceBCol);
         setupEditable(nurseRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
-        setupEditable(nurseResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
+        setupResponseOptionsColumn(nurseResponseOptionsCol);
         setupEditable(nurseBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
         setupEditable(nurseEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(nurseTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
@@ -2268,7 +2268,7 @@ public class AppController {
         setupDeviceAColumn(clinicalDeviceACol);
         setupDeviceBColumn(clinicalDeviceBCol);
         setupEditable(clinicalRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
-        setupEditable(clinicalResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
+        setupResponseOptionsColumn(clinicalResponseOptionsCol);
         setupEditable(clinicalBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
         setupEditable(clinicalEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(clinicalTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
@@ -2299,7 +2299,7 @@ public class AppController {
         setupDeviceAColumn(ordersDeviceACol);
         setupDeviceBColumn(ordersDeviceBCol);
         setupEditable(ordersRingtoneCol, f -> f.ringtone, (f, v) -> f.ringtone = v);
-        setupEditable(ordersResponseOptionsCol, f -> safe(f.responseOptions), (f, v) -> f.responseOptions = safe(v));
+        setupResponseOptionsColumn(ordersResponseOptionsCol);
         setupEditable(ordersBreakThroughDNDCol, f -> safe(f.breakThroughDND), (f, v) -> f.breakThroughDND = safe(v));
         setupEditable(ordersEscalateAfterCol, f -> safe(f.escalateAfter), (f, v) -> f.escalateAfter = safe(v));
         setupEditable(ordersTtlValueCol, f -> safe(f.ttlValue), (f, v) -> f.ttlValue = safe(v));
@@ -2543,6 +2543,17 @@ public class AppController {
     private void setupDeviceBColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
         setupValidatedColumn(col, f -> f.deviceB, (f, v) -> f.deviceB = v, false, 
             item -> parser != null && parser.hasValidRecipientKeyword(item));
+    }
+    
+    /**
+     * Sets up an editable column for Response Options with validation highlighting.
+     * Cells that don't contain valid response option keywords are highlighted with light orange.
+     * Blank cells are NOT highlighted.
+     * Valid keywords (case-insensitive): No Response, Accept, Acknowledge, Escalate, Decline, Reject, Call Back
+     */
+    private void setupResponseOptionsColumn(TableColumn<ExcelParserV5.FlowRow, String> col) {
+        setupValidatedColumn(col, f -> f.responseOptions, (f, v) -> f.responseOptions = v, false, 
+            item -> parser != null && parser.isValidResponseOptions(item));
     }
     
     /**

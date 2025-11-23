@@ -2381,6 +2381,44 @@ public class ExcelParserV5 {
   }
 
   /**
+   * Validates the Response Options field.
+   * Returns false (should be highlighted) when the field contains values
+   * that are not recognized response option keywords.
+   * 
+   * Valid keywords (case-insensitive):
+   * - No Response
+   * - Accept
+   * - Acknowledge
+   * - Escalate
+   * - Decline
+   * - Reject
+   * - Call Back (or callback)
+   * 
+   * Blank/empty cells are considered valid (not highlighted).
+   * Multiple comma-separated values are supported.
+   */
+  public boolean isValidResponseOptions(String responseOptionsText) {
+    // Empty/blank cells are valid (not highlighted)
+    if (isBlank(responseOptionsText)) return true;
+    
+    // Normalize: lowercase and remove all whitespace
+    String normalized = responseOptionsText.toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+    
+    // Valid keywords after normalization
+    // Note: "callback" is valid as both "callback" and "call back" -> "callback"
+    boolean hasValidKeyword = 
+        normalized.contains("noresponse") ||
+        normalized.contains("accept") ||
+        normalized.contains("acknowledge") ||
+        normalized.contains("escalate") ||
+        normalized.contains("decline") ||
+        normalized.contains("reject") ||
+        normalized.contains("callback");
+    
+    return hasValidKeyword;
+  }
+
+  /**
    * Determines if default interfaces should be applied based on device values.
    * Defaults apply when:
    * 1. Both devices are blank/empty, OR
