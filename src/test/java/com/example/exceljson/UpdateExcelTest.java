@@ -73,10 +73,16 @@ class UpdateExcelTest {
         assertEquals(1, parser.units.size());
         assertEquals("Original Facility", parser.units.get(0).facility);
         
-        // Modify the data
-        parser.units.get(0).facility = "Updated Facility";
-        parser.units.get(0).unitNames = "Updated Unit";
-        parser.units.get(0).nurseGroup = "Updated Nurse Group";
+        // Modify the data and mark fields as changed (simulating UI editing)
+        ExcelParserV5.UnitRow unit = parser.units.get(0);
+        unit.facility = "Updated Facility";
+        unit.unitNames = "Updated Unit";
+        unit.nurseGroup = "Updated Nurse Group";
+        
+        // Mark the changed fields so they will be updated
+        unit.changedFields.add("facility");
+        unit.changedFields.add("unitNames");
+        unit.changedFields.add("nurseGroup");
         
         // Update the Excel file
         parser.updateExcel(testFile);
@@ -96,11 +102,14 @@ class UpdateExcelTest {
             assertEquals("Updated Unit", dataRow.getCell(1).getStringCellValue());
             assertEquals("Updated Nurse Group", dataRow.getCell(2).getStringCellValue());
             
-            // Verify formatting was preserved (cell should still be bold)
+            // Verify formatting was updated to indicate changes (bold, italic, red)
             CellStyle style = cell0.getCellStyle();
             assertNotNull(style);
             Font font = wb.getFontAt(style.getFontIndex());
-            assertTrue(font.getBold(), "Cell formatting (bold) should be preserved");
+            assertTrue(font.getBold(), "Changed cells should be bold");
+            assertTrue(font.getItalic(), "Changed cells should be italic");
+            // Red color is IndexedColors.RED.getIndex() which is 10
+            assertEquals(10, font.getColor(), "Changed cells should be red");
         }
     }
 
@@ -171,9 +180,14 @@ class UpdateExcelTest {
         assertEquals(1, parser.nurseCalls.size());
         assertEquals("Original Alarm", parser.nurseCalls.get(0).alarmName);
         
-        // Modify flow data
-        parser.nurseCalls.get(0).alarmName = "Updated Alarm";
-        parser.nurseCalls.get(0).sendingName = "Updated Sending";
+        // Modify flow data and mark fields as changed (simulating UI editing)
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
+        flow.alarmName = "Updated Alarm";
+        flow.sendingName = "Updated Sending";
+        
+        // Mark the changed fields so they will be updated
+        flow.changedFields.add("alarmName");
+        flow.changedFields.add("sendingName");
         
         // Update the Excel file
         parser.updateExcel(testFile);

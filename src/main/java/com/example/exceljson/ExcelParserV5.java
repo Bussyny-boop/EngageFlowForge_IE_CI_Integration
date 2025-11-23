@@ -3250,6 +3250,19 @@ public class ExcelParserV5 {
    * @param startRow The row index where data starts (after headers)
    */
   private void updateUnitSheet(Sheet sheet, int startRow) {
+    // Get header mapping to find correct column indices
+    Row header = findHeaderRow(sheet);
+    Map<String, Integer> hm = headerMap(header);
+    
+    int cFacility = getCol(hm, "Facility");
+    int cUnitName = getCol(hm, "Common Unit Name");
+    int cPodRoomFilter = getCol(hm, "Filter for POD Rooms (Optional)", "Filter for POD Rooms");
+    int cNurseGroup = getCol(hm, "Nurse Call", "Configuration Group", "Nurse call", "Nurse Call Configuration Group");
+    int cClinGroup = getCol(hm, "Patient Monitoring", "Configuration Group", "Patient monitoring", "Patient Monitoring Configuration Group");
+    int cOrdersGroup = getCol(hm, "Orders", "Configuration Group", "Order", "Med Order", "STAT MED", "Orders Configuration Group");
+    int cNoCare = getCol(hm, "No Caregiver Alert Number or Group", "No Caregiver Group");
+    int cComments = getCol(hm, "Comments");
+    
     // Use row index from UnitRow if available, otherwise use sequential index
     for (UnitRow unit : units) {
       int rowIndex = unit.excelRowIndex >= 0 ? unit.excelRowIndex : startRow++;
@@ -3259,14 +3272,14 @@ public class ExcelParserV5 {
       }
       
       // Update each cell only if it was changed
-      updateCellIfChanged(row, 0, unit.facility, "facility", unit);
-      updateCellIfChanged(row, 1, unit.unitNames, "unitNames", unit);
-      updateCellIfChanged(row, 2, unit.podRoomFilter, "podRoomFilter", unit);
-      updateCellIfChanged(row, 3, unit.nurseGroup, "nurseGroup", unit);
-      updateCellIfChanged(row, 4, unit.clinGroup, "clinGroup", unit);
-      updateCellIfChanged(row, 5, unit.ordersGroup, "ordersGroup", unit);
-      updateCellIfChanged(row, 6, unit.noCareGroup, "noCareGroup", unit);
-      updateCellIfChanged(row, 7, unit.comments, "comments", unit);
+      if (cFacility >= 0) updateCellIfChanged(row, cFacility, unit.facility, "facility", unit);
+      if (cUnitName >= 0) updateCellIfChanged(row, cUnitName, unit.unitNames, "unitNames", unit);
+      if (cPodRoomFilter >= 0) updateCellIfChanged(row, cPodRoomFilter, unit.podRoomFilter, "podRoomFilter", unit);
+      if (cNurseGroup >= 0) updateCellIfChanged(row, cNurseGroup, unit.nurseGroup, "nurseGroup", unit);
+      if (cClinGroup >= 0) updateCellIfChanged(row, cClinGroup, unit.clinGroup, "clinGroup", unit);
+      if (cOrdersGroup >= 0) updateCellIfChanged(row, cOrdersGroup, unit.ordersGroup, "ordersGroup", unit);
+      if (cNoCare >= 0) updateCellIfChanged(row, cNoCare, unit.noCareGroup, "noCareGroup", unit);
+      if (cComments >= 0) updateCellIfChanged(row, cComments, unit.comments, "comments", unit);
     }
   }
   
@@ -3278,6 +3291,35 @@ public class ExcelParserV5 {
    * @param startRow The row index where data starts (after headers)
    */
   private void updateFlowSheet(Sheet sheet, List<FlowRow> flows, int startRow) {
+    // Get header mapping to find correct column indices
+    Row header = findHeaderRow(sheet);
+    Map<String, Integer> hm = headerMap(header);
+    
+    int cInScope = getCol(hm, "In scope", "In Scope");
+    int cCfg = getCol(hm, "Configuration Group");
+    int cAlarm = getCol(hm, "Common Alert or Alarm Name", "Alarm Name");
+    int cSend = getCol(hm, "Sending System Alert Name", "Sending System Alarm Name");
+    int cPriority = getCol(hm, "Priority");
+    int cDevice = getCol(hm, "Device - A", "Device");
+    int cDeviceB = getCol(hm, "Device - B");
+    int cRing = getCol(hm, "Ringtone Device - A", "Ringtone");
+    int cResp = getCol(hm, "Response Options", "Response Option");
+    int cBreakDND = getCol(hm, "Break Through DND");
+    int cEscalateAfter = getCol(hm, "Engage 6.6+: Escalate after all declines or 1 decline");
+    int cTTL = getCol(hm, "Engage/Edge Display Time (Time to Live) (Device - A)");
+    int cEnunciate = getCol(hm, "Genie Enunciation");
+    int cEmdan = getColLoose(hm, "emdan");
+    int cT1 = getCol(hm, "Time to 1st Recipient", "Delay to 1st", "Time to 1st Recipient (after alarm triggers)");
+    int cR1 = getCol(hm, "1st Recipient", "First Recipient", "1st recipients");
+    int cT2 = getCol(hm, "Time to 2nd Recipient", "Delay to 2nd");
+    int cR2 = getCol(hm, "2nd Recipient", "Second Recipient");
+    int cT3 = getCol(hm, "Time to 3rd Recipient", "Delay to 3rd");
+    int cR3 = getCol(hm, "3rd Recipient", "Third Recipient");
+    int cT4 = getCol(hm, "Time to 4th Recipient");
+    int cR4 = getCol(hm, "4th Recipient");
+    int cT5 = getCol(hm, "Time to 5th Recipient");
+    int cR5 = getCol(hm, "5th Recipient");
+    
     // Use row index from FlowRow if available, otherwise use sequential index  
     for (FlowRow flow : flows) {
       int rowIndex = flow.excelRowIndex >= 0 ? flow.excelRowIndex : startRow++;
@@ -3287,30 +3329,30 @@ public class ExcelParserV5 {
       }
       
       // Update each cell with flow data only if changed
-      updateCellIfChanged(row, 0, flow.inScope ? "TRUE" : "FALSE", "inScope", flow);
-      updateCellIfChanged(row, 1, flow.configGroup, "configGroup", flow);
-      updateCellIfChanged(row, 2, flow.alarmName, "alarmName", flow);
-      updateCellIfChanged(row, 3, flow.sendingName, "sendingName", flow);
-      updateCellIfChanged(row, 4, flow.priorityRaw, "priorityRaw", flow);
-      updateCellIfChanged(row, 5, flow.deviceA, "deviceA", flow);
-      updateCellIfChanged(row, 6, flow.deviceB, "deviceB", flow);
-      updateCellIfChanged(row, 7, flow.ringtone, "ringtone", flow);
-      updateCellIfChanged(row, 8, flow.responseOptions, "responseOptions", flow);
-      updateCellIfChanged(row, 9, flow.breakThroughDND, "breakThroughDND", flow);
-      updateCellIfChanged(row, 10, flow.escalateAfter, "escalateAfter", flow);
-      updateCellIfChanged(row, 11, flow.ttlValue, "ttlValue", flow);
-      updateCellIfChanged(row, 12, flow.enunciate, "enunciate", flow);
-      updateCellIfChanged(row, 13, flow.emdan, "emdan", flow);
-      updateCellIfChanged(row, 14, flow.t1, "t1", flow);
-      updateCellIfChanged(row, 15, flow.r1, "r1", flow);
-      updateCellIfChanged(row, 16, flow.t2, "t2", flow);
-      updateCellIfChanged(row, 17, flow.r2, "r2", flow);
-      updateCellIfChanged(row, 18, flow.t3, "t3", flow);
-      updateCellIfChanged(row, 19, flow.r3, "r3", flow);
-      updateCellIfChanged(row, 20, flow.t4, "t4", flow);
-      updateCellIfChanged(row, 21, flow.r4, "r4", flow);
-      updateCellIfChanged(row, 22, flow.t5, "t5", flow);
-      updateCellIfChanged(row, 23, flow.r5, "r5", flow);
+      if (cInScope >= 0) updateCellIfChanged(row, cInScope, flow.inScope ? "TRUE" : "FALSE", "inScope", flow);
+      if (cCfg >= 0) updateCellIfChanged(row, cCfg, flow.configGroup, "configGroup", flow);
+      if (cAlarm >= 0) updateCellIfChanged(row, cAlarm, flow.alarmName, "alarmName", flow);
+      if (cSend >= 0) updateCellIfChanged(row, cSend, flow.sendingName, "sendingName", flow);
+      if (cPriority >= 0) updateCellIfChanged(row, cPriority, flow.priorityRaw, "priorityRaw", flow);
+      if (cDevice >= 0) updateCellIfChanged(row, cDevice, flow.deviceA, "deviceA", flow);
+      if (cDeviceB >= 0) updateCellIfChanged(row, cDeviceB, flow.deviceB, "deviceB", flow);
+      if (cRing >= 0) updateCellIfChanged(row, cRing, flow.ringtone, "ringtone", flow);
+      if (cResp >= 0) updateCellIfChanged(row, cResp, flow.responseOptions, "responseOptions", flow);
+      if (cBreakDND >= 0) updateCellIfChanged(row, cBreakDND, flow.breakThroughDND, "breakThroughDND", flow);
+      if (cEscalateAfter >= 0) updateCellIfChanged(row, cEscalateAfter, flow.escalateAfter, "escalateAfter", flow);
+      if (cTTL >= 0) updateCellIfChanged(row, cTTL, flow.ttlValue, "ttlValue", flow);
+      if (cEnunciate >= 0) updateCellIfChanged(row, cEnunciate, flow.enunciate, "enunciate", flow);
+      if (cEmdan >= 0) updateCellIfChanged(row, cEmdan, flow.emdan, "emdan", flow);
+      if (cT1 >= 0) updateCellIfChanged(row, cT1, flow.t1, "t1", flow);
+      if (cR1 >= 0) updateCellIfChanged(row, cR1, flow.r1, "r1", flow);
+      if (cT2 >= 0) updateCellIfChanged(row, cT2, flow.t2, "t2", flow);
+      if (cR2 >= 0) updateCellIfChanged(row, cR2, flow.r2, "r2", flow);
+      if (cT3 >= 0) updateCellIfChanged(row, cT3, flow.t3, "t3", flow);
+      if (cR3 >= 0) updateCellIfChanged(row, cR3, flow.r3, "r3", flow);
+      if (cT4 >= 0) updateCellIfChanged(row, cT4, flow.t4, "t4", flow);
+      if (cR4 >= 0) updateCellIfChanged(row, cR4, flow.r4, "r4", flow);
+      if (cT5 >= 0) updateCellIfChanged(row, cT5, flow.t5, "t5", flow);
+      if (cR5 >= 0) updateCellIfChanged(row, cR5, flow.r5, "r5", flow);
     }
   }
   
