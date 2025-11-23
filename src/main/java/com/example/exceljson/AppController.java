@@ -4880,23 +4880,28 @@ public class AppController {
                 return;
             }
             
-            // Find the word being typed (last token)
+            // Get the caret position to determine which line is being edited
             String text = newVal;
+            int caretPos = input.getCaretPosition();
             
-            // Check if we're typing after "VAssign:" for assignment roles
-            boolean isVAssignContext = VASSIGN_KEYWORD_PATTERN.matcher(text).find();
+            // Get the current line being edited
+            String[] lines = text.substring(0, caretPos).split("\\n");
+            String currentLine = lines.length > 0 ? lines[lines.length - 1] : "";
             
-            // Regex to find the last partial word that looks like a group/role name
-            // Pattern explanation: (?:^|[,;\\n\\s:]\\s*) matches start of line or delimiter followed by optional space
+            // Check if we're typing after "VAssign:" for assignment roles (check the current line)
+            boolean isVAssignContext = VASSIGN_KEYWORD_PATTERN.matcher(currentLine).find();
+            
+            // Regex to find the last partial word on the current line that looks like a group/role name
+            // Pattern explanation: (?:^|[,;\\s:]\\s*) matches start of line or delimiter followed by optional space
             // ([a-zA-Z0-9_\\-\\s]{2,})$ captures 2+ chars (letters, numbers, underscore, hyphen, spaces) at end
             // This allows multi-word group names like "Code Blue" or "OB Nurse"
             // Note: Spaces are allowed to match VoiceGroupValidator.VGROUP_PATTERN which uses [^,;\\n]+
             // Reduced minimum from 3 to 2 characters for better UX (e.g., "OB ")
-            Pattern p = Pattern.compile("(?:^|[,;\\n\\s:]\\s*)([a-zA-Z0-9_\\-\\s]{2,})$");
-            Matcher m = p.matcher(text);
+            Pattern p = Pattern.compile("(?:^|[,;\\s:]\\s*)([a-zA-Z0-9_\\-\\s]{2,})$");
+            Matcher m = p.matcher(currentLine);
             
             String partial = null;
-            // Find the last match
+            // Find the last match in the current line
             while (m.find()) {
                 partial = m.group(1).trim();  // Trim to handle extra spaces
             }
@@ -4969,13 +4974,21 @@ public class AppController {
         for (String match : matches) {
             MenuItem item = new MenuItem(match);
             item.setOnAction(e -> {
-                // Replace partial with match
+                // Replace partial with match in the context of the current caret position
                 String text = input.getText();
-                int lastIndex = text.lastIndexOf(partial);
-                if (lastIndex >= 0) {
-                    String newText = text.substring(0, lastIndex) + match + text.substring(lastIndex + partial.length());
+                int caretPos = input.getCaretPosition();
+                
+                // Find the position of the partial text before the caret
+                // Look backward from caret position to find the partial match
+                int startIndex = -1;
+                String beforeCaret = text.substring(0, caretPos);
+                int searchIndex = beforeCaret.lastIndexOf(partial);
+                
+                if (searchIndex >= 0) {
+                    startIndex = searchIndex;
+                    String newText = text.substring(0, startIndex) + match + text.substring(startIndex + partial.length());
                     input.setText(newText);
-                    input.positionCaret(lastIndex + match.length());
+                    input.positionCaret(startIndex + match.length());
                 }
             });
             suggestionPopup.getItems().add(item);
