@@ -3146,7 +3146,7 @@ public class ExcelParserV5 {
    * @throws IOException if the file cannot be read or written
    */
   public void updateExcel(File sourceFile) throws IOException {
-    Objects.requireNonNull(sourceFile, "sourceFile");
+    Objects.requireNonNull(sourceFile, "Source file cannot be null");
     
     // Load the existing workbook
     try (FileInputStream fis = new FileInputStream(sourceFile);
@@ -3263,7 +3263,8 @@ public class ExcelParserV5 {
     }
     
     // Set the value based on the current cell type
-    // If it's a formula cell, we don't want to overwrite the formula
+    // Skip formula cells to preserve them - updating formula cells would overwrite
+    // the formula with a static value, losing the dynamic calculation capability
     if (cell.getCellType() == CellType.FORMULA) {
       // Skip formula cells to preserve them
       return;

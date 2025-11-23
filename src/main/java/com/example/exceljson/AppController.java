@@ -1881,7 +1881,11 @@ public class AppController {
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
             confirm.setTitle("Save on NDW");
             confirm.setHeaderText("Save changes to NDW file?");
-            confirm.setContentText("This will update the data in the original NDW file while preserving formatting:\n" + currentExcelFile.getAbsolutePath());
+            confirm.setContentText(
+                "This will update the data in the original NDW file\n" +
+                "while preserving formatting:\n\n" + 
+                currentExcelFile.getAbsolutePath()
+            );
             if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
                 return;
             }
