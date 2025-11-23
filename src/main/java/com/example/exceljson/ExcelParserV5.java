@@ -3138,6 +3138,142 @@ public class ExcelParserV5 {
     }
   }
 
+  /**
+   * Updates an existing Excel workbook with the current data while preserving
+   * formatting, formulas, and other workbook properties. Only updates cell values.
+   * 
+   * @param sourceFile The original Excel file to update
+   * @throws IOException if the file cannot be read or written
+   */
+  public void updateExcel(File sourceFile) throws IOException {
+    Objects.requireNonNull(sourceFile, "Source file cannot be null");
+    
+    // Load the existing workbook
+    try (FileInputStream fis = new FileInputStream(sourceFile);
+         Workbook wb = WorkbookFactory.create(fis)) {
+      
+      // Update Unit Breakdown sheet
+      Sheet unitSheet = wb.getSheet(SHEET_UNIT);
+      if (unitSheet != null) {
+        updateUnitSheet(unitSheet);
+      }
+      
+      // Update Nurse Call sheet
+      Sheet nurseSheet = wb.getSheet(SHEET_NURSE);
+      if (nurseSheet != null) {
+        updateFlowSheet(nurseSheet, nurseCalls);
+      }
+      
+      // Update Patient Monitoring sheet
+      Sheet clinicalSheet = wb.getSheet(SHEET_CLINICAL);
+      if (clinicalSheet != null) {
+        updateFlowSheet(clinicalSheet, clinicals);
+      }
+      
+      // Update Orders sheet
+      Sheet ordersSheet = wb.getSheet(SHEET_ORDERS);
+      if (ordersSheet != null) {
+        updateFlowSheet(ordersSheet, orders);
+      }
+      
+      // Write back to the same file
+      try (FileOutputStream fos = new FileOutputStream(sourceFile)) {
+        wb.write(fos);
+      }
+    }
+  }
+  
+  /**
+   * Updates the Unit Breakdown sheet with current unit data.
+   * Only updates cell values, preserving formatting.
+   */
+  private void updateUnitSheet(Sheet sheet) {
+    // Start from row 1 (row 0 is header)
+    int rowIndex = 1;
+    for (UnitRow unit : units) {
+      Row row = sheet.getRow(rowIndex);
+      if (row == null) {
+        row = sheet.createRow(rowIndex);
+      }
+      
+      // Update each cell, preserving cell type and formatting
+      updateCell(row, 0, unit.facility);
+      updateCell(row, 1, unit.unitNames);
+      updateCell(row, 2, unit.nurseGroup);
+      updateCell(row, 3, unit.clinGroup);
+      updateCell(row, 4, unit.ordersGroup);
+      updateCell(row, 5, unit.noCareGroup);
+      updateCell(row, 6, unit.comments);
+      
+      rowIndex++;
+    }
+  }
+  
+  /**
+   * Updates a flow sheet (Nurse Call, Patient Monitoring, or Orders) with current flow data.
+   * Only updates cell values, preserving formatting.
+   */
+  private void updateFlowSheet(Sheet sheet, List<FlowRow> flows) {
+    // Start from row 1 (row 0 is header)
+    int rowIndex = 1;
+    for (FlowRow flow : flows) {
+      Row row = sheet.getRow(rowIndex);
+      if (row == null) {
+        row = sheet.createRow(rowIndex);
+      }
+      
+      // Update each cell with flow data
+      updateCell(row, 0, flow.inScope ? "TRUE" : "FALSE");
+      updateCell(row, 1, flow.configGroup);
+      updateCell(row, 2, flow.alarmName);
+      updateCell(row, 3, flow.sendingName);
+      updateCell(row, 4, flow.priorityRaw);
+      updateCell(row, 5, flow.deviceA);
+      updateCell(row, 6, flow.deviceB);
+      updateCell(row, 7, flow.ringtone);
+      updateCell(row, 8, flow.responseOptions);
+      updateCell(row, 9, flow.breakThroughDND);
+      updateCell(row, 10, flow.escalateAfter);
+      updateCell(row, 11, flow.ttlValue);
+      updateCell(row, 12, flow.enunciate);
+      updateCell(row, 13, flow.emdan);
+      updateCell(row, 14, flow.t1);
+      updateCell(row, 15, flow.r1);
+      updateCell(row, 16, flow.t2);
+      updateCell(row, 17, flow.r2);
+      updateCell(row, 18, flow.t3);
+      updateCell(row, 19, flow.r3);
+      updateCell(row, 20, flow.t4);
+      updateCell(row, 21, flow.r4);
+      updateCell(row, 22, flow.t5);
+      updateCell(row, 23, flow.r5);
+      
+      rowIndex++;
+    }
+  }
+  
+  /**
+   * Updates a cell's value while preserving its formatting and cell type.
+   * If the cell doesn't exist, creates it as a string cell.
+   */
+  private void updateCell(Row row, int columnIndex, String value) {
+    Cell cell = row.getCell(columnIndex);
+    if (cell == null) {
+      cell = row.createCell(columnIndex, CellType.STRING);
+    }
+    
+    // Set the value based on the current cell type
+    // Skip formula cells to preserve them - updating formula cells would overwrite
+    // the formula with a static value, losing the dynamic calculation capability
+    if (cell.getCellType() == CellType.FORMULA) {
+      // Skip formula cells to preserve them
+      return;
+    }
+    
+    // Update the cell value
+    cell.setCellValue(value == null ? "" : value);
+  }
+
   private static String[] flowHeaders() {
     return new String[]{
       "In scope",
