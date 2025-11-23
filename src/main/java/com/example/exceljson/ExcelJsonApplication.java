@@ -6,9 +6,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ButtonBar;
+import javafx.stage.Modality;
 
 import java.io.InputStream;
 import java.util.prefs.Preferences;
+import java.util.Optional;
 
 public class ExcelJsonApplication extends Application {
 
@@ -27,8 +32,19 @@ public class ExcelJsonApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // Show role selection dialog first
+        UserProfile selectedProfile = showRoleSelectionDialog();
+        if (selectedProfile == null) {
+            // User closed the dialog without selecting - exit application
+            return;
+        }
+        
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
         Parent root = loader.load();
+        
+        // Get the controller and set the user profile
+        AppController controller = loader.getController();
+        controller.setUserProfile(selectedProfile);
 
         primaryStage.setTitle("Engage FlowForge 2.0");
         
@@ -69,5 +85,38 @@ public class ExcelJsonApplication extends Application {
         
         primaryStage.setScene(scene);
         primaryStage.show();
+        
+        // If CI mode, show the CI action selection dialog after main window is shown
+        if (selectedProfile == UserProfile.CI) {
+            controller.showCIActionDialog();
+        }
+    }
+    
+    /**
+     * Shows the role selection dialog at application startup.
+     * @return The selected UserProfile, or null if dialog was closed without selection
+     */
+    private UserProfile showRoleSelectionDialog() {
+        Alert roleDialog = new Alert(Alert.AlertType.NONE);
+        roleDialog.setTitle("Role Selection");
+        roleDialog.setHeaderText("What is your Role?");
+        roleDialog.initModality(Modality.APPLICATION_MODAL);
+        
+        ButtonType ieButton = new ButtonType("IE", ButtonBar.ButtonData.OK_DONE);
+        ButtonType ciButton = new ButtonType("CI", ButtonBar.ButtonData.OK_DONE);
+        
+        roleDialog.getButtonTypes().setAll(ieButton, ciButton);
+        
+        Optional<ButtonType> result = roleDialog.showAndWait();
+        
+        if (result.isPresent()) {
+            if (result.get() == ieButton) {
+                return UserProfile.IE;
+            } else if (result.get() == ciButton) {
+                return UserProfile.CI;
+            }
+        }
+        
+        return null; // Dialog closed without selection
     }
 }

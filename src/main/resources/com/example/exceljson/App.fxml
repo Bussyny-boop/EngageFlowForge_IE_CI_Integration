@@ -106,6 +106,14 @@
                                 <userData>🗑️</userData>
                             </Button>
                             
+                            <!-- Save on NDW (CI Mode Only) -->
+                            <Button fx:id="saveOnNdwButton" text="💾 Save on NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
+                                <userData>💾</userData>
+                                <tooltip>
+                                    <Tooltip text="Save changes back to the NDW Excel file" />
+                                </tooltip>
+                            </Button>
+                            
                             <!-- Units Navigation -->
                             <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true">
                                 <userData>📊</userData>
