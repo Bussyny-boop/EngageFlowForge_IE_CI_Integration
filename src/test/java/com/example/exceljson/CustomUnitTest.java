@@ -71,7 +71,7 @@ class CustomUnitTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check conditions
         @SuppressWarnings("unchecked")
@@ -79,7 +79,7 @@ class CustomUnitTest {
         assertNotNull(conditions, "Should have conditions");
         assertEquals(1, conditions.size(), "Should have one condition");
         
-        Map<String, Object> condition = conditions.getFirst();
+        Map<String, Object> condition = conditions.get(0);
         assertEquals("Custom All Assigned Nurse and CNA", condition.get("name"));
         assertEquals(0, condition.get("destinationOrder"));
         
@@ -88,9 +88,9 @@ class CustomUnitTest {
         assertEquals(3, filters.size(), "Normal priority should have 3 filters");
         
         // Check filter 1: role name
-        assertEquals("bed.room.unit.rooms.beds.locs.assignments.role.name", filters.getFirst().get("attributePath"));
-        assertEquals("in", filters.getFirst().get("operator"));
-        assertEquals("Nurse, CNA", filters.getFirst().get("value"));
+        assertEquals("bed.room.unit.rooms.beds.locs.assignments.role.name", filters.get(0).get("attributePath"));
+        assertEquals("in", filters.get(0).get("operator"));
+        assertEquals("Nurse, CNA", filters.get(0).get("value"));
         
         // Check filter 2: state
         assertEquals("bed.room.unit.rooms.beds.locs.assignments.state", filters.get(1).get("attributePath"));
@@ -107,7 +107,7 @@ class CustomUnitTest {
         List<Map<String, Object>> destinations = (List<Map<String, Object>>) flow.get("destinations");
         assertEquals(1, destinations.size(), "Should have one destination");
         
-        Map<String, Object> dest = destinations.getFirst();
+        Map<String, Object> dest = destinations.get(0);
         assertEquals("custom", dest.get("recipientType"));
         assertEquals("bed.room.unit.rooms.beds.locs.assignments.usr.devices.lines.number", dest.get("attributePath"));
         assertEquals(0, dest.get("delayTime"));
@@ -164,19 +164,19 @@ class CustomUnitTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check conditions
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
-        Map<String, Object> condition = conditions.getFirst();
+        Map<String, Object> condition = conditions.get(0);
         assertEquals("Custom All Assigned Nurse and CNA", condition.get("name"));
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> filters = (List<Map<String, Object>>) condition.get("filters");
         
         // Check that "all" was ignored and only roles remain
-        assertEquals("Nurse, CNA", filters.getFirst().get("value"));
+        assertEquals("Nurse, CNA", filters.get(0).get("value"));
     }
 
     @Test
@@ -226,11 +226,11 @@ class CustomUnitTest {
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
-        Map<String, Object> condition = conditions.getFirst();
+        Map<String, Object> condition = conditions.get(0);
         
         assertEquals("Custom All Assigned Nurse and CNA and Charge Nurse", condition.get("name"));
         
@@ -238,7 +238,7 @@ class CustomUnitTest {
         List<Map<String, Object>> filters = (List<Map<String, Object>>) condition.get("filters");
         
         // Check that "All" prefix was removed from each role
-        assertEquals("Nurse, CNA, Charge Nurse", filters.getFirst().get("value"));
+        assertEquals("Nurse, CNA, Charge Nurse", filters.get(0).get("value"));
     }
 
     @Test
@@ -288,12 +288,12 @@ class CustomUnitTest {
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check conditions
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
-        Map<String, Object> condition = conditions.getFirst();
+        Map<String, Object> condition = conditions.get(0);
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> filters = (List<Map<String, Object>>) condition.get("filters");
@@ -356,11 +356,11 @@ class CustomUnitTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should parse case-insensitive Custom Unit");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> conditions = (List<Map<String, Object>>) flow.get("conditions");
-        Map<String, Object> condition = conditions.getFirst();
+        Map<String, Object> condition = conditions.get(0);
         
         // Roles should be preserved with original case
         assertEquals("Custom All Assigned nurse and cna", condition.get("name"));
@@ -417,14 +417,14 @@ class CustomUnitTest {
         assertEquals(1, flows.size(), "Should parse Custom Unit with special characters");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> conditions = (List<Map<String, Object>>) flows.getFirst().get("conditions");
+        List<Map<String, Object>> conditions = (List<Map<String, Object>>) flows.get(0).get("conditions");
         assertNotNull(conditions);
         assertEquals(1, conditions.size());
         
         // Verify that special characters are stripped but spaces are preserved
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> filters = (List<Map<String, Object>>) conditions.getFirst().get("filters");
-        assertEquals("Nurse, CNA, Charge Nurse", filters.getFirst().get("value"), 
+        List<Map<String, Object>> filters = (List<Map<String, Object>>) conditions.get(0).get("filters");
+        assertEquals("Nurse, CNA, Charge Nurse", filters.get(0).get("value"), 
             "Special characters should be stripped, but spaces between words should be preserved");
     }
 
@@ -487,7 +487,7 @@ class CustomUnitTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one Orders flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check conditions
         @SuppressWarnings("unchecked")
@@ -495,14 +495,14 @@ class CustomUnitTest {
         assertNotNull(conditions, "Should have conditions");
         assertEquals(1, conditions.size(), "Should have one condition");
         
-        Map<String, Object> condition = conditions.getFirst();
+        Map<String, Object> condition = conditions.get(0);
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> filters = (List<Map<String, Object>>) condition.get("filters");
         assertEquals(3, filters.size(), "Normal priority should have 3 filters");
         
         // Verify that Orders flow uses patient.current_place.locs.units path instead of bed.room.unit.rooms.beds
-        assertEquals("patient.current_place.locs.units.locs.assignments.role.name", filters.getFirst().get("attributePath"),
+        assertEquals("patient.current_place.locs.units.locs.assignments.role.name", filters.get(0).get("attributePath"),
             "Orders flow should use patient.current_place.locs.units path");
         assertEquals("patient.current_place.locs.units.locs.assignments.state", filters.get(1).get("attributePath"),
             "Orders flow should use patient.current_place.locs.units path");
@@ -514,7 +514,7 @@ class CustomUnitTest {
         List<Map<String, Object>> destinations = (List<Map<String, Object>>) flow.get("destinations");
         assertEquals(1, destinations.size(), "Should have one destination");
         
-        Map<String, Object> dest = destinations.getFirst();
+        Map<String, Object> dest = destinations.get(0);
         assertEquals("patient.current_place.locs.units.locs.assignments.usr.devices.lines.number", dest.get("attributePath"),
             "Orders flow destination should use patient.current_place.locs.units path");
     }

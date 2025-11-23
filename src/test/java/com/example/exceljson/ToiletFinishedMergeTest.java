@@ -79,7 +79,7 @@ public class ToiletFinishedMergeTest {
                         "The data should be merged into a single row, not scattered across multiple rows.");
 
         // Verify the merged flow has all expected data
-        ExcelParserV5.FlowRow flow = toiletFinishedFlows.getFirst();
+        ExcelParserV5.FlowRow flow = toiletFinishedFlows.get(0);
         assertNotNull(flow.priorityRaw, "Priority should be set");
         assertNotNull(flow.responseOptions, "Response Options should be set");
         assertNotNull(flow.r1, "R1 (1st Recipient) should be set");

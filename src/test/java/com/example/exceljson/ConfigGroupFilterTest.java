@@ -87,7 +87,7 @@ class ConfigGroupFilterTest {
         
         // Initially all flows should have inScope=true
         assertEquals(3, parser.nurseCalls.size());
-        assertTrue(parser.nurseCalls.getFirst().inScope, "First flow should be in scope initially");
+        assertTrue(parser.nurseCalls.get(0).inScope, "First flow should be in scope initially");
         assertTrue(parser.nurseCalls.get(1).inScope, "Second flow should be in scope initially");
         assertTrue(parser.nurseCalls.get(2).inScope, "Third flow should be in scope initially");
         
@@ -98,7 +98,7 @@ class ConfigGroupFilterTest {
         }
         
         // Verify filtering worked
-        assertTrue(parser.nurseCalls.getFirst().inScope, "Group A flow should be in scope after filter");
+        assertTrue(parser.nurseCalls.get(0).inScope, "Group A flow should be in scope after filter");
         assertFalse(parser.nurseCalls.get(1).inScope, "Group B flow should NOT be in scope after filter");
         assertTrue(parser.nurseCalls.get(2).inScope, "Group A flow should be in scope after filter");
         
@@ -204,7 +204,7 @@ class ConfigGroupFilterTest {
         }
         
         // Verify only Group A is in scope
-        assertTrue(parser.nurseCalls.getFirst().inScope, "Group A flow should be in scope");
+        assertTrue(parser.nurseCalls.get(0).inScope, "Group A flow should be in scope");
         assertFalse(parser.nurseCalls.get(1).inScope, "Group B flow should NOT be in scope");
         assertFalse(parser.nurseCalls.get(2).inScope, "Group C flow should NOT be in scope");
         
@@ -214,7 +214,7 @@ class ConfigGroupFilterTest {
         }
         
         // Verify ALL flows are now in scope
-        assertTrue(parser.nurseCalls.getFirst().inScope, "Group A flow should be in scope when 'All' is selected");
+        assertTrue(parser.nurseCalls.get(0).inScope, "Group A flow should be in scope when 'All' is selected");
         assertTrue(parser.nurseCalls.get(1).inScope, "Group B flow should be in scope when 'All' is selected");
         assertTrue(parser.nurseCalls.get(2).inScope, "Group C flow should be in scope when 'All' is selected");
         

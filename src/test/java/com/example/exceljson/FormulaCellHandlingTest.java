@@ -62,7 +62,7 @@ class FormulaCellHandlingTest {
         var nurseCalls = parser.nurseCalls;
         assertFalse(nurseCalls.isEmpty(), "Should have loaded nurse calls");
         
-        var formulaRow = nurseCalls.getFirst();
+        var formulaRow = nurseCalls.get(0);
         
         // Verify the sendingName contains the concatenated value, not the formula
         assertEquals("Device Name", formulaRow.sendingName,

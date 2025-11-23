@@ -82,7 +82,7 @@ class XmlParserVAssignTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getNurseCalls().size(), "Should have 1 nurse call");
-        ExcelParserV5.FlowRow flow = parser.getNurseCalls().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getNurseCalls().get(0);
         
         // Verify VAssign:[Room] prefix is applied
         assertEquals("VAssign:[Room] Nurse", flow.r1, 
@@ -156,7 +156,7 @@ class XmlParserVAssignTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getNurseCalls().size(), "Should have 1 nurse call");
-        ExcelParserV5.FlowRow flow = parser.getNurseCalls().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getNurseCalls().get(0);
         
         // Verify newline separator (not comma)
         String expected = "VAssign:[Room] Nurse\nVAssign:[Room] Doctor\nVAssign:[Room] RT";
@@ -250,7 +250,7 @@ class XmlParserVAssignTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getNurseCalls().size(), "Should have 1 nurse call");
-        ExcelParserV5.FlowRow flow = parser.getNurseCalls().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getNurseCalls().get(0);
         
         // Verify config group includes facility, unit, and dataset (Facility_Unit_Dataset format)
         assertEquals("BCH_ICU_NurseCalls", flow.configGroup, 
@@ -258,7 +258,7 @@ class XmlParserVAssignTest {
         
         // Verify unit row was created with facility
         assertEquals(1, parser.getUnits().size(), "Should have 1 unit row");
-        ExcelParserV5.UnitRow unit = parser.getUnits().getFirst();
+        ExcelParserV5.UnitRow unit = parser.getUnits().get(0);
         assertEquals("BCH", unit.facility, "Unit should have facility 'BCH'");
         assertEquals("ICU", unit.unitNames, "Unit should have name 'ICU'");
         
@@ -358,7 +358,7 @@ class XmlParserVAssignTest {
         }
         
         // Verify unit row
-        ExcelParserV5.UnitRow unit = parser.getUnits().getFirst();
+        ExcelParserV5.UnitRow unit = parser.getUnits().get(0);
         assertEquals("MainHospital", unit.facility);
         assertEquals("ER", unit.unitNames);
         
@@ -368,8 +368,8 @@ class XmlParserVAssignTest {
         System.out.println("   2. Newline separator: ✓");
         System.out.println("   3. Facility + Unit config: ✓");
         System.out.println("\n   Example Recipient Field:");
-        System.out.println("   " + parser.getClinicals().getFirst().r1.replace("\n", "\n   "));
-        System.out.println("\n   Config Group: " + parser.getClinicals().getFirst().configGroup);
+        System.out.println("   " + parser.getClinicals().get(0).r1.replace("\n", "\n   "));
+        System.out.println("\n   Config Group: " + parser.getClinicals().get(0).configGroup);
         System.out.println("   Facility: " + unit.facility);
         System.out.println("   Unit: " + unit.unitNames);
     }

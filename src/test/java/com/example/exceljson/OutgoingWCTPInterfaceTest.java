@@ -55,7 +55,7 @@ public class OutgoingWCTPInterfaceTest {
 
         // Build flows and check that OutgoingWCTP device triggers Edge interface
         assertFalse(parser.nurseCalls.isEmpty(), "Should have nurse call flows");
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
         assertEquals("OutgoingWCTP", flow.deviceA, "Device-A should be OutgoingWCTP");
     }
 
@@ -74,7 +74,7 @@ public class OutgoingWCTPInterfaceTest {
 
         // Build flows and check that VMP device is recognized
         assertFalse(parser.nurseCalls.isEmpty(), "Should have nurse call flows");
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
         assertEquals("VMP", flow.deviceA, "Device-A should be VMP");
     }
 

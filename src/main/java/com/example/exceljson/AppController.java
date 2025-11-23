@@ -3923,12 +3923,12 @@ public class AppController {
         for (List<ExcelParserV5.FlowRow> group : groupedRows.values()) {
             if (group.size() == 1) {
                 // No duplicates, add as is
-                combinedRows.add(group.getFirst());
+                combinedRows.add(group.get(0));
             } else {
                 // Multiple rows with same fields but different config groups
                 // Combine them into one row
                 ExcelParserV5.FlowRow combined = new ExcelParserV5.FlowRow();
-                ExcelParserV5.FlowRow first = group.getFirst();
+                ExcelParserV5.FlowRow first = group.get(0);
                 
                 // Copy all fields from first row
                 copyFlowRow(first, combined);
@@ -4228,7 +4228,8 @@ public class AppController {
                             boolean hasGroupNameHeader = false;
                             
                             for (int i = 0; i < headers.length; i++) {
-                                if (headers[i].trim().equalsIgnoreCase("Group Name")) {
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
+                                if (headerValue.equalsIgnoreCase("Group Name")) {
                                     groupNameColumn = i;
                                     hasGroupNameHeader = true;
                                     break;
@@ -4269,7 +4270,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                         if (headerValue.equalsIgnoreCase("Group Name")) {
                                             groupNameColumn = i;
                                             hasGroupNameHeader = true;
@@ -4391,7 +4392,7 @@ public class AppController {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                 if (headerValue.equalsIgnoreCase("Name")) {
                                     nameColumn = i;
                                     break;
@@ -4424,7 +4425,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                         if (headerValue.equalsIgnoreCase("Name")) {
                                             nameColumn = i;
                                             break;
@@ -4541,7 +4542,7 @@ public class AppController {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                 if (header.equalsIgnoreCase("Department") || header.equalsIgnoreCase("Unit")) {
                                     unitColumn = i;
                                     break;
@@ -4574,7 +4575,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                         if (headerValue.equalsIgnoreCase("Department") || headerValue.equalsIgnoreCase("Unit")) {
                                             unitColumn = i;
                                             break;
@@ -4662,7 +4663,7 @@ public class AppController {
         if (statusLabel != null) statusLabel.setText("Bed list cleared.");
     }
 
-    private Node createValidatedCellGraphic(String text) {
+    private Node createValidatedCellGraphic(String text, TableColumn<?, ?> column) {
         if (text == null || text.isEmpty()) return null;
         
         // Check for VGroup/Group patterns
@@ -4681,9 +4682,14 @@ public class AppController {
         TextFlow flow = new TextFlow();
         flow.setPadding(new Insets(2, 5, 2, 5)); // Small padding for readability
         flow.setLineSpacing(0);
-        // Set max width to prevent horizontal expansion and enable proper wrapping
-        flow.setMaxWidth(Region.USE_PREF_SIZE);
-        flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        // Bind max width to column width to prevent horizontal expansion
+        if (column != null) {
+            flow.maxWidthProperty().bind(column.widthProperty().subtract(10)); // Subtract padding
+        } else {
+            // Fallback if column is null
+            flow.setMaxWidth(Region.USE_PREF_SIZE);
+            flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        }
         // Constrain height to prevent row expansion when validation data is loaded
         // Use a fixed preferred height that matches typical single-line row height
         flow.setPrefHeight(VALIDATED_CELL_HEIGHT); // Fixed height to prevent expansion
@@ -4972,8 +4978,8 @@ public class AppController {
                     // If any validation should be applied
                     if ((hasVoiceGroups && hasVGroupKeywords) || (hasAssignmentRoles && hasVAssignKeywords)) {
                         setText(null);
-                        Node graphic = createValidatedCellGraphic(item);
-                        // Allow the graphic to expand to show all content
+                        Node graphic = createValidatedCellGraphic(item, column);
+                        // Graphic width is now bound to column width to prevent expansion
                         setGraphic(graphic);
                         setStyle(""); 
                     } else {

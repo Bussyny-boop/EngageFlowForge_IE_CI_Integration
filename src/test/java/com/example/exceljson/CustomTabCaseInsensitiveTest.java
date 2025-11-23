@@ -168,7 +168,7 @@ public class CustomTabCaseInsensitiveTest {
         assertEquals(1, parser.clinicals.size(), "Should have 1 clinical flow");
         
         // Verify the flow was parsed correctly
-        ExcelParserV5.FlowRow flow = parser.clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = parser.clinicals.get(0);
         assertEquals("Bradycardia", flow.alarmName);
         assertEquals("HR Low Alert", flow.sendingName);
         assertEquals("Urgent", flow.priorityRaw);

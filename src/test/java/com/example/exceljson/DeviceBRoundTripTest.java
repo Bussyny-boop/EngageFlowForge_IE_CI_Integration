@@ -31,7 +31,7 @@ class DeviceBRoundTripTest {
 
         // Verify Device B was loaded
         assertEquals(1, parser1.nurseCalls.size(), "Should have one nurse call");
-        ExcelParserV5.FlowRow original = parser1.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow original = parser1.nurseCalls.get(0);
         assertEquals("Edge", original.deviceA, "Device A should be Edge");
         assertEquals("VCS", original.deviceB, "Device B should be VCS");
 
@@ -44,7 +44,7 @@ class DeviceBRoundTripTest {
 
         // Verify Device B is still present after round-trip
         assertEquals(1, parser2.nurseCalls.size(), "Should have one nurse call after round-trip");
-        ExcelParserV5.FlowRow roundTrip = parser2.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow roundTrip = parser2.nurseCalls.get(0);
         assertEquals("Edge", roundTrip.deviceA, "Device A should be preserved");
         assertEquals("VCS", roundTrip.deviceB, "Device B should be preserved after round-trip");
         assertEquals("Test Alarm", roundTrip.alarmName, "Alarm name should be preserved");
@@ -107,7 +107,7 @@ class DeviceBRoundTripTest {
         parser1.load(originalFile);
         
         assertEquals(1, parser1.clinicals.size(), "Should have one clinical");
-        assertEquals("VMP", parser1.clinicals.getFirst().deviceB, "Device B should be VMP");
+        assertEquals("VMP", parser1.clinicals.get(0).deviceB, "Device B should be VMP");
 
         parser1.writeExcel(exportedFile);
 
@@ -116,7 +116,7 @@ class DeviceBRoundTripTest {
         parser2.load(exportedFile);
 
         assertEquals(1, parser2.clinicals.size(), "Should have one clinical after round-trip");
-        assertEquals("VMP", parser2.clinicals.getFirst().deviceB, "Device B should be preserved in clinicals");
+        assertEquals("VMP", parser2.clinicals.get(0).deviceB, "Device B should be preserved in clinicals");
     }
 
     private void createTestWorkbookWithDeviceB(File file) throws Exception {

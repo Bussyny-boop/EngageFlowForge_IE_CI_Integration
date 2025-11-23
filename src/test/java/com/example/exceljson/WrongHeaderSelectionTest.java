@@ -93,14 +93,14 @@ class WrongHeaderSelectionTest {
         System.out.println("Nurse calls loaded: " + parser.nurseCalls.size());
         
         if (parser.units.size() > 0) {
-            System.out.println("First unit facility: '" + parser.units.getFirst().facility + "'");
-            System.out.println("Expected: 'Test Facility', Got: '" + parser.units.getFirst().facility + "'");
+            System.out.println("First unit facility: '" + parser.units.get(0).facility + "'");
+            System.out.println("Expected: 'Test Facility', Got: '" + parser.units.get(0).facility + "'");
         }
         
         // This should now work correctly with the smart header detection
         assertEquals(1, parser.units.size(), "Should have loaded 1 unit");
-        assertEquals("Test Facility", parser.units.getFirst().facility);
+        assertEquals("Test Facility", parser.units.get(0).facility);
         assertEquals(1, parser.nurseCalls.size(), "Should have loaded 1 nurse call");
-        assertEquals("Test Alarm", parser.nurseCalls.getFirst().alarmName);
+        assertEquals("Test Alarm", parser.nurseCalls.get(0).alarmName);
     }
 }

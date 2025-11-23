@@ -97,7 +97,7 @@ class TestEmdanShortMessage {
 
         // Verify the alarm was moved to clinicals
         assertEquals(1, parser.clinicals.size(), "One alarm should be in Clinicals");
-        assertEquals("EMDAN Alarm", parser.clinicals.getFirst().alarmName, "EMDAN alarm should be in Clinicals");
+        assertEquals("EMDAN Alarm", parser.clinicals.get(0).alarmName, "EMDAN alarm should be in Clinicals");
 
         // Build the clinicals JSON
         Map<String, Object> clinicalsJson = parser.buildClinicalsJson();
@@ -109,7 +109,7 @@ class TestEmdanShortMessage {
         assertFalse(flows.isEmpty(), "Should have at least one flow");
 
         // Get the first flow (our EMDAN alarm)
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Get parameter attributes
         @SuppressWarnings("unchecked")

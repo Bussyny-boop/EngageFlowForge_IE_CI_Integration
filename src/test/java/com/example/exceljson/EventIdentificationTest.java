@@ -71,7 +71,7 @@ class EventIdentificationTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check parameter attributes for eventIdentification
         @SuppressWarnings("unchecked")
@@ -135,7 +135,7 @@ class EventIdentificationTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) clinJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check parameter attributes for eventIdentification
         @SuppressWarnings("unchecked")
@@ -203,7 +203,7 @@ class EventIdentificationTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check parameter attributes for eventIdentification
         @SuppressWarnings("unchecked")

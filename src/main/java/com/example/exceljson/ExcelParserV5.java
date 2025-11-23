@@ -648,7 +648,7 @@ public class ExcelParserV5 {
       List<String> alarmsAlerts = (List<String>) flow.get("alarmsAlerts");
       if (alarmsAlerts != null && !alarmsAlerts.isEmpty()) {
         // Keep first for now; we'll expand to one row per alarm below
-        row.alarmName = alarmsAlerts.getFirst();
+        row.alarmName = alarmsAlerts.get(0);
       }
       
       // Parse interfaces to extract device information
@@ -849,7 +849,7 @@ public class ExcelParserV5 {
       // Parse units to extract facility, unit names and build proper config group
       List<Map<String, Object>> flowUnits = (List<Map<String, Object>>) flow.get("units");
       if (flowUnits != null && !flowUnits.isEmpty()) {
-        Map<String, Object> firstUnit = flowUnits.getFirst();
+        Map<String, Object> firstUnit = flowUnits.get(0);
         String facilityName = (String) firstUnit.get("facilityName");
         String unitName = (String) firstUnit.get("name");
         
@@ -1690,7 +1690,7 @@ public class ExcelParserV5 {
       // Add POD room filter condition if unit has one defined
       // Only for NurseCalls and Clinicals flows
       if ((nurseSide || "Clinicals".equals(flowType)) && !unitRefs.isEmpty()) {
-        String podRoomFilter = unitRefs.getFirst().getOrDefault("podRoomFilter", "");
+        String podRoomFilter = unitRefs.get(0).getOrDefault("podRoomFilter", "");
         Map<String,Object> podRoomFilterCond = buildPodRoomFilterCondition(podRoomFilter);
         if (podRoomFilterCond != null) {
           flowConditions.add(podRoomFilterCond);
@@ -1745,7 +1745,7 @@ public class ExcelParserV5 {
       if (group.isEmpty()) continue;
       
       // Use the first row as the template
-      FlowRow template = group.getFirst();
+      FlowRow template = group.get(0);
       
       // Collect units from ALL flows in the group (not just the template)
       // This ensures that when merging by config group, we combine units from all merged flows
@@ -1834,7 +1834,7 @@ public class ExcelParserV5 {
         // Add POD room filter condition if unit has one defined
         // Only for NurseCalls and Clinicals flows
         if ((nurseSide || "Clinicals".equals(flowType)) && !unitsForNoCareGroup.isEmpty()) {
-          String podRoomFilter = unitsForNoCareGroup.getFirst().getOrDefault("podRoomFilter", "");
+          String podRoomFilter = unitsForNoCareGroup.get(0).getOrDefault("podRoomFilter", "");
           Map<String,Object> podRoomFilterCond = buildPodRoomFilterCondition(podRoomFilter);
           if (podRoomFilterCond != null) {
             flowConditions.add(podRoomFilterCond);
@@ -1961,11 +1961,11 @@ public class ExcelParserV5 {
         groupText = String.join(" / ", configGroups);
       } else {
         // Merge by Single Config Group or No Merge: use the first config group
-        groupText = configGroups.getFirst().trim();
+        groupText = configGroups.get(0).trim();
       }
     }
     
-    String facility = unitRefs.isEmpty() ? "" : unitRefs.getFirst().getOrDefault("facilityName", "");
+    String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
     List<String> unitNames = unitRefs.stream()
       .map(u -> u.getOrDefault("name",""))
       .filter(s -> !isBlank(s))
@@ -2036,7 +2036,7 @@ public class ExcelParserV5 {
                                                                     List<Map<String,String>> unitRefs,
                                                                     String flowType,
                                                                     String mappedPriority) {
-    String facility = unitRefs.isEmpty() ? "" : unitRefs.getFirst().getOrDefault("facilityName", "");
+    String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
     boolean nurseSide = "NurseCalls".equals(flowType);
     
     // Determine presenceConfig based on Break Through DND value
@@ -2066,7 +2066,7 @@ public class ExcelParserV5 {
     boolean ordersType = "Orders".equals(flowType);
     if (!nurseSide && !ordersType && !isBlank(facility)) {
       // Get No Caregiver Group from the first unit ref
-      String noCare = unitRefs.isEmpty() ? "" : unitRefs.getFirst().getOrDefault(UNIT_FIELD_NO_CAREGIVER, "");
+      String noCare = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault(UNIT_FIELD_NO_CAREGIVER, "");
       if (!isBlank(noCare)) {
         Map<String,Object> d = new LinkedHashMap<>();
         d.put("order", destinations.size());
@@ -2792,7 +2792,7 @@ public class ExcelParserV5 {
     if (!isBlank(r.ringtone)) {
       String alertSoundValue = r.ringtone.trim();
       // Insert at the beginning to match previous behavior
-      params.addFirst(paQ("alertSound", alertSoundValue));
+      params.add(0, paQ("alertSound", alertSoundValue));
     }
 
     // 2. Override additionalContent: Different for Nurse/Clinical vs Orders
@@ -2959,7 +2959,7 @@ public class ExcelParserV5 {
                                List<Map<String,String>> unitRefs) {
     String alarm = nvl(row.alarmName, row.sendingName);
     String group = row.configGroup == null ? "" : row.configGroup.trim();
-    String facility = unitRefs.isEmpty() ? "" : unitRefs.getFirst().getOrDefault("facilityName", "");
+    String facility = unitRefs.isEmpty() ? "" : unitRefs.get(0).getOrDefault("facilityName", "");
     List<String> unitNames = unitRefs.stream()
       .map(u -> u.getOrDefault("name",""))
       .filter(s -> !isBlank(s))
@@ -3783,7 +3783,7 @@ public class ExcelParserV5 {
     List<Map<String, String>> units = groupMap.get(configGroup);
     if (units != null && !units.isEmpty()) {
       // Return the facility name from the first unit
-      String facility = units.getFirst().get("facilityName");
+      String facility = units.get(0).get("facilityName");
       return facility != null ? facility : "";
     }
     

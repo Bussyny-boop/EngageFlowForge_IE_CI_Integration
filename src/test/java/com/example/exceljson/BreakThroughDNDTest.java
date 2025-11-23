@@ -211,7 +211,7 @@ class BreakThroughDNDTest {
             parser2.load(excelPath2.toFile());
             
             assertEquals(1, parser2.nurseCalls.size(), "Should have one nurse call");
-            assertEquals("device", parser2.nurseCalls.getFirst().breakThroughDND, 
+            assertEquals("device", parser2.nurseCalls.get(0).breakThroughDND, 
                 "Break Through DND value should be preserved after save/load cycle");
         } finally {
             Files.deleteIfExists(excelPath1);

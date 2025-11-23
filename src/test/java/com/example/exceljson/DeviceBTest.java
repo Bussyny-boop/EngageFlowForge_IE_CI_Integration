@@ -137,8 +137,8 @@ class DeviceBTest {
         assertEquals(5, parser.nurseCalls.size(), "Should have 5 nurse call rows");
         
         // Check first row: Edge in A, blank in B
-        assertEquals("iPhone-Edge", parser.nurseCalls.getFirst().deviceA);
-        assertEquals("", parser.nurseCalls.getFirst().deviceB);
+        assertEquals("iPhone-Edge", parser.nurseCalls.get(0).deviceA);
+        assertEquals("", parser.nurseCalls.get(0).deviceB);
         
         // Check second row: blank in A, VCS in B
         assertEquals("", parser.nurseCalls.get(1).deviceA);
@@ -173,17 +173,17 @@ class DeviceBTest {
         assertEquals(5, flows.size(), "Should have 5 nurse call flows");
 
         // Flow 0: Edge in A only - should have OutgoingWCTP interface only
-        var flow0 = (Map<?, ?>) flows.getFirst();
+        var flow0 = (Map<?, ?>) flows.get(0);
         var interfaces0 = (List<?>) flow0.get("interfaces");
         assertEquals(1, interfaces0.size(), "Edge only flow should have 1 interface");
-        var iface0 = (Map<?, ?>) interfaces0.getFirst();
+        var iface0 = (Map<?, ?>) interfaces0.get(0);
         assertEquals("OutgoingWCTP", iface0.get("componentName"));
 
         // Flow 1: VCS in B only - should have VMP interface only
         var flow1 = (Map<?, ?>) flows.get(1);
         var interfaces1 = (List<?>) flow1.get("interfaces");
         assertEquals(1, interfaces1.size(), "VCS only flow should have 1 interface");
-        var iface1 = (Map<?, ?>) interfaces1.getFirst();
+        var iface1 = (Map<?, ?>) interfaces1.get(0);
         assertEquals("VMP", iface1.get("componentName"));
 
         // Flow 2: Edge in A and VCS in B - should have BOTH interfaces
@@ -191,7 +191,7 @@ class DeviceBTest {
         var interfaces2 = (List<?>) flow2.get("interfaces");
         assertEquals(2, interfaces2.size(), "Combined flow should have 2 interfaces");
         
-        var iface2_0 = (Map<?, ?>) interfaces2.getFirst();
+        var iface2_0 = (Map<?, ?>) interfaces2.get(0);
         assertEquals("OutgoingWCTP", iface2_0.get("componentName"), "First interface should be OutgoingWCTP");
         assertEquals("OutgoingWCTP", iface2_0.get("referenceName"), "First interface reference should be OutgoingWCTP");
         
@@ -204,7 +204,7 @@ class DeviceBTest {
         var interfaces3 = (List<?>) flow3.get("interfaces");
         assertEquals(2, interfaces3.size(), "Combined flow (reversed) should have 2 interfaces");
         
-        var iface3_0 = (Map<?, ?>) interfaces3.getFirst();
+        var iface3_0 = (Map<?, ?>) interfaces3.get(0);
         assertEquals("OutgoingWCTP", iface3_0.get("componentName"), "First interface should be OutgoingWCTP");
         
         var iface3_1 = (Map<?, ?>) interfaces3.get(1);
@@ -241,7 +241,7 @@ class DeviceBTest {
         var interfaces2 = (List<?>) flow2.get("interfaces");
         assertEquals(2, interfaces2.size(), "Combined flow should have 2 interfaces");
         
-        var iface2_0 = (Map<?, ?>) interfaces2.getFirst();
+        var iface2_0 = (Map<?, ?>) interfaces2.get(0);
         assertEquals("OutgoingWCTP", iface2_0.get("componentName"));
         assertEquals("CustomEdge", iface2_0.get("referenceName"), "Should use custom Edge reference");
         
@@ -276,7 +276,7 @@ class DeviceBTest {
             
             if (interfaces.size() == 2) {
                 foundCombined = true;
-                var iface0 = (Map<?, ?>) interfaces.getFirst();
+                var iface0 = (Map<?, ?>) interfaces.get(0);
                 var iface1 = (Map<?, ?>) interfaces.get(1);
                 
                 assertEquals("OutgoingWCTP", iface0.get("componentName"));

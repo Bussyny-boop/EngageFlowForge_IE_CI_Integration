@@ -109,10 +109,10 @@ class InterfaceReferencesTest {
         assertEquals(3, flows.size(), "Should have 3 nurse call flows");
 
         // Check Edge device flow
-        var edgeFlow = (Map<?, ?>) flows.getFirst();
+        var edgeFlow = (Map<?, ?>) flows.get(0);
         var edgeInterfaces = (List<?>) edgeFlow.get("interfaces");
         assertEquals(1, edgeInterfaces.size(), "Edge flow should have 1 interface");
-        var edgeInterface = (Map<?, ?>) edgeInterfaces.getFirst();
+        var edgeInterface = (Map<?, ?>) edgeInterfaces.get(0);
         assertEquals("OutgoingWCTP", edgeInterface.get("componentName"), "Edge should use OutgoingWCTP component");
         assertEquals("OutgoingWCTP", edgeInterface.get("referenceName"), "Edge should use default OutgoingWCTP reference");
 
@@ -120,7 +120,7 @@ class InterfaceReferencesTest {
         var vcsFlow = (Map<?, ?>) flows.get(1);
         var vcsInterfaces = (List<?>) vcsFlow.get("interfaces");
         assertEquals(1, vcsInterfaces.size(), "VCS flow should have 1 interface");
-        var vcsInterface = (Map<?, ?>) vcsInterfaces.getFirst();
+        var vcsInterface = (Map<?, ?>) vcsInterfaces.get(0);
         assertEquals("VMP", vcsInterface.get("componentName"), "VCS should use VMP component");
         assertEquals("VMP", vcsInterface.get("referenceName"), "VCS should use default VMP reference");
 
@@ -153,16 +153,16 @@ class InterfaceReferencesTest {
         assertEquals(3, flows.size(), "Should have 3 nurse call flows");
 
         // Check Edge device flow with custom reference
-        var edgeFlow = (Map<?, ?>) flows.getFirst();
+        var edgeFlow = (Map<?, ?>) flows.get(0);
         var edgeInterfaces = (List<?>) edgeFlow.get("interfaces");
-        var edgeInterface = (Map<?, ?>) edgeInterfaces.getFirst();
+        var edgeInterface = (Map<?, ?>) edgeInterfaces.get(0);
         assertEquals("OutgoingWCTP", edgeInterface.get("componentName"), "Edge component name should stay the same");
         assertEquals("CustomEdge", edgeInterface.get("referenceName"), "Edge should use custom reference");
 
         // Check VCS device flow with custom reference
         var vcsFlow = (Map<?, ?>) flows.get(1);
         var vcsInterfaces = (List<?>) vcsFlow.get("interfaces");
-        var vcsInterface = (Map<?, ?>) vcsInterfaces.getFirst();
+        var vcsInterface = (Map<?, ?>) vcsInterfaces.get(0);
         assertEquals("VMP", vcsInterface.get("componentName"), "VCS component name should stay the same");
         assertEquals("CustomVCS", vcsInterface.get("referenceName"), "VCS should use custom reference");
 
@@ -232,16 +232,16 @@ class InterfaceReferencesTest {
         var flows = (List<?>) nurseJson.get("deliveryFlows");
 
         // Both should match despite different cases
-        var flow1 = (Map<?, ?>) flows.getFirst();
+        var flow1 = (Map<?, ?>) flows.get(0);
         var interfaces1 = (List<?>) flow1.get("interfaces");
         assertEquals(1, interfaces1.size(), "EDGE (uppercase) should match");
-        var iface1 = (Map<?, ?>) interfaces1.getFirst();
+        var iface1 = (Map<?, ?>) interfaces1.get(0);
         assertEquals("OutgoingWCTP", iface1.get("componentName"));
 
         var flow2 = (Map<?, ?>) flows.get(1);
         var interfaces2 = (List<?>) flow2.get("interfaces");
         assertEquals(1, interfaces2.size(), "vcs (lowercase) should match");
-        var iface2 = (Map<?, ?>) interfaces2.getFirst();
+        var iface2 = (Map<?, ?>) interfaces2.get(0);
         assertEquals("VMP", iface2.get("componentName"));
 
         // Clean up
@@ -274,7 +274,7 @@ class InterfaceReferencesTest {
                 continue;
             }
 
-            var iface = (Map<?, ?>) interfaces.getFirst();
+            var iface = (Map<?, ?>) interfaces.get(0);
             String refName = (String) iface.get("referenceName");
             
             // Should be either the custom Edge or VCS reference
