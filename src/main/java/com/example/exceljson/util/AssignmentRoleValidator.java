@@ -50,8 +50,23 @@ public class AssignmentRoleValidator {
             if (roleName != null) {
                 roleName = roleName.trim();
                 
+                // Extract the actual role name after bracket notation like [Room], [Pod], etc.
+                // Pattern: optional bracket notation followed by the role name
+                String bracketPart = "";
+                String actualRoleName = roleName;
+                
+                // Check if there's a bracket notation at the start (e.g., "[Room] CNA")
+                if (roleName.matches("^\\[\\w+\\]\\s+.*")) {
+                    // Extract bracket part and role part separately
+                    int closeBracketIndex = roleName.indexOf(']');
+                    if (closeBracketIndex > 0) {
+                        bracketPart = roleName.substring(0, closeBracketIndex + 1).trim();
+                        actualRoleName = roleName.substring(closeBracketIndex + 1).trim();
+                    }
+                }
+                
                 // Clean role name for validation (remove trailing special chars)
-                String nameToValidate = roleName.replaceAll("[^a-zA-Z0-9_\\-\\s]+$", "").trim();
+                String nameToValidate = actualRoleName.replaceAll("[^a-zA-Z0-9_\\-\\s]+$", "").trim();
                 
                 // Check if this specific role name exists in loaded roles (case-insensitive)
                 boolean isValid = false;
@@ -64,8 +79,13 @@ public class AssignmentRoleValidator {
                     }
                 }
                 
-                // Only the role name is colored red if invalid
-                segments.add(new Segment(roleName, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
+                // Add bracket part as plain text if it exists
+                if (!bracketPart.isEmpty()) {
+                    segments.add(new Segment(bracketPart + " ", ValidationStatus.PLAIN));
+                }
+                
+                // Only the actual role name is colored red if invalid
+                segments.add(new Segment(actualRoleName, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
             }
             lastEnd = m.end();
         }

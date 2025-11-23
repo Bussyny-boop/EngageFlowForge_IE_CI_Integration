@@ -192,4 +192,59 @@ public class AssignmentRoleValidatorTest {
         // The role name captures "Nurse and text after" because there's no delimiter
         assertTrue(segments.get(2).text.contains("Nurse"));
     }
+
+    @Test
+    public void testVAssignWithBracketNotation() {
+        Set<String> roles = new HashSet<>();
+        roles.add("CNA");
+        roles.add("RN");
+        roles.add("PCT");
+
+        // Test: "VAssign: [Room] CNA" - should only validate "CNA", not "[Room] CNA"
+        String text = "VAssign: [Room] CNA";
+        List<AssignmentRoleValidator.Segment> segments = AssignmentRoleValidator.parseAndValidate(text, roles);
+
+        // Should find "CNA" as a valid role
+        boolean foundValidCNA = false;
+        for (AssignmentRoleValidator.Segment segment : segments) {
+            if (segment.status == AssignmentRoleValidator.ValidationStatus.VALID) {
+                // The text should be just "CNA" after extracting from "[Room] CNA"
+                String extractedRole = segment.text.replaceAll("^\\[\\w+\\]\\s*", "").trim();
+                if (extractedRole.equals("CNA")) {
+                    foundValidCNA = true;
+                    break;
+                }
+            }
+        }
+        
+        assertTrue(foundValidCNA, "CNA should be validated as a valid role after removing [Room] prefix");
+        
+        System.out.println("✅ Test: VAssign with [Room] bracket notation");
+        System.out.println("   Segments:");
+        for (AssignmentRoleValidator.Segment segment : segments) {
+            System.out.println("     - '" + segment.text + "' -> " + segment.status);
+        }
+    }
+
+    @Test
+    public void testVAssignWithPodBracketNotation() {
+        Set<String> roles = new HashSet<>();
+        roles.add("RN");
+
+        String text = "VAssign: [Pod] RN";
+        List<AssignmentRoleValidator.Segment> segments = AssignmentRoleValidator.parseAndValidate(text, roles);
+
+        boolean foundValidRN = false;
+        for (AssignmentRoleValidator.Segment segment : segments) {
+            if (segment.status == AssignmentRoleValidator.ValidationStatus.VALID) {
+                String extractedRole = segment.text.replaceAll("^\\[\\w+\\]\\s*", "").trim();
+                if (extractedRole.equals("RN")) {
+                    foundValidRN = true;
+                    break;
+                }
+            }
+        }
+        
+        assertTrue(foundValidRN, "RN should be validated as a valid role after removing [Pod] prefix");
+    }
 }
