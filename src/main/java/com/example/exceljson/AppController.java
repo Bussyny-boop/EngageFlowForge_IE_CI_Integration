@@ -2578,6 +2578,14 @@ public class AppController {
         if (parser == null || parser.units == null) return;
         for (ExcelParserV5.UnitRow r : parser.units) {
             normalizeUnitRow(r);
+            // Update original values after normalization so change tracking works correctly
+            r.originalValues.put("unitNames", r.unitNames);
+            r.originalValues.put("podRoomFilter", r.podRoomFilter);
+            r.originalValues.put("nurseGroup", r.nurseGroup);
+            r.originalValues.put("clinGroup", r.clinGroup);
+            r.originalValues.put("ordersGroup", r.ordersGroup);
+            r.originalValues.put("noCareGroup", r.noCareGroup);
+            r.originalValues.put("comments", r.comments);
         }
     }
 

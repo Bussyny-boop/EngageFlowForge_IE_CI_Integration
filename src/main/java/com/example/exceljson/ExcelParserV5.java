@@ -92,6 +92,10 @@ public class ExcelParserV5 {
   
   private int emdanMovedCount = 0;
   
+  // Cache for the changed cell style (to avoid exceeding Excel's 4000 style limit)
+  private CellStyle changedCellStyle = null;
+  private Font changedCellFont = null;
+  
   // Custom tab statistics
   private final Map<String, Integer> customTabRowCounts = new LinkedHashMap<>();
   
@@ -3420,35 +3424,26 @@ public class ExcelParserV5 {
   
   /**
    * Applies formatting to a changed cell: bold, italic, and red text.
-   * Creates a new cell style based on the existing style to preserve other formatting.
+   * Uses a cached style to avoid exceeding Excel's 4000 style limit per workbook.
    */
   private void applyChangedCellFormatting(Cell cell) {
     Workbook wb = cell.getSheet().getWorkbook();
     
-    // Create or get a cached style for changed cells
-    CellStyle changedStyle = wb.createCellStyle();
-    
-    // Copy existing cell style if it exists
-    CellStyle existingStyle = cell.getCellStyle();
-    if (existingStyle != null) {
-      changedStyle.cloneStyleFrom(existingStyle);
+    // Create cached style and font if not already created
+    if (changedCellStyle == null) {
+      changedCellStyle = wb.createCellStyle();
+      changedCellFont = wb.createFont();
+      
+      // Set bold, italic, and red color
+      changedCellFont.setBold(true);
+      changedCellFont.setItalic(true);
+      changedCellFont.setColor(IndexedColors.RED.getIndex());
+      
+      changedCellStyle.setFont(changedCellFont);
     }
     
-    // Create or get font for changed cells (bold, italic, red)
-    Font changedFont = wb.createFont();
-    if (existingStyle != null && existingStyle.getFontIndexAsInt() >= 0) {
-      Font existingFont = wb.getFontAt(existingStyle.getFontIndexAsInt());
-      changedFont.setFontName(existingFont.getFontName());
-      changedFont.setFontHeightInPoints(existingFont.getFontHeightInPoints());
-    }
-    
-    // Set bold, italic, and red color
-    changedFont.setBold(true);
-    changedFont.setItalic(true);
-    changedFont.setColor(IndexedColors.RED.getIndex());
-    
-    changedStyle.setFont(changedFont);
-    cell.setCellStyle(changedStyle);
+    // Apply the cached style to the cell
+    cell.setCellStyle(changedCellStyle);
   }
 
   private static String[] flowHeaders() {
