@@ -4651,6 +4651,11 @@ public class AppController {
             loadedBedListLower.clear();
         }
         updateBedListStats();
+        
+        // Refresh all tables including units table
+        if (tableUnits != null) {
+            tableUnits.refresh();
+        }
         refreshAllTables();
         
         // Clear the loaded state and checkmark from the Load Bed List button
@@ -4675,6 +4680,9 @@ public class AppController {
         if (!hasVGroupPattern && !hasVAssignPattern) {
             Label label = new Label(text);
             label.setWrapText(true);
+            // Constrain height to prevent expansion even for plain labels
+            label.setMaxHeight(VALIDATED_CELL_HEIGHT);
+            label.setPrefHeight(VALIDATED_CELL_HEIGHT);
             return label;
         }
 
@@ -4694,6 +4702,13 @@ public class AppController {
         // Use a fixed preferred height that matches typical single-line row height
         flow.setPrefHeight(VALIDATED_CELL_HEIGHT); // Fixed height to prevent expansion
         flow.setMaxHeight(VALIDATED_CELL_HEIGHT);  // Prevent vertical expansion beyond single line
+        flow.setMinHeight(VALIDATED_CELL_HEIGHT);  // Also set minimum to enforce consistent height
+        
+        // Enable clipping to hide overflow content beyond the fixed height
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(flow.widthProperty());
+        clip.setHeight(VALIDATED_CELL_HEIGHT);
+        flow.setClip(clip);
         
         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments = null;
         List<List<com.example.exceljson.util.AssignmentRoleValidator.Segment>> assignmentRoleSegments = null;
