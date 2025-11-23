@@ -12,6 +12,12 @@ public class AssignmentRoleValidator {
     // Uses [^,;\n]+ to capture everything until delimiter (consistent with VoiceGroupValidator)
     // This allows multi-word role names like "Room 101" or "ICU Pod A"
     private static final Pattern VASSIGN_PATTERN = Pattern.compile("(?i)(VAssign(?:ed)?:\\s*)([^,;\\n]+)?");
+    
+    // Pattern to match bracket notation at the start of a role name (e.g., "[Room] CNA", "[Pod] RN")
+    private static final Pattern BRACKET_NOTATION_PATTERN = Pattern.compile("^\\[\\w+\\]\\s+.*");
+    
+    // Pattern to clean trailing special characters from role names
+    private static final String TRAILING_SPECIAL_CHARS_REGEX = "[^a-zA-Z0-9_\\-\\s]+$";
 
     public static List<List<Segment>> parseAndValidateMultiLine(String text, Set<String> loadedAssignmentRoles) {
         List<List<Segment>> lineSegments = new ArrayList<>();
@@ -56,7 +62,7 @@ public class AssignmentRoleValidator {
                 String actualRoleName = roleName;
                 
                 // Check if there's a bracket notation at the start (e.g., "[Room] CNA")
-                if (roleName.matches("^\\[\\w+\\]\\s+.*")) {
+                if (BRACKET_NOTATION_PATTERN.matcher(roleName).matches()) {
                     // Extract bracket part and role part separately
                     int closeBracketIndex = roleName.indexOf(']');
                     if (closeBracketIndex > 0) {
@@ -66,7 +72,7 @@ public class AssignmentRoleValidator {
                 }
                 
                 // Clean role name for validation (remove trailing special chars)
-                String nameToValidate = actualRoleName.replaceAll("[^a-zA-Z0-9_\\-\\s]+$", "").trim();
+                String nameToValidate = actualRoleName.replaceAll(TRAILING_SPECIAL_CHARS_REGEX, "").trim();
                 
                 // Check if this specific role name exists in loaded roles (case-insensitive)
                 boolean isValid = false;

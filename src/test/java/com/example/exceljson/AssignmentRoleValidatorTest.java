@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,6 +14,16 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for AssignmentRoleValidator
  */
 public class AssignmentRoleValidatorTest {
+
+    // Helper pattern to extract role name from bracket notation (e.g., "[Room] CNA" -> "CNA")
+    private static final Pattern BRACKET_EXTRACTION_PATTERN = Pattern.compile("^\\[\\w+\\]\\s*");
+    
+    /**
+     * Helper method to extract the actual role name from text that may contain bracket notation
+     */
+    private String extractRoleFromBracketNotation(String text) {
+        return text.replaceAll(BRACKET_EXTRACTION_PATTERN.pattern(), "").trim();
+    }
 
     @Test
     public void testParseAndValidateWithValidRole() {
@@ -209,7 +220,7 @@ public class AssignmentRoleValidatorTest {
         for (AssignmentRoleValidator.Segment segment : segments) {
             if (segment.status == AssignmentRoleValidator.ValidationStatus.VALID) {
                 // The text should be just "CNA" after extracting from "[Room] CNA"
-                String extractedRole = segment.text.replaceAll("^\\[\\w+\\]\\s*", "").trim();
+                String extractedRole = extractRoleFromBracketNotation(segment.text);
                 if (extractedRole.equals("CNA")) {
                     foundValidCNA = true;
                     break;
@@ -237,7 +248,7 @@ public class AssignmentRoleValidatorTest {
         boolean foundValidRN = false;
         for (AssignmentRoleValidator.Segment segment : segments) {
             if (segment.status == AssignmentRoleValidator.ValidationStatus.VALID) {
-                String extractedRole = segment.text.replaceAll("^\\[\\w+\\]\\s*", "").trim();
+                String extractedRole = extractRoleFromBracketNotation(segment.text);
                 if (extractedRole.equals("RN")) {
                     foundValidRN = true;
                     break;
