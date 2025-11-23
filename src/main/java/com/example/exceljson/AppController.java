@@ -5494,9 +5494,9 @@ public class AppController {
             } else if (result.get() == convertRulesBtn) {
                 handleConvertRulesWorkflow();
             } else if (result.get() == cancelBtn) {
-                // Return to role selection - for now just show the action dialog again
-                // In a production app, we would restart the application or show role selection
-                if (statusLabel != null) statusLabel.setText("CI workflow cancelled. You can use the File menu to load data.");
+                // Cancel returns user to main app (CI Homepage) with restrictions applied
+                // User can still use Load buttons from the sidebar to load data
+                if (statusLabel != null) statusLabel.setText("CI workflow cancelled. You can use Load buttons to load data.");
             }
         }
     }
@@ -5524,76 +5524,45 @@ public class AppController {
     /**
      * Shows the validation data loading dialog with options to load Voice Group, 
      * Assignment Roles, Bedlist, and Clear Loaded Data.
+     * 
+     * Note: In this simplified version, we inform the user to use the Settings panel
+     * for data validation loading, then allow them to proceed or cancel.
      */
     private void showValidationDataDialog() {
-        Alert validationDialog = new Alert(Alert.AlertType.NONE);
+        Alert validationDialog = new Alert(Alert.AlertType.INFORMATION);
         validationDialog.setTitle("Validation Data");
-        validationDialog.setHeaderText("Load validation datasets");
+        validationDialog.setHeaderText("NDW file loaded successfully");
         validationDialog.setContentText(
             "Current NDW file: " + currentExcelFile.getName() + "\n\n" +
-            "Use the buttons below to load validation data, then click Begin Validation."
+            "To validate your data:\n" +
+            "1. Use the 'Data Validation' section in Settings to load:\n" +
+            "   - Voice Group data\n" +
+            "   - Assignment Roles data\n" +
+            "   - Bedlist data\n\n" +
+            "2. The application will automatically highlight invalid entries\n" +
+            "   in the recipient columns of your tables.\n\n" +
+            "3. When done editing, use 'Save on NDW' to save your changes."
         );
         validationDialog.initModality(Modality.APPLICATION_MODAL);
         
-        // Create custom buttons for validation loaders
-        ButtonType loadVoiceGroupBtn = new ButtonType("Load Voice Group", ButtonBar.ButtonData.OTHER);
-        ButtonType loadAssignRolesBtn = new ButtonType("Load Assignment Roles", ButtonBar.ButtonData.OTHER);
-        ButtonType loadBedlistBtn = new ButtonType("Load Bedlist", ButtonBar.ButtonData.OTHER);
-        ButtonType clearDataBtn = new ButtonType("Clear Loaded Data", ButtonBar.ButtonData.OTHER);
-        ButtonType beginValidationBtn = new ButtonType("Begin Validation", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        validationDialog.showAndWait();
         
-        validationDialog.getButtonTypes().setAll(
-            loadVoiceGroupBtn, loadAssignRolesBtn, loadBedlistBtn, clearDataBtn, 
-            beginValidationBtn, cancelBtn
-        );
-        
-        // Handle button clicks in a loop to keep dialog open until Begin Validation or Cancel
-        boolean continueDialog = true;
-        while (continueDialog) {
-            Optional<ButtonType> result = validationDialog.showAndWait();
-            
-            if (result.isPresent()) {
-                if (result.get() == loadVoiceGroupBtn) {
-                    loadVoiceGroups();
-                } else if (result.get() == loadAssignRolesBtn) {
-                    loadAssignmentRoles();
-                } else if (result.get() == loadBedlistBtn) {
-                    loadBedList();
-                } else if (result.get() == clearDataBtn) {
-                    clearVoiceGroups();
-                    clearAssignmentRoles();
-                    clearBedList();
-                    if (statusLabel != null) statusLabel.setText("All validation data cleared.");
-                } else if (result.get() == beginValidationBtn) {
-                    // Run validation and close dialog
-                    runNdwValidation();
-                    continueDialog = false;
-                } else if (result.get() == cancelBtn) {
-                    // Clear validation data and return to CI Homepage
-                    clearVoiceGroups();
-                    clearAssignmentRoles();
-                    clearBedList();
-                    if (statusLabel != null) statusLabel.setText("Validation cancelled. Cleared all loaded validation data.");
-                    continueDialog = false;
-                }
-            } else {
-                // Dialog closed without button click
-                continueDialog = false;
-            }
+        // User is now on CI Homepage and can use Data Validation settings
+        if (statusLabel != null) {
+            statusLabel.setText("NDW loaded. Use Data Validation settings to load validation data.");
         }
     }
     
     /**
-     * Run the NDW validation logic against all loaded datasets.
+     * Refreshes all tables to trigger validation display.
+     * The actual validation logic runs automatically in the table cell factories
+     * which check recipient values against loadedVoiceGroups, loadedAssignmentRoles,
+     * and loadedBedList datasets. This method simply forces a visual refresh.
      */
     private void runNdwValidation() {
         if (statusLabel != null) statusLabel.setText("Running NDW validation...");
         
-        // The validation is already happening automatically via the table cell factories
-        // that check against loadedVoiceGroups, loadedAssignmentRoles, and loadedBedList
-        // We just need to refresh the tables to trigger validation display
-        
+        // Refresh tables to trigger validation highlighting in cell factories
         if (tableUnits != null) tableUnits.refresh();
         if (tableNurseCalls != null) tableNurseCalls.refresh();
         if (tableClinicals != null) tableClinicals.refresh();
