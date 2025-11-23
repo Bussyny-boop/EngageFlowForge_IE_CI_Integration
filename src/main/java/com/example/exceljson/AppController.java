@@ -317,6 +317,9 @@ public class AppController {
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
     private File lastJsonDir = null;
+    
+    // ---------- Load Completion Callback ----------
+    private Runnable onNdwLoadComplete = null;
 
     private static final String APP_VERSION = "3.0.0";
     private static final String PREF_KEY_LAST_EXCEL_DIR = "lastExcelDir";
@@ -1428,7 +1431,11 @@ public class AppController {
             }
 
             File file = chooser.showOpenDialog(getStage());
-            if (file == null) return;
+            if (file == null) {
+                // User cancelled, clear callback
+                onNdwLoadComplete = null;
+                return;
+            }
 
             // Remember directory
             rememberDirectory(file, true);
@@ -1519,6 +1526,13 @@ public class AppController {
                     }
 
                     showInfo(successMsg.toString());
+                    
+                    // Call completion callback if set (for CI workflow)
+                    if (onNdwLoadComplete != null) {
+                        Runnable callback = onNdwLoadComplete;
+                        onNdwLoadComplete = null; // Clear callback after use
+                        callback.run();
+                    }
                 } finally {
                     setButtonLoading(loadNdwButton, false);
                 }
@@ -1529,6 +1543,9 @@ public class AppController {
                 hideProgressBar();
                 Throwable ex = task.getException();
                 showError("Failed to load file: " + (ex != null ? ex.getMessage() : "Unknown error"));
+                
+                // Clear callback on failure
+                onNdwLoadComplete = null;
             });
 
             Thread th = new Thread(task);
@@ -1864,7 +1881,7 @@ public class AppController {
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
             confirm.setTitle("Save on NDW");
             confirm.setHeaderText("Save changes to NDW file?");
-            confirm.setContentText("This will overwrite the original NDW file:\n" + currentExcelFile.getAbsolutePath());
+            confirm.setContentText("This will update the data in the original NDW file while preserving formatting:\n" + currentExcelFile.getAbsolutePath());
             if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
                 return;
             }
@@ -1875,8 +1892,8 @@ public class AppController {
             // Show progress
             showProgressBar("💾 Saving changes to NDW...");
             
-            // Save to the same file
-            parser.writeExcel(currentExcelFile);
+            // Update the existing file (preserving formatting)
+            parser.updateExcel(currentExcelFile);
             
             // Hide progress and show success
             hideProgressBar();
@@ -5474,7 +5491,7 @@ public class AppController {
     public void showCIActionDialog() {
         Alert actionDialog = new Alert(Alert.AlertType.NONE);
         actionDialog.setTitle("Clinical Informatics");
-        actionDialog.setHeaderText("What would you like to do?");
+        actionDialog.setHeaderText("Welcome! What would you like to do?");
         actionDialog.initModality(Modality.APPLICATION_MODAL);
         
         ButtonType validateNdwBtn = new ButtonType("Validate NDW", ButtonBar.ButtonData.OK_DONE);
@@ -5503,45 +5520,45 @@ public class AppController {
     
     /**
      * Handle the "Validate NDW" workflow for CI users.
-     * Steps: Load NDW -> Show validation loaders -> Begin Validation or Cancel
+     * Steps: Load NDW -> Show validation instructions
      */
     private void handleValidateNdwWorkflow() {
-        // Step 1: Automatically open NDW file picker
-        loadNdw();
-        
-        // After NDW is loaded, show validation data load options
-        // We'll use a Platform.runLater to ensure the loadNdw() completes first
-        javafx.application.Platform.runLater(() -> {
+        // Set callback to be executed when NDW loading completes
+        onNdwLoadComplete = () -> {
             if (currentExcelFile != null) {
+                // NDW loaded successfully, show validation instructions
                 showValidationDataDialog();
-            } else {
-                // User cancelled NDW load, return to CI action dialog
-                showCIActionDialog();
             }
-        });
+        };
+        
+        // Step 1: Automatically open NDW file picker
+        // The callback will be executed when loading completes
+        loadNdw();
     }
     
     /**
-     * Shows the validation data loading dialog with options to load Voice Group, 
-     * Assignment Roles, Bedlist, and Clear Loaded Data.
-     * 
-     * Note: In this simplified version, we inform the user to use the Settings panel
-     * for data validation loading, then allow them to proceed or cancel.
+     * Shows the validation data loading dialog with instructions for data validation.
      */
     private void showValidationDataDialog() {
         Alert validationDialog = new Alert(Alert.AlertType.INFORMATION);
         validationDialog.setTitle("Validation Data");
-        validationDialog.setHeaderText("NDW file loaded successfully");
+        validationDialog.setHeaderText("✅ NDW File Loaded Successfully");
         validationDialog.setContentText(
-            "Current NDW file: " + currentExcelFile.getName() + "\n\n" +
-            "To validate your data:\n" +
-            "1. Use the 'Data Validation' section in Settings to load:\n" +
-            "   - Voice Group data\n" +
-            "   - Assignment Roles data\n" +
-            "   - Bedlist data\n\n" +
-            "2. The application will automatically highlight invalid entries\n" +
-            "   in the recipient columns of your tables.\n\n" +
-            "3. When done editing, use 'Save on NDW' to save your changes."
+            "📁 Current NDW file: " + currentExcelFile.getName() + "\n\n" +
+            "📋 How to Validate Your Data:\n\n" +
+            "1️⃣  Load Validation Data:\n" +
+            "   • Click the ⚙️ Settings button (top right)\n" +
+            "   • Use the 'Data Validation' section to load:\n" +
+            "      - Voice Group data\n" +
+            "      - Assignment Roles data\n" +
+            "      - Bedlist data\n\n" +
+            "2️⃣  Review Data:\n" +
+            "   • Invalid entries will be highlighted in RED\n" +
+            "   • Edit the data tables as needed\n\n" +
+            "3️⃣  Save Your Changes:\n" +
+            "   • Use '💾 Save on NDW' button to save changes\n" +
+            "   • Only modified cells will be updated\n" +
+            "   • Original formatting will be preserved"
         );
         validationDialog.initModality(Modality.APPLICATION_MODAL);
         
@@ -5549,7 +5566,7 @@ public class AppController {
         
         // User is now on CI Homepage and can use Data Validation settings
         if (statusLabel != null) {
-            statusLabel.setText("NDW loaded. Use Data Validation settings to load validation data.");
+            statusLabel.setText("✅ NDW loaded. Use Settings → Data Validation to load validation data.");
         }
     }
     
