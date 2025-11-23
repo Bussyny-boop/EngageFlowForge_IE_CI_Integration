@@ -2518,7 +2518,7 @@ public class XmlParser {
                 if (isFromRole) {
                     result.append("VAssign:[Room] ").append(part);
                 } else {
-                    result.append("VGroup ").append(part);
+                    result.append("VGroup:").append(part);
                 }
             }
             return result.toString();
@@ -2528,7 +2528,7 @@ public class XmlParser {
         if (isFromRole) {
             return "VAssign:[Room] " + recipient;
         } else {
-            return "VGroup " + recipient;
+            return "VGroup:" + recipient;
         }
     }
     

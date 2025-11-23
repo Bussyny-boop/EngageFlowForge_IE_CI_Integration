@@ -105,7 +105,7 @@ public class StateBasedDataUpdateTimingTest {
         for (ExcelParserV5.FlowRow flow : clinicals) {
             if ("Code Blue".equals(flow.alarmName)) {
                 foundCodeBlue = true;
-                assertEquals("VGroup g-adult_code_blue2xxx", flow.r1, 
+                assertEquals("VGroup:g-adult_code_blue2xxx", flow.r1, 
                     "R1 should be destination from settings with VGroup prefix (no role found)");
                 assertEquals("VMP", flow.deviceA, "Device should be VMP");
             }

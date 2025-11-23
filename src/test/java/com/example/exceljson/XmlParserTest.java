@@ -189,7 +189,7 @@ public class XmlParserTest {
                 assertEquals("Normal", flow.priorityRaw, "Priority should be Normal");
                 assertEquals("10", flow.ttlValue, "TTL should be 10");
                 // Recipient should have VGroup prefix when no role is found
-                assertEquals("VGroup #{bed.room.unit.first.users.devices.lines.number}", flow.r1, 
+                assertEquals("VGroup:#{bed.room.unit.first.users.devices.lines.number}", flow.r1, 
                     "Recipient should have VGroup prefix when no role is found");
             }
         }
