@@ -5526,7 +5526,18 @@ public class AppController {
         // Set callback to be executed when NDW loading completes
         onNdwLoadComplete = () -> {
             if (currentExcelFile != null) {
-                // NDW loaded successfully, show validation instructions
+                // NDW loaded successfully in CI mode
+                // Hide the load buttons section since file is already loaded
+                if (loadButtonsContainer != null) {
+                    loadButtonsContainer.setVisible(false);
+                    loadButtonsContainer.setManaged(false);
+                }
+                if (loadDataLabel != null) {
+                    loadDataLabel.setVisible(false);
+                    loadDataLabel.setManaged(false);
+                }
+                
+                // Show validation instructions
                 showValidationDataDialog();
             }
         };
