@@ -647,7 +647,9 @@ public class AppController {
                 }
             });
             // Set initial value
-            tableUnits.setFixedCellSize(unitsRowHeightSlider.getValue());
+            if (tableUnits != null) {
+                tableUnits.setFixedCellSize(unitsRowHeightSlider.getValue());
+            }
         }
         
         // Nurse calls table row height
@@ -659,7 +661,9 @@ public class AppController {
                 }
             });
             // Set initial value
-            tableNurseCalls.setFixedCellSize(nurseCallsRowHeightSlider.getValue());
+            if (tableNurseCalls != null) {
+                tableNurseCalls.setFixedCellSize(nurseCallsRowHeightSlider.getValue());
+            }
         }
         
         // Clinicals table row height
@@ -671,7 +675,9 @@ public class AppController {
                 }
             });
             // Set initial value
-            tableClinicals.setFixedCellSize(clinicalsRowHeightSlider.getValue());
+            if (tableClinicals != null) {
+                tableClinicals.setFixedCellSize(clinicalsRowHeightSlider.getValue());
+            }
         }
         
         // Orders table row height
@@ -683,7 +689,9 @@ public class AppController {
                 }
             });
             // Set initial value
-            tableOrders.setFixedCellSize(ordersRowHeightSlider.getValue());
+            if (tableOrders != null) {
+                tableOrders.setFixedCellSize(ordersRowHeightSlider.getValue());
+            }
         }
     }
 
