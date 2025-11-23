@@ -141,7 +141,8 @@ public class AppController {
     
     // Constants for data validation
     private static final String TRAILING_ASTERISK_REGEX = "\\*+$";
-    private static final double VALIDATED_CELL_HEIGHT = 24.0; // Fixed height to prevent row expansion
+    private static final double VALIDATED_CELL_HEIGHT = 72.0; // Height for 3 lines of text in recipient columns
+    private static final double UNIT_CELL_HEIGHT = 72.0; // Height for unit validation cells (allows up to 3 lines)
     
     // ---------- Assignment Role Validation ----------
     @FXML private Button loadAssignmentRolesButton;
@@ -158,6 +159,16 @@ public class AppController {
     private final Set<String> loadedBedList = new HashSet<>();
     // Lowercase version for O(1) case-insensitive lookup performance
     private final Set<String> loadedBedListLower = new HashSet<>();
+
+    // ---------- Row Height Controls ----------
+    @FXML private Slider unitsRowHeightSlider;
+    @FXML private Label unitsRowHeightLabel;
+    @FXML private Slider nurseCallsRowHeightSlider;
+    @FXML private Label nurseCallsRowHeightLabel;
+    @FXML private Slider clinicalsRowHeightSlider;
+    @FXML private Label clinicalsRowHeightLabel;
+    @FXML private Slider ordersRowHeightSlider;
+    @FXML private Label ordersRowHeightLabel;
 
     // ---------- Custom Tab Mappings ----------
     @FXML private TextField customTabNameField;
@@ -396,6 +407,9 @@ public class AppController {
         if (loadBedListButton != null) loadBedListButton.setOnAction(e -> loadBedList());
         if (clearBedListButton != null) clearBedListButton.setOnAction(e -> clearBedList());
         
+        // ---------- Row Height Controls ----------
+        initializeRowHeightControls();
+        
         if (themeToggleButton != null) {
             themeToggleButton.setOnAction(e -> toggleTheme());
             updateThemeButton();
@@ -620,6 +634,56 @@ public class AppController {
                     }
                 });
             }
+        }
+    }
+
+    private void initializeRowHeightControls() {
+        // Units table row height
+        if (unitsRowHeightSlider != null && unitsRowHeightLabel != null) {
+            unitsRowHeightSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                unitsRowHeightLabel.setText(String.format("%.0f px", newVal.doubleValue()));
+                if (tableUnits != null) {
+                    tableUnits.setFixedCellSize(newVal.doubleValue());
+                }
+            });
+            // Set initial value
+            tableUnits.setFixedCellSize(unitsRowHeightSlider.getValue());
+        }
+        
+        // Nurse calls table row height
+        if (nurseCallsRowHeightSlider != null && nurseCallsRowHeightLabel != null) {
+            nurseCallsRowHeightSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                nurseCallsRowHeightLabel.setText(String.format("%.0f px", newVal.doubleValue()));
+                if (tableNurseCalls != null) {
+                    tableNurseCalls.setFixedCellSize(newVal.doubleValue());
+                }
+            });
+            // Set initial value
+            tableNurseCalls.setFixedCellSize(nurseCallsRowHeightSlider.getValue());
+        }
+        
+        // Clinicals table row height
+        if (clinicalsRowHeightSlider != null && clinicalsRowHeightLabel != null) {
+            clinicalsRowHeightSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                clinicalsRowHeightLabel.setText(String.format("%.0f px", newVal.doubleValue()));
+                if (tableClinicals != null) {
+                    tableClinicals.setFixedCellSize(newVal.doubleValue());
+                }
+            });
+            // Set initial value
+            tableClinicals.setFixedCellSize(clinicalsRowHeightSlider.getValue());
+        }
+        
+        // Orders table row height
+        if (ordersRowHeightSlider != null && ordersRowHeightLabel != null) {
+            ordersRowHeightSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                ordersRowHeightLabel.setText(String.format("%.0f px", newVal.doubleValue()));
+                if (tableOrders != null) {
+                    tableOrders.setFixedCellSize(newVal.doubleValue());
+                }
+            });
+            // Set initial value
+            tableOrders.setFixedCellSize(ordersRowHeightSlider.getValue());
         }
     }
 
@@ -2329,8 +2393,16 @@ public class AppController {
                         // Set max width to prevent horizontal expansion and enable proper wrapping
                         flow.setMaxWidth(Region.USE_PREF_SIZE);
                         flow.setPrefWidth(Region.USE_COMPUTED_SIZE);
-                        // Allow vertical expansion based on content, but limit to reasonable max height
-                        flow.setMaxHeight(150); // Reasonable max to show ~6-7 lines without excessive expansion
+                        // Constrain height to prevent row expansion
+                        flow.setPrefHeight(UNIT_CELL_HEIGHT);
+                        flow.setMaxHeight(UNIT_CELL_HEIGHT);
+                        flow.setMinHeight(UNIT_CELL_HEIGHT);
+                        
+                        // Enable clipping to hide overflow content beyond the fixed height
+                        Rectangle clip = new Rectangle();
+                        clip.widthProperty().bind(flow.widthProperty());
+                        clip.setHeight(UNIT_CELL_HEIGHT);
+                        flow.setClip(clip);
                         
                         boolean firstLine = true;
                         for (String unitName : unitNames) {
@@ -4027,6 +4099,9 @@ public class AppController {
      * Refresh all flow tables
      */
     private void refreshAllTables() {
+        if (tableUnits != null) {
+            tableUnits.refresh();
+        }
         if (tableNurseCalls != null) {
             tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
             tableNurseCalls.refresh();
