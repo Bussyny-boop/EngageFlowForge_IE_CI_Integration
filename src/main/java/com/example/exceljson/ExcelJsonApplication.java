@@ -10,6 +10,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ButtonBar;
 import javafx.stage.Modality;
+import javafx.scene.control.DialogPane;
+import javafx.geometry.Insets;
+import javafx.scene.layout.Region;
 
 import java.io.InputStream;
 import java.util.prefs.Preferences;
@@ -98,14 +101,24 @@ public class ExcelJsonApplication extends Application {
      */
     private UserProfile showRoleSelectionDialog() {
         Alert roleDialog = new Alert(Alert.AlertType.NONE);
-        roleDialog.setTitle("Role Selection");
-        roleDialog.setHeaderText("What is your Role?");
+        roleDialog.setTitle("Engage FlowForge - Role Selection");
+        roleDialog.setHeaderText("Engage FlowForge 2.0\n\nWhat is your Role?");
         roleDialog.initModality(Modality.APPLICATION_MODAL);
         
         ButtonType ieButton = new ButtonType("IE", ButtonBar.ButtonData.OK_DONE);
         ButtonType ciButton = new ButtonType("CI", ButtonBar.ButtonData.OK_DONE);
         
         roleDialog.getButtonTypes().setAll(ieButton, ciButton);
+        
+        // Get the dialog pane and add spacing between buttons
+        DialogPane dialogPane = roleDialog.getDialogPane();
+        dialogPane.setMinHeight(Region.USE_PREF_SIZE);
+        
+        // Add custom CSS to increase button spacing
+        dialogPane.setStyle("-fx-padding: 20; -fx-spacing: 20;");
+        
+        // Add spacing to button bar
+        dialogPane.lookup(".button-bar").setStyle("-fx-spacing: 30;");
         
         Optional<ButtonType> result = roleDialog.showAndWait();
         

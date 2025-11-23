@@ -3155,25 +3155,33 @@ public class ExcelParserV5 {
       // Update Unit Breakdown sheet
       Sheet unitSheet = wb.getSheet(SHEET_UNIT);
       if (unitSheet != null) {
-        updateUnitSheet(unitSheet);
+        Row header = findHeaderRow(unitSheet);
+        int startRow = firstDataRow(unitSheet, header);
+        updateUnitSheet(unitSheet, startRow);
       }
       
       // Update Nurse Call sheet
       Sheet nurseSheet = wb.getSheet(SHEET_NURSE);
       if (nurseSheet != null) {
-        updateFlowSheet(nurseSheet, nurseCalls);
+        Row header = findHeaderRow(nurseSheet);
+        int startRow = firstDataRow(nurseSheet, header);
+        updateFlowSheet(nurseSheet, nurseCalls, startRow);
       }
       
       // Update Patient Monitoring sheet
       Sheet clinicalSheet = wb.getSheet(SHEET_CLINICAL);
       if (clinicalSheet != null) {
-        updateFlowSheet(clinicalSheet, clinicals);
+        Row header = findHeaderRow(clinicalSheet);
+        int startRow = firstDataRow(clinicalSheet, header);
+        updateFlowSheet(clinicalSheet, clinicals, startRow);
       }
       
       // Update Orders sheet
       Sheet ordersSheet = wb.getSheet(SHEET_ORDERS);
       if (ordersSheet != null) {
-        updateFlowSheet(ordersSheet, orders);
+        Row header = findHeaderRow(ordersSheet);
+        int startRow = firstDataRow(ordersSheet, header);
+        updateFlowSheet(ordersSheet, orders, startRow);
       }
       
       // Write back to the same file
@@ -3186,10 +3194,12 @@ public class ExcelParserV5 {
   /**
    * Updates the Unit Breakdown sheet with current unit data.
    * Only updates cell values, preserving formatting.
+   * @param sheet The sheet to update
+   * @param startRow The row index where data starts (after headers)
    */
-  private void updateUnitSheet(Sheet sheet) {
-    // Start from row 1 (row 0 is header)
-    int rowIndex = 1;
+  private void updateUnitSheet(Sheet sheet, int startRow) {
+    // Start from the detected data row
+    int rowIndex = startRow;
     for (UnitRow unit : units) {
       Row row = sheet.getRow(rowIndex);
       if (row == null) {
@@ -3212,10 +3222,13 @@ public class ExcelParserV5 {
   /**
    * Updates a flow sheet (Nurse Call, Patient Monitoring, or Orders) with current flow data.
    * Only updates cell values, preserving formatting.
+   * @param sheet The sheet to update
+   * @param flows The list of flow rows to write
+   * @param startRow The row index where data starts (after headers)
    */
-  private void updateFlowSheet(Sheet sheet, List<FlowRow> flows) {
-    // Start from row 1 (row 0 is header)
-    int rowIndex = 1;
+  private void updateFlowSheet(Sheet sheet, List<FlowRow> flows, int startRow) {
+    // Start from the detected data row
+    int rowIndex = startRow;
     for (FlowRow flow : flows) {
       Row row = sheet.getRow(rowIndex);
       if (row == null) {
