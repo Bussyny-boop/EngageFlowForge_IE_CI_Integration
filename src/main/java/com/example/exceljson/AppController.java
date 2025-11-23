@@ -4980,15 +4980,13 @@ public class AppController {
                 
                 // Find the position of the partial text before the caret
                 // Look backward from caret position to find the partial match
-                int startIndex = -1;
                 String beforeCaret = text.substring(0, caretPos);
                 int searchIndex = beforeCaret.lastIndexOf(partial);
                 
                 if (searchIndex >= 0) {
-                    startIndex = searchIndex;
-                    String newText = text.substring(0, startIndex) + match + text.substring(startIndex + partial.length());
+                    String newText = text.substring(0, searchIndex) + match + text.substring(searchIndex + partial.length());
                     input.setText(newText);
-                    input.positionCaret(startIndex + match.length());
+                    input.positionCaret(searchIndex + match.length());
                 }
             });
             suggestionPopup.getItems().add(item);

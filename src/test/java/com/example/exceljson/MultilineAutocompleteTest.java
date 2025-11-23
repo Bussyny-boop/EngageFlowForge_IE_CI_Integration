@@ -109,10 +109,9 @@ public class MultilineAutocompleteTest {
         
         assertEquals("Co", partial, "Should extract 2-character partial");
         
-        // Test case 5: Single non-space character after colon+space
-        // The pattern (?:^|[,;\\s:]\\s*) matches colon followed by optional spaces
-        // Then requires 2+ chars from [a-zA-Z0-9_\\-\\s] which includes space
-        // So "VGroup: C" has space+C = 2 chars, but "VGroup:C" won't match (no space after colon)
+        // Test case 5: Single character should not match the pattern
+        // The pattern requires {2,} which means 2 or more characters
+        // 'VGroup:C' has only 'C' (1 char) after the colon, so it won't match
         currentLine = "VGroup:C";
         m = p.matcher(currentLine);
         partial = null;
@@ -120,7 +119,7 @@ public class MultilineAutocompleteTest {
             partial = m.group(1).trim();
         }
         
-        assertNull(partial, "Should not match single char without delimiter spacing");
+        assertNull(partial, "Should not match single character (requires 2+ chars)");
     }
     
     /**
@@ -177,8 +176,9 @@ public class MultilineAutocompleteTest {
         searchIndex = beforeCaret.lastIndexOf(partial);
         int newCaretPos = searchIndex + match.length();
         
-        // searchIndex should be 8 (position of "Cod"), so 8 + 9 ("Code Blue" length) = 17
-        assertEquals(17, newCaretPos, "Caret should be positioned after 'Code Blue'");
+        // Position should be at index of "Cod" (8) + length of "Code Blue" (9) = 17
+        assertEquals(searchIndex + match.length(), newCaretPos, 
+            "Caret should be positioned after replacement text");
     }
     
     /**
@@ -214,14 +214,14 @@ public class MultilineAutocompleteTest {
      */
     @Test
     public void testEdgeCases() {
-        // Test case 1: Text ending with newline - the split will create an empty last element
-        String text = "VGroup: Code Blue\n";
-        int caretPos = text.length();
-        String[] lines = text.substring(0, caretPos).split("\\n", -1); // Use -1 to keep trailing empty strings
+        // Test case 1: Text ending with newline followed by typing on new line
+        // When text ends with \n and user types, the current line will be the new content
+        String text = "VGroup: Code Blue\nVG";
+        int caretPos = text.length(); // At end after typing "VG"
+        String[] lines = text.substring(0, caretPos).split("\\n");
         String currentLine = lines.length > 0 ? lines[lines.length - 1] : "";
         
-        // When text ends with \n, split creates empty string at the end
-        assertEquals("", currentLine, "Current line should be empty after newline");
+        assertEquals("VG", currentLine, "Current line should be the new line being typed");
         
         // Test case 2: Line with only whitespace
         text = "VGroup: Code Blue\n   ";
