@@ -102,7 +102,7 @@ class ClinicalDestinationNameTest {
         assertTrue(flows.size() > 0, "Should have at least one clinical flow");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
         // Find destinationName parameters by destinationOrder
@@ -139,7 +139,7 @@ class ClinicalDestinationNameTest {
         assertNotNull(flows);
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
         // In the test workbook, we have 3 recipients (r1, r2, r3), so NoDeliveries should be at order 3
@@ -209,7 +209,7 @@ class ClinicalDestinationNameTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) clinicalsJson.get("deliveryFlows");
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         
         Map<String, Object> dest0 = findParameterWithDestinationOrder(params, "destinationName", 0);
         

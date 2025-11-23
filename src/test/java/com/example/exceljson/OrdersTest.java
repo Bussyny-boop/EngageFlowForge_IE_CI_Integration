@@ -86,8 +86,8 @@ class OrdersTest {
         parser.load(excelFile);
         
         assertEquals(1, parser.orders.size(), "Should parse 1 order from 'Order' sheet");
-        assertEquals("Orders", parser.orders.getFirst().type);
-        assertEquals("Med Order", parser.orders.getFirst().alarmName);
+        assertEquals("Orders", parser.orders.get(0).type);
+        assertEquals("Med Order", parser.orders.get(0).alarmName);
     }
 
     @Test
@@ -98,7 +98,7 @@ class OrdersTest {
         parser.load(excelFile);
         
         assertEquals(1, parser.orders.size(), "Should parse 1 order from 'Med Order' sheet");
-        assertEquals("Orders", parser.orders.getFirst().type);
+        assertEquals("Orders", parser.orders.get(0).type);
     }
 
     @Test
@@ -109,7 +109,7 @@ class OrdersTest {
         parser.load(excelFile);
         
         assertEquals(1, parser.orders.size(), "Should parse 1 order from 'STAT MED' sheet");
-        assertEquals("Orders", parser.orders.getFirst().type);
+        assertEquals("Orders", parser.orders.get(0).type);
     }
 
     @Test
@@ -138,7 +138,7 @@ class OrdersTest {
         List<Map<String, Object>> alarmDefs = (List<Map<String, Object>>) ordersJson.get("alarmAlertDefinitions");
         assertNotNull(alarmDefs);
         assertEquals(1, alarmDefs.size());
-        assertEquals("Orders", alarmDefs.getFirst().get("type"), "Alarm definition type should be 'Orders'");
+        assertEquals("Orders", alarmDefs.get(0).get("type"), "Alarm definition type should be 'Orders'");
     }
 
     @Test
@@ -156,7 +156,7 @@ class OrdersTest {
         assertEquals(1, flows.size());
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
         // Verify hardcoded parameters exist
@@ -194,7 +194,7 @@ class OrdersTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         
-        String flowName = (String) flows.getFirst().get("name");
+        String flowName = (String) flows.get(0).get("name");
         assertTrue(flowName.startsWith("SEND ORDER"), "Flow name should start with 'SEND ORDER'");
     }
 
@@ -211,12 +211,12 @@ class OrdersTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> units = (List<Map<String, String>>) flows.getFirst().get("units");
+        List<Map<String, String>> units = (List<Map<String, String>>) flows.get(0).get("units");
         
         assertNotNull(units);
         assertEquals(1, units.size());
-        assertEquals("Test Facility", units.getFirst().get("facilityName"));
-        assertEquals("Test Unit", units.getFirst().get("name"));
+        assertEquals("Test Facility", units.get(0).get("facilityName"));
+        assertEquals("Test Unit", units.get(0).get("name"));
     }
 
     @Test
@@ -253,7 +253,7 @@ class OrdersTest {
         parser.load(excelFile);
         
         assertEquals(1, parser.orders.size(), "Should parse orders from sheet with 'Order' in name");
-        assertEquals("Orders", parser.orders.getFirst().type);
+        assertEquals("Orders", parser.orders.get(0).type);
     }
 
     @Test
@@ -264,7 +264,7 @@ class OrdersTest {
         parser.load(excelFile);
         
         assertEquals(1, parser.orders.size(), "Should parse orders from 'Orders' sheet");
-        assertEquals("Orders", parser.orders.getFirst().type);
+        assertEquals("Orders", parser.orders.get(0).type);
     }
 
     @Test
@@ -336,7 +336,7 @@ class OrdersTest {
         assertEquals(1, flows.size());
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
         // Verify all parameters from NursecallFlow logic are present
@@ -386,7 +386,7 @@ class OrdersTest {
         assertEquals(1, flows.size());
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.getFirst().get("destinations");
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
         assertNotNull(destinations);
         assertTrue(destinations.size() > 0, "Should have at least one destination");
         
@@ -404,7 +404,7 @@ class OrdersTest {
         
         // Verify these are NOT in parameterAttributes
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
         assertFalse(hasParameter(params, "order"), "parameterAttributes should NOT contain 'order'");
@@ -502,7 +502,7 @@ class OrdersTest {
         assertEquals(1, flows.size());
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         assertNotNull(params);
         
         // Find destinationName parameters by destinationOrder
@@ -581,7 +581,7 @@ class OrdersTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         
         // Verify case-insensitive Room detection
         Map<String, Object> dest0 = findParameterWithDestinationOrder(params, "destinationName", 0);
@@ -646,7 +646,7 @@ class OrdersTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.getFirst().get("parameterAttributes");
+        List<Map<String, Object>> params = (List<Map<String, Object>>) flows.get(0).get("parameterAttributes");
         
         // Verify special characters are stripped from destinationName values
         Map<String, Object> dest0 = findParameterWithDestinationOrder(params, "destinationName", 0);
@@ -707,19 +707,19 @@ class OrdersTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> flows = (List<Map<String, Object>>) ordersJson.get("deliveryFlows");
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.getFirst().get("destinations");
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
         
         assertEquals(1, destinations.size(), "Should have one destination");
         
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> functionalRoles = (List<Map<String, String>>) destinations.getFirst().get("functionalRoles");
+        List<Map<String, String>> functionalRoles = (List<Map<String, String>>) destinations.get(0).get("functionalRoles");
         
         assertNotNull(functionalRoles);
         assertEquals(2, functionalRoles.size(), "Should have two functional roles from the two Room keywords");
         
         // Verify the two functional roles
-        assertEquals("BCH", functionalRoles.getFirst().get("facilityName"));
-        assertEquals("Nurse", functionalRoles.getFirst().get("name"));
+        assertEquals("BCH", functionalRoles.get(0).get("facilityName"));
+        assertEquals("Nurse", functionalRoles.get(0).get("name"));
         
         assertEquals("BCH", functionalRoles.get(1).get("facilityName"));
         assertEquals("CNA", functionalRoles.get(1).get("name"));
@@ -786,7 +786,7 @@ class OrdersTest {
         assertEquals(1, flows.size());
         
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.getFirst().get("destinations");
+        List<Map<String, Object>> destinations = (List<Map<String, Object>>) flows.get(0).get("destinations");
         assertNotNull(destinations);
         
         // Verify that none of the destinations have "NoDeliveries" as destinationType

@@ -100,7 +100,7 @@ class GetColLooseTest {
         // Verify: the EMDAN row should be in clinicals
         assertEquals(0, parser.nurseCalls.size(), "EMDAN alarm should be moved from NurseCalls");
         assertEquals(1, parser.clinicals.size(), "EMDAN alarm should be in Clinicals");
-        assertEquals("Bed Exit Call", parser.clinicals.getFirst().alarmName, "EMDAN alarm should be in Clinicals");
+        assertEquals("Bed Exit Call", parser.clinicals.get(0).alarmName, "EMDAN alarm should be in Clinicals");
         assertEquals(1, parser.getEmdanMovedCount(), "Should count 1 EMDAN row moved");
     }
 

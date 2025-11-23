@@ -87,7 +87,7 @@ class XmlParserRoleExtractionTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getClinicals().size(), "Should have 1 clinical alert");
-        ExcelParserV5.FlowRow flow = parser.getClinicals().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getClinicals().get(0);
         
         // Verify ALL roles are captured, formatted with VAssign:[Room] prefix and separated by newlines
         String expected = """
@@ -172,7 +172,7 @@ class XmlParserRoleExtractionTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getClinicals().size(), "Should have 1 clinical alert");
-        ExcelParserV5.FlowRow flow = parser.getClinicals().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getClinicals().get(0);
         
         // Verify exclusion notation is used
         String expected = "AllRoles_except_PCT,TECH";
@@ -248,7 +248,7 @@ class XmlParserRoleExtractionTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getClinicals().size(), "Should have 1 clinical alert");
-        ExcelParserV5.FlowRow flow = parser.getClinicals().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getClinicals().get(0);
         
         // Should only use "Nurse" from the filter value, not "RN and PCT" from view name/description
         String expected = "VAssign:[Room] Nurse";
@@ -325,7 +325,7 @@ class XmlParserRoleExtractionTest {
         parser.load(xmlFile);
         
         assertEquals(1, parser.getClinicals().size(), "Should have 1 clinical alert");
-        ExcelParserV5.FlowRow flow = parser.getClinicals().getFirst();
+        ExcelParserV5.FlowRow flow = parser.getClinicals().get(0);
         
         // Verify ALL roles are captured with "equal" relation
         String expected = "VAssign:[Room] RN\nVAssign:[Room] Charge Nurse";

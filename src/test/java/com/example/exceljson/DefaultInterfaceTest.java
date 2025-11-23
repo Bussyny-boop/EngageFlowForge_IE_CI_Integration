@@ -90,7 +90,7 @@ class DefaultInterfaceTest {
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
         // Check blank device flow has no interfaces
-        var blankFlow = (Map<?, ?>) flows.getFirst();
+        var blankFlow = (Map<?, ?>) flows.get(0);
         var blankInterfaces = (List<?>) blankFlow.get("interfaces");
         assertTrue(blankInterfaces.isEmpty(), "Blank device with no defaults should have no interfaces");
 
@@ -118,11 +118,11 @@ class DefaultInterfaceTest {
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
         // Check blank device flow gets Edge interface
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(1, interfaces.size(), "Should have 1 interface from default");
         
-        var iface = (Map<?, ?>) interfaces.getFirst();
+        var iface = (Map<?, ?>) interfaces.get(0);
         assertEquals("OutgoingWCTP", iface.get("componentName"), "Should use OutgoingWCTP component");
         assertEquals("OutgoingWCTP", iface.get("referenceName"), "Should use default OutgoingWCTP reference");
 
@@ -150,11 +150,11 @@ class DefaultInterfaceTest {
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
         // Check blank device flow gets VMP interface
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(1, interfaces.size(), "Should have 1 interface from default");
         
-        var iface = (Map<?, ?>) interfaces.getFirst();
+        var iface = (Map<?, ?>) interfaces.get(0);
         assertEquals("VMP", iface.get("componentName"), "Should use VMP component");
         assertEquals("VMP", iface.get("referenceName"), "Should use default VMP reference");
 
@@ -182,11 +182,11 @@ class DefaultInterfaceTest {
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
         // Check blank device flow gets both interfaces
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(2, interfaces.size(), "Should have 2 interfaces from defaults");
         
-        var iface1 = (Map<?, ?>) interfaces.getFirst();
+        var iface1 = (Map<?, ?>) interfaces.get(0);
         assertEquals("OutgoingWCTP", iface1.get("componentName"), "First should be OutgoingWCTP");
         assertEquals("OutgoingWCTP", iface1.get("referenceName"));
         
@@ -216,11 +216,11 @@ class DefaultInterfaceTest {
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
         
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         assertEquals(2, interfaces.size(), "Should have 2 interfaces");
         
-        var iface1 = (Map<?, ?>) interfaces.getFirst();
+        var iface1 = (Map<?, ?>) interfaces.get(0);
         assertEquals("OutgoingWCTP", iface1.get("componentName"));
         assertEquals("CustomEdge", iface1.get("referenceName"), "Should use custom Edge reference");
         
@@ -299,17 +299,17 @@ class DefaultInterfaceTest {
         assertEquals(2, flows.size(), "Should have 2 flows");
 
         // First flow (blank device) should use default VMP
-        var blankFlow = (Map<?, ?>) flows.getFirst();
+        var blankFlow = (Map<?, ?>) flows.get(0);
         var blankInterfaces = (List<?>) blankFlow.get("interfaces");
         assertEquals(1, blankInterfaces.size(), "Blank device should use default");
-        var blankIface = (Map<?, ?>) blankInterfaces.getFirst();
+        var blankIface = (Map<?, ?>) blankInterfaces.get(0);
         assertEquals("VMP", blankIface.get("componentName"), "Blank should use default VMP");
 
         // Second flow (Edge device) should use Edge, NOT default
         var edgeFlow = (Map<?, ?>) flows.get(1);
         var edgeInterfaces = (List<?>) edgeFlow.get("interfaces");
         assertEquals(1, edgeInterfaces.size(), "Edge device should have interface from device");
-        var edgeIface = (Map<?, ?>) edgeInterfaces.getFirst();
+        var edgeIface = (Map<?, ?>) edgeInterfaces.get(0);
         assertEquals("OutgoingWCTP", edgeIface.get("componentName"), "Edge should use OutgoingWCTP from device");
 
         // Clean up
@@ -386,10 +386,10 @@ class DefaultInterfaceTest {
         assertEquals(2, flows.size(), "Should have 2 flows");
 
         // First flow (Smartphone device, no Edge/VCS) should use default Edge
-        var smartphoneFlow = (Map<?, ?>) flows.getFirst();
+        var smartphoneFlow = (Map<?, ?>) flows.get(0);
         var smartphoneInterfaces = (List<?>) smartphoneFlow.get("interfaces");
         assertEquals(1, smartphoneInterfaces.size(), "Smartphone device should use default");
-        var smartphoneIface = (Map<?, ?>) smartphoneInterfaces.getFirst();
+        var smartphoneIface = (Map<?, ?>) smartphoneInterfaces.get(0);
         assertEquals("OutgoingWCTP", smartphoneIface.get("componentName"), 
             "Smartphone should use default Edge (OutgoingWCTP)");
 
@@ -397,7 +397,7 @@ class DefaultInterfaceTest {
         var badgeFlow = (Map<?, ?>) flows.get(1);
         var badgeInterfaces = (List<?>) badgeFlow.get("interfaces");
         assertEquals(1, badgeInterfaces.size(), "Badge device should use default");
-        var badgeIface = (Map<?, ?>) badgeInterfaces.getFirst();
+        var badgeIface = (Map<?, ?>) badgeInterfaces.get(0);
         assertEquals("OutgoingWCTP", badgeIface.get("componentName"), 
             "Badge should use default Edge (OutgoingWCTP)");
 
@@ -466,10 +466,10 @@ class DefaultInterfaceTest {
         assertEquals(1, flows.size(), "Should have 1 flow");
 
         // Flow with Edge should use Edge from device, NOT default VMP
-        var edgeFlow = (Map<?, ?>) flows.getFirst();
+        var edgeFlow = (Map<?, ?>) flows.get(0);
         var edgeInterfaces = (List<?>) edgeFlow.get("interfaces");
         assertEquals(1, edgeInterfaces.size(), "Edge device should have interface from device");
-        var edgeIface = (Map<?, ?>) edgeInterfaces.getFirst();
+        var edgeIface = (Map<?, ?>) edgeInterfaces.get(0);
         assertEquals("OutgoingWCTP", edgeIface.get("componentName"), 
             "Edge should use OutgoingWCTP from device, not default VMP");
 
@@ -538,10 +538,10 @@ class DefaultInterfaceTest {
         assertEquals(1, flows.size(), "Should have 1 flow");
 
         // Flow with VCS should use VCS from device, NOT default Edge
-        var vcsFlow = (Map<?, ?>) flows.getFirst();
+        var vcsFlow = (Map<?, ?>) flows.get(0);
         var vcsInterfaces = (List<?>) vcsFlow.get("interfaces");
         assertEquals(1, vcsInterfaces.size(), "VCS device should have interface from device");
-        var vcsIface = (Map<?, ?>) vcsInterfaces.getFirst();
+        var vcsIface = (Map<?, ?>) vcsInterfaces.get(0);
         assertEquals("VMP", vcsIface.get("componentName"), 
             "VCS should use VMP from device, not default Edge");
 

@@ -43,8 +43,8 @@ class JsonEscalateAfterMappingTest {
         p.loadJson(f);
 
         assertEquals(1, p.nurseCalls.size());
-        assertEquals("1 decline", p.nurseCalls.getFirst().escalateAfter);
-        assertEquals("Accept", p.nurseCalls.getFirst().responseOptions, "Response options should map from Accept/Decline");
+        assertEquals("1 decline", p.nurseCalls.get(0).escalateAfter);
+        assertEquals("Accept", p.nurseCalls.get(0).responseOptions, "Response options should map from Accept/Decline");
     }
 
     @Test
@@ -79,6 +79,6 @@ class JsonEscalateAfterMappingTest {
         p.loadJson(f);
 
         assertEquals(1, p.nurseCalls.size());
-        assertEquals("All declines", p.nurseCalls.getFirst().escalateAfter);
+        assertEquals("All declines", p.nurseCalls.get(0).escalateAfter);
     }
 }

@@ -111,7 +111,7 @@ public class StateBasedEscalationTest {
         }
         
         // Verify that settings from SEND rules are applied
-        ExcelParserV5.FlowRow flow = clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
         assertEquals("VMP", flow.deviceA, "Device should be set from component attribute");
         assertNotNull(flow.ttlValue, "TTL should be set from settings");
         assertNotNull(flow.priorityRaw, "Priority should be set from settings");

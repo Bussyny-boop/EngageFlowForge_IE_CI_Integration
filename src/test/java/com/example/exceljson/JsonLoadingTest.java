@@ -57,7 +57,7 @@ class JsonLoadingTest {
         // Verify that the flow was loaded
         assertEquals(1, parser.nurseCalls.size(), "Should load 1 nurse call flow");
         
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
         assertEquals("Test Alarm", flow.alarmName);
         assertEquals("urgent", flow.priorityRaw.toLowerCase());
         assertEquals("Group 1", flow.configGroup);
@@ -121,8 +121,8 @@ class JsonLoadingTest {
         assertEquals(1, parser.nurseCalls.size(), "Should load 1 nurse call flow");
         assertEquals(1, parser.clinicals.size(), "Should load 1 clinical flow");
         
-        assertEquals("Nurse Alarm", parser.nurseCalls.getFirst().alarmName);
-        assertEquals("Clinical Alarm", parser.clinicals.getFirst().alarmName);
+        assertEquals("Nurse Alarm", parser.nurseCalls.get(0).alarmName);
+        assertEquals("Clinical Alarm", parser.clinicals.get(0).alarmName);
     }
 
     @Test
@@ -167,7 +167,7 @@ class JsonLoadingTest {
         
         // Verify parameter attributes were parsed
         assertEquals(1, parser.nurseCalls.size());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
         
         // Reverse-mapped values from JSON to GUI-friendly forms
         assertEquals("Yes", flow.breakThroughDND);
@@ -204,7 +204,7 @@ class JsonLoadingTest {
         
         // Verify the data survived the round trip
         assertEquals(1, parser2.nurseCalls.size());
-        ExcelParserV5.FlowRow loadedFlow = parser2.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow loadedFlow = parser2.nurseCalls.get(0);
         
         assertEquals("Round Trip Test", loadedFlow.alarmName);
         assertEquals("urgent", loadedFlow.priorityRaw.toLowerCase());

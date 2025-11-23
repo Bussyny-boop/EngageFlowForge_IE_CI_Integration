@@ -81,14 +81,14 @@ class CustomUnitManualVerificationTest {
         assertEquals(2, flows.size(), "Should have two flows (normal and urgent)");
         
         // Verify Normal Priority Flow
-        Map<String, Object> normalFlow = flows.getFirst();
+        Map<String, Object> normalFlow = flows.get(0);
         assertEquals("normal", normalFlow.get("priority"));
         
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> normalConditions = (List<Map<String, Object>>) normalFlow.get("conditions");
         assertEquals(1, normalConditions.size(), "Normal flow should have 1 condition");
         
-        Map<String, Object> normalCondition = normalConditions.getFirst();
+        Map<String, Object> normalCondition = normalConditions.get(0);
         assertEquals("Custom All Assigned Nurse and CNA", normalCondition.get("name"));
         assertEquals(0, normalCondition.get("destinationOrder"));
         
@@ -97,7 +97,7 @@ class CustomUnitManualVerificationTest {
         assertEquals(3, normalFilters.size(), "Normal priority should have 3 filters");
         
         // Verify filter structure
-        Map<String, Object> roleFilter = normalFilters.getFirst();
+        Map<String, Object> roleFilter = normalFilters.get(0);
         assertEquals("bed.room.unit.rooms.beds.locs.assignments.role.name", roleFilter.get("attributePath"));
         assertEquals("in", roleFilter.get("operator"));
         assertEquals("Nurse, CNA", roleFilter.get("value"));
@@ -115,7 +115,7 @@ class CustomUnitManualVerificationTest {
         List<Map<String, Object>> normalDestinations = (List<Map<String, Object>>) normalFlow.get("destinations");
         assertEquals(1, normalDestinations.size());
         
-        Map<String, Object> normalDest = normalDestinations.getFirst();
+        Map<String, Object> normalDest = normalDestinations.get(0);
         assertEquals("custom", normalDest.get("recipientType"));
         assertEquals("bed.room.unit.rooms.beds.locs.assignments.usr.devices.lines.number", normalDest.get("attributePath"));
         assertEquals(5, normalDest.get("delayTime"), "Should use the delay time from Excel");
@@ -129,7 +129,7 @@ class CustomUnitManualVerificationTest {
         List<Map<String, Object>> urgentConditions = (List<Map<String, Object>>) urgentFlow.get("conditions");
         assertEquals(1, urgentConditions.size(), "Urgent flow should have 1 condition");
         
-        Map<String, Object> urgentCondition = urgentConditions.getFirst();
+        Map<String, Object> urgentCondition = urgentConditions.get(0);
         assertEquals("Custom All Assigned Nurse and CNA and Charge Nurse", urgentCondition.get("name"));
         
         @SuppressWarnings("unchecked")
@@ -146,7 +146,7 @@ class CustomUnitManualVerificationTest {
         List<Map<String, Object>> urgentDestinations = (List<Map<String, Object>>) urgentFlow.get("destinations");
         assertEquals(1, urgentDestinations.size());
         
-        Map<String, Object> urgentDest = urgentDestinations.getFirst();
+        Map<String, Object> urgentDest = urgentDestinations.get(0);
         assertEquals("custom", urgentDest.get("recipientType"));
         assertEquals(3, urgentDest.get("delayTime"), "Should use the delay time from Excel");
         
@@ -213,7 +213,7 @@ class CustomUnitManualVerificationTest {
         List<Map<String, Object>> flows = (List<Map<String, Object>>) nurseJson.get("deliveryFlows");
         assertEquals(1, flows.size(), "Should have one flow");
         
-        Map<String, Object> flow = flows.getFirst();
+        Map<String, Object> flow = flows.get(0);
         
         // Check that we have 1 condition (for Custom Unit)
         @SuppressWarnings("unchecked")
@@ -226,7 +226,7 @@ class CustomUnitManualVerificationTest {
         assertEquals(2, destinations.size(), "Should have 2 destinations");
         
         // First destination should be Custom Unit
-        Map<String, Object> customDest = destinations.getFirst();
+        Map<String, Object> customDest = destinations.get(0);
         assertEquals("custom", customDest.get("recipientType"));
         assertEquals(0, customDest.get("order"));
         

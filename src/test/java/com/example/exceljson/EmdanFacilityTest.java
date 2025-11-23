@@ -83,7 +83,7 @@ class EmdanFacilityTest {
 
         // Verify the alarm was moved to clinicals
         assertEquals(1, parser.clinicals.size(), "EMDAN alarm should be in clinicals");
-        assertEquals("SpO2 Desat", parser.clinicals.getFirst().alarmName);
+        assertEquals("SpO2 Desat", parser.clinicals.get(0).alarmName);
         
         // Build clinicals JSON
         Map<String,Object> json = parser.buildClinicalsJson();
@@ -94,7 +94,7 @@ class EmdanFacilityTest {
         assertNotNull(flows, "deliveryFlows should not be null");
         assertEquals(1, flows.size(), "Should have 1 delivery flow");
         
-        Map<String,Object> flow = flows.getFirst();
+        Map<String,Object> flow = flows.get(0);
         
         // Extract destinations
         @SuppressWarnings("unchecked")
@@ -103,14 +103,14 @@ class EmdanFacilityTest {
         assertTrue(destinations.size() > 0, "Should have at least 1 destination");
         
         // Check the first destination (functional role)
-        Map<String,Object> destination = destinations.getFirst();
+        Map<String,Object> destination = destinations.get(0);
         
         @SuppressWarnings("unchecked")
         List<Map<String,String>> functionalRoles = (List<Map<String,String>>) destination.get("functionalRoles");
         assertNotNull(functionalRoles, "functionalRoles should not be null");
         assertEquals(1, functionalRoles.size(), "Should have 1 functional role");
         
-        Map<String,String> role = functionalRoles.getFirst();
+        Map<String,String> role = functionalRoles.get(0);
         assertEquals("Nurse", role.get("name"), "Role name should be Nurse");
         assertEquals("BCH", role.get("facilityName"), "Facility name should be BCH (not empty)");
         
@@ -119,8 +119,8 @@ class EmdanFacilityTest {
         List<Map<String,String>> units = (List<Map<String,String>>) flow.get("units");
         assertNotNull(units, "units should not be null");
         assertEquals(1, units.size(), "Should have 1 unit");
-        assertEquals("BCH", units.getFirst().get("facilityName"), "Unit facility should be BCH");
-        assertEquals("MedSurg", units.getFirst().get("name"), "Unit name should be MedSurg");
+        assertEquals("BCH", units.get(0).get("facilityName"), "Unit facility should be BCH");
+        assertEquals("MedSurg", units.get(0).get("name"), "Unit name should be MedSurg");
     }
 
     /**
@@ -186,19 +186,19 @@ class EmdanFacilityTest {
         // Extract the delivery flow
         @SuppressWarnings("unchecked")
         List<Map<String,Object>> flows = (List<Map<String,Object>>) json.get("deliveryFlows");
-        Map<String,Object> flow = flows.getFirst();
+        Map<String,Object> flow = flows.get(0);
         
         // Extract destinations
         @SuppressWarnings("unchecked")
         List<Map<String,Object>> destinations = (List<Map<String,Object>>) flow.get("destinations");
-        Map<String,Object> destination = destinations.getFirst();
+        Map<String,Object> destination = destinations.get(0);
         
         @SuppressWarnings("unchecked")
         List<Map<String,String>> groups = (List<Map<String,String>>) destination.get("groups");
         assertNotNull(groups, "groups should not be null");
         assertEquals(1, groups.size(), "Should have 1 group");
         
-        Map<String,String> group = groups.getFirst();
+        Map<String,String> group = groups.get(0);
         assertEquals("Acute Care Nurse", group.get("name"), "Group name should be Acute Care Nurse");
         assertEquals("BCH", group.get("facilityName"), "Facility name should be BCH (not empty)");
     }

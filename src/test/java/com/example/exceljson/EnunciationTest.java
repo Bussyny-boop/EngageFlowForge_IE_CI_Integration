@@ -49,7 +49,7 @@ class EnunciationTest {
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify enunciate is true (not quoted)
@@ -71,7 +71,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true for 'y'");
@@ -92,7 +92,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true for 'Enunciate'");
@@ -113,7 +113,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true for 'Enunciation'");
@@ -134,7 +134,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true for 'True'");
@@ -155,7 +155,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "false", "Enunciate should be false for 'No'");
@@ -176,7 +176,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "false", "Enunciate should be false for 'N'");
@@ -197,7 +197,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "false", "Enunciate should be false for 'False'");
@@ -218,7 +218,7 @@ class EnunciationTest {
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "false", "Enunciate should default to false when blank");
@@ -239,7 +239,7 @@ class EnunciationTest {
 
         // Verify the field is parsed correctly
         assertEquals(1, parser.nurseCalls.size(), "Should have 1 nurse call row");
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
         assertEquals("Yes", nurseCall.enunciate, "Enunciate field should be parsed as 'Yes'");
 
         Files.deleteIfExists(excelFile.toPath());
@@ -265,7 +265,7 @@ class EnunciationTest {
 
         // Verify field is preserved
         assertEquals(1, parser2.nurseCalls.size());
-        ExcelParserV5.FlowRow nurseCall = parser2.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser2.nurseCalls.get(0);
         assertEquals("Yes", nurseCall.enunciate, "Enunciate field should be preserved in export");
 
         Files.deleteIfExists(inputFile.toPath());
@@ -293,7 +293,7 @@ class EnunciationTest {
             parser.load(excelFile);
 
             assertEquals(1, parser.nurseCalls.size(), "Should parse row with column: " + columnName);
-            ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+            ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
             assertEquals("Yes", nurseCall.enunciate, 
                 "Should parse enunciate from column: " + columnName);
 
@@ -319,7 +319,7 @@ class EnunciationTest {
 
             var nurseJson = parser.buildNurseCallsJson();
             var flows = (List<?>) nurseJson.get("deliveryFlows");
-            var flow = (Map<?, ?>) flows.getFirst();
+            var flow = (Map<?, ?>) flows.get(0);
             var params = (List<?>) flow.get("parameterAttributes");
 
             assertEnunciateValue(params, "true", 
@@ -409,12 +409,12 @@ class EnunciationTest {
         parser.load(excelFile);
 
         assertEquals(1, parser.nurseCalls.size(), "Should parse row with Genie Enunciation column");
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
         assertEquals("Yes", nurseCall.enunciate, "Should parse enunciate value");
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true for 'Yes'");
@@ -436,13 +436,13 @@ class EnunciationTest {
 
         // Should use the value from the first column
         assertEquals(1, parser.nurseCalls.size());
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
         assertEquals("Yes", nurseCall.enunciate, 
             "Should extract from first column when it has a value");
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true from first column");
@@ -464,13 +464,13 @@ class EnunciationTest {
 
         // Should use the value from the second column
         assertEquals(1, parser.nurseCalls.size());
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
         assertEquals("No", nurseCall.enunciate, 
             "Should extract from second column when first is empty");
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "false", "Enunciate should be false from second column");
@@ -492,13 +492,13 @@ class EnunciationTest {
 
         // Should use the value from the first column (priority to first match)
         assertEquals(1, parser.nurseCalls.size());
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
         assertEquals("Yes", nurseCall.enunciate, 
             "Should extract from first column when both have values");
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "true", "Enunciate should be true from first column");
@@ -520,13 +520,13 @@ class EnunciationTest {
 
         // Should default to empty (which then defaults to true in JSON)
         assertEquals(1, parser.nurseCalls.size());
-        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow nurseCall = parser.nurseCalls.get(0);
         assertEquals("", nurseCall.enunciate, 
             "Should be empty when both columns are empty");
 
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         assertEnunciateValue(params, "false", "Enunciate should default to false when both empty");

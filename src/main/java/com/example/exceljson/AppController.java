@@ -3923,12 +3923,12 @@ public class AppController {
         for (List<ExcelParserV5.FlowRow> group : groupedRows.values()) {
             if (group.size() == 1) {
                 // No duplicates, add as is
-                combinedRows.add(group.getFirst());
+                combinedRows.add(group.get(0));
             } else {
                 // Multiple rows with same fields but different config groups
                 // Combine them into one row
                 ExcelParserV5.FlowRow combined = new ExcelParserV5.FlowRow();
-                ExcelParserV5.FlowRow first = group.getFirst();
+                ExcelParserV5.FlowRow first = group.get(0);
                 
                 // Copy all fields from first row
                 copyFlowRow(first, combined);
@@ -4228,7 +4228,8 @@ public class AppController {
                             boolean hasGroupNameHeader = false;
                             
                             for (int i = 0; i < headers.length; i++) {
-                                if (headers[i].trim().equalsIgnoreCase("Group Name")) {
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
+                                if (headerValue.equalsIgnoreCase("Group Name")) {
                                     groupNameColumn = i;
                                     hasGroupNameHeader = true;
                                     break;
@@ -4269,7 +4270,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim();
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                         if (headerValue.equalsIgnoreCase("Group Name")) {
                                             groupNameColumn = i;
                                             hasGroupNameHeader = true;
@@ -4391,7 +4392,7 @@ public class AppController {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                 if (headerValue.equalsIgnoreCase("Name")) {
                                     nameColumn = i;
                                     break;
@@ -4424,7 +4425,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                         if (headerValue.equalsIgnoreCase("Name")) {
                                             nameColumn = i;
                                             break;
@@ -4541,7 +4542,7 @@ public class AppController {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                 if (header.equalsIgnoreCase("Department") || header.equalsIgnoreCase("Unit")) {
                                     unitColumn = i;
                                     break;
@@ -4574,7 +4575,7 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, ""); // Remove trailing asterisks
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
                                         if (headerValue.equalsIgnoreCase("Department") || headerValue.equalsIgnoreCase("Unit")) {
                                             unitColumn = i;
                                             break;

@@ -71,7 +71,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty(), "Should have parsed nurse calls");
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
         assertEquals("VAssign:[Room] Charge Nurse", flow.r1, "First recipient should be Charge Nurse with VAssign prefix");
         assertEquals("", flow.t1, "First delay should be 0 (empty)");
@@ -123,7 +123,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.clinicals.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = parser.clinicals.get(0);
 
         // Should have all recipients newline-separated
         String expected = "VAssign:[Room] Nurse\nVAssign:[Room] Tech\nVGroup: Team A\nVGroup: Team B";
@@ -159,7 +159,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
         assertEquals("Hospital_ICU_OldConfig", flow.configGroup,
                 "Config group should use Facility_Unit_Dataset format");
@@ -197,7 +197,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
         // Reverse-mapped values should reflect GUI inputs
         assertEquals("Yes", flow.breakThroughDND);
@@ -238,7 +238,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
         assertEquals("VGroup: Team1", flow.r1);
         assertEquals("", flow.t1);
@@ -288,7 +288,7 @@ public class JsonParserEnhancedTest {
         parser.loadJson(jsonFile);
 
         assertFalse(parser.nurseCalls.isEmpty());
-        ExcelParserV5.FlowRow flow = parser.nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = parser.nurseCalls.get(0);
 
         // Verify all fields were parsed
         assertEquals("Round Trip", flow.alarmName);

@@ -72,7 +72,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         assertEquals(1, clinicals.size(), "Should have 1 clinical row");
         
-        ExcelParserV5.FlowRow flow = clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
         
         // Verify response options were extracted
         assertEquals("Acknowledge,Escalate", flow.responseOptions,
@@ -131,7 +131,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
         assertEquals(1, nurseCalls.size(), "Should have 1 nurse call row");
         
-        ExcelParserV5.FlowRow flow = nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = nurseCalls.get(0);
         
         // Verify enunciation was extracted and normalized
         assertEquals("ENUNCIATE", flow.enunciate,
@@ -189,7 +189,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         assertEquals(1, clinicals.size(), "Should have 1 clinical row");
         
-        ExcelParserV5.FlowRow flow = clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
         
         // Verify EMDAN field is set to "Yes" for Clinicals dataset
         assertEquals("Yes", flow.emdan,
@@ -247,7 +247,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
         assertEquals(1, nurseCalls.size(), "Should have 1 nurse call row");
         
-        ExcelParserV5.FlowRow flow = nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = nurseCalls.get(0);
         
         // Verify EMDAN field is set to "No" for NurseCalls dataset
         assertEquals("No", flow.emdan,
@@ -305,7 +305,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         assertEquals(1, clinicals.size(), "Should have 1 clinical row");
         
-        ExcelParserV5.FlowRow flow = clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
         
         // Verify escalateAfter field is set to "1 decline"
         assertEquals("1 decline", flow.escalateAfter,
@@ -367,7 +367,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> nurseCalls = parser.getNurseCalls();
         assertEquals(1, nurseCalls.size(), "Should have 1 nurse call row");
         
-        ExcelParserV5.FlowRow flow = nurseCalls.getFirst();
+        ExcelParserV5.FlowRow flow = nurseCalls.get(0);
         
         // Verify response options were extracted from responses array
         assertEquals("Acknowledge,Escalate", flow.responseOptions,
@@ -427,7 +427,7 @@ class XmlParserSettingsTest {
         List<ExcelParserV5.FlowRow> clinicals = parser.getClinicals();
         assertEquals(1, clinicals.size(), "Should have 1 clinical row");
         
-        ExcelParserV5.FlowRow flow = clinicals.getFirst();
+        ExcelParserV5.FlowRow flow = clinicals.get(0);
         
         // Verify all fields
         assertEquals("Acknowledge,Escalate", flow.responseOptions,

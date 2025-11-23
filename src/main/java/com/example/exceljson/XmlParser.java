@@ -1857,7 +1857,7 @@ public class XmlParser {
         template.sendingName = displayAlertName;
 
         // Get reference rule for common fields (use first rule from first state)
-        Rule refRule = sendByState.values().iterator().next().getFirst();
+        Rule refRule = sendByState.values().iterator().next().get(0);
         template.deviceA = mapComponent(refRule.component);
 
         // Set initial timing (T1) based on CREATE rules
@@ -1879,7 +1879,7 @@ public class XmlParser {
 
             if (sendRules != null && !sendRules.isEmpty()) {
                 // Use first rule for this state
-                Rule sendRule = sendRules.getFirst();
+                Rule sendRule = sendRules.get(0);
                 String recipient = extractDestination(sendRule);
                 setRecipient(template, i + 1, recipient, sendRule.roleFromView);
 

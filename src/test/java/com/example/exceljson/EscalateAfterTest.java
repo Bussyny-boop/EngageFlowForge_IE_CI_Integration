@@ -50,7 +50,7 @@ class EscalateAfterTest {
         assertNotNull(flows, "Delivery flows should not be null");
         assertEquals(1, flows.size(), "Should have 1 nurse call flow");
 
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
         assertNotNull(params, "Parameter attributes should not be null");
 
@@ -78,7 +78,7 @@ class EscalateAfterTest {
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify declineCount parameter does NOT exist
@@ -104,7 +104,7 @@ class EscalateAfterTest {
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify declineCount parameter does NOT exist
@@ -130,7 +130,7 @@ class EscalateAfterTest {
         // Build JSON for nurse calls
         var nurseJson = parser.buildNurseCallsJson();
         var flows = (List<?>) nurseJson.get("deliveryFlows");
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
 
         // Verify declineCount parameter exists (case-insensitive check)
@@ -160,7 +160,7 @@ class EscalateAfterTest {
         assertNotNull(flows, "Delivery flows should not be null");
         assertEquals(1, flows.size(), "Should have 1 clinical flow");
 
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var params = (List<?>) flow.get("parameterAttributes");
         assertNotNull(params, "Parameter attributes should not be null");
 

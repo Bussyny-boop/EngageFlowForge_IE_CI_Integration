@@ -37,12 +37,12 @@ class VcsCheckboxLabelTest {
         var flows = (List<?>) json.get("deliveryFlows");
         assertEquals(1, flows.size());
 
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         
         // Verify Edge checkbox generates OutgoingWCTP interface
         assertEquals(1, interfaces.size(), "Edge checkbox should generate 1 interface");
-        var iface = (Map<?, ?>) interfaces.getFirst();
+        var iface = (Map<?, ?>) interfaces.get(0);
         assertEquals("OutgoingWCTP", iface.get("componentName"), 
             "Edge checkbox should generate OutgoingWCTP component");
         assertEquals("OutgoingWCTP", iface.get("referenceName"),
@@ -70,12 +70,12 @@ class VcsCheckboxLabelTest {
         var flows = (List<?>) json.get("deliveryFlows");
         assertEquals(1, flows.size());
 
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         
         // Verify VCS checkbox generates VMP interface
         assertEquals(1, interfaces.size(), "VCS checkbox should generate 1 interface");
-        var iface = (Map<?, ?>) interfaces.getFirst();
+        var iface = (Map<?, ?>) interfaces.get(0);
         assertEquals("VMP", iface.get("componentName"), 
             "VCS checkbox should generate VMP component");
         assertEquals("VMP", iface.get("referenceName"),
@@ -103,13 +103,13 @@ class VcsCheckboxLabelTest {
         var flows = (List<?>) json.get("deliveryFlows");
         assertEquals(1, flows.size());
 
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         
         // Verify both checkboxes generate both interfaces
         assertEquals(2, interfaces.size(), "Both checkboxes should generate 2 interfaces");
         
-        var iface1 = (Map<?, ?>) interfaces.getFirst();
+        var iface1 = (Map<?, ?>) interfaces.get(0);
         assertEquals("OutgoingWCTP", iface1.get("componentName"), 
             "First interface should be OutgoingWCTP");
         assertEquals("OutgoingWCTP", iface1.get("referenceName"));
@@ -139,7 +139,7 @@ class VcsCheckboxLabelTest {
         var flows = (List<?>) json.get("deliveryFlows");
         assertEquals(1, flows.size());
 
-        var flow = (Map<?, ?>) flows.getFirst();
+        var flow = (Map<?, ?>) flows.get(0);
         var interfaces = (List<?>) flow.get("interfaces");
         
         // Verify interfaces are empty when no checkboxes are selected
