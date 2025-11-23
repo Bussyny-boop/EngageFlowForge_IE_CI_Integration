@@ -5777,8 +5777,7 @@ public class AppController {
         onNdwLoadComplete = () -> {
             if (currentExcelFile != null) {
                 // NDW loaded successfully in CI mode
-                // Keep the load buttons visible so users can load other files if needed
-                // (Removed the code that was hiding loadButtonsContainer and loadDataLabel)
+                // Keep load buttons visible in CI mode to allow loading additional files after NDW is loaded
                 
                 // Show validation instructions
                 showValidationDataDialog();
