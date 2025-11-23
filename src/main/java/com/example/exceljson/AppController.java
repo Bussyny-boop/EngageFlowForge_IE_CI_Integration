@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Modality;
 import javafx.util.Duration;
 import javafx.concurrent.Task;
 import javafx.scene.control.SpinnerValueFactory;
@@ -95,6 +96,7 @@ public class AppController {
     @FXML private Button loadJsonButton;
     @FXML private Button saveExcelButton;
     @FXML private Button saveExcelAsButton;
+    @FXML private Button saveOnNdwButton; // CI mode only - save changes back to NDW
     @FXML private Button clearAllButton;
     @FXML private Button generateJsonButton;
     @FXML private Button exportNurseJsonButton;
@@ -282,6 +284,9 @@ public class AppController {
     private String lastGeneratedJson = "";
     private boolean lastGeneratedWasNurseSide = true; // Track last generated JSON type
     
+    // User profile (IE or CI mode)
+    private UserProfile userProfile = UserProfile.IE; // Default to IE mode
+    
     // Tab animation
     private FadeTransition tabFadeTransition = null;
 
@@ -386,6 +391,7 @@ public class AppController {
         if (loadJsonButton != null) loadJsonButton.setOnAction(e -> loadJson());
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
+        if (saveOnNdwButton != null) saveOnNdwButton.setOnAction(e -> saveOnNdw());
         if (clearAllButton != null) clearAllButton.setOnAction(e -> clearAllData());
         generateJsonButton.setOnAction(e -> generateCombinedJson());
         exportNurseJsonButton.setOnAction(e -> exportJson("NurseCalls"));
@@ -1835,6 +1841,54 @@ public class AppController {
             showError("Error saving Excel: " + ex.getMessage());
         }
     }
+    
+    // ---------- Save on NDW (CI Mode Only) ----------
+    /**
+     * Saves modified data back to the originally loaded NDW Excel file.
+     * Only updates values that were changed by the user.
+     * This is a CI-mode only feature.
+     */
+    private void saveOnNdw() {
+        try {
+            if (parser == null) {
+                showError("Please load an NDW file first.");
+                return;
+            }
+            
+            if (currentExcelFile == null) {
+                showError("No NDW file is currently loaded.");
+                return;
+            }
+            
+            // Confirm overwrite
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Save on NDW");
+            confirm.setHeaderText("Save changes to NDW file?");
+            confirm.setContentText("This will overwrite the original NDW file:\n" + currentExcelFile.getAbsolutePath());
+            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+                return;
+            }
+            
+            // Sync edits from UI to parser
+            syncEditsToParser();
+            
+            // Show progress
+            showProgressBar("💾 Saving changes to NDW...");
+            
+            // Save to the same file
+            parser.writeExcel(currentExcelFile);
+            
+            // Hide progress and show success
+            hideProgressBar();
+            if (statusLabel != null) {
+                statusLabel.setText("✅ NDW saved successfully");
+            }
+            showInfo("💾 NDW file updated successfully:\n" + currentExcelFile.getAbsolutePath());
+        } catch (Exception ex) {
+            hideProgressBar();
+            showError("Error saving NDW: " + ex.getMessage());
+        }
+    }
 
     // ---------- Generate JSON ----------
     private void generateJson(String flowType) {
@@ -2151,6 +2205,11 @@ public class AppController {
     }
 
     private void setJsonButtonsEnabled(boolean enabled) {
+        // In CI mode, JSON buttons should always stay disabled
+        if (userProfile == UserProfile.CI) {
+            enabled = false;
+        }
+        
         generateJsonButton.setDisable(!enabled);
         exportNurseJsonButton.setDisable(!enabled);
         exportClinicalJsonButton.setDisable(!enabled);
@@ -2161,6 +2220,11 @@ public class AppController {
         if (saveExcelButton != null) saveExcelButton.setDisable(!enabled);
         if (saveExcelAsButton != null) saveExcelAsButton.setDisable(!enabled);
         if (clearAllButton != null) clearAllButton.setDisable(!enabled);
+        
+        // Save on NDW is only enabled in CI mode when data is loaded
+        if (saveOnNdwButton != null && userProfile == UserProfile.CI) {
+            saveOnNdwButton.setDisable(!enabled);
+        }
     }
 
     // ---------- Sync table edits back to parser ----------
@@ -5323,5 +5387,237 @@ public class AppController {
             setter.accept(row, ev.getNewValue());
             if (col.getTableView() != null) col.getTableView().refresh();
         });
+    }
+    
+    // ========== DUAL-PROFILE SYSTEM (IE/CI MODES) ==========
+    
+    /**
+     * Sets the user profile for this session and applies appropriate UI restrictions.
+     */
+    public void setUserProfile(UserProfile profile) {
+        this.userProfile = profile;
+        applyProfileRestrictions();
+    }
+    
+    /**
+     * Gets the current user profile.
+     */
+    public UserProfile getUserProfile() {
+        return this.userProfile;
+    }
+    
+    /**
+     * Apply UI restrictions based on the current profile.
+     * CI mode restricts certain features and shows only allowed settings.
+     */
+    private void applyProfileRestrictions() {
+        if (userProfile == UserProfile.CI) {
+            // Show and enable Save on NDW button (CI only)
+            if (saveOnNdwButton != null) {
+                saveOnNdwButton.setVisible(true);
+                saveOnNdwButton.setManaged(true);
+            }
+            
+            // Disable Export JSON buttons
+            if (generateJsonButton != null) generateJsonButton.setDisable(true);
+            if (exportNurseJsonButton != null) exportNurseJsonButton.setDisable(true);
+            if (exportClinicalJsonButton != null) exportClinicalJsonButton.setDisable(true);
+            if (exportOrdersJsonButton != null) exportOrdersJsonButton.setDisable(true);
+            
+            // Disable Preview JSON button (visualFlowButton)
+            if (visualFlowButton != null) visualFlowButton.setDisable(true);
+            
+            // Disable most settings - keep only: Data Validation, Combine Config Group, Table Row Height
+            // Settings to disable:
+            if (noMergeCheckbox != null) noMergeCheckbox.setDisable(true);
+            if (mergeByConfigGroupCheckbox != null) mergeByConfigGroupCheckbox.setDisable(true);
+            if (mergeAcrossConfigGroupCheckbox != null) mergeAcrossConfigGroupCheckbox.setDisable(true);
+            if (edgeRefNameField != null) edgeRefNameField.setDisable(true);
+            if (vcsRefNameField != null) vcsRefNameField.setDisable(true);
+            if (voceraRefNameField != null) voceraRefNameField.setDisable(true);
+            if (xmppRefNameField != null) xmppRefNameField.setDisable(true);
+            if (defaultEdgeCheckbox != null) defaultEdgeCheckbox.setDisable(true);
+            if (defaultVmpCheckbox != null) defaultVmpCheckbox.setDisable(true);
+            if (defaultVoceraCheckbox != null) defaultVoceraCheckbox.setDisable(true);
+            if (defaultXmppCheckbox != null) defaultXmppCheckbox.setDisable(true);
+            if (resetDefaultsButton != null) resetDefaultsButton.setDisable(true);
+            if (resetPathsButton != null) resetPathsButton.setDisable(true);
+            if (loadedTimeoutSlider != null) loadedTimeoutSlider.setDisable(true);
+            if (loadedTimeoutMinField != null) loadedTimeoutMinField.setDisable(true);
+            if (loadedTimeoutMaxField != null) loadedTimeoutMaxField.setDisable(true);
+            if (roomFilterNursecallField != null) roomFilterNursecallField.setDisable(true);
+            if (roomFilterClinicalField != null) roomFilterClinicalField.setDisable(true);
+            if (roomFilterOrdersField != null) roomFilterOrdersField.setDisable(true);
+            
+            // Custom tab controls should be disabled
+            if (customTabNameField != null) customTabNameField.setDisable(true);
+            if (customTabFlowTypeCombo != null) customTabFlowTypeCombo.setDisable(true);
+            if (addCustomTabButton != null) addCustomTabButton.setDisable(true);
+            if (customTabMappingsList != null) customTabMappingsList.setDisable(true);
+            
+            // Note: Data Validation controls (Voice Group, Assignment Roles, Bed List),
+            // Combine Config Group checkbox, and Row Height sliders remain enabled
+        } else {
+            // IE mode: hide Save on NDW button
+            if (saveOnNdwButton != null) {
+                saveOnNdwButton.setVisible(false);
+                saveOnNdwButton.setManaged(false);
+            }
+        }
+        // IE mode has no other restrictions - all features remain enabled
+    }
+    
+    /**
+     * Shows the CI Action Selection dialog.
+     * This is the main menu for CI users to choose their workflow.
+     */
+    public void showCIActionDialog() {
+        Alert actionDialog = new Alert(Alert.AlertType.NONE);
+        actionDialog.setTitle("Clinical Informatics");
+        actionDialog.setHeaderText("What would you like to do?");
+        actionDialog.initModality(Modality.APPLICATION_MODAL);
+        
+        ButtonType validateNdwBtn = new ButtonType("Validate NDW", ButtonBar.ButtonData.OK_DONE);
+        ButtonType convertXmlBtn = new ButtonType("Convert Engage XML to Excel", ButtonBar.ButtonData.OK_DONE);
+        ButtonType convertRulesBtn = new ButtonType("Convert Engage Rules to Excel", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        
+        actionDialog.getButtonTypes().setAll(validateNdwBtn, convertXmlBtn, convertRulesBtn, cancelBtn);
+        
+        Optional<ButtonType> result = actionDialog.showAndWait();
+        
+        if (result.isPresent()) {
+            if (result.get() == validateNdwBtn) {
+                handleValidateNdwWorkflow();
+            } else if (result.get() == convertXmlBtn) {
+                handleConvertXmlWorkflow();
+            } else if (result.get() == convertRulesBtn) {
+                handleConvertRulesWorkflow();
+            } else if (result.get() == cancelBtn) {
+                // Return to role selection - for now just show the action dialog again
+                // In a production app, we would restart the application or show role selection
+                if (statusLabel != null) statusLabel.setText("CI workflow cancelled. You can use the File menu to load data.");
+            }
+        }
+    }
+    
+    /**
+     * Handle the "Validate NDW" workflow for CI users.
+     * Steps: Load NDW -> Show validation loaders -> Begin Validation or Cancel
+     */
+    private void handleValidateNdwWorkflow() {
+        // Step 1: Automatically open NDW file picker
+        loadNdw();
+        
+        // After NDW is loaded, show validation data load options
+        // We'll use a Platform.runLater to ensure the loadNdw() completes first
+        javafx.application.Platform.runLater(() -> {
+            if (currentExcelFile != null) {
+                showValidationDataDialog();
+            } else {
+                // User cancelled NDW load, return to CI action dialog
+                showCIActionDialog();
+            }
+        });
+    }
+    
+    /**
+     * Shows the validation data loading dialog with options to load Voice Group, 
+     * Assignment Roles, Bedlist, and Clear Loaded Data.
+     */
+    private void showValidationDataDialog() {
+        Alert validationDialog = new Alert(Alert.AlertType.NONE);
+        validationDialog.setTitle("Validation Data");
+        validationDialog.setHeaderText("Load validation datasets");
+        validationDialog.setContentText(
+            "Current NDW file: " + currentExcelFile.getName() + "\n\n" +
+            "Use the buttons below to load validation data, then click Begin Validation."
+        );
+        validationDialog.initModality(Modality.APPLICATION_MODAL);
+        
+        // Create custom buttons for validation loaders
+        ButtonType loadVoiceGroupBtn = new ButtonType("Load Voice Group", ButtonBar.ButtonData.OTHER);
+        ButtonType loadAssignRolesBtn = new ButtonType("Load Assignment Roles", ButtonBar.ButtonData.OTHER);
+        ButtonType loadBedlistBtn = new ButtonType("Load Bedlist", ButtonBar.ButtonData.OTHER);
+        ButtonType clearDataBtn = new ButtonType("Clear Loaded Data", ButtonBar.ButtonData.OTHER);
+        ButtonType beginValidationBtn = new ButtonType("Begin Validation", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        
+        validationDialog.getButtonTypes().setAll(
+            loadVoiceGroupBtn, loadAssignRolesBtn, loadBedlistBtn, clearDataBtn, 
+            beginValidationBtn, cancelBtn
+        );
+        
+        // Handle button clicks in a loop to keep dialog open until Begin Validation or Cancel
+        boolean continueDialog = true;
+        while (continueDialog) {
+            Optional<ButtonType> result = validationDialog.showAndWait();
+            
+            if (result.isPresent()) {
+                if (result.get() == loadVoiceGroupBtn) {
+                    loadVoiceGroups();
+                } else if (result.get() == loadAssignRolesBtn) {
+                    loadAssignmentRoles();
+                } else if (result.get() == loadBedlistBtn) {
+                    loadBedList();
+                } else if (result.get() == clearDataBtn) {
+                    clearVoiceGroups();
+                    clearAssignmentRoles();
+                    clearBedList();
+                    if (statusLabel != null) statusLabel.setText("All validation data cleared.");
+                } else if (result.get() == beginValidationBtn) {
+                    // Run validation and close dialog
+                    runNdwValidation();
+                    continueDialog = false;
+                } else if (result.get() == cancelBtn) {
+                    // Clear validation data and return to CI Homepage
+                    clearVoiceGroups();
+                    clearAssignmentRoles();
+                    clearBedList();
+                    if (statusLabel != null) statusLabel.setText("Validation cancelled. Cleared all loaded validation data.");
+                    continueDialog = false;
+                }
+            } else {
+                // Dialog closed without button click
+                continueDialog = false;
+            }
+        }
+    }
+    
+    /**
+     * Run the NDW validation logic against all loaded datasets.
+     */
+    private void runNdwValidation() {
+        if (statusLabel != null) statusLabel.setText("Running NDW validation...");
+        
+        // The validation is already happening automatically via the table cell factories
+        // that check against loadedVoiceGroups, loadedAssignmentRoles, and loadedBedList
+        // We just need to refresh the tables to trigger validation display
+        
+        if (tableUnits != null) tableUnits.refresh();
+        if (tableNurseCalls != null) tableNurseCalls.refresh();
+        if (tableClinicals != null) tableClinicals.refresh();
+        if (tableOrders != null) tableOrders.refresh();
+        
+        if (statusLabel != null) statusLabel.setText("NDW validation complete. Check highlighted cells for issues.");
+    }
+    
+    /**
+     * Handle the "Convert Engage XML to Excel" workflow for CI users.
+     */
+    private void handleConvertXmlWorkflow() {
+        loadXml();
+        // After loading, we're done - user is at CI Homepage
+        if (statusLabel != null) statusLabel.setText("XML loaded. You can now edit and save to NDW.");
+    }
+    
+    /**
+     * Handle the "Convert Engage Rules to Excel" workflow for CI users.
+     * This loads a JSON file and populates the Excel view.
+     */
+    private void handleConvertRulesWorkflow() {
+        loadJson();
+        // After loading, we're done - user is at CI Homepage
+        if (statusLabel != null) statusLabel.setText("Engage Rules loaded. You can now edit and save to NDW.");
     }
 }
