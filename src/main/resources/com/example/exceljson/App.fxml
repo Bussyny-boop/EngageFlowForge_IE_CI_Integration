@@ -283,43 +283,6 @@
 
                                     <Separator />
                                     
-                                    <!-- Row Height Controls -->
-                                    <Label text="Table Row Height" style="-fx-font-weight:bold;" />
-                                    
-                                    <!-- Units Table Row Height -->
-                                    <Label text="Units Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
-                                    <HBox spacing="10" alignment="CENTER_LEFT">
-                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
-                                        <Slider fx:id="unitsRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
-                                        <Label fx:id="unitsRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
-                                    </HBox>
-                                    
-                                    <!-- Nurse Calls Table Row Height -->
-                                    <Label text="Nurse Calls Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
-                                    <HBox spacing="10" alignment="CENTER_LEFT">
-                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
-                                        <Slider fx:id="nurseCallsRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
-                                        <Label fx:id="nurseCallsRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
-                                    </HBox>
-                                    
-                                    <!-- Clinicals Table Row Height -->
-                                    <Label text="Clinicals Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
-                                    <HBox spacing="10" alignment="CENTER_LEFT">
-                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
-                                        <Slider fx:id="clinicalsRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
-                                        <Label fx:id="clinicalsRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
-                                    </HBox>
-                                    
-                                    <!-- Orders Table Row Height -->
-                                    <Label text="Orders Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
-                                    <HBox spacing="10" alignment="CENTER_LEFT">
-                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
-                                        <Slider fx:id="ordersRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
-                                        <Label fx:id="ordersRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
-                                    </HBox>
-                                    
-                                    <Separator />
-                                    
                                     <!-- Combine Config Group Toggle -->
                                     <HBox spacing="10" alignment="CENTER_LEFT">
                                         <Label text="Combine Config Group" style="-fx-font-weight:bold;" />
@@ -446,6 +409,43 @@
                                                 </TextField>
                                             </GridPane>
                                         </VBox>
+                                    </HBox>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Row Height Controls -->
+                                    <Label text="Table Row Height" style="-fx-font-weight:bold;" />
+                                    
+                                    <!-- Units Table Row Height -->
+                                    <Label text="Units Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
+                                        <Slider fx:id="unitsRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
+                                        <Label fx:id="unitsRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
+                                    </HBox>
+                                    
+                                    <!-- Nurse Calls Table Row Height -->
+                                    <Label text="Nurse Calls Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
+                                        <Slider fx:id="nurseCallsRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
+                                        <Label fx:id="nurseCallsRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
+                                    </HBox>
+                                    
+                                    <!-- Clinicals Table Row Height -->
+                                    <Label text="Clinicals Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
+                                        <Slider fx:id="clinicalsRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
+                                        <Label fx:id="clinicalsRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
+                                    </HBox>
+                                    
+                                    <!-- Orders Table Row Height -->
+                                    <Label text="Orders Table" style="-fx-font-size: 11; -fx-text-fill: #888;" />
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <Label text="Row Height:" style="-fx-font-size: 10;" />
+                                        <Slider fx:id="ordersRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
+                                        <Label fx:id="ordersRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
                                     </HBox>
                                     
                                     <Separator />
