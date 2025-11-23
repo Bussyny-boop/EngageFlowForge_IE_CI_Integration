@@ -5439,50 +5439,296 @@ public class AppController {
                 saveOnNdwButton.setManaged(true);
             }
             
-            // Disable Export JSON buttons
-            if (generateJsonButton != null) generateJsonButton.setDisable(true);
-            if (exportNurseJsonButton != null) exportNurseJsonButton.setDisable(true);
-            if (exportClinicalJsonButton != null) exportClinicalJsonButton.setDisable(true);
-            if (exportOrdersJsonButton != null) exportOrdersJsonButton.setDisable(true);
+            // Hide Export JSON section entirely in CI mode
+            if (exportJsonLabel != null) {
+                exportJsonLabel.setVisible(false);
+                exportJsonLabel.setManaged(false);
+            }
+            if (exportButtonsContainer != null) {
+                exportButtonsContainer.setVisible(false);
+                exportButtonsContainer.setManaged(false);
+            }
             
-            // Disable Preview JSON button (visualFlowButton)
-            if (visualFlowButton != null) visualFlowButton.setDisable(true);
+            // Hide Export JSON buttons (instead of just disabling)
+            if (generateJsonButton != null) {
+                generateJsonButton.setVisible(false);
+                generateJsonButton.setManaged(false);
+            }
+            if (exportNurseJsonButton != null) {
+                exportNurseJsonButton.setVisible(false);
+                exportNurseJsonButton.setManaged(false);
+            }
+            if (exportClinicalJsonButton != null) {
+                exportClinicalJsonButton.setVisible(false);
+                exportClinicalJsonButton.setManaged(false);
+            }
+            if (exportOrdersJsonButton != null) {
+                exportOrdersJsonButton.setVisible(false);
+                exportOrdersJsonButton.setManaged(false);
+            }
             
-            // Disable most settings - keep only: Data Validation, Combine Config Group, Table Row Height
-            // Settings to disable:
-            if (noMergeCheckbox != null) noMergeCheckbox.setDisable(true);
-            if (mergeByConfigGroupCheckbox != null) mergeByConfigGroupCheckbox.setDisable(true);
-            if (mergeAcrossConfigGroupCheckbox != null) mergeAcrossConfigGroupCheckbox.setDisable(true);
-            if (edgeRefNameField != null) edgeRefNameField.setDisable(true);
-            if (vcsRefNameField != null) vcsRefNameField.setDisable(true);
-            if (voceraRefNameField != null) voceraRefNameField.setDisable(true);
-            if (xmppRefNameField != null) xmppRefNameField.setDisable(true);
-            if (defaultEdgeCheckbox != null) defaultEdgeCheckbox.setDisable(true);
-            if (defaultVmpCheckbox != null) defaultVmpCheckbox.setDisable(true);
-            if (defaultVoceraCheckbox != null) defaultVoceraCheckbox.setDisable(true);
-            if (defaultXmppCheckbox != null) defaultXmppCheckbox.setDisable(true);
-            if (resetDefaultsButton != null) resetDefaultsButton.setDisable(true);
-            if (resetPathsButton != null) resetPathsButton.setDisable(true);
-            if (loadedTimeoutSlider != null) loadedTimeoutSlider.setDisable(true);
-            if (loadedTimeoutMinField != null) loadedTimeoutMinField.setDisable(true);
-            if (loadedTimeoutMaxField != null) loadedTimeoutMaxField.setDisable(true);
-            if (roomFilterNursecallField != null) roomFilterNursecallField.setDisable(true);
-            if (roomFilterClinicalField != null) roomFilterClinicalField.setDisable(true);
-            if (roomFilterOrdersField != null) roomFilterOrdersField.setDisable(true);
+            // Hide Preview JSON button (visualFlowButton)
+            if (visualFlowButton != null) {
+                visualFlowButton.setVisible(false);
+                visualFlowButton.setManaged(false);
+            }
             
-            // Custom tab controls should be disabled
-            if (customTabNameField != null) customTabNameField.setDisable(true);
-            if (customTabFlowTypeCombo != null) customTabFlowTypeCombo.setDisable(true);
-            if (addCustomTabButton != null) addCustomTabButton.setDisable(true);
-            if (customTabMappingsList != null) customTabMappingsList.setDisable(true);
+            // Hide most settings - keep only: Data Validation, Combine Config Group, Table Row Height
+            // Settings to hide:
+            if (noMergeCheckbox != null) {
+                noMergeCheckbox.setVisible(false);
+                noMergeCheckbox.setManaged(false);
+            }
+            if (mergeByConfigGroupCheckbox != null) {
+                mergeByConfigGroupCheckbox.setVisible(false);
+                mergeByConfigGroupCheckbox.setManaged(false);
+            }
+            if (mergeAcrossConfigGroupCheckbox != null) {
+                mergeAcrossConfigGroupCheckbox.setVisible(false);
+                mergeAcrossConfigGroupCheckbox.setManaged(false);
+            }
+            if (edgeRefNameField != null) {
+                edgeRefNameField.setVisible(false);
+                edgeRefNameField.setManaged(false);
+            }
+            if (vcsRefNameField != null) {
+                vcsRefNameField.setVisible(false);
+                vcsRefNameField.setManaged(false);
+            }
+            if (voceraRefNameField != null) {
+                voceraRefNameField.setVisible(false);
+                voceraRefNameField.setManaged(false);
+            }
+            if (xmppRefNameField != null) {
+                xmppRefNameField.setVisible(false);
+                xmppRefNameField.setManaged(false);
+            }
+            if (defaultEdgeCheckbox != null) {
+                defaultEdgeCheckbox.setVisible(false);
+                defaultEdgeCheckbox.setManaged(false);
+            }
+            if (defaultVmpCheckbox != null) {
+                defaultVmpCheckbox.setVisible(false);
+                defaultVmpCheckbox.setManaged(false);
+            }
+            if (defaultVoceraCheckbox != null) {
+                defaultVoceraCheckbox.setVisible(false);
+                defaultVoceraCheckbox.setManaged(false);
+            }
+            if (defaultXmppCheckbox != null) {
+                defaultXmppCheckbox.setVisible(false);
+                defaultXmppCheckbox.setManaged(false);
+            }
+            if (resetDefaultsButton != null) {
+                resetDefaultsButton.setVisible(false);
+                resetDefaultsButton.setManaged(false);
+            }
+            if (resetPathsButton != null) {
+                resetPathsButton.setVisible(false);
+                resetPathsButton.setManaged(false);
+            }
+            if (loadedTimeoutSlider != null) {
+                loadedTimeoutSlider.setVisible(false);
+                loadedTimeoutSlider.setManaged(false);
+            }
+            if (loadedTimeoutMinField != null) {
+                loadedTimeoutMinField.setVisible(false);
+                loadedTimeoutMinField.setManaged(false);
+            }
+            if (loadedTimeoutMaxField != null) {
+                loadedTimeoutMaxField.setVisible(false);
+                loadedTimeoutMaxField.setManaged(false);
+            }
+            if (roomFilterNursecallField != null) {
+                roomFilterNursecallField.setVisible(false);
+                roomFilterNursecallField.setManaged(false);
+            }
+            if (roomFilterClinicalField != null) {
+                roomFilterClinicalField.setVisible(false);
+                roomFilterClinicalField.setManaged(false);
+            }
+            if (roomFilterOrdersField != null) {
+                roomFilterOrdersField.setVisible(false);
+                roomFilterOrdersField.setManaged(false);
+            }
+            
+            // Hide custom tab controls
+            if (customTabNameField != null) {
+                customTabNameField.setVisible(false);
+                customTabNameField.setManaged(false);
+            }
+            if (customTabFlowTypeCombo != null) {
+                customTabFlowTypeCombo.setVisible(false);
+                customTabFlowTypeCombo.setManaged(false);
+            }
+            if (addCustomTabButton != null) {
+                addCustomTabButton.setVisible(false);
+                addCustomTabButton.setManaged(false);
+            }
+            if (customTabMappingsList != null) {
+                customTabMappingsList.setVisible(false);
+                customTabMappingsList.setManaged(false);
+            }
             
             // Note: Data Validation controls (Voice Group, Assignment Roles, Bed List),
-            // Combine Config Group checkbox, and Row Height sliders remain enabled
+            // Combine Config Group checkbox, and Row Height sliders remain visible and enabled
         } else {
             // IE mode: hide Save on NDW button
             if (saveOnNdwButton != null) {
                 saveOnNdwButton.setVisible(false);
                 saveOnNdwButton.setManaged(false);
+            }
+            
+            // IE mode: ensure Export JSON section is visible
+            if (exportJsonLabel != null) {
+                exportJsonLabel.setVisible(true);
+                exportJsonLabel.setManaged(true);
+            }
+            if (exportButtonsContainer != null) {
+                exportButtonsContainer.setVisible(true);
+                exportButtonsContainer.setManaged(true);
+            }
+            
+            // IE mode: ensure all controls are visible and enabled
+            if (generateJsonButton != null) {
+                generateJsonButton.setVisible(true);
+                generateJsonButton.setManaged(true);
+                generateJsonButton.setDisable(false);
+            }
+            if (exportNurseJsonButton != null) {
+                exportNurseJsonButton.setVisible(true);
+                exportNurseJsonButton.setManaged(true);
+                exportNurseJsonButton.setDisable(false);
+            }
+            if (exportClinicalJsonButton != null) {
+                exportClinicalJsonButton.setVisible(true);
+                exportClinicalJsonButton.setManaged(true);
+                exportClinicalJsonButton.setDisable(false);
+            }
+            if (exportOrdersJsonButton != null) {
+                exportOrdersJsonButton.setVisible(true);
+                exportOrdersJsonButton.setManaged(true);
+                exportOrdersJsonButton.setDisable(false);
+            }
+            if (visualFlowButton != null) {
+                visualFlowButton.setVisible(true);
+                visualFlowButton.setManaged(true);
+                visualFlowButton.setDisable(false);
+            }
+            if (noMergeCheckbox != null) {
+                noMergeCheckbox.setVisible(true);
+                noMergeCheckbox.setManaged(true);
+                noMergeCheckbox.setDisable(false);
+            }
+            if (mergeByConfigGroupCheckbox != null) {
+                mergeByConfigGroupCheckbox.setVisible(true);
+                mergeByConfigGroupCheckbox.setManaged(true);
+                mergeByConfigGroupCheckbox.setDisable(false);
+            }
+            if (mergeAcrossConfigGroupCheckbox != null) {
+                mergeAcrossConfigGroupCheckbox.setVisible(true);
+                mergeAcrossConfigGroupCheckbox.setManaged(true);
+                mergeAcrossConfigGroupCheckbox.setDisable(false);
+            }
+            if (edgeRefNameField != null) {
+                edgeRefNameField.setVisible(true);
+                edgeRefNameField.setManaged(true);
+                edgeRefNameField.setDisable(false);
+            }
+            if (vcsRefNameField != null) {
+                vcsRefNameField.setVisible(true);
+                vcsRefNameField.setManaged(true);
+                vcsRefNameField.setDisable(false);
+            }
+            if (voceraRefNameField != null) {
+                voceraRefNameField.setVisible(true);
+                voceraRefNameField.setManaged(true);
+                voceraRefNameField.setDisable(false);
+            }
+            if (xmppRefNameField != null) {
+                xmppRefNameField.setVisible(true);
+                xmppRefNameField.setManaged(true);
+                xmppRefNameField.setDisable(false);
+            }
+            if (defaultEdgeCheckbox != null) {
+                defaultEdgeCheckbox.setVisible(true);
+                defaultEdgeCheckbox.setManaged(true);
+                defaultEdgeCheckbox.setDisable(false);
+            }
+            if (defaultVmpCheckbox != null) {
+                defaultVmpCheckbox.setVisible(true);
+                defaultVmpCheckbox.setManaged(true);
+                defaultVmpCheckbox.setDisable(false);
+            }
+            if (defaultVoceraCheckbox != null) {
+                defaultVoceraCheckbox.setVisible(true);
+                defaultVoceraCheckbox.setManaged(true);
+                defaultVoceraCheckbox.setDisable(false);
+            }
+            if (defaultXmppCheckbox != null) {
+                defaultXmppCheckbox.setVisible(true);
+                defaultXmppCheckbox.setManaged(true);
+                defaultXmppCheckbox.setDisable(false);
+            }
+            if (resetDefaultsButton != null) {
+                resetDefaultsButton.setVisible(true);
+                resetDefaultsButton.setManaged(true);
+                resetDefaultsButton.setDisable(false);
+            }
+            if (resetPathsButton != null) {
+                resetPathsButton.setVisible(true);
+                resetPathsButton.setManaged(true);
+                resetPathsButton.setDisable(false);
+            }
+            if (loadedTimeoutSlider != null) {
+                loadedTimeoutSlider.setVisible(true);
+                loadedTimeoutSlider.setManaged(true);
+                loadedTimeoutSlider.setDisable(false);
+            }
+            if (loadedTimeoutMinField != null) {
+                loadedTimeoutMinField.setVisible(true);
+                loadedTimeoutMinField.setManaged(true);
+                loadedTimeoutMinField.setDisable(false);
+            }
+            if (loadedTimeoutMaxField != null) {
+                loadedTimeoutMaxField.setVisible(true);
+                loadedTimeoutMaxField.setManaged(true);
+                loadedTimeoutMaxField.setDisable(false);
+            }
+            if (roomFilterNursecallField != null) {
+                roomFilterNursecallField.setVisible(true);
+                roomFilterNursecallField.setManaged(true);
+                roomFilterNursecallField.setDisable(false);
+            }
+            if (roomFilterClinicalField != null) {
+                roomFilterClinicalField.setVisible(true);
+                roomFilterClinicalField.setManaged(true);
+                roomFilterClinicalField.setDisable(false);
+            }
+            if (roomFilterOrdersField != null) {
+                roomFilterOrdersField.setVisible(true);
+                roomFilterOrdersField.setManaged(true);
+                roomFilterOrdersField.setDisable(false);
+            }
+            if (customTabNameField != null) {
+                customTabNameField.setVisible(true);
+                customTabNameField.setManaged(true);
+                customTabNameField.setDisable(false);
+            }
+            if (customTabFlowTypeCombo != null) {
+                customTabFlowTypeCombo.setVisible(true);
+                customTabFlowTypeCombo.setManaged(true);
+                customTabFlowTypeCombo.setDisable(false);
+            }
+            if (addCustomTabButton != null) {
+                addCustomTabButton.setVisible(true);
+                addCustomTabButton.setManaged(true);
+                addCustomTabButton.setDisable(false);
+            }
+            if (customTabMappingsList != null) {
+                customTabMappingsList.setVisible(true);
+                customTabMappingsList.setManaged(true);
+                customTabMappingsList.setDisable(false);
             }
         }
         // IE mode has no other restrictions - all features remain enabled
@@ -5531,15 +5777,8 @@ public class AppController {
         onNdwLoadComplete = () -> {
             if (currentExcelFile != null) {
                 // NDW loaded successfully in CI mode
-                // Hide the load buttons section since file is already loaded
-                if (loadButtonsContainer != null) {
-                    loadButtonsContainer.setVisible(false);
-                    loadButtonsContainer.setManaged(false);
-                }
-                if (loadDataLabel != null) {
-                    loadDataLabel.setVisible(false);
-                    loadDataLabel.setManaged(false);
-                }
+                // Keep the load buttons visible so users can load other files if needed
+                // (Removed the code that was hiding loadButtonsContainer and loadDataLabel)
                 
                 // Show validation instructions
                 showValidationDataDialog();
