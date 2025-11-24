@@ -2740,8 +2740,13 @@ public class AppController {
                 super.commitEdit(newValue);
                 ExcelParserV5.UnitRow row = getTableRow().getItem();
                 if (row != null) {
+                    String oldValue = getter.apply(row);
                     String converted = commaToNewlines(newValue);
                     setter.accept(row, converted);
+                    
+                    // Track changes for Save to NDW
+                    trackFieldChange(row, getFieldName(col), oldValue, converted);
+                    
                     if (getTableView() != null) getTableView().refresh();
                 }
             }
@@ -5609,7 +5614,12 @@ public class AppController {
                 super.commitEdit(newValue);
                 ExcelParserV5.FlowRow row = getTableRow().getItem();
                 if (row != null) {
+                    String oldValue = getter.apply(row);
                     setter.accept(row, newValue);
+                    
+                    // Track changes for Save to NDW
+                    trackFieldChange(row, getFieldName(col), oldValue, newValue);
+                    
                     if (getTableView() != null) getTableView().refresh();
                 }
             }
