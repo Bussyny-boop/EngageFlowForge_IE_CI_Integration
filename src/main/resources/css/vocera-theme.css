@@ -59,10 +59,10 @@
 .nav-button {
     -fx-background-color: transparent;
     -fx-text-fill: #E0E0E0;
-    -fx-font-size: 14px;
+    -fx-font-size: 10px;
     -fx-alignment: CENTER_LEFT;
-    -fx-graphic-text-gap: 10;
-    -fx-padding: 8 12 8 12;
+    -fx-graphic-text-gap: 7;
+    -fx-padding: 6 8 6 8;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
@@ -133,6 +133,72 @@
 
 .side-nav-action-warning:hover {
     -fx-background-color: linear-gradient(to bottom, #F06D5A, #E85D4A);
+}
+
+/* Sidebar collapse/expand styles */
+.sidebar-collapsed {
+    -fx-pref-width: 42;
+    -fx-min-width: 42;
+    -fx-max-width: 42;
+}
+
+.sidebar-expanded {
+    -fx-pref-width: 140;
+    -fx-min-width: 140;
+    -fx-max-width: 140;
+}
+
+/* --- Sidebar Toggle Button --- */
+.sidebar-toggle-btn {
+    -fx-background-color: #2F2F2F;
+    -fx-text-fill: #00979D;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6;
+    -fx-background-radius: 0;
+    -fx-border-color: #3A3A3A;
+    -fx-border-width: 0 0 1 0;
+    -fx-cursor: hand;
+}
+
+.sidebar-toggle-btn:hover {
+    -fx-background-color: #3A3A3A;
+    -fx-text-fill: #FFFFFF;
+}
+
+.sidebar-toggle-btn:pressed {
+    -fx-background-color: #1E1E1E;
+}
+
+/* --- Collapsed Sidebar Styles --- */
+.sidebar-collapsed .nav-button {
+    -fx-alignment: CENTER;
+    -fx-padding: 7 3;
+    -fx-font-size: 16px;
+    -fx-text-alignment: CENTER;
+    -fx-wrap-text: false;
+    -fx-text-overrun: clip;
+    -fx-ellipsis-string: "";
+    -fx-max-width: 38;
+    -fx-pref-width: 38;
+    -fx-min-height: 35;
+}
+
+.sidebar-collapsed Label {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-min-width: 0;
+}
+
+.sidebar-collapsed .separator {
+    -fx-opacity: 0.3;
+}
+
+/* --- Clear Button Hover Style --- */
+.nav-button.clear-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #E85D4A, #D14836);
+    -fx-text-fill: white;
 }
 
 /* --- Settings Drawer --- */

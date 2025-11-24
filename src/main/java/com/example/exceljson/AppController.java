@@ -396,7 +396,11 @@ public class AppController {
         if (saveExcelButton != null) saveExcelButton.setOnAction(e -> saveExcel());
         if (saveExcelAsButton != null) saveExcelAsButton.setOnAction(e -> saveExcelAs());
         if (saveOnNdwButton != null) saveOnNdwButton.setOnAction(e -> saveOnNdw());
-        if (clearAllButton != null) clearAllButton.setOnAction(e -> clearAllData());
+        if (clearAllButton != null) {
+            clearAllButton.setOnAction(e -> clearAllData());
+            // Add clear-button style class for red hover effect
+            clearAllButton.getStyleClass().add("clear-button");
+        }
         generateJsonButton.setOnAction(e -> generateCombinedJson());
         exportNurseJsonButton.setOnAction(e -> exportJson("NurseCalls"));
         exportClinicalJsonButton.setOnAction(e -> exportJson("Clinicals"));
@@ -3965,6 +3969,7 @@ public class AppController {
         if (loadXmlButton != null) originalButtonTexts.put(loadXmlButton, loadXmlButton.getText());
         if (loadJsonButton != null) originalButtonTexts.put(loadJsonButton, loadJsonButton.getText());
         if (clearAllButton != null) originalButtonTexts.put(clearAllButton, clearAllButton.getText());
+        if (saveOnNdwButton != null) originalButtonTexts.put(saveOnNdwButton, saveOnNdwButton.getText());
         if (generateJsonButton != null) originalButtonTexts.put(generateJsonButton, generateJsonButton.getText());
         if (exportNurseJsonButton != null) originalButtonTexts.put(exportNurseJsonButton, exportNurseJsonButton.getText());
         if (exportClinicalJsonButton != null) originalButtonTexts.put(exportClinicalJsonButton, exportClinicalJsonButton.getText());
@@ -3988,10 +3993,10 @@ public class AppController {
      * Collapse sidebar to show only icons
      */
     private void collapseSidebarToIcons() {
-        // Keep sidebar visible but make it narrow
+        // Keep sidebar visible but make it narrow (30% reduction from 60 to 42)
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(60);
+        sidebarContainer.setPrefWidth(42);
         
         // Add collapsed style class for CSS styling
         if (!sidebarContent.getStyleClass().contains("sidebar-collapsed")) {
@@ -4008,7 +4013,7 @@ public class AppController {
     private void expandSidebarToFull() {
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(200);
+        sidebarContainer.setPrefWidth(140);  // 30% reduction from 200 to 140
         
         // Remove collapsed style class
         sidebarContent.getStyleClass().remove("sidebar-collapsed");
@@ -4036,6 +4041,7 @@ public class AppController {
         setCollapsedButton(loadXmlButton, "/icons/load-xml.png", "Load Engage XML");
         setCollapsedButton(loadJsonButton, "/icons/load-json.png", "Load Engage Rules");
         setCollapsedButton(clearAllButton, "/icons/clear.png", "Clear All");
+        setCollapsedButton(saveOnNdwButton, "/icons/save.png", "Save to NDW");
         setCollapsedButton(generateJsonButton, "/icons/preview.png", "Preview JSON");
         // Export JSON: use distinct icons
         setCollapsedButton(exportNurseJsonButton, "/icons/export-nurse.png", "Nursecall");
@@ -4069,6 +4075,7 @@ public class AppController {
         restoreButtonText(loadXmlButton);
         restoreButtonText(loadJsonButton);
         restoreButtonText(clearAllButton);
+        restoreButtonText(saveOnNdwButton);
         restoreButtonText(generateJsonButton);
         restoreButtonText(exportNurseJsonButton);
         restoreButtonText(exportClinicalJsonButton);
@@ -4086,6 +4093,7 @@ public class AppController {
         removeTooltip(loadXmlButton);
         removeTooltip(loadJsonButton);
         removeTooltip(clearAllButton);
+        removeTooltip(saveOnNdwButton);
         removeTooltip(generateJsonButton);
         removeTooltip(exportNurseJsonButton);
         removeTooltip(exportClinicalJsonButton);
@@ -4242,6 +4250,23 @@ public class AppController {
         if (table.getSkin() != null) {
             freezeColumn(table, column);
         }
+        
+        // Also listen for items changes to reattach the scroll listener
+        // This ensures the sticky behavior works after data refresh
+        table.itemsProperty().addListener((obs, oldItems, newItems) -> {
+            javafx.application.Platform.runLater(() -> {
+                if (table.getSkin() != null) {
+                    freezeColumn(table, column);
+                }
+            });
+        });
+        
+        // Listen for column visibility changes
+        column.visibleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal && table.getSkin() != null) {
+                javafx.application.Platform.runLater(() -> freezeColumn(table, column));
+            }
+        });
     }
     
     /**
@@ -4309,6 +4334,9 @@ public class AppController {
         // To keep the column fixed, we translate it by the same amount the table scrolled
         double hScrollValue = scrollBar.getValue();
         
+        // Get the column index for the sticky column
+        int columnIndex = table.getColumns().indexOf(column);
+        
         // Find and translate the column header
         java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
         for (javafx.scene.Node header : headers) {
@@ -4323,10 +4351,33 @@ public class AppController {
             }
         }
         
-        // Find and translate the column cells
+        // Find and translate the column cells by iterating through table rows
+        // Use a more reliable approach: look for cells in all table row cells
+        java.util.Set<javafx.scene.Node> rows = table.lookupAll(".table-row-cell");
+        for (javafx.scene.Node row : rows) {
+            if (row instanceof javafx.scene.control.TableRow<?> tableRow) {
+                // Get cells within this row
+                for (javafx.scene.Node cellNode : tableRow.getChildrenUnmodifiable()) {
+                    if (cellNode instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
+                        // Check if this cell belongs to our sticky column by comparing the column reference
+                        if (tableCell.getTableColumn() == column) {
+                            cellNode.setTranslateX(hScrollValue);
+                            cellNode.setMouseTransparent(false);
+                            cellNode.setPickOnBounds(true);
+                            cellNode.setViewOrder(-1); // ensure checkbox stays clickable
+                            cellNode.toFront();
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Alternative approach: find cells by CSS class if the above doesn't work
+        // Also lookup all table-cell elements as a fallback
         java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
         for (javafx.scene.Node cell : cells) {
             if (cell instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
+                // Compare the column directly
                 if (tableCell.getTableColumn() == column) {
                     cell.setTranslateX(hScrollValue);
                     cell.setMouseTransparent(false);
