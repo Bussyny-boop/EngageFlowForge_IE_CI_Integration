@@ -54,10 +54,10 @@
 .button {
     -fx-background-color: linear-gradient(to bottom, -fx-primary-orange, -fx-dark-orange);
     -fx-text-fill: white;
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-font-weight: 600;
-    -fx-padding: 8 16 8 16;
-    -fx-background-radius: 6;
+    -fx-padding: 5 12 5 12;
+    -fx-background-radius: 4;
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 4, 0, 0, 2);
 }

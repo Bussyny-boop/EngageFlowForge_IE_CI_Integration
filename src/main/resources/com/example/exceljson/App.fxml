@@ -11,7 +11,7 @@
             styleClass="border-pane">
     <!-- Top App Bar -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="app-bar">
+        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="app-bar">
             <!-- Left: App Title and Version -->
             <VBox spacing="2" alignment="CENTER_LEFT">
                 <Label text="Engage FlowForge" style="-fx-font-size:18; -fx-font-weight:bold; -fx-text-fill:white;" />
@@ -44,7 +44,7 @@
             </VBox>
             
             <!-- Right: Global Actions -->
-            <HBox spacing="8" alignment="CENTER_RIGHT">
+            <HBox spacing="6" alignment="CENTER_RIGHT">
                 <Button fx:id="settingsButton" text="⚙️ Settings" styleClass="app-bar-button">
                     <tooltip>
                         <Tooltip text="Open Settings" />
@@ -86,10 +86,10 @@
                         </Button>
                     </top>
                     <center>
-                        <VBox fx:id="sidebarContent" spacing="8" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 10; -fx-spacing: 8;">
+                        <VBox fx:id="sidebarContent" spacing="6" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 8; -fx-spacing: 6;">
                             <!-- Load Section -->
                             <Label fx:id="loadDataLabel" text="Load Data" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 4 0 0 2;" />
-                            <VBox fx:id="loadButtonsContainer" spacing="6">
+                            <VBox fx:id="loadButtonsContainer" spacing="4">
                                 <!-- Load NDW (Excel) -->
                                 <Button fx:id="loadNdwButton" text="📄 Load NDW" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📄</userData>
@@ -165,7 +165,7 @@
                             
                             <!-- Export JSON Section Header -->
                             <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 4 0 0 2;" />
-                            <VBox fx:id="exportButtonsContainer" spacing="6">
+                            <VBox fx:id="exportButtonsContainer" spacing="4">
                                 <!-- Export Nursecall JSON -->
                                 <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>🩺</userData>
@@ -513,22 +513,15 @@
                                     <!-- Nurse Calls View -->
                                     <BorderPane fx:id="nurseCallsView" visible="false">
                                         <top>
-                                            <VBox spacing="5">
-                                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                                    <padding>
-                                                        <Insets top="5" right="5" bottom="5" left="5" />
-                                                    </padding>
-                                                    <Label text="Filter by Config Group:" />
-                                                    <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
-                                                </HBox>
-                                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                                    <padding>
-                                                        <Insets top="0" right="5" bottom="5" left="5" />
-                                                    </padding>
-                                                    <Label text="Search:" />
-                                                    <TextField fx:id="nurseAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
-                                                </HBox>
-                                            </VBox>
+                                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                                <padding>
+                                                    <Insets top="5" right="5" bottom="5" left="5" />
+                                                </padding>
+                                                <Label text="Filter by Config Group:" />
+                                                <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
+                                                <Label text="Search:" />
+                                                <TextField fx:id="nurseAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                            </HBox>
                                         </top>
                                         <center>
                                             <TableView fx:id="tableNurseCalls" editable="true">
@@ -564,22 +557,15 @@
                                     <!-- Clinicals View -->
                                     <BorderPane fx:id="clinicalsView" visible="false">
                                         <top>
-                                            <VBox spacing="5">
-                                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                                    <padding>
-                                                        <Insets top="5" right="5" bottom="5" left="5" />
-                                                    </padding>
-                                                    <Label text="Filter by Config Group:" />
-                                                    <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
-                                                </HBox>
-                                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                                    <padding>
-                                                        <Insets top="0" right="5" bottom="5" left="5" />
-                                                    </padding>
-                                                    <Label text="Search:" />
-                                                    <TextField fx:id="clinicalAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
-                                                </HBox>
-                                            </VBox>
+                                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                                <padding>
+                                                    <Insets top="5" right="5" bottom="5" left="5" />
+                                                </padding>
+                                                <Label text="Filter by Config Group:" />
+                                                <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
+                                                <Label text="Search:" />
+                                                <TextField fx:id="clinicalAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                            </HBox>
                                         </top>
                                         <center>
                                             <TableView fx:id="tableClinicals" editable="true">
@@ -616,22 +602,15 @@
                                     <!-- Orders View -->
                                     <BorderPane fx:id="ordersView" visible="false">
                                         <top>
-                                            <VBox spacing="5">
-                                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                                    <padding>
-                                                        <Insets top="5" right="5" bottom="5" left="5" />
-                                                    </padding>
-                                                    <Label text="Filter by Config Group:" />
-                                                    <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
-                                                </HBox>
-                                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                                    <padding>
-                                                        <Insets top="0" right="5" bottom="5" left="5" />
-                                                    </padding>
-                                                    <Label text="Search:" />
-                                                    <TextField fx:id="ordersAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
-                                                </HBox>
-                                            </VBox>
+                                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                                <padding>
+                                                    <Insets top="5" right="5" bottom="5" left="5" />
+                                                </padding>
+                                                <Label text="Filter by Config Group:" />
+                                                <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
+                                                <Label text="Search:" />
+                                                <TextField fx:id="ordersAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                            </HBox>
                                         </top>
                                         <center>
                                             <TableView fx:id="tableOrders" editable="true">
