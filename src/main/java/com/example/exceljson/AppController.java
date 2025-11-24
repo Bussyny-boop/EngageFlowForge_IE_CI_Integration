@@ -2306,26 +2306,28 @@ public class AppController {
      */
     private <R> void trackFieldChange(R row, String fieldName, String oldValue, String newValue) {
         if (row instanceof ExcelParserV5.UnitRow unitRow) {
-            String originalValue = unitRow.originalValues.get(fieldName);
-            if (originalValue != null) {
-                // Compare with original value from Excel
-                if (!Objects.equals(originalValue, newValue)) {
-                    unitRow.changedFields.add(fieldName);
-                } else {
-                    // Value was changed back to original, remove from changed fields
-                    unitRow.changedFields.remove(fieldName);
-                }
+            // Get original value, defaulting to empty string if not found
+            // This handles fields that weren't in the original Excel (e.g., dynamically added columns)
+            String originalValue = unitRow.originalValues.getOrDefault(fieldName, "");
+            
+            // Compare with original value from Excel
+            if (!Objects.equals(originalValue, newValue)) {
+                unitRow.changedFields.add(fieldName);
+            } else {
+                // Value was changed back to original, remove from changed fields
+                unitRow.changedFields.remove(fieldName);
             }
         } else if (row instanceof ExcelParserV5.FlowRow flowRow) {
-            String originalValue = flowRow.originalValues.get(fieldName);
-            if (originalValue != null) {
-                // Compare with original value from Excel
-                if (!Objects.equals(originalValue, newValue)) {
-                    flowRow.changedFields.add(fieldName);
-                } else {
-                    // Value was changed back to original, remove from changed fields
-                    flowRow.changedFields.remove(fieldName);
-                }
+            // Get original value, defaulting to empty string if not found
+            // This handles fields that weren't in the original Excel (e.g., dynamically added columns)
+            String originalValue = flowRow.originalValues.getOrDefault(fieldName, "");
+            
+            // Compare with original value from Excel
+            if (!Objects.equals(originalValue, newValue)) {
+                flowRow.changedFields.add(fieldName);
+            } else {
+                // Value was changed back to original, remove from changed fields
+                flowRow.changedFields.remove(fieldName);
             }
         }
     }
@@ -2994,7 +2996,14 @@ public class AppController {
         newColumn.setCellFactory(TextAreaTableCell.forTableColumn());
         newColumn.setOnEditCommit(ev -> {
             ExcelParserV5.UnitRow row = ev.getRowValue();
-            row.customGroups.put(customTabName, ev.getNewValue());
+            String oldValue = row.customGroups.get(customTabName);
+            String newValue = ev.getNewValue();
+            row.customGroups.put(customTabName, newValue);
+            
+            // Track changes for custom group columns
+            String fieldName = "customGroup_" + customTabName;
+            trackFieldChange(row, fieldName, oldValue, newValue);
+            
             if (parser != null) {
                 parser.rebuildUnitMaps();
             }

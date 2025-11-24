@@ -3284,6 +3284,19 @@ public class ExcelParserV5 {
       if (cOrdersGroup >= 0) updateCellIfChanged(row, cOrdersGroup, unit.ordersGroup, "ordersGroup", unit);
       if (cNoCare >= 0) updateCellIfChanged(row, cNoCare, unit.noCareGroup, "noCareGroup", unit);
       if (cComments >= 0) updateCellIfChanged(row, cComments, unit.comments, "comments", unit);
+      
+      // Update custom group columns
+      for (Map.Entry<String, String> customGroup : unit.customGroups.entrySet()) {
+        String customTabName = customGroup.getKey();
+        String customGroupValue = customGroup.getValue();
+        
+        // Find the column index for this custom tab
+        int customColIndex = getCol(hm, customTabName);
+        if (customColIndex >= 0) {
+          String fieldName = "customGroup_" + customTabName;
+          updateCellIfChanged(row, customColIndex, customGroupValue, fieldName, unit);
+        }
+      }
     }
   }
   
