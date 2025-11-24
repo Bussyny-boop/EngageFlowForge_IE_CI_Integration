@@ -35,19 +35,11 @@ public class ExcelJsonApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Show role selection dialog first
-        UserProfile selectedProfile = showRoleSelectionDialog();
-        if (selectedProfile == null) {
-            // User closed the dialog without selecting - exit application
-            return;
-        }
-        
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/exceljson/App.fxml"));
         Parent root = loader.load();
         
-        // Get the controller and set the user profile
+        // Get the controller
         AppController controller = loader.getController();
-        controller.setUserProfile(selectedProfile);
 
         primaryStage.setTitle("Engage FlowForge 2.0");
         
@@ -89,24 +81,39 @@ public class ExcelJsonApplication extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
         
-        // If CI mode, show the CI action selection dialog after main window is shown
+        // Show role selection dialog AFTER app launches with theme applied
+        UserProfile selectedProfile = showRoleSelectionDialog(scene, primaryStage);
+        if (selectedProfile == null) {
+            // User closed the dialog without selecting - exit application
+            primaryStage.close();
+            return;
+        }
+        
+        // Set the user profile
+        controller.setUserProfile(selectedProfile);
+        
+        // If CI mode, show the CI action selection dialog after role selection
         if (selectedProfile == UserProfile.CI) {
             controller.showCIActionDialog();
         }
     }
     
     /**
-     * Shows the role selection dialog at application startup.
+     * Shows the role selection dialog after application launches.
+     * Dialog is styled with the app's theme and blocks access until a selection is made.
+     * @param scene The application scene (for theme styling)
+     * @param owner The owner stage (for modality)
      * @return The selected UserProfile, or null if dialog was closed without selection
      */
-    private UserProfile showRoleSelectionDialog() {
+    private UserProfile showRoleSelectionDialog(Scene scene, Stage owner) {
         Alert roleDialog = new Alert(Alert.AlertType.NONE);
         roleDialog.setTitle("Engage FlowForge - Role Selection");
-        roleDialog.setHeaderText("Engage FlowForge 2.0\n\nWhat is your Role?");
+        roleDialog.setHeaderText("Engage FlowForge 2.0\n\nWhat is your Role?\n\nPlease select a profile to access the application.");
         roleDialog.initModality(Modality.APPLICATION_MODAL);
+        roleDialog.initOwner(owner);
         
-        ButtonType ieButton = new ButtonType("IE", ButtonBar.ButtonData.OK_DONE);
-        ButtonType ciButton = new ButtonType("CI", ButtonBar.ButtonData.OK_DONE);
+        ButtonType ieButton = new ButtonType("IE (Implementation Engineer)", ButtonBar.ButtonData.OK_DONE);
+        ButtonType ciButton = new ButtonType("CI (Clinical Informatics)", ButtonBar.ButtonData.OK_DONE);
         
         roleDialog.getButtonTypes().setAll(ieButton, ciButton);
         
@@ -114,22 +121,45 @@ public class ExcelJsonApplication extends Application {
         DialogPane dialogPane = roleDialog.getDialogPane();
         dialogPane.setMinHeight(Region.USE_PREF_SIZE);
         
-        // Add custom CSS to increase button spacing
-        dialogPane.setStyle("-fx-padding: 20; -fx-spacing: 20;");
+        // Apply the app's theme to the dialog
+        dialogPane.getStylesheets().addAll(scene.getStylesheets());
+        
+        // Add custom CSS to increase button spacing and improve appearance
+        dialogPane.setStyle("-fx-padding: 30; -fx-spacing: 25;");
         
         // Add spacing to button bar
-        dialogPane.lookup(".button-bar").setStyle("-fx-spacing: 30;");
+        if (dialogPane.lookup(".button-bar") != null) {
+            dialogPane.lookup(".button-bar").setStyle("-fx-spacing: 40; -fx-padding: 15 0 0 0;");
+        }
         
-        Optional<ButtonType> result = roleDialog.showAndWait();
+        // Make buttons larger and more prominent
+        dialogPane.lookupButton(ieButton).setStyle("-fx-font-size: 14; -fx-padding: 12 30; -fx-min-width: 250;");
+        dialogPane.lookupButton(ciButton).setStyle("-fx-font-size: 14; -fx-padding: 12 30; -fx-min-width: 250;");
         
-        if (result.isPresent()) {
-            if (result.get() == ieButton) {
-                return UserProfile.IE;
-            } else if (result.get() == ciButton) {
-                return UserProfile.CI;
+        // Keep showing dialog until user makes a selection (no close without selection)
+        UserProfile selectedProfile = null;
+        while (selectedProfile == null) {
+            Optional<ButtonType> result = roleDialog.showAndWait();
+            
+            if (result.isPresent()) {
+                if (result.get() == ieButton) {
+                    selectedProfile = UserProfile.IE;
+                } else if (result.get() == ciButton) {
+                    selectedProfile = UserProfile.CI;
+                }
+            } else {
+                // User tried to close without selecting - show warning and re-display
+                Alert warning = new Alert(Alert.AlertType.WARNING);
+                warning.setTitle("Selection Required");
+                warning.setHeaderText("Profile Selection Required");
+                warning.setContentText("You must select a profile (IE or CI) to access the application.\n\nPlease choose your role to continue.");
+                warning.initModality(Modality.APPLICATION_MODAL);
+                warning.initOwner(owner);
+                warning.getDialogPane().getStylesheets().addAll(scene.getStylesheets());
+                warning.showAndWait();
             }
         }
         
-        return null; // Dialog closed without selection
+        return selectedProfile;
     }
 }
