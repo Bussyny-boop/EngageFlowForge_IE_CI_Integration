@@ -75,7 +75,7 @@
         <BorderPane>
             <!-- Left: Side Navigation Panel -->
             <left>
-                <BorderPane fx:id="sidebarContainer" prefWidth="200" minWidth="60">
+                <BorderPane fx:id="sidebarContainer" prefWidth="140" minWidth="42">
                     <top>
                         <!-- Collapse/Expand Toggle Button -->
                         <Button fx:id="sidebarToggleButton" text="◀" maxWidth="Infinity" 
@@ -86,10 +86,10 @@
                         </Button>
                     </top>
                     <center>
-                        <VBox fx:id="sidebarContent" spacing="6" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 8; -fx-spacing: 6;">
+                        <VBox fx:id="sidebarContent" spacing="4" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 6; -fx-spacing: 4;">
                             <!-- Load Section -->
-                            <Label fx:id="loadDataLabel" text="Load Data" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 4 0 0 2;" />
-                            <VBox fx:id="loadButtonsContainer" spacing="4">
+                            <Label fx:id="loadDataLabel" text="Load Data" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 3 0 0 2; -fx-font-size: 10;" />
+                            <VBox fx:id="loadButtonsContainer" spacing="3">
                                 <!-- Load NDW (Excel) -->
                                 <Button fx:id="loadNdwButton" text="📄 Load NDW" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📄</userData>
@@ -150,7 +150,7 @@
                             </ToggleButton>
                             
                             <!-- Separator between navigation and preview buttons -->
-                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 8 0 8 0;" />
+                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
                             
                             <!-- Preview JSON (Combined) -->
                             <Button fx:id="generateJsonButton" text="👁️ Preview JSON" maxWidth="Infinity" styleClass="nav-button">
@@ -161,11 +161,11 @@
                             </Button>
                             
                             <!-- Separator between preview and export buttons -->
-                            <Separator fx:id="exportSeparator" style="-fx-background-color: #3E3E3E; -fx-padding: 8 0 8 0;" />
+                            <Separator fx:id="exportSeparator" style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
                             
                             <!-- Export JSON Section Header -->
-                            <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 4 0 0 2;" />
-                            <VBox fx:id="exportButtonsContainer" spacing="4">
+                            <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 3 0 0 2; -fx-font-size: 10;" />
+                            <VBox fx:id="exportButtonsContainer" spacing="3">
                                 <!-- Export Nursecall JSON -->
                                 <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>🩺</userData>
