@@ -75,7 +75,7 @@
         <BorderPane>
             <!-- Left: Side Navigation Panel -->
             <left>
-                <BorderPane fx:id="sidebarContainer" prefWidth="140" minWidth="42">
+                <BorderPane fx:id="sidebarContainer" prefWidth="165" minWidth="42">
                     <top>
                         <!-- Collapse/Expand Toggle Button -->
                         <Button fx:id="sidebarToggleButton" text="◀" maxWidth="Infinity" 
@@ -98,14 +98,14 @@
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage XML -->
-                                <Button fx:id="loadXmlButton" text="📋 Load Engage XML" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="loadXmlButton" text="📋 Load XML" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📋</userData>
                                     <tooltip>
                                         <Tooltip text="Load Engage interface rules from XML (*.xml)" />
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage Rules (JSON) -->
-                                <Button fx:id="loadJsonButton" text="📥 Load Engage Rules" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="loadJsonButton" text="📥 Load Rules" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📥</userData>
                                     <tooltip>
                                         <Tooltip text="Load previously exported Engage Rules JSON (*.json)" />

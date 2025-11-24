@@ -63,9 +63,9 @@
 }
 
 .sidebar-expanded {
-    -fx-pref-width: 140;
-    -fx-min-width: 140;
-    -fx-max-width: 140;
+    -fx-pref-width: 165;
+    -fx-min-width: 165;
+    -fx-max-width: 165;
 }
 
 /* --- Navigation Buttons --- */
@@ -75,11 +75,13 @@
     -fx-font-size: 10px;
     -fx-alignment: CENTER_LEFT;
     -fx-graphic-text-gap: 7;
-    -fx-padding: 7 8 7 8;
+    -fx-padding: 8 10 8 10;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
     -fx-transition: all 0.2s ease;
+    -fx-wrap-text: true;
+    -fx-text-overrun: ellipsis;
 }
 
 .nav-button:hover {
