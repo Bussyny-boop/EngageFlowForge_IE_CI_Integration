@@ -5773,6 +5773,12 @@ public class AppController {
                 customTabMappingsList.setManaged(false);
             }
             
+            // Hide profile switcher in CI mode (users cannot switch back to IE from CI)
+            if (profileSwitcher != null) {
+                profileSwitcher.setVisible(false);
+                profileSwitcher.setManaged(false);
+            }
+            
             // Note: Data Validation controls (Voice Group, Assignment Roles, Bed List),
             // Combine Config Group checkbox, and Row Height sliders remain visible and enabled
         } else {
@@ -5932,6 +5938,13 @@ public class AppController {
                 customTabMappingsList.setVisible(true);
                 customTabMappingsList.setManaged(true);
                 customTabMappingsList.setDisable(false);
+            }
+            
+            // IE mode: ensure profile switcher is visible (allows switching to CI)
+            if (profileSwitcher != null) {
+                profileSwitcher.setVisible(true);
+                profileSwitcher.setManaged(true);
+                profileSwitcher.setDisable(false);
             }
         }
         // IE mode has no other restrictions - all features remain enabled
