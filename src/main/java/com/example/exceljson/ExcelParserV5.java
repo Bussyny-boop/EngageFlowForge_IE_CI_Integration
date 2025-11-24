@@ -3204,6 +3204,11 @@ public class ExcelParserV5 {
   public void updateExcel(File sourceFile) throws IOException {
     Objects.requireNonNull(sourceFile, "Source file cannot be null");
     
+    // Reset cached styles before working with a new workbook instance
+    // This prevents "Style does not belong to workbook" errors
+    changedCellStyle = null;
+    changedCellFont = null;
+    
     // Load the existing workbook
     try (FileInputStream fis = new FileInputStream(sourceFile);
          Workbook wb = WorkbookFactory.create(fis)) {

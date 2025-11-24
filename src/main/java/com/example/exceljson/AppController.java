@@ -5679,10 +5679,10 @@ public class AppController {
                 exportOrdersJsonButton.setManaged(false);
             }
             
-            // Hide Preview JSON button (visualFlowButton)
+            // Keep Visual Flow button visible in CI mode
             if (visualFlowButton != null) {
-                visualFlowButton.setVisible(false);
-                visualFlowButton.setManaged(false);
+                visualFlowButton.setVisible(true);
+                visualFlowButton.setManaged(true);
             }
             
             // Hide most settings - keep only: Data Validation, Combine Config Group, Table Row Height
