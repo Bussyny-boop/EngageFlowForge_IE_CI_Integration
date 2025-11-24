@@ -5625,11 +5625,6 @@ public class AppController {
             }
         });
         col.setEditable(true);
-        col.setOnEditCommit(ev -> {
-            ExcelParserV5.FlowRow row = ev.getRowValue();
-            setter.accept(row, ev.getNewValue());
-            if (col.getTableView() != null) col.getTableView().refresh();
-        });
     }
     
     // ========== DUAL-PROFILE SYSTEM (IE/CI MODES) ==========
