@@ -75,7 +75,7 @@
         <BorderPane>
             <!-- Left: Side Navigation Panel -->
             <left>
-                <BorderPane fx:id="sidebarContainer" prefWidth="165" minWidth="42">
+                <BorderPane fx:id="sidebarContainer" prefWidth="175" minWidth="42">
                     <top>
                         <!-- Collapse/Expand Toggle Button -->
                         <Button fx:id="sidebarToggleButton" text="◀" maxWidth="Infinity" 

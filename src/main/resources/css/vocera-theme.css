@@ -59,10 +59,11 @@
 .nav-button {
     -fx-background-color: transparent;
     -fx-text-fill: #E0E0E0;
-    -fx-font-size: 10px;
+    -fx-font-size: 11px;
+    -fx-font-weight: 500;
     -fx-alignment: CENTER_LEFT;
-    -fx-graphic-text-gap: 7;
-    -fx-padding: 8 10 8 10;
+    -fx-graphic-text-gap: 8;
+    -fx-padding: 10 12 10 12;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
@@ -80,6 +81,7 @@
 .nav-button:selected {
     -fx-background-color: linear-gradient(to right, #00A8B0, #007C80);
     -fx-text-fill: white;
+    -fx-font-weight: 600;
     -fx-border-color: #00D4DD;
     -fx-border-width: 0 0 0 3;
     -fx-effect: dropshadow(gaussian, rgba(0,168,176,0.6), 8, 0, 0, 4);
@@ -150,9 +152,9 @@
 }
 
 .sidebar-expanded {
-    -fx-pref-width: 165;
-    -fx-min-width: 165;
-    -fx-max-width: 165;
+    -fx-pref-width: 175;
+    -fx-min-width: 175;
+    -fx-max-width: 175;
 }
 
 /* --- Sidebar Toggle Button --- */

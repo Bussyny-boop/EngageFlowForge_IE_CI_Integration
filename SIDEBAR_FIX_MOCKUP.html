@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Button Fix - Before & After Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", "Open Sans", "Roboto", sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2C3E50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #546E7A;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .before-title {
+            color: #E74C3C;
+        }
+
+        .after-title {
+            color: #4CAF50;
+        }
+
+        .panel-subtitle {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .sidebar-mockup {
+            background: #1E1E1E;
+            border-right: 1px solid #3A3A3A;
+            border-radius: 8px;
+            padding: 6px;
+            display: inline-block;
+        }
+
+        .sidebar-before {
+            width: 140px;
+        }
+
+        .sidebar-after {
+            width: 165px;
+        }
+
+        .nav-section-label {
+            color: #bbb;
+            font-weight: bold;
+            padding: 3px 0 0 2px;
+            font-size: 10px;
+            margin-bottom: 3px;
+        }
+
+        .button-container {
+            margin-bottom: 4px;
+        }
+
+        .nav-button {
+            width: 100%;
+            background: transparent;
+            color: #E0E0E0;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            position: relative;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        .nav-button-before {
+            padding: 6px 8px;
+            overflow: hidden;
+            text-overflow: clip;
+            white-space: nowrap;
+        }
+
+        .nav-button-after {
+            padding: 8px 10px;
+            word-wrap: break-word;
+        }
+
+        .nav-button:hover {
+            background: #2F2F2F;
+            color: #FFFFFF;
+        }
+
+        .nav-button.selected {
+            background: linear-gradient(to right, #00A8B0, #007C80);
+            color: white;
+            border-left: 3px solid #00D4DD;
+        }
+
+        .separator {
+            background: #3E3E3E;
+            height: 1px;
+            margin: 5px 0;
+        }
+
+        .overflow-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            background: linear-gradient(to left, #1E1E1E, transparent);
+            pointer-events: none;
+        }
+
+        .changes-list {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .changes-list h2 {
+            color: #00979D;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .change-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #F5F7FA;
+            border-radius: 8px;
+            border-left: 4px solid #00979D;
+        }
+
+        .change-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .change-content h3 {
+            color: #2C3E50;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .change-content p {
+            color: #546E7A;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .code-comparison {
+            background: #2C3E50;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #ECF0F1;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+        }
+
+        .code-before {
+            color: #E74C3C;
+        }
+
+        .code-after {
+            color: #4CAF50;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00979D;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .benefit-badge {
+            display: inline-block;
+            background: #E8F5F6;
+            color: #00979D;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 3px;
+        }
+
+        @media (max-width: 900px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+            .metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Sidebar Button Text Overflow Fix</h1>
+        <p class="subtitle">Interactive Before & After Comparison</p>
+
+        <!-- Metrics -->
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-value">+25px</div>
+                <div class="metric-label">Width Increase</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">+2px</div>
+                <div class="metric-label">Padding Increase</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">100%</div>
+                <div class="metric-label">Text Visible</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">2</div>
+                <div class="metric-label">Labels Shortened</div>
+            </div>
+        </div>
+
+        <!-- Side-by-Side Comparison -->
+        <div class="comparison-container">
+            <!-- BEFORE -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title before-title">❌ Before (140px)</div>
+                    <div class="panel-subtitle">Text overflow and cramped spacing</div>
+                </div>
+
+                <div class="sidebar-mockup sidebar-before">
+                    <div class="nav-section-label">Load Data</div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            📄 Load NDW
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            📋 Load Engage XML
+                            <div class="overflow-indicator"></div>
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            📥 Load Engage Rules
+                            <div class="overflow-indicator"></div>
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            🗑️ Clear All
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            💾 Save to NDW
+                            <div class="overflow-indicator"></div>
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before selected">
+                            📊 Units
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            🔔 Nurse Calls
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            🏥 Clinicals
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            💊 Orders
+                        </button>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            👁️ Preview JSON
+                        </button>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="nav-section-label">Export JSON</div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            🩺 Nursecall
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            🧬 Clinicals
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-before">
+                            💊 Orders
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AFTER -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title after-title">✅ After (165px)</div>
+                    <div class="panel-subtitle">Full text visible with comfortable spacing</div>
+                </div>
+
+                <div class="sidebar-mockup sidebar-after">
+                    <div class="nav-section-label">Load Data</div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            📄 Load NDW
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            📋 Load XML
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            📥 Load Rules
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            🗑️ Clear All
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            💾 Save to NDW
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after selected">
+                            📊 Units
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            🔔 Nurse Calls
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            🏥 Clinicals
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            💊 Orders
+                        </button>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            👁️ Preview JSON
+                        </button>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="nav-section-label">Export JSON</div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            🩺 Nursecall
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            🧬 Clinicals
+                        </button>
+                    </div>
+                    <div class="button-container">
+                        <button class="nav-button nav-button-after">
+                            💊 Orders
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changes List -->
+        <div class="changes-list">
+            <h2>📋 What Changed</h2>
+
+            <div class="change-item">
+                <div class="change-icon">📏</div>
+                <div class="change-content">
+                    <h3>1. Increased Sidebar Width</h3>
+                    <p>Expanded sidebar from <strong>140px</strong> to <strong>165px</strong> (+25px) to accommodate longer button text without overflow.</p>
+                    <div class="code-comparison">
+                        <div class="code-before">- -fx-pref-width: 140;</div>
+                        <div class="code-after">+ -fx-pref-width: 165;</div>
+                    </div>
+                    <span class="benefit-badge">Better readability</span>
+                    <span class="benefit-badge">No text clipping</span>
+                </div>
+            </div>
+
+            <div class="change-item">
+                <div class="change-icon">📦</div>
+                <div class="change-content">
+                    <h3>2. Improved Button Padding</h3>
+                    <p>Increased padding from <strong>6px 8px</strong> to <strong>8px 10px</strong> for better spacing and visual comfort.</p>
+                    <div class="code-comparison">
+                        <div class="code-before">- -fx-padding: 6 8 6 8;</div>
+                        <div class="code-after">+ -fx-padding: 8 10 8 10;</div>
+                    </div>
+                    <span class="benefit-badge">More breathing room</span>
+                    <span class="benefit-badge">Professional look</span>
+                </div>
+            </div>
+
+            <div class="change-item">
+                <div class="change-icon">📄</div>
+                <div class="change-content">
+                    <h3>3. Added Text Wrapping Support</h3>
+                    <p>Added CSS properties to allow text wrapping and ellipsis for extremely long labels.</p>
+                    <div class="code-comparison">
+                        <div class="code-after">+ -fx-wrap-text: true;</div>
+                        <div class="code-after">+ -fx-text-overrun: ellipsis;</div>
+                    </div>
+                    <span class="benefit-badge">Flexible layout</span>
+                    <span class="benefit-badge">Future-proof</span>
+                </div>
+            </div>
+
+            <div class="change-item">
+                <div class="change-icon">✂️</div>
+                <div class="change-content">
+                    <h3>4. Shortened Long Button Labels</h3>
+                    <p>Simplified overly long button text while keeping full descriptions in tooltips.</p>
+                    <div class="code-comparison">
+                        <div class="code-before">- 📋 Load Engage XML</div>
+                        <div class="code-after">+ 📋 Load XML</div>
+                        <br>
+                        <div class="code-before">- 📥 Load Engage Rules</div>
+                        <div class="code-after">+ 📥 Load Rules</div>
+                    </div>
+                    <span class="benefit-badge">Concise labels</span>
+                    <span class="benefit-badge">Tooltips preserved</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 12px;">
+            <p>✨ All changes maintain consistency across light and dark themes</p>
+            <p style="margin-top: 5px;">🔧 Implementation Date: November 24, 2025</p>
+        </div>
+    </div>
+
+    <script>
+        // Add hover tooltips to buttons
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-1px)';
+            });
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
