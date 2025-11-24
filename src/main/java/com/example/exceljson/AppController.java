@@ -4334,20 +4334,13 @@ public class AppController {
         // To keep the column fixed, we translate it by the same amount the table scrolled
         double hScrollValue = scrollBar.getValue();
         
-        // Get the column index for the sticky column
-        int columnIndex = table.getColumns().indexOf(column);
-        
         // Find and translate the column header
         java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
         for (javafx.scene.Node header : headers) {
             // Check if this header belongs to our sticky column
             if (header.getStyleClass().contains("sticky-column") || 
                 isHeaderForColumn(header, column)) {
-                header.setTranslateX(hScrollValue);
-                header.setMouseTransparent(false);
-                header.setPickOnBounds(true);
-                header.setViewOrder(-1); // keep header above scrolling content
-                header.toFront();
+                applyStickyPosition(header, hScrollValue);
             }
         }
         
@@ -4361,11 +4354,7 @@ public class AppController {
                     if (cellNode instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
                         // Check if this cell belongs to our sticky column by comparing the column reference
                         if (tableCell.getTableColumn() == column) {
-                            cellNode.setTranslateX(hScrollValue);
-                            cellNode.setMouseTransparent(false);
-                            cellNode.setPickOnBounds(true);
-                            cellNode.setViewOrder(-1); // ensure checkbox stays clickable
-                            cellNode.toFront();
+                            applyStickyPosition(cellNode, hScrollValue);
                         }
                     }
                 }
@@ -4379,14 +4368,21 @@ public class AppController {
             if (cell instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
                 // Compare the column directly
                 if (tableCell.getTableColumn() == column) {
-                    cell.setTranslateX(hScrollValue);
-                    cell.setMouseTransparent(false);
-                    cell.setPickOnBounds(true);
-                    cell.setViewOrder(-1); // ensure checkbox stays clickable
-                    cell.toFront();
+                    applyStickyPosition(cell, hScrollValue);
                 }
             }
         }
+    }
+    
+    /**
+     * Applies sticky position properties to a node to keep it fixed during horizontal scrolling
+     */
+    private void applyStickyPosition(javafx.scene.Node node, double translateX) {
+        node.setTranslateX(translateX);
+        node.setMouseTransparent(false);
+        node.setPickOnBounds(true);
+        node.setViewOrder(-1); // keep element above scrolling content
+        node.toFront();
     }
     
     /**
