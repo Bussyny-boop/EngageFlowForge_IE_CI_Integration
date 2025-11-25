@@ -73,20 +73,20 @@
 .sidebar-section-header {
     -fx-text-fill: #00D4DD;
     -fx-font-weight: bold;
-    -fx-font-size: 9px;
-    -fx-padding: 4 8 2 8;
+    -fx-font-size: 12px;
+    -fx-padding: 6 8 4 8;
     -fx-letter-spacing: 0.5px;
 }
 
 /* --- Navigation Buttons --- */
 .nav-button {
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(255, 255, 255, 0.08);
     -fx-text-fill: #E0E0E0;
-    -fx-font-size: 10px;
+    -fx-font-size: 11px;
     -fx-font-weight: 500;
     -fx-alignment: CENTER_LEFT;
     -fx-graphic-text-gap: 6;
-    -fx-padding: 6 8 6 10;
+    -fx-padding: 8 8 8 10;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
@@ -142,14 +142,14 @@
 }
 
 .side-nav-action {
-    -fx-background-color: linear-gradient(to bottom, #00A8B0, #00979D);
+    -fx-background-color: linear-gradient(to bottom, #0084A0, #006880);
     -fx-text-fill: white;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 6 8 6 10;
-    -fx-font-size: 10px;
+    -fx-padding: 8 8 8 10;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-background-radius: 4;
-    -fx-border-color: #00C4CC;
+    -fx-border-color: #00B8C0;
     -fx-border-width: 1;
     -fx-border-radius: 4;
     -fx-wrap-text: false;
@@ -158,7 +158,7 @@
 }
 
 .side-nav-action:hover {
-    -fx-background-color: linear-gradient(to bottom, #00C4CC, #00A8B0);
+    -fx-background-color: linear-gradient(to bottom, #00A8B0, #0084A0);
     -fx-translate-x: 2;
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
@@ -166,14 +166,14 @@
 }
 
 .side-nav-action-warning {
-    -fx-background-color: #8B0000;
+    -fx-background-color: linear-gradient(to bottom, #B22222, #8B0000);
     -fx-text-fill: white;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 6 8 6 10;
-    -fx-font-size: 10px;
+    -fx-padding: 8 8 8 10;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-background-radius: 4;
-    -fx-border-color: #A52A2A;
+    -fx-border-color: #DC143C;
     -fx-border-width: 1;
     -fx-border-radius: 4;
     -fx-wrap-text: false;
@@ -182,8 +182,8 @@
 }
 
 .side-nav-action-warning:hover {
-    -fx-background-color: #A52A2A;
-    -fx-border-color: #CD5C5C;
+    -fx-background-color: linear-gradient(to bottom, #DC143C, #B22222);
+    -fx-border-color: #FF6347;
     -fx-effect: dropshadow(gaussian, rgba(139, 0, 0, 0.6), 4, 0, 0, 2);
 }
 

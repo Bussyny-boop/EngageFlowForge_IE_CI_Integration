@@ -4190,6 +4190,7 @@ public class AppController {
 
     /**
      * Set a button to collapsed mode with icon and tooltip
+     * Falls back to emoji from userData if icon fails to load
      */
     private void setCollapsedButton(Button button, String iconPath, String tooltip) {
         if (button != null) {
@@ -4197,6 +4198,12 @@ public class AppController {
             if (icon != null) {
                 button.setGraphic(icon);
                 button.setText("");
+            } else {
+                // Fallback to emoji from userData if icon fails to load
+                button.setGraphic(null);
+                if (button.getUserData() != null) {
+                    button.setText(button.getUserData().toString());
+                }
             }
             button.setTooltip(new Tooltip(tooltip));
         }
@@ -4204,6 +4211,7 @@ public class AppController {
 
     /**
      * Set a toggle button (tab) to collapsed mode (icon only, tooltip for full name)
+     * Falls back to emoji from userData if icon fails to load
      */
     private void setCollapsedTab(ToggleButton button, String iconPath, String tooltip) {
         if (button != null) {
@@ -4211,6 +4219,12 @@ public class AppController {
             if (icon != null) {
                 button.setGraphic(icon);
                 button.setText("");
+            } else {
+                // Fallback to emoji from userData if icon fails to load
+                button.setGraphic(null);
+                if (button.getUserData() != null) {
+                    button.setText(button.getUserData().toString());
+                }
             }
             button.setTooltip(new Tooltip(tooltip));
         }
@@ -4997,38 +5011,50 @@ public class AppController {
                 if (name.endsWith(".csv")) {
                     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                         String headerLine = br.readLine();
-                        int nameColumn = -1;
+                        int nameColumn = 0; // Default to first column (column 0)
+                        boolean hasNameHeader = false;
                         
-                        // Look for "Name" header (case-insensitive, ignoring trailing "*")
+                        // Look for "Name" header in all columns (case-insensitive, ignoring trailing "*")
                         if (headerLine != null) {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
                                 if (headerValue.equalsIgnoreCase("Name")) {
                                     nameColumn = i;
+                                    hasNameHeader = true;
                                     break;
+                                }
+                            }
+                            
+                            // If no "Name" header found, fallback to first column and treat first line as data
+                            if (!hasNameHeader) {
+                                nameColumn = 0;
+                                // First line is data - add it
+                                String[] parts = headerLine.split(",");
+                                if (parts.length > nameColumn && !parts[nameColumn].trim().isEmpty()) {
+                                    roles.add(parts[nameColumn].trim());
                                 }
                             }
                         }
                         
-                        // If "Name" column found, read data from it
-                        if (nameColumn >= 0) {
-                            String line;
-                            while ((line = br.readLine()) != null) {
-                                String[] parts = line.split(",");
-                                if (parts.length > nameColumn && !parts[nameColumn].trim().isEmpty()) {
-                                    roles.add(parts[nameColumn].trim());
-                                }
+                        // Read remaining lines
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            String[] parts = line.split(",");
+                            if (parts.length > nameColumn && !parts[nameColumn].trim().isEmpty()) {
+                                roles.add(parts[nameColumn].trim());
                             }
                         }
                     }
                 } else {
                     try (Workbook workbook = WorkbookFactory.create(file)) {
                         Sheet sheet = workbook.getSheetAt(0);
-                        int nameColumn = -1;
+                        int nameColumn = 0; // Default to first column (column 0)
+                        boolean hasNameHeader = false;
+                        int startRow = 0; // 0 means first row is data
                         
-                        // Check first row for "Name" header (case-insensitive, ignoring trailing "*")
+                        // Check first row for "Name" header in all columns (case-insensitive, ignoring trailing "*")
                         if (sheet.getPhysicalNumberOfRows() > 0) {
                             Row headerRow = sheet.getRow(0);
                             if (headerRow != null) {
@@ -5037,9 +5063,11 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
                                         if (headerValue.equalsIgnoreCase("Name")) {
                                             nameColumn = i;
+                                            hasNameHeader = true;
+                                            startRow = 1; // Skip header row
                                             break;
                                         }
                                     }
@@ -5047,18 +5075,16 @@ public class AppController {
                             }
                         }
                         
-                        // If "Name" column found, read data from it
-                        if (nameColumn >= 0) {
-                            DataFormatter formatter = new DataFormatter();
-                            for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) { // Start from row 1 (skip header)
-                                Row row = sheet.getRow(i);
-                                if (row != null) {
-                                    org.apache.poi.ss.usermodel.Cell cell = row.getCell(nameColumn);
-                                    if (cell != null) {
-                                        String val = formatter.formatCellValue(cell).trim();
-                                        if (!val.isEmpty()) {
-                                            roles.add(val);
-                                        }
+                        // Read data from the determined column starting at the appropriate row
+                        DataFormatter formatter = new DataFormatter();
+                        for (int i = startRow; i < sheet.getPhysicalNumberOfRows(); i++) {
+                            Row row = sheet.getRow(i);
+                            if (row != null) {
+                                org.apache.poi.ss.usermodel.Cell cell = row.getCell(nameColumn);
+                                if (cell != null) {
+                                    String val = formatter.formatCellValue(cell).trim();
+                                    if (!val.isEmpty()) {
+                                        roles.add(val);
                                     }
                                 }
                             }
@@ -5147,38 +5173,50 @@ public class AppController {
                 if (name.endsWith(".csv")) {
                     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                         String headerLine = br.readLine();
-                        int unitColumn = -1;
+                        int unitColumn = 0; // Default to first column (column 0)
+                        boolean hasUnitHeader = false;
                         
-                        // Look for "Department" or "Unit" header (case-insensitive, ignoring trailing "*")
+                        // Look for "Department" or "Unit" header in all columns (case-insensitive, ignoring trailing "*")
                         if (headerLine != null) {
                             String[] headers = headerLine.split(",");
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
+                                String header = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
                                 if (header.equalsIgnoreCase("Department") || header.equalsIgnoreCase("Unit")) {
                                     unitColumn = i;
+                                    hasUnitHeader = true;
                                     break;
+                                }
+                            }
+                            
+                            // If no "Department" or "Unit" header found, fallback to first column and treat first line as data
+                            if (!hasUnitHeader) {
+                                unitColumn = 0;
+                                // First line is data - add it
+                                String[] parts = headerLine.split(",");
+                                if (parts.length > unitColumn && !parts[unitColumn].trim().isEmpty()) {
+                                    bedList.add(parts[unitColumn].trim());
                                 }
                             }
                         }
                         
-                        // If "Department" or "Unit" column found, read data from it
-                        if (unitColumn >= 0) {
-                            String line;
-                            while ((line = br.readLine()) != null) {
-                                String[] parts = line.split(",");
-                                if (parts.length > unitColumn && !parts[unitColumn].trim().isEmpty()) {
-                                    bedList.add(parts[unitColumn].trim());
-                                }
+                        // Read remaining lines
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            String[] parts = line.split(",");
+                            if (parts.length > unitColumn && !parts[unitColumn].trim().isEmpty()) {
+                                bedList.add(parts[unitColumn].trim());
                             }
                         }
                     }
                 } else {
                     try (Workbook workbook = WorkbookFactory.create(file)) {
                         Sheet sheet = workbook.getSheetAt(0);
-                        int unitColumn = -1;
+                        int unitColumn = 0; // Default to first column (column 0)
+                        boolean hasUnitHeader = false;
+                        int startRow = 0; // 0 means first row is data
                         
-                        // Check first row for "Department" or "Unit" header (case-insensitive, ignoring trailing "*")
+                        // Check first row for "Department" or "Unit" header in all columns (case-insensitive, ignoring trailing "*")
                         if (sheet.getPhysicalNumberOfRows() > 0) {
                             Row headerRow = sheet.getRow(0);
                             if (headerRow != null) {
@@ -5187,9 +5225,11 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
                                         if (headerValue.equalsIgnoreCase("Department") || headerValue.equalsIgnoreCase("Unit")) {
                                             unitColumn = i;
+                                            hasUnitHeader = true;
+                                            startRow = 1; // Skip header row
                                             break;
                                         }
                                     }
@@ -5197,18 +5237,16 @@ public class AppController {
                             }
                         }
                         
-                        // If "Department" or "Unit" column found, read data from it
-                        if (unitColumn >= 0) {
-                            DataFormatter formatter = new DataFormatter();
-                            for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) { // Start from row 1 (skip header)
-                                Row row = sheet.getRow(i);
-                                if (row != null) {
-                                    org.apache.poi.ss.usermodel.Cell cell = row.getCell(unitColumn);
-                                    if (cell != null) {
-                                        String val = formatter.formatCellValue(cell).trim();
-                                        if (!val.isEmpty()) {
-                                            bedList.add(val);
-                                        }
+                        // Read data from the determined column starting at the appropriate row
+                        DataFormatter formatter = new DataFormatter();
+                        for (int i = startRow; i < sheet.getPhysicalNumberOfRows(); i++) {
+                            Row row = sheet.getRow(i);
+                            if (row != null) {
+                                org.apache.poi.ss.usermodel.Cell cell = row.getCell(unitColumn);
+                                if (cell != null) {
+                                    String val = formatter.formatCellValue(cell).trim();
+                                    if (!val.isEmpty()) {
+                                        bedList.add(val);
                                     }
                                 }
                             }
