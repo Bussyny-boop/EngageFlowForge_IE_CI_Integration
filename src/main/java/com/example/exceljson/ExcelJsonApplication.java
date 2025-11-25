@@ -41,7 +41,7 @@ public class ExcelJsonApplication extends Application {
         // Get the controller
         AppController controller = loader.getController();
 
-        primaryStage.setTitle("Engage FlowForge 2.0");
+        primaryStage.setTitle("Engage FlowForge 3.1");
         
         // Load application icon from resources - use multiple sizes for best quality
         // JavaFX will automatically select the most appropriate size for different contexts
@@ -108,7 +108,7 @@ public class ExcelJsonApplication extends Application {
     private UserProfile showRoleSelectionDialog(Scene scene, Stage owner) {
         Alert roleDialog = new Alert(Alert.AlertType.NONE);
         roleDialog.setTitle("Engage FlowForge - Role Selection");
-        roleDialog.setHeaderText("Engage FlowForge 2.0\n\nWhat is your Role?\n\nPlease select a profile to access the application.");
+        roleDialog.setHeaderText("Engage FlowForge 3.1\n\nWhat is your Role?\n\nPlease select a profile to access the application.");
         roleDialog.initModality(Modality.APPLICATION_MODAL);
         roleDialog.initOwner(owner);
         
