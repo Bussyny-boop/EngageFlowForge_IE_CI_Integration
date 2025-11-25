@@ -1362,9 +1362,14 @@ public class XmlParser {
             }
             
             // If rule has no alert types but has state and defer-delivery-by, it's global escalation
+            // BUT skip DataUpdate rules that have filter with not_equal on assignments.state = Active
+            // These represent "No Primary Assigned" scenarios that shouldn't contribute to timing
             if (rule.alertTypes.isEmpty() && rule.state != null && !rule.state.isEmpty() 
                 && rule.deferDeliveryBy != null && !hasDestination(rule)) {
-                globalEscalationRules.add(rule);
+                // Skip DataUpdate rules whose views contain filter excluding active assignments
+                if (!("DataUpdate".equalsIgnoreCase(rule.component) && hasInactiveAssignmentStateFilter(rule))) {
+                    globalEscalationRules.add(rule);
+                }
                 continue;
             }
             
@@ -1775,7 +1780,14 @@ public class XmlParser {
                 sendByState.computeIfAbsent(state, k -> new ArrayList<>()).add(rule);
             }
             // If has defer-delivery-by but no destination, it's escalation timing
+            // BUT skip rules that have filter with not_equal on assignments.state = Active
+            // These represent "No Primary Assigned" scenarios that shouldn't contribute to timing
             else if (rule.deferDeliveryBy != null && !hasDestination(rule)) {
+                // Skip DataUpdate rules whose views contain filter excluding active assignments
+                if ("DataUpdate".equalsIgnoreCase(rule.component) && hasInactiveAssignmentStateFilter(rule)) {
+                    // Rule references views with "assignments.state not_equal Active" - skip for timing
+                    continue;
+                }
                 escalateDelay.put(state, rule.deferDeliveryBy);
             }
         }
@@ -2438,6 +2450,48 @@ public class XmlParser {
                upper.equals("CUCM") || 
                upper.equals("VOCERA") ||
                upper.equals("OUTGOINGWCTP");
+    }
+    
+    /**
+     * Check if a rule's condition views contain a filter that excludes active assignments.
+     * This detects patterns like:
+     * <filter relation="not_equal">
+     *   <path>bed.locs.assignments.state</path>
+     *   <value>Active</value>
+     * </filter>
+     * 
+     * Rules with such filters should be excluded from "time to recipients" calculation
+     * because they represent scenarios where no caregiver is actively assigned (e.g., 
+     * "No Primary Assigned" escalation rules).
+     * 
+     * @param rule The rule to check
+     * @return true if the rule contains a filter excluding active assignments state
+     */
+    private boolean hasInactiveAssignmentStateFilter(Rule rule) {
+        if (rule == null || rule.dataset == null) return false;
+        Map<String, View> views = datasetViews.get(rule.dataset);
+        if (views == null) return false;
+        
+        for (String viewName : rule.viewNames) {
+            View view = views.get(viewName);
+            if (view == null || view.filters == null) continue;
+            
+            for (Filter filter : view.filters) {
+                if (filter.path == null || filter.relation == null || filter.value == null) continue;
+                
+                String path = filter.path.trim().toLowerCase();
+                String relation = filter.relation.trim().toLowerCase();
+                String value = filter.value.trim().toLowerCase();
+                
+                // Check for "not_equal" relation on a path ending with "assignments.state" with value "active"
+                if (relation.equals("not_equal") && 
+                    path.endsWith("assignments.state") && 
+                    value.equals("active")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
     private boolean hasDestination(Rule rule) {
