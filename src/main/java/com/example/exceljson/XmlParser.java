@@ -2453,19 +2453,27 @@ public class XmlParser {
     }
     
     /**
-     * Check if a rule's condition views contain a filter that excludes active assignments.
+     * Check if a rule's condition views contain filters that indicate "no caregiver assigned" scenarios.
      * This detects patterns like:
+     * 
+     * 1. Filter with "not_equal" on assignments.state = Active:
      * <filter relation="not_equal">
      *   <path>bed.locs.assignments.state</path>
      *   <value>Active</value>
      * </filter>
      * 
+     * 2. Filter with negative relation (not_in, not_equal) on role.name:
+     * <filter relation="not_in">
+     *   <path>bed.locs.assignments.role.name</path>
+     *   <value>Buddy Nurse, Nurse Buddy</value>
+     * </filter>
+     * 
      * Rules with such filters should be excluded from "time to recipients" calculation
      * because they represent scenarios where no caregiver is actively assigned (e.g., 
-     * "No Primary Assigned" escalation rules).
+     * "No Primary Assigned" or "No role caregiver X is online" escalation rules).
      * 
      * @param rule The rule to check
-     * @return true if the rule contains a filter excluding active assignments state
+     * @return true if the rule contains filters indicating "no caregiver assigned" scenario
      */
     private boolean hasInactiveAssignmentStateFilter(Rule rule) {
         if (rule == null || rule.dataset == null) return false;
@@ -2489,9 +2497,39 @@ public class XmlParser {
                     value.equals("active")) {
                     return true;
                 }
+                
+                // Check for negative relations (not_in, not_equal) on role.name paths
+                // This captures scenarios like "No_role_caregiver_NURSE_BUDDY_is_online"
+                // where the view filters for roles that are NOT assigned
+                if (isNegativeRelation(relation) && isRoleNamePath(path)) {
+                    return true;
+                }
             }
         }
         return false;
+    }
+    
+    /**
+     * Check if a relation is a negative/exclusion relation.
+     * @param relation The relation to check (already lowercase)
+     * @return true if the relation represents negative/exclusion logic
+     */
+    private boolean isNegativeRelation(String relation) {
+        return relation != null && (
+            relation.equals("not_in") ||
+            relation.equals("not_equal") ||
+            relation.equals("not_like")
+        );
+    }
+    
+    /**
+     * Check if a path refers to a role name field.
+     * Matches paths like "bed.locs.assignments.role.name" or "assignments.role.name"
+     * @param path The path to check (already lowercase)
+     * @return true if the path refers to role.name
+     */
+    private boolean isRoleNamePath(String path) {
+        return path != null && path.contains("role.name");
     }
     
     private boolean hasDestination(Rule rule) {
