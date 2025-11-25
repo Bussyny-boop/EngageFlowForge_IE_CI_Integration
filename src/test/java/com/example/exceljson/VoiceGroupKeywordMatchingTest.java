@@ -123,14 +123,7 @@ class VoiceGroupKeywordMatchingTest {
     @Test
     void testWhitespaceHandling() {
         String header = "  Group Name  *  ";
-        // Outer trim first
-        String step1 = header.trim();
-        // Now we have "Group Name  *"
-        // Remove trailing asterisks
-        String step2 = step1.replaceAll(TRAILING_ASTERISK_REGEX, "");
-        // Now we have "Group Name  " 
-        // Final trim removes trailing space
-        String normalized = step2.trim();
+        String normalized = header.trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
         assertTrue(normalized.toLowerCase().contains("group name"), 
             "Should match header with extra whitespace after proper trimming");
     }
