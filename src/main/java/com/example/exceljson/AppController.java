@@ -687,10 +687,16 @@ public class AppController {
                 if (tableNurseCalls != null) {
                     tableNurseCalls.setFixedCellSize(newVal.doubleValue());
                 }
+                if (frozenNurseTable != null) {
+                    frozenNurseTable.setFixedCellSize(newVal.doubleValue());
+                }
             });
             // Set initial value
             if (tableNurseCalls != null) {
                 tableNurseCalls.setFixedCellSize(nurseCallsRowHeightSlider.getValue());
+            }
+            if (frozenNurseTable != null) {
+                frozenNurseTable.setFixedCellSize(nurseCallsRowHeightSlider.getValue());
             }
         }
         
@@ -701,10 +707,16 @@ public class AppController {
                 if (tableClinicals != null) {
                     tableClinicals.setFixedCellSize(newVal.doubleValue());
                 }
+                if (frozenClinicalTable != null) {
+                    frozenClinicalTable.setFixedCellSize(newVal.doubleValue());
+                }
             });
             // Set initial value
             if (tableClinicals != null) {
                 tableClinicals.setFixedCellSize(clinicalsRowHeightSlider.getValue());
+            }
+            if (frozenClinicalTable != null) {
+                frozenClinicalTable.setFixedCellSize(clinicalsRowHeightSlider.getValue());
             }
         }
         
@@ -715,10 +727,16 @@ public class AppController {
                 if (tableOrders != null) {
                     tableOrders.setFixedCellSize(newVal.doubleValue());
                 }
+                if (frozenOrdersTable != null) {
+                    frozenOrdersTable.setFixedCellSize(newVal.doubleValue());
+                }
             });
             // Set initial value
             if (tableOrders != null) {
                 tableOrders.setFixedCellSize(ordersRowHeightSlider.getValue());
+            }
+            if (frozenOrdersTable != null) {
+                frozenOrdersTable.setFixedCellSize(ordersRowHeightSlider.getValue());
             }
         }
     }
@@ -4262,6 +4280,19 @@ public class AppController {
         
         // Hide horizontal scrollbar on frozen table
         frozenTable.setStyle("-fx-hbar-policy: never;");
+        
+        // Synchronize fixed cell size between tables to ensure row alignment
+        // This is critical for row alignment - both tables must have the same fixed cell size
+        mainTable.fixedCellSizeProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.doubleValue() > 0) {
+                frozenTable.setFixedCellSize(newVal.doubleValue());
+            }
+        });
+        
+        // Set initial fixed cell size from main table
+        if (mainTable.getFixedCellSize() > 0) {
+            frozenTable.setFixedCellSize(mainTable.getFixedCellSize());
+        }
         
         // Synchronize vertical scrolling between tables
         Platform.runLater(() -> {

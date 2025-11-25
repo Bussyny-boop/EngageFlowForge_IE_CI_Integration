@@ -147,11 +147,11 @@
                             <!-- Separator after navigation tabs -->
                             <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
                             
-                            <!-- Preview JSON -->
-                            <Button fx:id="generateJsonButton" text="👁️ Preview JSON" maxWidth="Infinity" styleClass="side-nav-action">
+                            <!-- View JSON -->
+                            <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>👁️</userData>
                                 <tooltip>
-                                    <Tooltip text="Preview JSON file for all selected rows in the dataset" />
+                                    <Tooltip text="View JSON file for all selected rows in the dataset" />
                                 </tooltip>
                             </Button>
                             
