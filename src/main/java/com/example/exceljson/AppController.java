@@ -4336,9 +4336,10 @@ public class AppController {
     private void applyStickyPosition(Node node, double translateX) {
         node.setTranslateX(translateX);
         node.setMouseTransparent(false);
-        node.setPickOnBounds(true);
-        node.setViewOrder(-1);
-        node.toFront();
+        // Ensure the node is fully interactive and visible
+        if (node instanceof javafx.scene.layout.Region region) {
+            region.setManaged(true);
+        }
     }
 
     private <T> boolean isHeaderForColumn(Node header, TableColumn<T, ?> column) {

@@ -227,9 +227,13 @@
 }
 
 /* --- Clear Button Hover Style --- */
-.nav-button.clear-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #E85D4A, #D14836);
-    -fx-text-fill: white;
+.nav-button.clear-button:hover,
+.side-nav-action-warning.clear-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #FF0000, #CC0000) !important;
+    -fx-text-fill: white !important;
+    -fx-scale-x: 1.26;
+    -fx-scale-y: 1.26;
+    -fx-effect: dropshadow(gaussian, rgba(255, 0, 0, 0.5), 8, 0, 0, 4) !important;
 }
 
 /* --- Settings Drawer --- */
@@ -729,13 +733,17 @@
 }
 
 /* --- Sticky Column --- */
-.sticky-column .table-cell {
-    -fx-background-color: #1F3A3D;
-    -fx-border-color: #00C8D4;
-    -fx-border-width: 0 2 0 0;
+.table-view .column-header.sticky-column {
+    -fx-border-color: #00D4DD;
+    -fx-border-width: 0 3 0 0;
 }
 
-.sticky-column .label {
+.table-view .column-header.sticky-column .label {
     -fx-font-weight: bold;
     -fx-text-fill: white;
+}
+
+/* Ensure sticky column cells are visible during scroll */
+.table-cell {
+    -fx-background-insets: 0;
 }
