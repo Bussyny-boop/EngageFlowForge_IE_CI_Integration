@@ -544,7 +544,7 @@
                                         <center>
                                             <TableView fx:id="tableNurseCalls" editable="true">
                                                 <columns>
-                                                    <TableColumn fx:id="nurseInScopeCol" prefWidth="80.0" text="In Scope" />
+                                                    <TableColumn fx:id="nurseInScopeCol" prefWidth="100.0" text="In Scope" />
                                                     <TableColumn fx:id="nurseConfigGroupCol" prefWidth="160.0" text="Config Group" />
                                                     <TableColumn fx:id="nurseAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
                                                     <TableColumn fx:id="nurseSendingNameCol" prefWidth="200.0" text="Sending Name" />
@@ -588,7 +588,7 @@
                                         <center>
                                             <TableView fx:id="tableClinicals" editable="true">
                                                 <columns>
-                                                    <TableColumn fx:id="clinicalInScopeCol" prefWidth="80.0" text="In Scope" />
+                                                    <TableColumn fx:id="clinicalInScopeCol" prefWidth="100.0" text="In Scope" />
                                                     <TableColumn fx:id="clinicalConfigGroupCol" prefWidth="160.0" text="Config Group" />
                                                     <TableColumn fx:id="clinicalAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
                                                     <TableColumn fx:id="clinicalSendingNameCol" prefWidth="200.0" text="Sending Name" />
@@ -633,7 +633,7 @@
                                         <center>
                                             <TableView fx:id="tableOrders" editable="true">
                                                 <columns>
-                                                    <TableColumn fx:id="ordersInScopeCol" prefWidth="80.0" text="In Scope" />
+                                                    <TableColumn fx:id="ordersInScopeCol" prefWidth="100.0" text="In Scope" />
                                                     <TableColumn fx:id="ordersConfigGroupCol" prefWidth="160.0" text="Config Group" />
                                                     <TableColumn fx:id="ordersAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
                                                     <TableColumn fx:id="ordersSendingNameCol" prefWidth="200.0" text="Sending Name" />

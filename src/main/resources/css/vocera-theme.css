@@ -715,13 +715,13 @@
 }
 
 /* --- Sticky Column --- */
-.table-column.sticky-column {
-    -fx-background-color: #E8F5F6;
+.sticky-column .table-cell {
+    -fx-background-color: #F0F9FA;
     -fx-border-color: #00979D;
-    -fx-border-width: 0 1 0 0;
+    -fx-border-width: 0 2 0 0;
 }
 
-.table-column.sticky-column .label {
+.sticky-column .label {
     -fx-font-weight: bold;
-    -fx-text-fill: #00979D;
+    -fx-text-fill: white;
 }
