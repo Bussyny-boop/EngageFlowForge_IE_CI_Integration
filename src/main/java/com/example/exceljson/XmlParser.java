@@ -2529,7 +2529,9 @@ public class XmlParser {
      * @return true if the path refers to role.name
      */
     private boolean isRoleNamePath(String path) {
-        return path != null && path.contains("role.name");
+        // Use endsWith to be more precise and avoid false positives
+        // Valid patterns: *.role.name, assignments.role.name
+        return path != null && (path.endsWith("role.name") || path.endsWith(".role.name"));
     }
     
     private boolean hasDestination(Rule rule) {

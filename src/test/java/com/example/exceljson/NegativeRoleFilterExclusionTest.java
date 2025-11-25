@@ -1,6 +1,7 @@
 package com.example.exceljson;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 import java.io.File;
 import java.util.List;
 
@@ -127,10 +128,10 @@ public class NegativeRoleFilterExclusionTest {
     public void testFairviewXmlParsingSucceeds() throws Exception {
         // Test with the actual fairview_eastbank_west_bank_prod.xml if available
         File xmlFile = new File("fairview_eastbank_west_bank_prod.xml");
-        if (!xmlFile.exists()) {
-            System.out.println("Skipping fairview test - file not found");
-            return;
-        }
+        
+        // Use Assumptions to properly skip the test if file doesn't exist
+        Assumptions.assumeTrue(xmlFile.exists(), 
+            "Skipping fairview test - fairview_eastbank_west_bank_prod.xml not found");
         
         XmlParser parser = new XmlParser();
         parser.load(xmlFile);
