@@ -3251,22 +3251,17 @@ public class AppController {
             // Config group filter
             boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
             
-            // Search all columns
+            // Search all columns in the actual table data (not just In Scope column)
             boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
             
             return configMatch && searchMatch;
         });
         
-        // Update inScope based on filter
-        if (nurseCallsFullList != null) {
-            for (ExcelParserV5.FlowRow flow : nurseCallsFullList) {
-                boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
-                boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
-                flow.inScope = configMatch && searchMatch;
-            }
-        }
+        // Note: Search does NOT update inScope - search only filters visibility
+        // The inScope checkbox is for users to manually mark rows for export
         
         if (tableNurseCalls != null) tableNurseCalls.refresh();
+        if (frozenNurseTable != null) frozenNurseTable.refresh();
         updateStatusLabel();
     }
 
@@ -3322,22 +3317,17 @@ public class AppController {
             // Config group filter
             boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
             
-            // Search all columns
+            // Search all columns in the actual table data (not just In Scope column)
             boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
             
             return configMatch && searchMatch;
         });
         
-        // Update inScope based on filter
-        if (clinicalsFullList != null) {
-            for (ExcelParserV5.FlowRow flow : clinicalsFullList) {
-                boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
-                boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
-                flow.inScope = configMatch && searchMatch;
-            }
-        }
+        // Note: Search does NOT update inScope - search only filters visibility
+        // The inScope checkbox is for users to manually mark rows for export
         
         if (tableClinicals != null) tableClinicals.refresh();
+        if (frozenClinicalTable != null) frozenClinicalTable.refresh();
         updateStatusLabel();
     }
 
@@ -3352,22 +3342,17 @@ public class AppController {
             // Config group filter
             boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
             
-            // Search all columns
+            // Search all columns in the actual table data (not just In Scope column)
             boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
             
             return configMatch && searchMatch;
         });
         
-        // Update inScope based on filter
-        if (ordersFullList != null) {
-            for (ExcelParserV5.FlowRow flow : ordersFullList) {
-                boolean configMatch = selectedConfigGroup == null || selectedConfigGroup.equals("All") || selectedConfigGroup.equals(flow.configGroup);
-                boolean searchMatch = searchFilter.isEmpty() || matchesAnyColumn(flow, searchFilter);
-                flow.inScope = configMatch && searchMatch;
-            }
-        }
+        // Note: Search does NOT update inScope - search only filters visibility
+        // The inScope checkbox is for users to manually mark rows for export
         
         if (tableOrders != null) tableOrders.refresh();
+        if (frozenOrdersTable != null) frozenOrdersTable.refresh();
         updateStatusLabel();
     }
 
@@ -4848,14 +4833,17 @@ public class AppController {
                         String headerLine = br.readLine();
                         int groupNameColumn = 0; // Default to column 0 (Column A)
                         
-                        // Check if first line contains "Group Name" header (case-insensitive)
+                        // Check if first line contains "Group Name" keyword in header (case-insensitive)
+                        // Ignoring asterisks (e.g., "Group Name *" matches "Group Name")
                         if (headerLine != null) {
                             String[] headers = headerLine.split(",");
                             boolean hasGroupNameHeader = false;
                             
                             for (int i = 0; i < headers.length; i++) {
-                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
-                                if (headerValue.equalsIgnoreCase("Group Name")) {
+                                // Remove trailing asterisks and trim to normalize the header
+                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
+                                // Use contains to match "Group Name" keyword anywhere in the header
+                                if (headerValue.toLowerCase().contains("group name")) {
                                     groupNameColumn = i;
                                     hasGroupNameHeader = true;
                                     break;
@@ -4886,7 +4874,8 @@ public class AppController {
                         int groupNameColumn = 0; // Default to column 0 (Column A)
                         int startRow = 0;
                         
-                        // Check first row for "Group Name" header (case-insensitive)
+                        // Check first row for "Group Name" keyword in header (case-insensitive)
+                        // Ignoring asterisks (e.g., "Group Name *" matches "Group Name")
                         if (sheet.getPhysicalNumberOfRows() > 0) {
                             Row headerRow = sheet.getRow(0);
                             if (headerRow != null) {
@@ -4896,8 +4885,10 @@ public class AppController {
                                 for (int i = 0; i < headerRow.getLastCellNum(); i++) {
                                     org.apache.poi.ss.usermodel.Cell cell = headerRow.getCell(i);
                                     if (cell != null) {
-                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim(); // Remove trailing asterisks and trim again
-                                        if (headerValue.equalsIgnoreCase("Group Name")) {
+                                        // Remove trailing asterisks and trim to normalize the header
+                                        String headerValue = formatter.formatCellValue(cell).trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
+                                        // Use contains to match "Group Name" keyword anywhere in the header
+                                        if (headerValue.toLowerCase().contains("group name")) {
                                             groupNameColumn = i;
                                             hasGroupNameHeader = true;
                                             startRow = 1; // Skip header row
