@@ -73,8 +73,8 @@
 .sidebar-section-header {
     -fx-text-fill: #00D4DD;
     -fx-font-weight: bold;
-    -fx-font-size: 9px;
-    -fx-padding: 4 8 2 8;
+    -fx-font-size: 12px;
+    -fx-padding: 6 8 4 8;
     -fx-letter-spacing: 0.5px;
 }
 
@@ -93,13 +93,13 @@
 
 /* --- Navigation Buttons --- */
 .nav-button {
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(255, 255, 255, 0.08);
     -fx-text-fill: #F0F0F0;
-    -fx-font-size: 10px;
+    -fx-font-size: 11px;
     -fx-font-weight: 500;
     -fx-alignment: CENTER_LEFT;
     -fx-graphic-text-gap: 6;
-    -fx-padding: 6 8 6 10;
+    -fx-padding: 8 8 8 10;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
@@ -156,14 +156,14 @@
 }
 
 .side-nav-action {
-    -fx-background-color: linear-gradient(to bottom, #00C4CC, #00A8B0);
+    -fx-background-color: linear-gradient(to bottom, #0084A0, #006880);
     -fx-text-fill: white;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 6 8 6 10;
-    -fx-font-size: 10px;
+    -fx-padding: 8 8 8 10;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-background-radius: 4;
-    -fx-border-color: #00D4DD;
+    -fx-border-color: #00B8C0;
     -fx-border-width: 1;
     -fx-border-radius: 4;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 3, 0, 0, 2);
@@ -173,35 +173,31 @@
 }
 
 .side-nav-action:hover {
-    -fx-background-color: linear-gradient(to bottom, #00D4DD, #00C4CC);
+    -fx-background-color: linear-gradient(to bottom, #00A8B0, #0084A0);
     -fx-translate-x: 2;
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
     -fx-effect: dropshadow(gaussian, rgba(0, 212, 221, 0.5), 6, 0, 0, 3);
 }
-    -fx-scale-x: 1.26;
-    -fx-scale-y: 1.26;
-    -fx-effect: dropshadow(gaussian, rgba(0, 212, 221, 0.4), 5, 0, 0, 3);
-}
 
 .side-nav-action-warning {
-    -fx-background-color: linear-gradient(to bottom, #E85D4A, #D14836);
+    -fx-background-color: linear-gradient(to bottom, #B22222, #8B0000);
     -fx-text-fill: white;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 8 10 8 12;
-    -fx-font-size: 12px;
+    -fx-padding: 8 8 8 10;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-background-radius: 5;
-    -fx-border-color: #FF6B57;
+    -fx-background-radius: 4;
+    -fx-border-color: #DC143C;
     -fx-border-width: 1;
-    -fx-border-radius: 5;
+    -fx-border-radius: 4;
     -fx-wrap-text: false;
     -fx-min-width: 160;
     -fx-pref-width: 175;
 }
 
 .side-nav-action-warning:hover {
-    -fx-background-color: linear-gradient(to bottom, #FF0000, #CC0000);
+    -fx-background-color: linear-gradient(to bottom, #DC143C, #B22222);
     -fx-scale-x: 1.26;
     -fx-scale-y: 1.26;
     -fx-effect: dropshadow(gaussian, rgba(255, 0, 0, 0.5), 8, 0, 0, 4);
