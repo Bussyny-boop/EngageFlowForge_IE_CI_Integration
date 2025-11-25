@@ -91,21 +91,21 @@
                             <Label fx:id="loadDataLabel" text="Load Data" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 3 0 0 2; -fx-font-size: 10;" />
                             <VBox fx:id="loadButtonsContainer" spacing="3">
                                 <!-- Load NDW (Excel) -->
-                                <Button fx:id="loadNdwButton" text="📄 Load NDW" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="loadNdwButton" text="📄 NDW File" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📄</userData>
                                     <tooltip>
                                         <Tooltip text="Load NDW Excel workbook (*.xlsx)" />
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage XML -->
-                                <Button fx:id="loadXmlButton" text="📋 Load XML" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="loadXmlButton" text="📋 Engage XML" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📋</userData>
                                     <tooltip>
                                         <Tooltip text="Load Engage interface rules from XML (*.xml)" />
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage Rules (JSON) -->
-                                <Button fx:id="loadJsonButton" text="📥 Load Rules" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="loadJsonButton" text="📥 Engage JSON" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📥</userData>
                                     <tooltip>
                                         <Tooltip text="Load previously exported Engage Rules JSON (*.json)" />
@@ -113,9 +113,12 @@
                                 </Button>
                             </VBox>
                             
-                            <!-- Clear All -->
-                            <Button fx:id="clearAllButton" text="🗑️ Clear All" disable="true" maxWidth="Infinity" styleClass="nav-button">
-                                <userData>🗑️</userData>
+                            <!-- Reset Data (renamed from Clear All, moved to buttons section) -->
+                            <Button fx:id="clearAllButton" text="🔄 Reset Data" disable="true" maxWidth="Infinity" styleClass="side-nav-action-warning">
+                                <userData>🔄</userData>
+                                <tooltip>
+                                    <Tooltip text="Clear all loaded data and reset the application" />
+                                </tooltip>
                             </Button>
                             
                             <!-- Save to NDW (CI Mode Only) -->
@@ -127,7 +130,7 @@
                             </Button>
                             
                             <!-- Units Navigation -->
-                            <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true">
+                            <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true" style="-fx-font-weight: bold;">
                                 <userData>📊</userData>
                                 <toggleGroup>
                                     <ToggleGroup fx:id="navigationGroup" />
@@ -135,39 +138,36 @@
                             </ToggleButton>
                             
                             <!-- Nurse Calls Navigation -->
-                            <ToggleButton fx:id="navNurseCalls" text="🔔 Nurse Calls" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup">
+                            <ToggleButton fx:id="navNurseCalls" text="🔔 Nurse Calls" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" style="-fx-font-weight: bold;">
                                 <userData>🔔</userData>
                             </ToggleButton>
                             
                             <!-- Clinicals Navigation -->
-                            <ToggleButton fx:id="navClinicals" text="🏥 Clinicals" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup">
+                            <ToggleButton fx:id="navClinicals" text="🏥 Clinicals" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" style="-fx-font-weight: bold;">
                                 <userData>🏥</userData>
                             </ToggleButton>
                             
                             <!-- Orders Navigation -->
-                            <ToggleButton fx:id="navOrders" text="💊 Orders" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup">
+                            <ToggleButton fx:id="navOrders" text="💊 Orders" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" style="-fx-font-weight: bold;">
                                 <userData>💊</userData>
                             </ToggleButton>
                             
-                            <!-- Separator between navigation and preview buttons -->
+                            <!-- Separator after navigation tabs -->
                             <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
                             
-                            <!-- Preview JSON (Combined) -->
-                            <Button fx:id="generateJsonButton" text="👁️ Preview JSON" maxWidth="Infinity" styleClass="nav-button">
+                            <!-- Preview JSON -->
+                            <Button fx:id="generateJsonButton" text="👁️ Preview JSON" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>👁️</userData>
                                 <tooltip>
                                     <Tooltip text="Preview JSON file for all selected rows in the dataset" />
                                 </tooltip>
                             </Button>
                             
-                            <!-- Separator between preview and export buttons -->
-                            <Separator fx:id="exportSeparator" style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
-                            
-                            <!-- Export JSON Section Header -->
-                            <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 3 0 0 2; -fx-font-size: 10;" />
+                            <!-- Export JSON Section -->
+                            <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 8 0 0 2; -fx-font-size: 10;" />
                             <VBox fx:id="exportButtonsContainer" spacing="3">
                                 <!-- Export Nursecall JSON -->
-                                <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="side-nav-action">
                                     <userData>🩺</userData>
                                     <tooltip>
                                         <Tooltip text="Export Nursecall JSON" />
@@ -175,7 +175,7 @@
                                 </Button>
                                 
                                 <!-- Export Clinical JSON -->
-                                <Button fx:id="exportClinicalJsonButton" text="🧬 Clinicals" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="exportClinicalJsonButton" text="🧬 Clinicals" maxWidth="Infinity" styleClass="side-nav-action">
                                     <userData>🧬</userData>
                                     <tooltip>
                                         <Tooltip text="Export Clinicals JSON" />
@@ -183,7 +183,7 @@
                                 </Button>
                                 
                                 <!-- Export Orders JSON -->
-                                <Button fx:id="exportOrdersJsonButton" text="📦 Orders" maxWidth="Infinity" styleClass="nav-button">
+                                <Button fx:id="exportOrdersJsonButton" text="📦 Orders" maxWidth="Infinity" styleClass="side-nav-action">
                                     <userData>📦</userData>
                                     <tooltip>
                                         <Tooltip text="Export Orders JSON" />
@@ -191,11 +191,14 @@
                                 </Button>
                             </VBox>
                             
-                            <!-- Visual CallFlow -->
-                            <Button fx:id="visualFlowButton" text="🔀 Visual CallFlow" maxWidth="Infinity" styleClass="nav-button">
+                            <!-- Separator before Visual Flow -->
+                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
+                            
+                            <!-- Visual Flow (renamed from Visual CallFlow) -->
+                            <Button fx:id="visualFlowButton" text="🔀 Visual Flow" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>🔀</userData>
                                 <tooltip>
-                                    <Tooltip text="Generate Visual CallFlow Diagram" />
+                                    <Tooltip text="Generate Visual Flow Diagram" />
                                 </tooltip>
                             </Button>
                         </VBox>

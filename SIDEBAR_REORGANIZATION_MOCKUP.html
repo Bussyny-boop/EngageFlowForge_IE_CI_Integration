@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Reorganization - Version 3.1 UI Changes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 36px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .panel h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .before h2 {
+            border-bottom-color: #dc3545;
+        }
+        
+        .after h2 {
+            border-bottom-color: #28a745;
+        }
+        
+        .sidebar {
+            background: #1E1E1E;
+            border-radius: 8px;
+            padding: 15px;
+            width: 185px;
+            margin: 0 auto;
+        }
+        
+        .section-label {
+            color: #bbb;
+            font-size: 10px;
+            font-weight: bold;
+            margin: 12px 0 6px 2px;
+        }
+        
+        .button {
+            background: #2A2A2A;
+            color: #E0E0E0;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 3px 0;
+            width: 100%;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: block;
+        }
+        
+        .button:hover {
+            background: #353535;
+            border-color: #00979D;
+        }
+        
+        .button.selected {
+            background: linear-gradient(135deg, #00979D 0%, #007B80 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .button.bold-tab {
+            font-weight: bold;
+        }
+        
+        .button.action {
+            background: #00979D;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .button.action:hover {
+            background: #00858A;
+        }
+        
+        .button.warning {
+            background: #8B4513;
+            color: white;
+        }
+        
+        .button.warning:hover {
+            background: #A0522D;
+        }
+        
+        .separator {
+            height: 1px;
+            background: #3E3E3E;
+            margin: 8px 0;
+        }
+        
+        .changes-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .changes-summary h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .change-item {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .change-item strong {
+            color: #28a745;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .change-item ul {
+            margin-left: 20px;
+            color: #555;
+        }
+        
+        .change-item li {
+            margin: 5px 0;
+        }
+        
+        .version-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .icon {
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .old-text {
+            text-decoration: line-through;
+            color: #dc3545;
+            margin-right: 10px;
+        }
+        
+        .new-text {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Sidebar Reorganization - Engage FlowForge</h1>
+        <div class="subtitle">Version 3.1 UI Improvements <span class="version-badge">v3.1</span></div>
+        
+        <div class="comparison">
+            <!-- BEFORE -->
+            <div class="panel before">
+                <h2>❌ Before (Version 2.0)</h2>
+                <div class="sidebar">
+                    <div class="section-label">Load Data</div>
+                    <button class="button">📄 Load NDW</button>
+                    <button class="button">📋 Load XML</button>
+                    <button class="button">📥 Load Rules</button>
+                    <button class="button">🗑️ Clear All</button>
+                    
+                    <div style="margin-top: 15px;"></div>
+                    
+                    <button class="button selected">📊 Units</button>
+                    <button class="button">🔔 Nurse Calls</button>
+                    <button class="button">🏥 Clinicals</button>
+                    <button class="button">💊 Orders</button>
+                    
+                    <div class="separator"></div>
+                    
+                    <button class="button">👁️ Preview JSON</button>
+                    
+                    <div class="separator"></div>
+                    
+                    <div class="section-label">Export JSON</div>
+                    <button class="button">🩺 Nursecall</button>
+                    <button class="button">🧬 Clinicals</button>
+                    <button class="button">📦 Orders</button>
+                    
+                    <button class="button">🔀 Visual CallFlow</button>
+                </div>
+            </div>
+            
+            <!-- AFTER -->
+            <div class="panel after">
+                <h2>✅ After (Version 3.1)</h2>
+                <div class="sidebar">
+                    <div class="section-label">Load Data</div>
+                    <button class="button">📄 NDW File</button>
+                    <button class="button">📋 Engage XML</button>
+                    <button class="button">📥 Engage JSON</button>
+                    
+                    <button class="button warning">🔄 Reset Data</button>
+                    
+                    <div style="margin-top: 15px;"></div>
+                    
+                    <button class="button selected bold-tab">📊 Units</button>
+                    <button class="button bold-tab">🔔 Nurse Calls</button>
+                    <button class="button bold-tab">🏥 Clinicals</button>
+                    <button class="button bold-tab">💊 Orders</button>
+                    
+                    <div class="separator"></div>
+                    
+                    <button class="button action">👁️ Preview JSON</button>
+                    
+                    <div class="section-label">Export JSON</div>
+                    <button class="button action">🩺 Nursecall</button>
+                    <button class="button action">🧬 Clinicals</button>
+                    <button class="button action">📦 Orders</button>
+                    
+                    <div class="separator"></div>
+                    
+                    <button class="button action">🔀 Visual Flow</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CHANGES SUMMARY -->
+        <div class="changes-summary">
+            <h2>📋 Complete List of UI Changes</h2>
+            
+            <div class="change-item">
+                <strong>1. Button Renaming (Clearer Labels)</strong>
+                <ul>
+                    <li><span class="old-text">📄 Load NDW</span> → <span class="new-text">📄 NDW File</span></li>
+                    <li><span class="old-text">📋 Load XML</span> → <span class="new-text">📋 Engage XML</span></li>
+                    <li><span class="old-text">📥 Load Rules</span> → <span class="new-text">📥 Engage JSON</span></li>
+                    <li><span class="old-text">🗑️ Clear All</span> → <span class="new-text">🔄 Reset Data</span></li>
+                    <li><span class="old-text">🔀 Visual CallFlow</span> → <span class="new-text">🔀 Visual Flow</span></li>
+                </ul>
+            </div>
+            
+            <div class="change-item">
+                <strong>2. Sidebar Reorganization</strong>
+                <ul>
+                    <li><strong>Reset Data</strong> moved from bottom of Load Data section to standalone position below Load buttons</li>
+                    <li><strong>Visual Flow</strong> separated from Export JSON group with its own separator</li>
+                    <li>All Preview/Export buttons now use consistent action button styling (teal background)</li>
+                </ul>
+            </div>
+            
+            <div class="change-item">
+                <strong>3. Navigation Tabs Enhanced</strong>
+                <ul>
+                    <li><strong>Bold text</strong> applied to all navigation tabs: Units, Nurse Calls, Clinicals, Orders</li>
+                    <li>Improved visual hierarchy separating navigation from actions</li>
+                    <li>Better contrast for selected state with bold font weight (600)</li>
+                </ul>
+            </div>
+            
+            <div class="change-item">
+                <strong>4. Visual Hierarchy Improvements</strong>
+                <ul>
+                    <li>Clear separation between Load, Navigate, Preview, Export, and Visualize sections</li>
+                    <li>Consistent button sizing across all action buttons</li>
+                    <li><strong>Reset Data</strong> uses warning styling (brown/orange) to indicate destructive action</li>
+                    <li>Strategic use of separators to group related functionality</li>
+                </ul>
+            </div>
+            
+            <div class="change-item">
+                <strong>5. Version Update</strong>
+                <ul>
+                    <li>Application version updated from <span class="old-text">2.0</span> to <span class="new-text">3.1</span></li>
+                    <li>Reflects significant UI/UX improvements in this release</li>
+                </ul>
+            </div>
+            
+            <div class="change-item">
+                <strong>6. Usability Enhancements</strong>
+                <ul>
+                    <li>Button labels are more descriptive and intuitive</li>
+                    <li>Consistent spacing and grouping improves scannability</li>
+                    <li>Action buttons (Preview, Export, Visual Flow) visually distinct from navigation</li>
+                    <li>Destructive action (Reset Data) clearly differentiated with warning color</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
