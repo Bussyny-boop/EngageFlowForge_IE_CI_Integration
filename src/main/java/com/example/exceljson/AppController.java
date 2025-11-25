@@ -40,12 +40,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.geometry.Side;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.layout.HBox;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -603,124 +599,6 @@ public class AppController {
                 combineConfigGroupRows();
             }
         }
-        
-        // Setup keyboard shortcuts
-        setupKeyboardShortcuts();
-    }
-    
-    // ---------- Keyboard Shortcuts Setup ----------
-    /**
-     * Sets up global keyboard shortcuts for common actions.
-     * Ctrl+O: Open NDW file
-     * Ctrl+Shift+O: Open Engage XML
-     * Ctrl+J: Open Engage JSON
-     * Ctrl+S: Save changes
-     * Ctrl+E: Export combined JSON
-     * F5: Refresh/View JSON
-     */
-    private void setupKeyboardShortcuts() {
-        // Get the root scene when available
-        Platform.runLater(() -> {
-            if (contentStack != null && contentStack.getScene() != null) {
-                contentStack.getScene().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-                    if (event.isControlDown()) {
-                        switch (event.getCode()) {
-                            case O:
-                                if (event.isShiftDown()) {
-                                    // Ctrl+Shift+O: Load Engage XML
-                                    loadXml();
-                                } else {
-                                    // Ctrl+O: Load NDW
-                                    loadNdw();
-                                }
-                                event.consume();
-                                break;
-                            case J:
-                                // Ctrl+J: Load Engage JSON
-                                loadJson();
-                                event.consume();
-                                break;
-                            case S:
-                                // Ctrl+S: Save
-                                if (saveExcelButton != null && !saveExcelButton.isDisabled()) {
-                                    saveExcel();
-                                }
-                                event.consume();
-                                break;
-                            case E:
-                                // Ctrl+E: Export/View combined JSON
-                                if (generateJsonButton != null && !generateJsonButton.isDisabled()) {
-                                    generateCombinedJson();
-                                }
-                                event.consume();
-                                break;
-                            default:
-                                break;
-                        }
-                    } else if (event.getCode() == KeyCode.F5) {
-                        // F5: Refresh/View JSON
-                        if (generateJsonButton != null && !generateJsonButton.isDisabled()) {
-                            generateCombinedJson();
-                        }
-                        event.consume();
-                    }
-                });
-            }
-        });
-    }
-    
-    // ---------- Toast Notification System ----------
-    /**
-     * Shows a toast notification that fades in and out automatically.
-     * More user-friendly than alert dialogs for non-critical messages.
-     */
-    private void showToast(String message, ToastType type) {
-        Platform.runLater(() -> {
-            if (contentStack == null) return;
-            
-            Label toast = new Label(message);
-            toast.getStyleClass().add("toast-notification");
-            toast.getStyleClass().add("toast-" + type.name().toLowerCase());
-            toast.setWrapText(true);
-            toast.setMaxWidth(400);
-            
-            // Position at top center
-            StackPane.setAlignment(toast, javafx.geometry.Pos.TOP_CENTER);
-            StackPane.setMargin(toast, new Insets(60, 0, 0, 0));
-            
-            // Initially transparent
-            toast.setOpacity(0);
-            contentStack.getChildren().add(toast);
-            
-            // Fade in
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), toast);
-            fadeIn.setFromValue(0);
-            fadeIn.setToValue(1);
-            
-            // Pause
-            PauseTransition pause = new PauseTransition(Duration.seconds(3));
-            
-            // Fade out
-            FadeTransition fadeOut = new FadeTransition(Duration.millis(300), toast);
-            fadeOut.setFromValue(1);
-            fadeOut.setToValue(0);
-            fadeOut.setOnFinished(e -> contentStack.getChildren().remove(toast));
-            
-            // Play sequence
-            fadeIn.setOnFinished(e -> pause.play());
-            pause.setOnFinished(e -> fadeOut.play());
-            fadeIn.play();
-        });
-    }
-    
-    /**
-     * Toast notification types for different message styles.
-     */
-    private enum ToastType {
-        SUCCESS,    // Green - operation completed successfully
-        INFO,       // Blue - informational message
-        WARNING,    // Orange - warning message
-        ERROR       // Red - error message
     }
 
     // ---------- Loaded Timeout Control Setup ----------
