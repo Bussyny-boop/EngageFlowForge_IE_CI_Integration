@@ -77,19 +77,37 @@
             <left>
                 <BorderPane fx:id="sidebarContainer" prefWidth="193" minWidth="46">
                     <top>
-                        <!-- Collapse/Expand Toggle Button -->
-                        <Button fx:id="sidebarToggleButton" text="◀" maxWidth="Infinity" 
-                                styleClass="sidebar-toggle-btn" onAction="#toggleSidebar">
-                            <tooltip>
-                                <Tooltip text="Collapse/Expand Sidebar" />
-                            </tooltip>
-                        </Button>
+                        <!-- Branding Bar with Icon and Toggle -->
+                        <VBox spacing="0" styleClass="sidebar-header">
+                            <!-- App Icon and Brand -->
+                            <HBox alignment="CENTER" spacing="8" style="-fx-padding: 10 8; -fx-background-color: #00979D;">
+                                <ImageView fx:id="sidebarLogoImage" fitHeight="28" fitWidth="28" preserveRatio="true">
+                                    <image>
+                                        <Image url="@/icon_32.png" />
+                                    </image>
+                                </ImageView>
+                                <VBox fx:id="sidebarBrandText" spacing="0" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                    <Label text="FlowForge" style="-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;" />
+                                    <Label text="v3.1" style="-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 9px;" />
+                                </VBox>
+                            </HBox>
+                            <!-- Collapse/Expand Toggle Button -->
+                            <Button fx:id="sidebarToggleButton" text="◀" maxWidth="Infinity" 
+                                    styleClass="sidebar-toggle-btn" onAction="#toggleSidebar">
+                                <tooltip>
+                                    <Tooltip text="Collapse/Expand Sidebar" />
+                                </tooltip>
+                            </Button>
+                        </VBox>
                     </top>
                     <center>
-                        <VBox fx:id="sidebarContent" spacing="4" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 6; -fx-spacing: 4;">
-                            <!-- Load Section -->
-                            <Label fx:id="loadDataLabel" text="Load Data" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 3 0 0 2; -fx-font-size: 10;" />
-                            <VBox fx:id="loadButtonsContainer" spacing="3">
+                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" 
+                                    style="-fx-background-color: #1E1E1E; -fx-background: #1E1E1E;">
+                            <VBox fx:id="sidebarContent" spacing="6" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 8; -fx-spacing: 6;">
+                                <!-- Load Section -->
+                                <VBox spacing="4" styleClass="sidebar-section">
+                                    <Label fx:id="loadDataLabel" text="📂 LOAD DATA" styleClass="sidebar-section-header" />
+                                    <VBox fx:id="loadButtonsContainer" spacing="4">
                                 <!-- Load NDW (Excel) -->
                                 <Button fx:id="loadNdwButton" text="📄 NDW File" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📄</userData>
@@ -110,19 +128,24 @@
                                     <tooltip>
                                         <Tooltip text="Load previously exported Engage Rules JSON (*.json)" />
                                     </tooltip>
-                                </Button>
-                            </VBox>
-                            
-                            <!-- Save to NDW (CI Mode Only) -->
-                            <Button fx:id="saveOnNdwButton" text="💾 Save to NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
+                                        </Button>
+                                    </VBox>
+                                </VBox>
+                                
+                                <!-- Save to NDW (CI Mode Only) -->
+                                <Button fx:id="saveOnNdwButton" text="💾 Save to NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
                                 <userData>💾</userData>
                                 <tooltip>
                                     <Tooltip text="Save changes back to the NDW Excel file" />
                                 </tooltip>
-                            </Button>
-                            
-                            <!-- Units Navigation -->
-                            <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true" style="-fx-font-weight: bold;">
+                                </Button>
+                                
+                                <!-- Navigation Section -->
+                                <VBox spacing="4" styleClass="sidebar-section">
+                                    <Label text="📑 VIEWS" styleClass="sidebar-section-header" />
+                                    
+                                    <!-- Units Navigation -->
+                                    <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true" style="-fx-font-weight: bold;">
                                 <userData>📊</userData>
                                 <toggleGroup>
                                     <ToggleGroup fx:id="navigationGroup" />
@@ -142,22 +165,26 @@
                             <!-- Orders Navigation -->
                             <ToggleButton fx:id="navOrders" text="💊 Orders" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" style="-fx-font-weight: bold;">
                                 <userData>💊</userData>
-                            </ToggleButton>
-                            
-                            <!-- Separator after navigation tabs -->
-                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
-                            
-                            <!-- View JSON -->
-                            <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
+                                    </ToggleButton>
+                                </VBox>
+                                
+                                <!-- Actions Section -->
+                                <VBox spacing="4" styleClass="sidebar-section">
+                                    <Label text="⚡ ACTIONS" styleClass="sidebar-section-header" />
+                                    
+                                    <!-- View JSON -->
+                                    <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>👁️</userData>
                                 <tooltip>
                                     <Tooltip text="View JSON file for all selected rows in the dataset" />
                                 </tooltip>
-                            </Button>
-                            
-                            <!-- Export JSON Section -->
-                            <Label fx:id="exportJsonLabel" text="Export JSON" style="-fx-text-fill: #bbb; -fx-font-weight: bold; -fx-padding: 8 0 0 2; -fx-font-size: 10;" />
-                            <VBox fx:id="exportButtonsContainer" spacing="3">
+                                    </Button>
+                                </VBox>
+                                
+                                <!-- Export JSON Section -->
+                                <VBox spacing="4" styleClass="sidebar-section">
+                                    <Label fx:id="exportJsonLabel" text="📤 EXPORT" styleClass="sidebar-section-header" />
+                                    <VBox fx:id="exportButtonsContainer" spacing="4">
                                 <!-- Export Nursecall JSON -->
                                 <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="side-nav-action">
                                     <userData>🩺</userData>
@@ -180,31 +207,32 @@
                                     <tooltip>
                                         <Tooltip text="Export Orders JSON" />
                                     </tooltip>
-                                </Button>
-                            </VBox>
-                            
-                            <!-- Separator before Visual Flow -->
-                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
-                            
-                            <!-- Visual Flow (renamed from Visual CallFlow) -->
-                            <Button fx:id="visualFlowButton" text="🔀 Visual Flow" maxWidth="Infinity" styleClass="side-nav-action">
+                                        </Button>
+                                    </VBox>
+                                </VBox>
+                                
+                                <!-- Tools Section -->
+                                <VBox spacing="4" styleClass="sidebar-section">
+                                    <Label text="🛠️ TOOLS" styleClass="sidebar-section-header" />
+                                    
+                                    <!-- Visual Flow (renamed from Visual CallFlow) -->
+                                    <Button fx:id="visualFlowButton" text="🔀 Visual Flow" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>🔀</userData>
                                 <tooltip>
                                     <Tooltip text="Generate Visual Flow Diagram" />
                                 </tooltip>
-                            </Button>
-                            
-                            <!-- Separator before Reset Data -->
-                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
-                            
-                            <!-- Reset Data -->
-                            <Button fx:id="clearAllButton" text="🔄 Reset Data" disable="true" maxWidth="Infinity" styleClass="side-nav-action-warning">
+                                    </Button>
+                                    
+                                    <!-- Reset Data -->
+                                    <Button fx:id="clearAllButton" text="🔄 Reset Data" disable="true" maxWidth="Infinity" styleClass="side-nav-action-warning">
                                 <userData>🔄</userData>
                                 <tooltip>
                                     <Tooltip text="Clear all loaded data and reset the application" />
                                 </tooltip>
-                            </Button>
-                        </VBox>
+                                    </Button>
+                                </VBox>
+                            </VBox>
+                        </ScrollPane>
                     </center>
                 </BorderPane>
             </left>

@@ -87,6 +87,8 @@ public class AppController {
     @FXML private BorderPane sidebarContainer;
     @FXML private VBox sidebarContent;
     @FXML private Button sidebarToggleButton;
+    @FXML private ImageView sidebarLogoImage;
+    @FXML private VBox sidebarBrandText;
     @FXML private Label loadDataLabel;
     @FXML private VBox loadButtonsContainer;
     @FXML private Label exportJsonLabel;
@@ -4039,6 +4041,16 @@ public class AppController {
         sidebarContent.setManaged(true);
         sidebarContainer.setPrefWidth(42);
         
+        // Hide brand text in collapsed mode, keep only logo
+        if (sidebarBrandText != null) {
+            sidebarBrandText.setVisible(false);
+            sidebarBrandText.setManaged(false);
+        }
+        if (sidebarLogoImage != null) {
+            sidebarLogoImage.setVisible(true);
+            sidebarLogoImage.setManaged(true);
+        }
+        
         // Add collapsed style class for CSS styling
         if (!sidebarContent.getStyleClass().contains("sidebar-collapsed")) {
             sidebarContent.getStyleClass().add("sidebar-collapsed");
@@ -4055,6 +4067,16 @@ public class AppController {
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
         sidebarContainer.setPrefWidth(140);  // 30% reduction from 200 to 140
+        
+        // Show brand text in expanded mode
+        if (sidebarBrandText != null) {
+            sidebarBrandText.setVisible(true);
+            sidebarBrandText.setManaged(true);
+        }
+        if (sidebarLogoImage != null) {
+            sidebarLogoImage.setVisible(true);
+            sidebarLogoImage.setManaged(true);
+        }
         
         // Remove collapsed style class
         sidebarContent.getStyleClass().remove("sidebar-collapsed");

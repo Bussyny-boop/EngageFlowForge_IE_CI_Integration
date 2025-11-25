@@ -55,6 +55,29 @@
     -fx-transition: all 0.3s ease;
 }
 
+/* --- Sidebar Header and Branding --- */
+.sidebar-header {
+    -fx-background-color: #2A2A2A;
+}
+
+.sidebar-header HBox {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 8, 0, 0, 2);
+}
+
+/* --- Sidebar Sections --- */
+.sidebar-section {
+    -fx-background-color: transparent;
+    -fx-padding: 4 0;
+}
+
+.sidebar-section-header {
+    -fx-text-fill: #777;
+    -fx-font-weight: bold;
+    -fx-font-size: 9px;
+    -fx-padding: 8 8 4 8;
+    -fx-letter-spacing: 0.5px;
+}
+
 /* Sidebar collapse/expand styles - approximately 10% wider */
 .sidebar-collapsed {
     -fx-pref-width: 51;
@@ -77,7 +100,7 @@
     -fx-alignment: CENTER_LEFT;
     -fx-graphic-text-gap: 8;
     -fx-padding: 10 10 10 12;
-    -fx-background-radius: 4;
+    -fx-background-radius: 6;
     -fx-border-width: 0;
     -fx-cursor: hand;
     -fx-transition: all 0.2s ease;
@@ -90,10 +113,10 @@
 .nav-button:hover {
     -fx-background-color: #4A4A4A;
     -fx-text-fill: #FFFFFF;
-    -fx-translate-y: -1;
-    -fx-scale-x: 1.26;
-    -fx-scale-y: 1.26;
-    -fx-effect: dropshadow(gaussian, rgba(0, 212, 221, 0.4), 6, 0, 0, 3);
+    -fx-translate-x: 2;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(gaussian, rgba(0, 212, 221, 0.3), 4, 0, 0, 2);
 }
 
 .nav-button:selected {
@@ -102,7 +125,9 @@
     -fx-font-weight: 600;
     -fx-border-color: #00D4DD;
     -fx-border-width: 0 0 0 3;
-    -fx-effect: dropshadow(gaussian, rgba(0, 168, 176, 0.6), 8, 0, 0, 4);
+    -fx-border-radius: 6 0 0 6;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0, 168, 176, 0.5), 6, 0, 0, 3);
 }
 
 /* Legacy nav-item styles for backward compatibility */
@@ -134,8 +159,8 @@
     -fx-background-color: linear-gradient(to bottom, #00C4CC, #00A8B0);
     -fx-text-fill: white;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 10 10 10 12;
-    -fx-font-size: 13px;
+    -fx-padding: 9 10 9 12;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-background-radius: 6;
     -fx-border-color: #00D4DD;
@@ -149,6 +174,11 @@
 
 .side-nav-action:hover {
     -fx-background-color: linear-gradient(to bottom, #00D4DD, #00C4CC);
+    -fx-translate-x: 2;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(gaussian, rgba(0, 212, 221, 0.5), 6, 0, 0, 3);
+}
     -fx-scale-x: 1.26;
     -fx-scale-y: 1.26;
     -fx-effect: dropshadow(gaussian, rgba(0, 212, 221, 0.4), 5, 0, 0, 3);
@@ -181,22 +211,24 @@
 .sidebar-toggle-btn {
     -fx-background-color: #3A3A3A;
     -fx-text-fill: #00D4DD;
-    -fx-font-size: 11px;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-padding: 6;
+    -fx-padding: 8;
     -fx-background-radius: 0;
     -fx-border-color: #4A4A4A;
-    -fx-border-width: 0 0 1 0;
+    -fx-border-width: 1 0 0 0;
     -fx-cursor: hand;
 }
 
 .sidebar-toggle-btn:hover {
     -fx-background-color: #4A4A4A;
     -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(0,212,221,0.4), 6, 0, 0, 2);
 }
 
 .sidebar-toggle-btn:pressed {
-    -fx-background-color: #2A2A2A;
+    -fx-background-color: #00979D;
+    -fx-text-fill: white;
 }
 
 /* --- Collapsed Sidebar Styles --- */
@@ -657,20 +689,47 @@
 
 /* --- ScrollBar --- */
 .scroll-bar {
-    -fx-background-color: #252525;
+    -fx-background-color: #2A2A2A;
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: #4A4A4A;
+    -fx-background-color: #555555;
     -fx-background-radius: 4;
 }
 
 .scroll-bar .thumb:hover {
-    -fx-background-color: #00A8B0;
+    -fx-background-color: #00D4DD;
 }
 
 .scroll-bar .thumb:pressed {
+    -fx-background-color: #00A8B0;
+}
+
+/* Sidebar ScrollPane styling */
+.side-nav .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.side-nav .scroll-pane .viewport {
+    -fx-background-color: #2A2A2A;
+}
+
+.side-nav .scroll-pane .scroll-bar:vertical {
+    -fx-background-color: #2A2A2A;
+    -fx-pref-width: 8;
+}
+
+.side-nav .scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #4A4A4A;
+    -fx-background-radius: 4;
+}
+
+.side-nav .scroll-pane .scroll-bar:vertical .thumb:hover {
     -fx-background-color: #00D4DD;
+}
+
+.side-nav .scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
 }
 
 .scroll-bar .increment-button,
