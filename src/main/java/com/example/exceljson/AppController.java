@@ -1541,6 +1541,9 @@ public class AppController {
 
                     showInfo(successMsg.toString());
                     
+                    // Auto-hide empty columns
+                    hideEmptyColumns();
+                    
                     // Call completion callback if set (for CI workflow)
                     if (onNdwLoadComplete != null) {
                         Runnable callback = onNdwLoadComplete;
@@ -4327,51 +4330,32 @@ public class AppController {
      * Updates the position of a frozen column based on scroll position
      */
     private <T> void updateColumnPosition(TableView<T> table, TableColumn<T, ?> column, javafx.scene.control.ScrollBar scrollBar) {
-        // No need for Platform.runLater here since we're already on the JavaFX thread
-        // (called from a listener on the scrollBar)
-        
         // The scroll bar value in JavaFX TableView represents the horizontal pixel offset
         // To keep the column fixed, we translate it by the same amount the table scrolled
         double hScrollValue = scrollBar.getValue();
         
-        // Find and translate the column header
-        java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
-        for (javafx.scene.Node header : headers) {
-            // Check if this header belongs to our sticky column
-            if (header.getStyleClass().contains("sticky-column") || 
-                isHeaderForColumn(header, column)) {
-                applyStickyPosition(header, hScrollValue);
+        // Use Platform.runLater to ensure we're working with fully rendered nodes
+        javafx.application.Platform.runLater(() -> {
+            // Find and translate the column header
+            java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
+            for (javafx.scene.Node header : headers) {
+                // Check if this header belongs to our sticky column
+                if (isHeaderForColumn(header, column)) {
+                    applyStickyPosition(header, hScrollValue);
+                }
             }
-        }
-        
-        // Find and translate the column cells by iterating through table rows
-        // Use a more reliable approach: look for cells in all table row cells
-        java.util.Set<javafx.scene.Node> rows = table.lookupAll(".table-row-cell");
-        for (javafx.scene.Node row : rows) {
-            if (row instanceof javafx.scene.control.TableRow<?> tableRow) {
-                // Get cells within this row
-                for (javafx.scene.Node cellNode : tableRow.getChildrenUnmodifiable()) {
-                    if (cellNode instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
-                        // Check if this cell belongs to our sticky column by comparing the column reference
-                        if (tableCell.getTableColumn() == column) {
-                            applyStickyPosition(cellNode, hScrollValue);
-                        }
+            
+            // Find and translate column cells - use direct TableCell lookup
+            java.util.Set<javafx.scene.Node> allCells = table.lookupAll(".table-cell");
+            for (javafx.scene.Node cellNode : allCells) {
+                if (cellNode instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
+                    // Compare the column directly
+                    if (tableCell.getTableColumn() == column) {
+                        applyStickyPosition(cellNode, hScrollValue);
                     }
                 }
             }
-        }
-        
-        // Alternative approach: find cells by CSS class if the above doesn't work
-        // Also lookup all table-cell elements as a fallback
-        java.util.Set<javafx.scene.Node> cells = table.lookupAll(".table-cell");
-        for (javafx.scene.Node cell : cells) {
-            if (cell instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
-                // Compare the column directly
-                if (tableCell.getTableColumn() == column) {
-                    applyStickyPosition(cell, hScrollValue);
-                }
-            }
-        }
+        });
     }
     
     /**
@@ -4403,6 +4387,61 @@ public class AppController {
     }
     
     // ---------- Combine Config Group Methods ----------
+    
+    /**
+     * Automatically hides table columns that have no data in any of their rows.
+     * This helps reduce clutter by hiding empty columns after data is loaded.
+     */
+    private void hideEmptyColumns() {
+        // Hide empty columns in Nurse Calls table
+        if (tableNurseCalls != null && parser != null) {
+            hideEmptyColumnsInTable(tableNurseCalls, parser.nurseCalls);
+        }
+        
+        // Hide empty columns in Clinicals table
+        if (tableClinicals != null && parser != null) {
+            hideEmptyColumnsInTable(tableClinicals, parser.clinicals);
+        }
+        
+        // Hide empty columns in Orders table
+        if (tableOrders != null && parser != null) {
+            hideEmptyColumnsInTable(tableOrders, parser.orders);
+        }
+    }
+    
+    /**
+     * Helper method to hide empty columns in a specific table.
+     * A column is considered empty if all cells in that column are null or empty strings.
+     */
+    private <T> void hideEmptyColumnsInTable(TableView<T> table, java.util.List<T> data) {
+        if (table == null || data == null || data.isEmpty()) {
+            return;
+        }
+        
+        for (TableColumn<T, ?> column : table.getColumns()) {
+            // Skip the "In Scope" checkbox column - always keep it visible
+            if (column.getText() != null && column.getText().contains("Scope")) {
+                continue;
+            }
+            
+            // Check if this column has any non-empty data
+            boolean hasData = false;
+            
+            for (T row : data) {
+                javafx.beans.value.ObservableValue<?> cellValue = column.getCellObservableValue(row);
+                if (cellValue != null) {
+                    Object value = cellValue.getValue();
+                    if (value != null && !value.toString().trim().isEmpty()) {
+                        hasData = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Hide the column if it has no data
+            column.setVisible(hasData);
+        }
+    }
     
     /**
      * Combine rows with identical columns (except config group) into single rows

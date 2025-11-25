@@ -75,6 +75,8 @@
     -fx-background-color: #2F2F2F;
     -fx-text-fill: #FFFFFF;
     -fx-translate-y: -1;
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
     -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.4), 6, 0, 0, 3);
 }
 
@@ -141,20 +143,23 @@
 }
 
 .side-nav-action-warning:hover {
-    -fx-background-color: linear-gradient(to bottom, #F06D5A, #E85D4A);
+    -fx-background-color: linear-gradient(to bottom, #FF0000, #CC0000);
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+    -fx-effect: dropshadow(gaussian, rgba(255, 0, 0, 0.5), 8, 0, 0, 4);
 }
 
 /* Sidebar collapse/expand styles */
 .sidebar-collapsed {
-    -fx-pref-width: 42;
-    -fx-min-width: 42;
-    -fx-max-width: 42;
+    -fx-pref-width: 46;
+    -fx-min-width: 46;
+    -fx-max-width: 46;
 }
 
 .sidebar-expanded {
-    -fx-pref-width: 175;
-    -fx-min-width: 175;
-    -fx-max-width: 175;
+    -fx-pref-width: 193;
+    -fx-min-width: 193;
+    -fx-max-width: 193;
 }
 
 /* --- Sidebar Toggle Button --- */
@@ -188,9 +193,13 @@
     -fx-wrap-text: false;
     -fx-text-overrun: clip;
     -fx-ellipsis-string: "";
-    -fx-max-width: 38;
-    -fx-pref-width: 38;
+    -fx-max-width: 42;
+    -fx-pref-width: 42;
     -fx-min-height: 35;
+}
+
+.sidebar-collapsed .nav-button:hover {
+    -fx-text-fill: #000000;
 }
 
 .sidebar-collapsed Label {
