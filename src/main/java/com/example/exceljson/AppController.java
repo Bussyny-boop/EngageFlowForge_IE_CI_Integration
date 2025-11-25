@@ -12,6 +12,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
@@ -40,6 +41,7 @@ import javafx.geometry.Side;
 import javafx.geometry.Insets;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.ScrollEvent;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -61,6 +63,8 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+
+import javafx.beans.value.ChangeListener;
 
 public class AppController {
 
@@ -332,6 +336,8 @@ public class AppController {
     private static final String PREF_KEY_LOADED_TIMEOUT_MIN = "loadedTimeoutMin";
     private static final String PREF_KEY_LOADED_TIMEOUT_MAX = "loadedTimeoutMax";
     private static final String PREF_KEY_COMBINE_CONFIG_GROUP = "combineConfigGroup";
+    private static final String STICKY_LISTENER_KEY = "stickyColumnListener";
+    private static final String STICKY_SCROLLBAR_KEY = "stickyColumnScrollBar";
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
@@ -4230,158 +4236,122 @@ public class AppController {
     /**
      * Makes a table column "sticky" (frozen) by preventing it from being reordered
      * and keeping it visible during horizontal scrolling.
-     * This implementation uses CSS transforms to keep the column fixed in place.
      */
     private <T> void makeStickyColumn(TableView<T> table, TableColumn<T, ?> column) {
-        if (table == null || column == null) return;
-        
-        // Prevent the column from being moved
+        if (table == null || column == null) {
+            return;
+        }
+
         column.setReorderable(false);
-        
-        // Add a style class to visually indicate the sticky column
         column.getStyleClass().add("sticky-column");
-        
-        // Make the column frozen during horizontal scrolling
-        // We need to wait for the table to be fully rendered before accessing the scroll bar
+
         table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            if (oldSkin != null) {
+                detachStickySupport(column);
+            }
             if (newSkin != null) {
-                freezeColumn(table, column);
+                javafx.application.Platform.runLater(() -> attachStickySupport(table, column));
             }
         });
-        
-        // If skin already exists, apply freezing immediately
+
+        table.itemsProperty().addListener((obs, oldItems, newItems) ->
+            javafx.application.Platform.runLater(() -> attachStickySupport(table, column))
+        );
+
+        column.visibleProperty().addListener((obs, wasVisible, isVisible) -> {
+            if (isVisible) {
+                javafx.application.Platform.runLater(() -> attachStickySupport(table, column));
+            }
+        });
+
+        table.addEventFilter(ScrollEvent.SCROLL, event -> {
+            ScrollBar scrollBar = (ScrollBar) column.getProperties().get(STICKY_SCROLLBAR_KEY);
+            if (scrollBar != null) {
+                updateStickyColumnPosition(table, column, scrollBar);
+            }
+        });
+
         if (table.getSkin() != null) {
-            freezeColumn(table, column);
+            javafx.application.Platform.runLater(() -> attachStickySupport(table, column));
         }
-        
-        // Also listen for items changes to reattach the scroll listener
-        // This ensures the sticky behavior works after data refresh
-        table.itemsProperty().addListener((obs, oldItems, newItems) -> {
-            javafx.application.Platform.runLater(() -> {
-                if (table.getSkin() != null) {
-                    freezeColumn(table, column);
-                }
-            });
-        });
-        
-        // Listen for column visibility changes
-        column.visibleProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal && table.getSkin() != null) {
-                javafx.application.Platform.runLater(() -> freezeColumn(table, column));
-            }
-        });
     }
-    
-    /**
-     * Applies the freeze effect to a column by listening to horizontal scroll events
-     * and translating the column to compensate for scrolling.
-     */
-    private <T> void freezeColumn(TableView<T> table, TableColumn<T, ?> column) {
-        // Use a Timer to retry attaching the scroll listener with proper delays
-        // This ensures we catch the scrollbar even if the table is rendered later
-        java.util.Timer timer = new java.util.Timer(true);
-        java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger(0);
-        
-        timer.schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                javafx.application.Platform.runLater(() -> {
-                    boolean success = attachScrollListener(table, column);
-                    if (success || attempts.incrementAndGet() >= 5) {
-                        timer.cancel();
-                    }
-                });
-            }
-        }, 0, 500); // Try every 500ms, up to 5 times
+
+    private <T> void attachStickySupport(TableView<T> table, TableColumn<T, ?> column) {
+        ScrollBar scrollBar = findHorizontalScrollBar(table);
+        if (scrollBar == null) {
+            return;
+        }
+
+        detachStickySupport(column);
+
+        ChangeListener<Number> listener = (obs, oldVal, newVal) ->
+            updateStickyColumnPosition(table, column, scrollBar);
+
+        scrollBar.valueProperty().addListener(listener);
+        column.getProperties().put(STICKY_LISTENER_KEY, listener);
+        column.getProperties().put(STICKY_SCROLLBAR_KEY, scrollBar);
+
+        updateStickyColumnPosition(table, column, scrollBar);
     }
-    
-    /**
-     * Helper method to attach scroll listener to freeze a column
-     * @return true if successfully attached, false otherwise
-     */
-    private <T> boolean attachScrollListener(TableView<T> table, TableColumn<T, ?> column) {
-        // Find the horizontal scroll bar
-        javafx.scene.control.ScrollBar horizontalScrollBar = null;
-        for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
-            if (node instanceof javafx.scene.control.ScrollBar sb) {
-                if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
-                    horizontalScrollBar = sb;
-                    break;
-                }
+
+    private void detachStickySupport(TableColumn<?, ?> column) {
+        @SuppressWarnings("unchecked")
+        ChangeListener<Number> listener = (ChangeListener<Number>) column.getProperties().remove(STICKY_LISTENER_KEY);
+        ScrollBar scrollBar = (ScrollBar) column.getProperties().remove(STICKY_SCROLLBAR_KEY);
+        if (listener != null && scrollBar != null) {
+            scrollBar.valueProperty().removeListener(listener);
+        }
+    }
+
+    private ScrollBar findHorizontalScrollBar(TableView<?> table) {
+        for (Node node : table.lookupAll(".scroll-bar")) {
+            if (node instanceof ScrollBar sb && sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
+                return sb;
             }
         }
-        
-        if (horizontalScrollBar != null) {
-            final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
-            
-            // Listen to scroll position changes
-            scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
-                updateColumnPosition(table, column, scrollBar);
-            });
-            
-            // Initial position update
-            updateColumnPosition(table, column, scrollBar);
-            return true;
-        }
-        return false;
+        return null;
     }
-    
-    /**
-     * Updates the position of a frozen column based on scroll position
-     */
-    private <T> void updateColumnPosition(TableView<T> table, TableColumn<T, ?> column, javafx.scene.control.ScrollBar scrollBar) {
-        // The scroll bar value in JavaFX TableView represents the horizontal pixel offset
-        // To keep the column fixed, we translate it by the same amount the table scrolled
-        double hScrollValue = scrollBar.getValue();
-        
-        // Use Platform.runLater to ensure we're working with fully rendered nodes
+
+    private <T> void updateStickyColumnPosition(TableView<T> table, TableColumn<T, ?> column, ScrollBar scrollBar) {
+        double offset = scrollBar.getValue();
         javafx.application.Platform.runLater(() -> {
-            // Find and translate the column header
-            java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
-            for (javafx.scene.Node header : headers) {
-                // Check if this header belongs to our sticky column
+            Set<Node> headers = table.lookupAll(".column-header");
+            for (Node header : headers) {
                 if (isHeaderForColumn(header, column)) {
-                    applyStickyPosition(header, hScrollValue);
+                    applyStickyPosition(header, offset);
                 }
             }
-            
-            // Find and translate column cells - use direct TableCell lookup
-            java.util.Set<javafx.scene.Node> allCells = table.lookupAll(".table-cell");
-            for (javafx.scene.Node cellNode : allCells) {
-                if (cellNode instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
-                    // Compare the column directly
-                    if (tableCell.getTableColumn() == column) {
-                        applyStickyPosition(cellNode, hScrollValue);
+
+            Set<Node> cells = table.lookupAll(".table-cell");
+            for (Node cellNode : cells) {
+                if (cellNode instanceof TableCell<?, ?> cell) {
+                    if (cell.getTableColumn() == column) {
+                        applyStickyPosition(cellNode, offset);
                     }
                 }
             }
         });
     }
-    
-    /**
-     * Applies sticky position properties to a node to keep it fixed during horizontal scrolling
-     */
-    private void applyStickyPosition(javafx.scene.Node node, double translateX) {
+
+    private void applyStickyPosition(Node node, double translateX) {
         node.setTranslateX(translateX);
         node.setMouseTransparent(false);
         node.setPickOnBounds(true);
-        node.setViewOrder(-1); // keep element above scrolling content
+        node.setViewOrder(-1);
         node.toFront();
     }
-    
-    /**
-     * Checks if a header node belongs to a specific column
-     */
-    private <T> boolean isHeaderForColumn(javafx.scene.Node header, TableColumn<T, ?> column) {
-        if (!(header instanceof javafx.scene.layout.Region)) return false;
-        
-        javafx.scene.layout.Region region = (javafx.scene.layout.Region) header;
-        for (javafx.scene.Node child : region.getChildrenUnmodifiable()) {
-            if (child instanceof javafx.scene.control.Label label) {
-                if (column.getText() != null && column.getText().equals(label.getText())) {
-                    return true;
-                }
+
+    private <T> boolean isHeaderForColumn(Node header, TableColumn<T, ?> column) {
+        try {
+            java.lang.reflect.Method method = header.getClass().getMethod("getTableColumn");
+            Object result = method.invoke(header);
+            if (result instanceof TableColumn<?, ?> tc) {
+                return tc == column;
             }
+        } catch (NoSuchMethodException ignored) {
+            // Not a column header node
+        } catch (Exception e) {
+            System.err.println("Unable to evaluate sticky column header: " + e.getMessage());
         }
         return false;
     }
