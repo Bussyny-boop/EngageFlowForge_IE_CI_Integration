@@ -63,20 +63,21 @@
     -fx-font-weight: 500;
     -fx-alignment: CENTER_LEFT;
     -fx-graphic-text-gap: 8;
-    -fx-padding: 10 12 10 12;
+    -fx-padding: 10 10 10 12;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
     -fx-wrap-text: true;
     -fx-text-overrun: ellipsis;
+    -fx-max-width: 154;
 }
 
 .nav-button:hover {
     -fx-background-color: #2F2F2F;
     -fx-text-fill: #FFFFFF;
     -fx-translate-y: -1;
-    -fx-scale-x: 1.32;
-    -fx-scale-y: 1.32;
+    -fx-scale-x: 1.26;
+    -fx-scale-y: 1.26;
     -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.4), 6, 0, 0, 3);
 }
 
@@ -117,38 +118,42 @@
 .side-nav-action {
     -fx-background-color: linear-gradient(to bottom, #00A8B0, #00979D);
     -fx-text-fill: white;
-    -fx-padding: 8 12;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8 10 8 12;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-background-radius: 5;
     -fx-border-color: #00C4CC;
     -fx-border-width: 1;
     -fx-border-radius: 5;
+    -fx-max-width: 154;
 }
 
 .side-nav-action:hover {
     -fx-background-color: linear-gradient(to bottom, #00C4CC, #00A8B0);
-    -fx-scale-x: 1.32;
-    -fx-scale-y: 1.32;
+    -fx-scale-x: 1.26;
+    -fx-scale-y: 1.26;
     -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.4), 6, 0, 0, 3);
 }
 
 .side-nav-action-warning {
     -fx-background-color: linear-gradient(to bottom, #E85D4A, #E74C3C);
     -fx-text-fill: white;
-    -fx-padding: 8 12;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8 10 8 12;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-background-radius: 5;
     -fx-border-color: #FF6B57;
     -fx-border-width: 1;
     -fx-border-radius: 5;
+    -fx-max-width: 154;
 }
 
 .side-nav-action-warning:hover {
     -fx-background-color: linear-gradient(to bottom, #FF0000, #CC0000);
-    -fx-scale-x: 1.32;
-    -fx-scale-y: 1.32;
+    -fx-scale-x: 1.26;
+    -fx-scale-y: 1.26;
     -fx-effect: dropshadow(gaussian, rgba(255, 0, 0, 0.5), 8, 0, 0, 4);
 }
 
