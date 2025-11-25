@@ -81,9 +81,10 @@
     -fx-border-width: 0;
     -fx-cursor: hand;
     -fx-transition: all 0.2s ease;
-    -fx-wrap-text: true;
-    -fx-text-overrun: ellipsis;
-    -fx-max-width: 154;
+    -fx-wrap-text: false;
+    -fx-text-overrun: clip;
+    -fx-min-width: 160;
+    -fx-pref-width: 175;
 }
 
 .nav-button:hover {
@@ -141,7 +142,9 @@
     -fx-border-width: 1;
     -fx-border-radius: 6;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 3, 0, 0, 2);
-    -fx-max-width: 154;
+    -fx-wrap-text: false;
+    -fx-min-width: 160;
+    -fx-pref-width: 175;
 }
 
 .side-nav-action:hover {
@@ -162,7 +165,9 @@
     -fx-border-color: #FF6B57;
     -fx-border-width: 1;
     -fx-border-radius: 5;
-    -fx-max-width: 154;
+    -fx-wrap-text: false;
+    -fx-min-width: 160;
+    -fx-pref-width: 175;
 }
 
 .side-nav-action-warning:hover {
