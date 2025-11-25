@@ -75,7 +75,7 @@
         <BorderPane>
             <!-- Left: Side Navigation Panel -->
             <left>
-                <BorderPane fx:id="sidebarContainer" prefWidth="175" minWidth="42">
+                <BorderPane fx:id="sidebarContainer" prefWidth="193" minWidth="46">
                     <top>
                         <!-- Collapse/Expand Toggle Button -->
                         <Button fx:id="sidebarToggleButton" text="◀" maxWidth="Infinity" 
@@ -472,6 +472,18 @@
                                         <Label text="Row Height:" style="-fx-font-size: 10;" />
                                         <Slider fx:id="ordersRowHeightSlider" min="24" max="150" value="72" blockIncrement="6" showTickLabels="false" showTickMarks="true" majorTickUnit="24" minorTickCount="5" prefWidth="150" />
                                         <Label fx:id="ordersRowHeightLabel" text="72 px" style="-fx-font-size: 10; -fx-min-width: 50;" />
+                                    </HBox>
+                                    
+                                    <Separator />
+                                    
+                                    <!-- Column Visibility Controls -->
+                                    <Label text="Column Visibility" style="-fx-font-weight:bold;" />
+                                    <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <CheckBox fx:id="expandAllColumnsCheckbox" text="Expand All Columns">
+                                            <tooltip>
+                                                <Tooltip text="When unchecked, columns with no data will be automatically hidden. Check to show all columns regardless of data." />
+                                            </tooltip>
+                                        </CheckBox>
                                     </HBox>
                                     
                                     <Separator />

@@ -109,6 +109,7 @@ public class AppController {
     @FXML private CheckBox mergeByConfigGroupCheckbox;  // "Merge by Config Group" checkbox
     @FXML private CheckBox mergeAcrossConfigGroupCheckbox;  // "Merge Across Config Group" checkbox
     @FXML private CheckBox combineConfigGroupCheckbox;  // "Combine Config Group" toggle
+    @FXML private CheckBox expandAllColumnsCheckbox;  // "Expand All Columns" checkbox
     @FXML private TextField edgeRefNameField;
     @FXML private TextField vcsRefNameField;
     @FXML private TextField voceraRefNameField;
@@ -332,10 +333,12 @@ public class AppController {
     private static final String PREF_KEY_LOADED_TIMEOUT_MIN = "loadedTimeoutMin";
     private static final String PREF_KEY_LOADED_TIMEOUT_MAX = "loadedTimeoutMax";
     private static final String PREF_KEY_COMBINE_CONFIG_GROUP = "combineConfigGroup";
+    private static final String PREF_KEY_EXPAND_ALL_COLUMNS = "expandAllColumns";
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
     private boolean isTopBarCollapsed = false; // Track if top bar buttons show icons only
+    private boolean isExpandAllColumns = false; // Track if all columns should be shown
     private double loadedTimeoutSeconds = 600.0; // Default to persistent (10 minutes = never auto-clear)
     private double loadedTimeoutMin = 3.0;
     private double loadedTimeoutMax = 600.0; // 600 = 10 minutes, acts as "persistent"
@@ -359,6 +362,7 @@ public class AppController {
         String jsonDirPath = prefs.get(PREF_KEY_LAST_JSON_DIR, null);
         isDarkMode = prefs.getBoolean(PREF_KEY_DARK_MODE, false);
         isSidebarCollapsed = prefs.getBoolean(PREF_KEY_SIDEBAR_COLLAPSED, false);
+        isExpandAllColumns = prefs.getBoolean(PREF_KEY_EXPAND_ALL_COLUMNS, false);
         boolean combineConfigGroup = prefs.getBoolean(PREF_KEY_COMBINE_CONFIG_GROUP, false);
         // Load min/max and current timeout, with validation
         loadedTimeoutMin = clamp(safeParseDouble(prefs.get(PREF_KEY_LOADED_TIMEOUT_MIN, "3"), 3.0), 1.0, 600.0);
@@ -520,6 +524,11 @@ public class AppController {
             combineConfigGroupCheckbox.setSelected(prefs.getBoolean(PREF_KEY_COMBINE_CONFIG_GROUP, false));
         }
         
+        // Set expand all columns checkbox state from preferences
+        if (expandAllColumnsCheckbox != null) {
+            expandAllColumnsCheckbox.setSelected(prefs.getBoolean(PREF_KEY_EXPAND_ALL_COLUMNS, false));
+        }
+        
         // --- Merge Flows checkbox mutual exclusion logic (three-way) ---
         if (noMergeCheckbox != null && mergeByConfigGroupCheckbox != null && mergeAcrossConfigGroupCheckbox != null) {
             // When noMergeCheckbox is selected, deselect the other two
@@ -593,6 +602,23 @@ public class AppController {
             if (combineConfigGroupCheckbox.isSelected()) {
                 combineConfigGroupRows();
             }
+        }
+        
+        // --- Expand All Columns toggle logic ---
+        if (expandAllColumnsCheckbox != null) {
+            expandAllColumnsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                Preferences preferences = Preferences.userNodeForPackage(AppController.class);
+                preferences.putBoolean(PREF_KEY_EXPAND_ALL_COLUMNS, newV);
+                isExpandAllColumns = newV;
+                
+                if (newV) {
+                    // Expand all columns - show all columns regardless of data
+                    showAllColumns();
+                } else {
+                    // Collapse empty columns
+                    hideEmptyColumns();
+                }
+            });
         }
     }
 
@@ -3382,6 +3408,11 @@ public class AppController {
         
         // Update filter options
         updateFilterOptions();
+        
+        // Auto-collapse empty columns if "Expand All Columns" is not checked
+        if (!isExpandAllColumns) {
+            hideEmptyColumns();
+        }
     }
 
     // ---------- Reset Defaults ----------
@@ -3996,10 +4027,10 @@ public class AppController {
      * Collapse sidebar to show only icons
      */
     private void collapseSidebarToIcons() {
-        // Keep sidebar visible but make it narrow (30% reduction from 60 to 42)
+        // Keep sidebar visible but make it narrow (increased by 10% to 46)
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(42);
+        sidebarContainer.setPrefWidth(46);
         
         // Add collapsed style class for CSS styling
         if (!sidebarContent.getStyleClass().contains("sidebar-collapsed")) {
@@ -4016,7 +4047,7 @@ public class AppController {
     private void expandSidebarToFull() {
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(140);  // 30% reduction from 200 to 140
+        sidebarContainer.setPrefWidth(193);  // Increased by 10% from 175 to 193
         
         // Remove collapsed style class
         sidebarContent.getStyleClass().remove("sidebar-collapsed");
@@ -4241,149 +4272,11 @@ public class AppController {
         // Add a style class to visually indicate the sticky column
         column.getStyleClass().add("sticky-column");
         
-        // Make the column frozen during horizontal scrolling
-        // We need to wait for the table to be fully rendered before accessing the scroll bar
-        table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-            if (newSkin != null) {
-                freezeColumn(table, column);
-            }
-        });
-        
-        // If skin already exists, apply freezing immediately
-        if (table.getSkin() != null) {
-            freezeColumn(table, column);
-        }
-        
-        // Also listen for items changes to reattach the scroll listener
-        // This ensures the sticky behavior works after data refresh
-        table.itemsProperty().addListener((obs, oldItems, newItems) -> {
-            javafx.application.Platform.runLater(() -> {
-                if (table.getSkin() != null) {
-                    freezeColumn(table, column);
-                }
-            });
-        });
-        
-        // Listen for column visibility changes
-        column.visibleProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal && table.getSkin() != null) {
-                javafx.application.Platform.runLater(() -> freezeColumn(table, column));
-            }
-        });
-    }
-    
-    /**
-     * Applies the freeze effect to a column by listening to horizontal scroll events
-     * and translating the column to compensate for scrolling.
-     */
-    private <T> void freezeColumn(TableView<T> table, TableColumn<T, ?> column) {
-        // Use a Timer to retry attaching the scroll listener with proper delays
-        // This ensures we catch the scrollbar even if the table is rendered later
-        java.util.Timer timer = new java.util.Timer(true);
-        java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger(0);
-        
-        timer.schedule(new java.util.TimerTask() {
-            @Override
-            public void run() {
-                javafx.application.Platform.runLater(() -> {
-                    boolean success = attachScrollListener(table, column);
-                    if (success || attempts.incrementAndGet() >= 5) {
-                        timer.cancel();
-                    }
-                });
-            }
-        }, 0, 500); // Try every 500ms, up to 5 times
-    }
-    
-    /**
-     * Helper method to attach scroll listener to freeze a column
-     * @return true if successfully attached, false otherwise
-     */
-    private <T> boolean attachScrollListener(TableView<T> table, TableColumn<T, ?> column) {
-        // Find the horizontal scroll bar
-        javafx.scene.control.ScrollBar horizontalScrollBar = null;
-        for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
-            if (node instanceof javafx.scene.control.ScrollBar sb) {
-                if (sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
-                    horizontalScrollBar = sb;
-                    break;
-                }
-            }
-        }
-        
-        if (horizontalScrollBar != null) {
-            final javafx.scene.control.ScrollBar scrollBar = horizontalScrollBar;
-            
-            // Listen to scroll position changes
-            scrollBar.valueProperty().addListener((obs, oldVal, newVal) -> {
-                updateColumnPosition(table, column, scrollBar);
-            });
-            
-            // Initial position update
-            updateColumnPosition(table, column, scrollBar);
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * Updates the position of a frozen column based on scroll position
-     */
-    private <T> void updateColumnPosition(TableView<T> table, TableColumn<T, ?> column, javafx.scene.control.ScrollBar scrollBar) {
-        // The scroll bar value in JavaFX TableView represents the horizontal pixel offset
-        // To keep the column fixed, we translate it by the same amount the table scrolled
-        double hScrollValue = scrollBar.getValue();
-        
-        // Use Platform.runLater to ensure we're working with fully rendered nodes
-        javafx.application.Platform.runLater(() -> {
-            // Find and translate the column header
-            java.util.Set<javafx.scene.Node> headers = table.lookupAll(".column-header");
-            for (javafx.scene.Node header : headers) {
-                // Check if this header belongs to our sticky column
-                if (isHeaderForColumn(header, column)) {
-                    applyStickyPosition(header, hScrollValue);
-                }
-            }
-            
-            // Find and translate column cells - use direct TableCell lookup
-            java.util.Set<javafx.scene.Node> allCells = table.lookupAll(".table-cell");
-            for (javafx.scene.Node cellNode : allCells) {
-                if (cellNode instanceof javafx.scene.control.TableCell<?, ?> tableCell) {
-                    // Compare the column directly
-                    if (tableCell.getTableColumn() == column) {
-                        applyStickyPosition(cellNode, hScrollValue);
-                    }
-                }
-            }
-        });
-    }
-    
-    /**
-     * Applies sticky position properties to a node to keep it fixed during horizontal scrolling
-     */
-    private void applyStickyPosition(javafx.scene.Node node, double translateX) {
-        node.setTranslateX(translateX);
-        node.setMouseTransparent(false);
-        node.setPickOnBounds(true);
-        node.setViewOrder(-1); // keep element above scrolling content
-        node.toFront();
-    }
-    
-    /**
-     * Checks if a header node belongs to a specific column
-     */
-    private <T> boolean isHeaderForColumn(javafx.scene.Node header, TableColumn<T, ?> column) {
-        if (!(header instanceof javafx.scene.layout.Region)) return false;
-        
-        javafx.scene.layout.Region region = (javafx.scene.layout.Region) header;
-        for (javafx.scene.Node child : region.getChildrenUnmodifiable()) {
-            if (child instanceof javafx.scene.control.Label label) {
-                if (column.getText() != null && column.getText().equals(label.getText())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        // Note: JavaFX TableView doesn't natively support frozen/sticky columns.
+        // The previous translateX-based implementation caused synchronization issues 
+        // between header and cells. Instead, we just keep the column non-reorderable
+        // and styled to indicate it's a special column. The column will scroll with
+        // the rest of the table content, but it's always the first column.
     }
     
     // ---------- Combine Config Group Methods ----------
@@ -4391,8 +4284,14 @@ public class AppController {
     /**
      * Automatically hides table columns that have no data in any of their rows.
      * This helps reduce clutter by hiding empty columns after data is loaded.
+     * Respects the isExpandAllColumns setting - if enabled, all columns remain visible.
      */
     private void hideEmptyColumns() {
+        // Don't hide columns if expand all columns is enabled
+        if (isExpandAllColumns) {
+            return;
+        }
+        
         // Hide empty columns in Nurse Calls table
         if (tableNurseCalls != null && parser != null) {
             hideEmptyColumnsInTable(tableNurseCalls, parser.nurseCalls);
@@ -4406,6 +4305,40 @@ public class AppController {
         // Hide empty columns in Orders table
         if (tableOrders != null && parser != null) {
             hideEmptyColumnsInTable(tableOrders, parser.orders);
+        }
+    }
+    
+    /**
+     * Shows all columns in all tables regardless of data.
+     * Called when "Expand All Columns" checkbox is checked.
+     */
+    private void showAllColumns() {
+        // Show all columns in Nurse Calls table
+        if (tableNurseCalls != null) {
+            for (TableColumn<?, ?> column : tableNurseCalls.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in Clinicals table
+        if (tableClinicals != null) {
+            for (TableColumn<?, ?> column : tableClinicals.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in Orders table
+        if (tableOrders != null) {
+            for (TableColumn<?, ?> column : tableOrders.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in Units table
+        if (tableUnits != null) {
+            for (TableColumn<?, ?> column : tableUnits.getColumns()) {
+                column.setVisible(true);
+            }
         }
     }
     
