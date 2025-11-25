@@ -12,7 +12,6 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.ScrollBar;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
@@ -41,7 +40,6 @@ import javafx.geometry.Side;
 import javafx.geometry.Insets;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.ScrollEvent;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -63,8 +61,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-
-import javafx.beans.value.ChangeListener;
 
 public class AppController {
 
@@ -336,8 +332,6 @@ public class AppController {
     private static final String PREF_KEY_LOADED_TIMEOUT_MIN = "loadedTimeoutMin";
     private static final String PREF_KEY_LOADED_TIMEOUT_MAX = "loadedTimeoutMax";
     private static final String PREF_KEY_COMBINE_CONFIG_GROUP = "combineConfigGroup";
-    private static final String STICKY_LISTENER_KEY = "stickyColumnListener";
-    private static final String STICKY_SCROLLBAR_KEY = "stickyColumnScrollBar";
     
     private boolean isDarkMode = false;
     private boolean isSidebarCollapsed = false;
@@ -4234,127 +4228,26 @@ public class AppController {
     }
     
     /**
-     * Makes a table column "sticky" (frozen) by preventing it from being reordered
-     * and keeping it visible during horizontal scrolling.
+     * Configures the "In Scope" column to be fixed at the left and always visible.
+     * Since JavaFX TableView doesn't natively support frozen columns, we:
+     * 1. Prevent reordering so it stays first
+     * 2. Add visual styling to make it stand out
+     * 3. Ensure checkboxes remain interactive
      */
     private <T> void makeStickyColumn(TableView<T> table, TableColumn<T, ?> column) {
         if (table == null || column == null) {
             return;
         }
 
+        // Prevent the column from being moved - it should always be first
         column.setReorderable(false);
+        
+        // Add style class for visual distinction
         column.getStyleClass().add("sticky-column");
-
-        table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-            if (oldSkin != null) {
-                detachStickySupport(column);
-            }
-            if (newSkin != null) {
-                javafx.application.Platform.runLater(() -> attachStickySupport(table, column));
-            }
-        });
-
-        table.itemsProperty().addListener((obs, oldItems, newItems) ->
-            javafx.application.Platform.runLater(() -> attachStickySupport(table, column))
-        );
-
-        column.visibleProperty().addListener((obs, wasVisible, isVisible) -> {
-            if (isVisible) {
-                javafx.application.Platform.runLater(() -> attachStickySupport(table, column));
-            }
-        });
-
-        table.addEventFilter(ScrollEvent.SCROLL, event -> {
-            ScrollBar scrollBar = (ScrollBar) column.getProperties().get(STICKY_SCROLLBAR_KEY);
-            if (scrollBar != null) {
-                updateStickyColumnPosition(table, column, scrollBar);
-            }
-        });
-
-        if (table.getSkin() != null) {
-            javafx.application.Platform.runLater(() -> attachStickySupport(table, column));
-        }
-    }
-
-    private <T> void attachStickySupport(TableView<T> table, TableColumn<T, ?> column) {
-        ScrollBar scrollBar = findHorizontalScrollBar(table);
-        if (scrollBar == null) {
-            return;
-        }
-
-        detachStickySupport(column);
-
-        ChangeListener<Number> listener = (obs, oldVal, newVal) ->
-            updateStickyColumnPosition(table, column, scrollBar);
-
-        scrollBar.valueProperty().addListener(listener);
-        column.getProperties().put(STICKY_LISTENER_KEY, listener);
-        column.getProperties().put(STICKY_SCROLLBAR_KEY, scrollBar);
-
-        updateStickyColumnPosition(table, column, scrollBar);
-    }
-
-    private void detachStickySupport(TableColumn<?, ?> column) {
-        @SuppressWarnings("unchecked")
-        ChangeListener<Number> listener = (ChangeListener<Number>) column.getProperties().remove(STICKY_LISTENER_KEY);
-        ScrollBar scrollBar = (ScrollBar) column.getProperties().remove(STICKY_SCROLLBAR_KEY);
-        if (listener != null && scrollBar != null) {
-            scrollBar.valueProperty().removeListener(listener);
-        }
-    }
-
-    private ScrollBar findHorizontalScrollBar(TableView<?> table) {
-        for (Node node : table.lookupAll(".scroll-bar")) {
-            if (node instanceof ScrollBar sb && sb.getOrientation() == javafx.geometry.Orientation.HORIZONTAL) {
-                return sb;
-            }
-        }
-        return null;
-    }
-
-    private <T> void updateStickyColumnPosition(TableView<T> table, TableColumn<T, ?> column, ScrollBar scrollBar) {
-        double offset = scrollBar.getValue();
-        javafx.application.Platform.runLater(() -> {
-            Set<Node> headers = table.lookupAll(".column-header");
-            for (Node header : headers) {
-                if (isHeaderForColumn(header, column)) {
-                    applyStickyPosition(header, offset);
-                }
-            }
-
-            Set<Node> cells = table.lookupAll(".table-cell");
-            for (Node cellNode : cells) {
-                if (cellNode instanceof TableCell<?, ?> cell) {
-                    if (cell.getTableColumn() == column) {
-                        applyStickyPosition(cellNode, offset);
-                    }
-                }
-            }
-        });
-    }
-
-    private void applyStickyPosition(Node node, double translateX) {
-        node.setTranslateX(translateX);
-        node.setMouseTransparent(false);
-        // Ensure the node is fully interactive and visible
-        if (node instanceof javafx.scene.layout.Region region) {
-            region.setManaged(true);
-        }
-    }
-
-    private <T> boolean isHeaderForColumn(Node header, TableColumn<T, ?> column) {
-        try {
-            java.lang.reflect.Method method = header.getClass().getMethod("getTableColumn");
-            Object result = method.invoke(header);
-            if (result instanceof TableColumn<?, ?> tc) {
-                return tc == column;
-            }
-        } catch (NoSuchMethodException ignored) {
-            // Not a column header node
-        } catch (Exception e) {
-            System.err.println("Unable to evaluate sticky column header: " + e.getMessage());
-        }
-        return false;
+        
+        // Ensure minimum width so "In Scope" text is always visible
+        column.setMinWidth(100);
+        column.setPrefWidth(100);
     }
     
     // ---------- Combine Config Group Methods ----------
