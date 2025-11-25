@@ -101,13 +101,11 @@
                         </VBox>
                     </top>
                     <center>
-                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" 
-                                    style="-fx-background-color: #1E1E1E; -fx-background: #1E1E1E;">
-                            <VBox fx:id="sidebarContent" spacing="6" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 8; -fx-spacing: 6;">
-                                <!-- Load Section -->
-                                <VBox spacing="4" styleClass="sidebar-section">
-                                    <Label fx:id="loadDataLabel" text="📂 LOAD DATA" styleClass="sidebar-section-header" />
-                                    <VBox fx:id="loadButtonsContainer" spacing="4">
+                        <VBox fx:id="sidebarContent" spacing="3" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 4; -fx-spacing: 3;">
+                            <!-- Load Section -->
+                            <VBox spacing="2" styleClass="sidebar-section">
+                                <Label fx:id="loadDataLabel" text="📂 LOAD DATA" styleClass="sidebar-section-header" />
+                                <VBox fx:id="loadButtonsContainer" spacing="2">
                                 <!-- Load NDW (Excel) -->
                                 <Button fx:id="loadNdwButton" text="📄 NDW File" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📄</userData>
@@ -128,21 +126,21 @@
                                     <tooltip>
                                         <Tooltip text="Load previously exported Engage Rules JSON (*.json)" />
                                     </tooltip>
-                                        </Button>
-                                    </VBox>
+                                    </Button>
                                 </VBox>
-                                
-                                <!-- Save to NDW (CI Mode Only) -->
+                            </VBox>
+                            
+                            <!-- Save to NDW (CI Mode Only) -->
                                 <Button fx:id="saveOnNdwButton" text="💾 Save to NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
                                 <userData>💾</userData>
                                 <tooltip>
                                     <Tooltip text="Save changes back to the NDW Excel file" />
                                 </tooltip>
                                 </Button>
-                                
-                                <!-- Navigation Section -->
-                                <VBox spacing="4" styleClass="sidebar-section">
-                                    <Label text="📑 VIEWS" styleClass="sidebar-section-header" />
+                            
+                            <!-- Navigation Section -->
+                            <VBox spacing="2" styleClass="sidebar-section">
+                                <Label text="📑 VIEWS" styleClass="sidebar-section-header" />
                                     
                                     <!-- Units Navigation -->
                                     <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true" style="-fx-font-weight: bold;">
@@ -165,26 +163,26 @@
                             <!-- Orders Navigation -->
                             <ToggleButton fx:id="navOrders" text="💊 Orders" maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navigationGroup" style="-fx-font-weight: bold;">
                                 <userData>💊</userData>
-                                    </ToggleButton>
-                                </VBox>
+                                </ToggleButton>
+                            </VBox>
+                            
+                            <!-- Actions Section -->
+                            <VBox spacing="2" styleClass="sidebar-section">
+                                <Label text="⚡ ACTIONS" styleClass="sidebar-section-header" />
                                 
-                                <!-- Actions Section -->
-                                <VBox spacing="4" styleClass="sidebar-section">
-                                    <Label text="⚡ ACTIONS" styleClass="sidebar-section-header" />
-                                    
-                                    <!-- View JSON -->
-                                    <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
+                                <!-- View JSON -->
+                                <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>👁️</userData>
                                 <tooltip>
                                     <Tooltip text="View JSON file for all selected rows in the dataset" />
                                 </tooltip>
-                                    </Button>
-                                </VBox>
-                                
-                                <!-- Export JSON Section -->
-                                <VBox spacing="4" styleClass="sidebar-section">
-                                    <Label fx:id="exportJsonLabel" text="📤 EXPORT" styleClass="sidebar-section-header" />
-                                    <VBox fx:id="exportButtonsContainer" spacing="4">
+                                </Button>
+                            </VBox>
+                            
+                            <!-- Export JSON Section -->
+                            <VBox spacing="2" styleClass="sidebar-section">
+                                <Label fx:id="exportJsonLabel" text="📤 EXPORT" styleClass="sidebar-section-header" />
+                                <VBox fx:id="exportButtonsContainer" spacing="2">
                                 <!-- Export Nursecall JSON -->
                                 <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="side-nav-action">
                                     <userData>🩺</userData>
@@ -207,13 +205,13 @@
                                     <tooltip>
                                         <Tooltip text="Export Orders JSON" />
                                     </tooltip>
-                                        </Button>
-                                    </VBox>
+                                    </Button>
                                 </VBox>
-                                
-                                <!-- Tools Section -->
-                                <VBox spacing="4" styleClass="sidebar-section">
-                                    <Label text="🛠️ TOOLS" styleClass="sidebar-section-header" />
+                            </VBox>
+                            
+                            <!-- Tools Section -->
+                            <VBox spacing="2" styleClass="sidebar-section">
+                                <Label text="🛠️ TOOLS" styleClass="sidebar-section-header" />
                                     
                                     <!-- Visual Flow (renamed from Visual CallFlow) -->
                                     <Button fx:id="visualFlowButton" text="🔀 Visual Flow" maxWidth="Infinity" styleClass="side-nav-action">
@@ -229,10 +227,9 @@
                                 <tooltip>
                                     <Tooltip text="Clear all loaded data and reset the application" />
                                 </tooltip>
-                                    </Button>
-                                </VBox>
+                                </Button>
                             </VBox>
-                        </ScrollPane>
+                        </VBox>
                     </center>
                 </BorderPane>
             </left>

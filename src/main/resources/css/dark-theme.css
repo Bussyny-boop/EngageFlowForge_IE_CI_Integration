@@ -71,10 +71,10 @@
 }
 
 .sidebar-section-header {
-    -fx-text-fill: #777;
+    -fx-text-fill: #00D4DD;
     -fx-font-weight: bold;
     -fx-font-size: 9px;
-    -fx-padding: 8 8 4 8;
+    -fx-padding: 4 8 2 8;
     -fx-letter-spacing: 0.5px;
 }
 
@@ -95,12 +95,12 @@
 .nav-button {
     -fx-background-color: transparent;
     -fx-text-fill: #F0F0F0;
-    -fx-font-size: 11px;
+    -fx-font-size: 10px;
     -fx-font-weight: 500;
     -fx-alignment: CENTER_LEFT;
-    -fx-graphic-text-gap: 8;
-    -fx-padding: 10 10 10 12;
-    -fx-background-radius: 6;
+    -fx-graphic-text-gap: 6;
+    -fx-padding: 6 8 6 10;
+    -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
     -fx-transition: all 0.2s ease;
@@ -159,13 +159,13 @@
     -fx-background-color: linear-gradient(to bottom, #00C4CC, #00A8B0);
     -fx-text-fill: white;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 9 10 9 12;
-    -fx-font-size: 11px;
+    -fx-padding: 6 8 6 10;
+    -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-background-radius: 6;
+    -fx-background-radius: 4;
     -fx-border-color: #00D4DD;
     -fx-border-width: 1;
-    -fx-border-radius: 6;
+    -fx-border-radius: 4;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 3, 0, 0, 2);
     -fx-wrap-text: false;
     -fx-min-width: 160;
@@ -234,15 +234,26 @@
 /* --- Collapsed Sidebar Styles --- */
 .sidebar-collapsed .nav-button {
     -fx-alignment: CENTER;
-    -fx-padding: 7 3;
-    -fx-font-size: 16px;
+    -fx-padding: 8 5;
+    -fx-font-size: 18px;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: false;
     -fx-text-overrun: clip;
     -fx-ellipsis-string: "";
     -fx-max-width: 46;
     -fx-pref-width: 46;
-    -fx-min-height: 35;
+    -fx-min-height: 38;
+}
+
+.sidebar-collapsed .nav-button .graphic {
+    -fx-opacity: 1.0;
+}
+
+.sidebar-collapsed .side-nav-action,
+.sidebar-collapsed .side-nav-action-warning {
+    -fx-alignment: CENTER;
+    -fx-padding: 8 5;
+    -fx-font-size: 18px;
 }
 
 .sidebar-collapsed .nav-button:hover {
@@ -745,11 +756,15 @@
 /* --- Tooltip --- */
 .tooltip {
     -fx-background-color: #3A3A3A;
-    -fx-text-fill: #E0E0E0;
+    -fx-text-fill: #FFFFFF;
     -fx-padding: 8 12;
-    -fx-font-size: 12px;
-    -fx-background-radius: 6;
+    -fx-font-size: 11px;
+    -fx-background-radius: 4;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 10, 0, 0, 3);
+}
+
+.tooltip .label {
+    -fx-text-fill: #FFFFFF;
 }
 
 /* --- SplitPane --- */
