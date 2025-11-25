@@ -52,7 +52,7 @@
                 </Button>
                 <Button fx:id="saveExcelButton" text="💾 Save" disable="true" styleClass="app-bar-button">
                     <tooltip>
-                        <Tooltip text="Save Changes to Excel" />
+                        <Tooltip text="Save Changes to Excel [Ctrl+S]" />
                     </tooltip>
                 </Button>
                 <Button fx:id="themeToggleButton" text="🌓 Toggle" styleClass="app-bar-button">
@@ -94,21 +94,21 @@
                                 <Button fx:id="loadNdwButton" text="📄 NDW File" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📄</userData>
                                     <tooltip>
-                                        <Tooltip text="Load NDW Excel workbook (*.xlsx)" />
+                                        <Tooltip text="Load NDW Excel workbook (*.xlsx) [Ctrl+O]" />
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage XML -->
                                 <Button fx:id="loadXmlButton" text="📋 Engage XML" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📋</userData>
                                     <tooltip>
-                                        <Tooltip text="Load Engage interface rules from XML (*.xml)" />
+                                        <Tooltip text="Load Engage interface rules from XML (*.xml) [Ctrl+Shift+O]" />
                                     </tooltip>
                                 </Button>
                                 <!-- Load Engage Rules (JSON) -->
                                 <Button fx:id="loadJsonButton" text="📥 Engage JSON" maxWidth="Infinity" styleClass="nav-button">
                                     <userData>📥</userData>
                                     <tooltip>
-                                        <Tooltip text="Load previously exported Engage Rules JSON (*.json)" />
+                                        <Tooltip text="Load previously exported Engage Rules JSON (*.json) [Ctrl+J]" />
                                     </tooltip>
                                 </Button>
                             </VBox>
@@ -117,7 +117,7 @@
                             <Button fx:id="saveOnNdwButton" text="💾 Save to NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
                                 <userData>💾</userData>
                                 <tooltip>
-                                    <Tooltip text="Save changes back to the NDW Excel file" />
+                                    <Tooltip text="Save changes back to the NDW Excel file [Ctrl+S]" />
                                 </tooltip>
                             </Button>
                             
@@ -151,7 +151,7 @@
                             <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
                                 <userData>👁️</userData>
                                 <tooltip>
-                                    <Tooltip text="View JSON file for all selected rows in the dataset" />
+                                    <Tooltip text="View JSON file for all selected rows in the dataset [F5 or Ctrl+E]" />
                                 </tooltip>
                             </Button>
                             
