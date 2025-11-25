@@ -5013,7 +5013,6 @@ public class AppController {
                         String headerLine = br.readLine();
                         int nameColumn = 0; // Default to first column (column 0)
                         boolean hasNameHeader = false;
-                        int startRow = 0; // 0 means first line is data, will be set based on header detection
                         
                         // Look for "Name" header in all columns (case-insensitive, ignoring trailing "*")
                         if (headerLine != null) {
