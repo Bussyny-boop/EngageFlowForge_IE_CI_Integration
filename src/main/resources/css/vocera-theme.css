@@ -152,7 +152,7 @@
     -fx-effect: dropshadow(gaussian, rgba(255, 0, 0, 0.5), 8, 0, 0, 4);
 }
 
-/* Sidebar collapse/expand styles - increased by 10% */
+/* Sidebar collapse/expand styles - approximately 10% wider */
 .sidebar-collapsed {
     -fx-pref-width: 51;
     -fx-min-width: 51;

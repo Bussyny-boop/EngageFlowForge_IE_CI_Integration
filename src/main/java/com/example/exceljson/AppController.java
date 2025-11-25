@@ -4027,7 +4027,7 @@ public class AppController {
      * Collapse sidebar to show only icons
      */
     private void collapseSidebarToIcons() {
-        // Keep sidebar visible but make it narrow (increased by 10% to 46)
+        // Keep sidebar visible but make it narrow (approximately 10% increase from 42 to 46)
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
         sidebarContainer.setPrefWidth(46);
@@ -4047,7 +4047,7 @@ public class AppController {
     private void expandSidebarToFull() {
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(193);  // Increased by 10% from 175 to 193
+        sidebarContainer.setPrefWidth(193);  // Approximately 10% increase from 175
         
         // Remove collapsed style class
         sidebarContent.getStyleClass().remove("sidebar-collapsed");
@@ -4306,6 +4306,11 @@ public class AppController {
         if (tableOrders != null && parser != null) {
             hideEmptyColumnsInTable(tableOrders, parser.orders);
         }
+        
+        // Hide empty columns in Units table
+        if (tableUnits != null && parser != null) {
+            hideEmptyColumnsInUnitsTable();
+        }
     }
     
     /**
@@ -4361,6 +4366,34 @@ public class AppController {
             boolean hasData = false;
             
             for (T row : data) {
+                javafx.beans.value.ObservableValue<?> cellValue = column.getCellObservableValue(row);
+                if (cellValue != null) {
+                    Object value = cellValue.getValue();
+                    if (value != null && !value.toString().trim().isEmpty()) {
+                        hasData = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Hide the column if it has no data
+            column.setVisible(hasData);
+        }
+    }
+    
+    /**
+     * Helper method to hide empty columns in the Units table.
+     */
+    private void hideEmptyColumnsInUnitsTable() {
+        if (tableUnits == null || parser == null || parser.units == null || parser.units.isEmpty()) {
+            return;
+        }
+        
+        for (TableColumn<ExcelParserV5.UnitRow, ?> column : tableUnits.getColumns()) {
+            // Check if this column has any non-empty data
+            boolean hasData = false;
+            
+            for (ExcelParserV5.UnitRow row : parser.units) {
                 javafx.beans.value.ObservableValue<?> cellValue = column.getCellObservableValue(row);
                 if (cellValue != null) {
                     Object value = cellValue.getValue();

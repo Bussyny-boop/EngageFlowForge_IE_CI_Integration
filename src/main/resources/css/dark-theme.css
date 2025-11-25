@@ -55,7 +55,7 @@
     -fx-transition: all 0.3s ease;
 }
 
-/* Sidebar collapse/expand styles - increased by 10% */
+/* Sidebar collapse/expand styles - approximately 10% wider */
 .sidebar-collapsed {
     -fx-pref-width: 51;
     -fx-min-width: 51;
