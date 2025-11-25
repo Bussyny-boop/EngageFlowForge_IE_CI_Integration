@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version-major="1" version-minor="0">
+  <meta-data>
+    <name>Test Inactive Assignment State Filter Exclusion</name>
+  </meta-data>
+  <contents>
+    <datasets>
+      <dataset active="true">
+        <name>Clinicals</name>
+        
+        <!-- View for active alarms -->
+        <view>
+          <name>Alarm_is_active</name>
+          <description>Alarm is active</description>
+          <filter relation="equal">
+            <path>active</path>
+            <value>true</value>
+          </filter>
+        </view>
+        
+        <!-- View for primary state -->
+        <view>
+          <name>Alarm_is_at_primary_state</name>
+          <description>Alarm is at primary state</description>
+          <filter relation="equal">
+            <path>state</path>
+            <value>Primary</value>
+          </filter>
+        </view>
+        
+        <!-- View for alert types -->
+        <view>
+          <name>Alarm_included_in_test_alerts</name>
+          <description>Test alerts</description>
+          <filter relation="in">
+            <path>alert_type</path>
+            <value>APNEA, BRADY</value>
+          </filter>
+        </view>
+        
+        <!-- View for NURSE role - NORMAL (should be processed for timing) -->
+        <view>
+          <name>Role_caregiver_NURSE_is_online</name>
+          <description>Role caregiver NURSE is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Nurse</value>
+          </filter>
+          <filter relation="equal">
+            <path>bed.locs.assignments.state</path>
+            <value>Active</value>
+          </filter>
+        </view>
+        
+        <!-- View that EXCLUDES active assignment state - should be filtered out for timing -->
+        <view>
+          <name>No_role_caregiver_NURSE_is_online</name>
+          <description>No role caregiver NURSE is online</description>
+          <filter relation="not_equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>Nurse</value>
+          </filter>
+          <filter relation="not_equal">
+            <path>bed.locs.assignments.state</path>
+            <value>Active</value>
+          </filter>
+          <filter relation="not_in">
+            <path>bed.locs.assignments.usr.devices.status</path>
+            <value>Registered,Disconnected</value>
+          </filter>
+        </view>
+        
+        <!-- View for CHARGE NURSE -->
+        <view>
+          <name>Role_caregiver_CHARGE_NURSE_is_online</name>
+          <description>Role caregiver CHARGE NURSE is online</description>
+          <filter relation="equal">
+            <path>bed.locs.assignments.role.name</path>
+            <value>CHARGE NURSE</value>
+          </filter>
+        </view>
+      </dataset>
+    </datasets>
+    
+    <interfaces>
+      <!-- DataUpdate CREATE rule - sets state to Primary with delay of 30 seconds -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Create</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>CREATE PRIMARY | TEST ALERTS | 30 SEC</purpose>
+          <trigger-on create="true"/>
+          <defer-delivery-by>30</defer-delivery-by>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_test_alerts</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Primary"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate ESCALATION rule - NORMAL - should contribute to timing (60 sec to Secondary) -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Escalation Normal</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO SECONDARY | 60 SEC | ALL ALARMS | NURSE ONLINE</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>60</defer-delivery-by>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE_is_online</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"},{"path":"history.previous_state","value":"#{state}"},{"path":"history.state","value":"Secondary"},{"path":"history.reason","value":"Escalation"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- DataUpdate ESCALATION rule - NO PRIMARY ASSIGNED - should NOT contribute to timing -->
+      <!-- This is the rule that should be FILTERED OUT because it references a view with 
+           not_equal on assignments.state = Active -->
+      <interface component="DataUpdate">
+        <name>DataUpdate Escalation No Primary</name>
+        <rule active="true" dataset="Clinicals">
+          <purpose>ESCALATE TO SECONDARY | ALL ALARMS | NO PRIMARY ASSIGNED | NURSE | ALL UNITS</purpose>
+          <trigger-on update="true"/>
+          <defer-delivery-by>0</defer-delivery-by>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>No_role_caregiver_NURSE_is_online</view>
+          </condition>
+          <settings>{"parameters":[{"path":"state","value":"Secondary"},{"path":"history.previous_state","value":"#{state}"},{"path":"history.state","value":"Secondary"},{"path":"history.reason","value":"No Primary Caregivers"}]}</settings>
+        </rule>
+      </interface>
+      
+      <!-- VMP SEND rules for Primary and Secondary -->
+      <interface component="VMP">
+        <name>VMP</name>
+        
+        <!-- SEND PRIMARY -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND PRIMARY | TEST ALERTS | VMP | NURSE</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_test_alerts</view>
+            <view>Alarm_is_at_primary_state</view>
+            <view>Role_caregiver_NURSE_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10,"enunciate":"ENUNCIATE_ALWAYS"}</settings>
+        </rule>
+        
+        <!-- SEND SECONDARY -->
+        <rule active="true" dataset="Clinicals">
+          <purpose>SEND SECONDARY | TEST ALERTS | VMP | CHARGE NURSE</purpose>
+          <trigger-on update="true"/>
+          <condition>
+            <view>Alarm_is_active</view>
+            <view>Alarm_included_in_test_alerts</view>
+            <view>Role_caregiver_CHARGE_NURSE_is_online</view>
+          </condition>
+          <settings>{"destination":"#{bed.locs.assignments.usr.devices.lines.number}","priority":"2","ttl":10}</settings>
+        </rule>
+      </interface>
+    </interfaces>
+  </contents>
+</package>
