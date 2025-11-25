@@ -542,33 +542,41 @@
                                             </HBox>
                                         </top>
                                         <center>
-                                            <TableView fx:id="tableNurseCalls" editable="true">
-                                                <columns>
-                                                    <TableColumn fx:id="nurseInScopeCol" prefWidth="100.0" text="In Scope" />
-                                                    <TableColumn fx:id="nurseConfigGroupCol" prefWidth="160.0" text="Config Group" />
-                                                    <TableColumn fx:id="nurseAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
-                                                    <TableColumn fx:id="nurseSendingNameCol" prefWidth="200.0" text="Sending Name" />
-                                                    <TableColumn fx:id="nursePriorityCol" prefWidth="120.0" text="Priority" />
-                                                    <TableColumn fx:id="nurseDeviceACol" prefWidth="140.0" text="Device A" />
-                                                    <TableColumn fx:id="nurseDeviceBCol" prefWidth="140.0" text="Device B" />
-                                                    <TableColumn fx:id="nurseRingtoneCol" prefWidth="160.0" text="Ringtone" />
-                                                    <TableColumn fx:id="nurseResponseOptionsCol" prefWidth="160.0" text="Response Options" />
-                                                    <TableColumn fx:id="nurseBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
-                                                    <TableColumn fx:id="nurseEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
-                                                    <TableColumn fx:id="nurseTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
-                                                    <TableColumn fx:id="nurseEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
-                                                    <TableColumn fx:id="nurseT1Col" prefWidth="140.0" text="Time to 1st" />
-                                                    <TableColumn fx:id="nurseR1Col" prefWidth="220.0" text="1st Recipient" />
-                                                    <TableColumn fx:id="nurseT2Col" prefWidth="140.0" text="Time to 2nd" />
-                                                    <TableColumn fx:id="nurseR2Col" prefWidth="220.0" text="2nd Recipient" />
-                                                    <TableColumn fx:id="nurseT3Col" prefWidth="140.0" text="Time to 3rd" />
-                                                    <TableColumn fx:id="nurseR3Col" prefWidth="220.0" text="3rd Recipient" />
-                                                    <TableColumn fx:id="nurseT4Col" prefWidth="140.0" text="Time to 4th" />
-                                                    <TableColumn fx:id="nurseR4Col" prefWidth="220.0" text="4th Recipient" />
-                                                    <TableColumn fx:id="nurseT5Col" prefWidth="140.0" text="Time to 5th" />
-                                                    <TableColumn fx:id="nurseR5Col" prefWidth="220.0" text="5th Recipient" />
-                                                </columns>
-                                            </TableView>
+                                            <HBox spacing="0">
+                                                <!-- Frozen In Scope Column -->
+                                                <TableView fx:id="frozenNurseTable" editable="true" prefWidth="102" minWidth="102" maxWidth="102" styleClass="frozen-table">
+                                                    <columns>
+                                                        <TableColumn fx:id="frozenNurseInScopeCol" prefWidth="100.0" text="In Scope" />
+                                                    </columns>
+                                                </TableView>
+                                                <!-- Main Scrollable Table -->
+                                                <TableView fx:id="tableNurseCalls" editable="true" HBox.hgrow="ALWAYS">
+                                                    <columns>
+                                                        <TableColumn fx:id="nurseConfigGroupCol" prefWidth="160.0" text="Config Group" />
+                                                        <TableColumn fx:id="nurseAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
+                                                        <TableColumn fx:id="nurseSendingNameCol" prefWidth="200.0" text="Sending Name" />
+                                                        <TableColumn fx:id="nursePriorityCol" prefWidth="120.0" text="Priority" />
+                                                        <TableColumn fx:id="nurseDeviceACol" prefWidth="140.0" text="Device A" />
+                                                        <TableColumn fx:id="nurseDeviceBCol" prefWidth="140.0" text="Device B" />
+                                                        <TableColumn fx:id="nurseRingtoneCol" prefWidth="160.0" text="Ringtone" />
+                                                        <TableColumn fx:id="nurseResponseOptionsCol" prefWidth="160.0" text="Response Options" />
+                                                        <TableColumn fx:id="nurseBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
+                                                        <TableColumn fx:id="nurseEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
+                                                        <TableColumn fx:id="nurseTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
+                                                        <TableColumn fx:id="nurseEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
+                                                        <TableColumn fx:id="nurseT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                        <TableColumn fx:id="nurseR1Col" prefWidth="220.0" text="1st Recipient" />
+                                                        <TableColumn fx:id="nurseT2Col" prefWidth="140.0" text="Time to 2nd" />
+                                                        <TableColumn fx:id="nurseR2Col" prefWidth="220.0" text="2nd Recipient" />
+                                                        <TableColumn fx:id="nurseT3Col" prefWidth="140.0" text="Time to 3rd" />
+                                                        <TableColumn fx:id="nurseR3Col" prefWidth="220.0" text="3rd Recipient" />
+                                                        <TableColumn fx:id="nurseT4Col" prefWidth="140.0" text="Time to 4th" />
+                                                        <TableColumn fx:id="nurseR4Col" prefWidth="220.0" text="4th Recipient" />
+                                                        <TableColumn fx:id="nurseT5Col" prefWidth="140.0" text="Time to 5th" />
+                                                        <TableColumn fx:id="nurseR5Col" prefWidth="220.0" text="5th Recipient" />
+                                                    </columns>
+                                                </TableView>
+                                            </HBox>
                                         </center>
                                     </BorderPane>
                                     
@@ -586,34 +594,42 @@
                                             </HBox>
                                         </top>
                                         <center>
-                                            <TableView fx:id="tableClinicals" editable="true">
-                                                <columns>
-                                                    <TableColumn fx:id="clinicalInScopeCol" prefWidth="100.0" text="In Scope" />
-                                                    <TableColumn fx:id="clinicalConfigGroupCol" prefWidth="160.0" text="Config Group" />
-                                                    <TableColumn fx:id="clinicalAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
-                                                    <TableColumn fx:id="clinicalSendingNameCol" prefWidth="200.0" text="Sending Name" />
-                                                    <TableColumn fx:id="clinicalPriorityCol" prefWidth="120.0" text="Priority" />
-                                                    <TableColumn fx:id="clinicalDeviceACol" prefWidth="140.0" text="Device A" />
-                                                    <TableColumn fx:id="clinicalDeviceBCol" prefWidth="140.0" text="Device B" />
-                                                    <TableColumn fx:id="clinicalRingtoneCol" prefWidth="160.0" text="Ringtone" />
-                                                    <TableColumn fx:id="clinicalResponseOptionsCol" prefWidth="160.0" text="Response Options" />
-                                                    <TableColumn fx:id="clinicalBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
-                                                    <TableColumn fx:id="clinicalEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
-                                                    <TableColumn fx:id="clinicalTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
-                                                    <TableColumn fx:id="clinicalEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
-                                                    <TableColumn fx:id="clinicalEmdanCol" prefWidth="140.0" text="EMDAN Compliant" />
-                                                    <TableColumn fx:id="clinicalT1Col" prefWidth="140.0" text="Time to 1st" />
-                                                    <TableColumn fx:id="clinicalR1Col" prefWidth="220.0" text="1st Recipient" />
-                                                    <TableColumn fx:id="clinicalT2Col" prefWidth="140.0" text="Time to 2nd" />
-                                                    <TableColumn fx:id="clinicalR2Col" prefWidth="220.0" text="2nd Recipient" />
-                                                    <TableColumn fx:id="clinicalT3Col" prefWidth="140.0" text="Time to 3rd" />
-                                                    <TableColumn fx:id="clinicalR3Col" prefWidth="220.0" text="3rd Recipient" />
-                                                    <TableColumn fx:id="clinicalT4Col" prefWidth="140.0" text="Time to 4th" />
-                                                    <TableColumn fx:id="clinicalR4Col" prefWidth="220.0" text="4th Recipient" />
-                                                    <TableColumn fx:id="clinicalT5Col" prefWidth="140.0" text="Time to 5th" />
-                                                    <TableColumn fx:id="clinicalR5Col" prefWidth="220.0" text="5th Recipient" />
-                                                </columns>
-                                            </TableView>
+                                            <HBox spacing="0">
+                                                <!-- Frozen In Scope Column -->
+                                                <TableView fx:id="frozenClinicalTable" editable="true" prefWidth="102" minWidth="102" maxWidth="102" styleClass="frozen-table">
+                                                    <columns>
+                                                        <TableColumn fx:id="frozenClinicalInScopeCol" prefWidth="100.0" text="In Scope" />
+                                                    </columns>
+                                                </TableView>
+                                                <!-- Main Scrollable Table -->
+                                                <TableView fx:id="tableClinicals" editable="true" HBox.hgrow="ALWAYS">
+                                                    <columns>
+                                                        <TableColumn fx:id="clinicalConfigGroupCol" prefWidth="160.0" text="Config Group" />
+                                                        <TableColumn fx:id="clinicalAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
+                                                        <TableColumn fx:id="clinicalSendingNameCol" prefWidth="200.0" text="Sending Name" />
+                                                        <TableColumn fx:id="clinicalPriorityCol" prefWidth="120.0" text="Priority" />
+                                                        <TableColumn fx:id="clinicalDeviceACol" prefWidth="140.0" text="Device A" />
+                                                        <TableColumn fx:id="clinicalDeviceBCol" prefWidth="140.0" text="Device B" />
+                                                        <TableColumn fx:id="clinicalRingtoneCol" prefWidth="160.0" text="Ringtone" />
+                                                        <TableColumn fx:id="clinicalResponseOptionsCol" prefWidth="160.0" text="Response Options" />
+                                                        <TableColumn fx:id="clinicalBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
+                                                        <TableColumn fx:id="clinicalEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
+                                                        <TableColumn fx:id="clinicalTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
+                                                        <TableColumn fx:id="clinicalEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
+                                                        <TableColumn fx:id="clinicalEmdanCol" prefWidth="140.0" text="EMDAN Compliant" />
+                                                        <TableColumn fx:id="clinicalT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                        <TableColumn fx:id="clinicalR1Col" prefWidth="220.0" text="1st Recipient" />
+                                                        <TableColumn fx:id="clinicalT2Col" prefWidth="140.0" text="Time to 2nd" />
+                                                        <TableColumn fx:id="clinicalR2Col" prefWidth="220.0" text="2nd Recipient" />
+                                                        <TableColumn fx:id="clinicalT3Col" prefWidth="140.0" text="Time to 3rd" />
+                                                        <TableColumn fx:id="clinicalR3Col" prefWidth="220.0" text="3rd Recipient" />
+                                                        <TableColumn fx:id="clinicalT4Col" prefWidth="140.0" text="Time to 4th" />
+                                                        <TableColumn fx:id="clinicalR4Col" prefWidth="220.0" text="4th Recipient" />
+                                                        <TableColumn fx:id="clinicalT5Col" prefWidth="140.0" text="Time to 5th" />
+                                                        <TableColumn fx:id="clinicalR5Col" prefWidth="220.0" text="5th Recipient" />
+                                                    </columns>
+                                                </TableView>
+                                            </HBox>
                                         </center>
                                     </BorderPane>
                                     
@@ -631,33 +647,41 @@
                                             </HBox>
                                         </top>
                                         <center>
-                                            <TableView fx:id="tableOrders" editable="true">
-                                                <columns>
-                                                    <TableColumn fx:id="ordersInScopeCol" prefWidth="100.0" text="In Scope" />
-                                                    <TableColumn fx:id="ordersConfigGroupCol" prefWidth="160.0" text="Config Group" />
-                                                    <TableColumn fx:id="ordersAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
-                                                    <TableColumn fx:id="ordersSendingNameCol" prefWidth="200.0" text="Sending Name" />
-                                                    <TableColumn fx:id="ordersPriorityCol" prefWidth="120.0" text="Priority" />
-                                                    <TableColumn fx:id="ordersDeviceACol" prefWidth="140.0" text="Device A" />
-                                                    <TableColumn fx:id="ordersDeviceBCol" prefWidth="140.0" text="Device B" />
-                                                    <TableColumn fx:id="ordersRingtoneCol" prefWidth="160.0" text="Ringtone" />
-                                                    <TableColumn fx:id="ordersResponseOptionsCol" prefWidth="160.0" text="Response Options" />
-                                                    <TableColumn fx:id="ordersBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
-                                                    <TableColumn fx:id="ordersEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
-                                                    <TableColumn fx:id="ordersTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
-                                                    <TableColumn fx:id="ordersEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
-                                                    <TableColumn fx:id="ordersT1Col" prefWidth="140.0" text="Time to 1st" />
-                                                    <TableColumn fx:id="ordersR1Col" prefWidth="220.0" text="1st Recipient" />
-                                                    <TableColumn fx:id="ordersT2Col" prefWidth="140.0" text="Time to 2nd" />
-                                                    <TableColumn fx:id="ordersR2Col" prefWidth="220.0" text="2nd Recipient" />
-                                                    <TableColumn fx:id="ordersT3Col" prefWidth="140.0" text="Time to 3rd" />
-                                                    <TableColumn fx:id="ordersR3Col" prefWidth="220.0" text="3rd Recipient" />
-                                                    <TableColumn fx:id="ordersT4Col" prefWidth="140.0" text="Time to 4th" />
-                                                    <TableColumn fx:id="ordersR4Col" prefWidth="220.0" text="4th Recipient" />
-                                                    <TableColumn fx:id="ordersT5Col" prefWidth="140.0" text="Time to 5th" />
-                                                    <TableColumn fx:id="ordersR5Col" prefWidth="220.0" text="5th Recipient" />
-                                                </columns>
-                                            </TableView>
+                                            <HBox spacing="0">
+                                                <!-- Frozen In Scope column -->
+                                                <TableView fx:id="frozenOrdersTable" editable="true" prefWidth="102" minWidth="102" maxWidth="102" styleClass="frozen-table">
+                                                    <columns>
+                                                        <TableColumn fx:id="frozenOrdersInScopeCol" prefWidth="100.0" text="In Scope" />
+                                                    </columns>
+                                                </TableView>
+                                                <!-- Main scrollable table -->
+                                                <TableView fx:id="tableOrders" editable="true" HBox.hgrow="ALWAYS">
+                                                    <columns>
+                                                        <TableColumn fx:id="ordersConfigGroupCol" prefWidth="160.0" text="Config Group" />
+                                                        <TableColumn fx:id="ordersAlarmNameCol" prefWidth="200.0" text="Alarm Name" />
+                                                        <TableColumn fx:id="ordersSendingNameCol" prefWidth="200.0" text="Sending Name" />
+                                                        <TableColumn fx:id="ordersPriorityCol" prefWidth="120.0" text="Priority" />
+                                                        <TableColumn fx:id="ordersDeviceACol" prefWidth="140.0" text="Device A" />
+                                                        <TableColumn fx:id="ordersDeviceBCol" prefWidth="140.0" text="Device B" />
+                                                        <TableColumn fx:id="ordersRingtoneCol" prefWidth="160.0" text="Ringtone" />
+                                                        <TableColumn fx:id="ordersResponseOptionsCol" prefWidth="160.0" text="Response Options" />
+                                                        <TableColumn fx:id="ordersBreakThroughDNDCol" prefWidth="160.0" text="Break Through DND" />
+                                                        <TableColumn fx:id="ordersEscalateAfterCol" prefWidth="160.0" text="Escalate After" />
+                                                        <TableColumn fx:id="ordersTtlValueCol" prefWidth="140.0" text="Time to Live (TTL)" />
+                                                        <TableColumn fx:id="ordersEnunciateCol" prefWidth="140.0" text="Genie Enunciation" />
+                                                        <TableColumn fx:id="ordersT1Col" prefWidth="140.0" text="Time to 1st" />
+                                                        <TableColumn fx:id="ordersR1Col" prefWidth="220.0" text="1st Recipient" />
+                                                        <TableColumn fx:id="ordersT2Col" prefWidth="140.0" text="Time to 2nd" />
+                                                        <TableColumn fx:id="ordersR2Col" prefWidth="220.0" text="2nd Recipient" />
+                                                        <TableColumn fx:id="ordersT3Col" prefWidth="140.0" text="Time to 3rd" />
+                                                        <TableColumn fx:id="ordersR3Col" prefWidth="220.0" text="3rd Recipient" />
+                                                        <TableColumn fx:id="ordersT4Col" prefWidth="140.0" text="Time to 4th" />
+                                                        <TableColumn fx:id="ordersR4Col" prefWidth="220.0" text="4th Recipient" />
+                                                        <TableColumn fx:id="ordersT5Col" prefWidth="140.0" text="Time to 5th" />
+                                                        <TableColumn fx:id="ordersR5Col" prefWidth="220.0" text="5th Recipient" />
+                                                    </columns>
+                                                </TableView>
+                                            </HBox>
                                         </center>
                                     </BorderPane>
                                 </StackPane>

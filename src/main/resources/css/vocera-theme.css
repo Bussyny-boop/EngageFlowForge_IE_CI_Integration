@@ -733,3 +733,39 @@
 .table-cell {
     -fx-background-insets: 0;
 }
+
+/* --- Frozen Table Styles --- */
+.frozen-table {
+    -fx-border-color: transparent #00979D transparent transparent;
+    -fx-border-width: 0 2 0 0;
+}
+
+.frozen-table .scroll-bar:vertical {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-min-width: 0;
+    -fx-max-width: 0;
+}
+
+.frozen-table .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+}
+
+.frozen-table .column-header {
+    -fx-background-color: #00979D;
+    -fx-font-weight: bold;
+}
+
+.frozen-table .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.frozen-table .table-cell {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: transparent #00979D transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}

@@ -4,12 +4,14 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.animation.ParallelTransition;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
@@ -201,8 +203,9 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.UnitRow, String> unitCommentsCol;
 
     // ---------- Nurse Calls ----------
+    @FXML private TableView<ExcelParserV5.FlowRow> frozenNurseTable;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> frozenNurseInScopeCol;
     @FXML private TableView<ExcelParserV5.FlowRow> tableNurseCalls;
-    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> nurseInScopeCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseAlarmNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseSendingNameCol;
@@ -227,8 +230,9 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> nurseR5Col;
 
     // ---------- Clinicals ----------
+    @FXML private TableView<ExcelParserV5.FlowRow> frozenClinicalTable;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> frozenClinicalInScopeCol;
     @FXML private TableView<ExcelParserV5.FlowRow> tableClinicals;
-    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> clinicalInScopeCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalAlarmNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalSendingNameCol;
@@ -254,8 +258,9 @@ public class AppController {
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> clinicalR5Col;
 
     // ---------- Orders ----------
+    @FXML private TableView<ExcelParserV5.FlowRow> frozenOrdersTable;
+    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> frozenOrdersInScopeCol;
     @FXML private TableView<ExcelParserV5.FlowRow> tableOrders;
-    @FXML private TableColumn<ExcelParserV5.FlowRow, Boolean> ordersInScopeCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersConfigGroupCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersAlarmNameCol;
     @FXML private TableColumn<ExcelParserV5.FlowRow, String> ordersSendingNameCol;
@@ -2460,7 +2465,11 @@ public class AppController {
 
     private void initializeNurseColumns() {
         if (tableNurseCalls != null) tableNurseCalls.setEditable(true);
-        setupCheckBox(nurseInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        if (frozenNurseTable != null) frozenNurseTable.setEditable(true);
+        
+        // Setup the frozen In Scope column
+        setupCheckBox(frozenNurseInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        
         setupEditable(nurseConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(nurseAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(nurseSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
@@ -2484,13 +2493,17 @@ public class AppController {
         setupEditable(nurseT5Col, f -> f.t5, (f, v) -> f.t5 = v);
         setupOtherRecipientColumn(nurseR5Col, f -> f.r5, (f, v) -> f.r5 = v);
         
-        // Make "In Scope" column sticky (always visible on left)
-        makeStickyColumn(tableNurseCalls, nurseInScopeCol);
+        // Synchronize frozen and main tables
+        synchronizeFrozenTable(frozenNurseTable, tableNurseCalls);
     }
 
     private void initializeClinicalColumns() {
         if (tableClinicals != null) tableClinicals.setEditable(true);
-        setupCheckBox(clinicalInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        if (frozenClinicalTable != null) frozenClinicalTable.setEditable(true);
+        
+        // Setup the frozen In Scope column
+        setupCheckBox(frozenClinicalInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        
         setupEditable(clinicalConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(clinicalAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(clinicalSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
@@ -2515,13 +2528,17 @@ public class AppController {
         setupEditable(clinicalT5Col, f -> f.t5, (f, v) -> f.t5 = v);
         setupOtherRecipientColumn(clinicalR5Col, f -> f.r5, (f, v) -> f.r5 = v);
         
-        // Make "In Scope" column sticky (always visible on left)
-        makeStickyColumn(tableClinicals, clinicalInScopeCol);
+        // Synchronize frozen and main tables
+        synchronizeFrozenTable(frozenClinicalTable, tableClinicals);
     }
 
     private void initializeOrdersColumns() {
         if (tableOrders != null) tableOrders.setEditable(true);
-        setupCheckBox(ordersInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        if (frozenOrdersTable != null) frozenOrdersTable.setEditable(true);
+        
+        // Setup the frozen In Scope column
+        setupCheckBox(frozenOrdersInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        
         setupEditable(ordersConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(ordersAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
         setupEditable(ordersSendingNameCol, f -> f.sendingName, (f, v) -> f.sendingName = v);
@@ -2545,8 +2562,8 @@ public class AppController {
         setupEditable(ordersT5Col, f -> f.t5, (f, v) -> f.t5 = v);
         setupOtherRecipientColumn(ordersR5Col, f -> f.r5, (f, v) -> f.r5 = v);
         
-        // Make "In Scope" column sticky (always visible on left)
-        makeStickyColumn(tableOrders, ordersInScopeCol);
+        // Synchronize frozen and main tables
+        synchronizeFrozenTable(frozenOrdersTable, tableOrders);
     }
 
     private <R> void setupEditable(TableColumn<R, String> col, Function<R, String> getter, BiConsumer<R, String> setter) {
@@ -3369,16 +3386,19 @@ public class AppController {
         clinicalsFilteredList = new FilteredList<>(clinicalsFullList, flow -> true);
         ordersFilteredList = new FilteredList<>(ordersFullList, flow -> true);
         
-        // Set filtered lists to tables
+        // Set filtered lists to tables (both frozen and main)
         if (tableUnits != null) tableUnits.setItems(unitsFilteredList);
         if (tableNurseCalls != null) tableNurseCalls.setItems(nurseCallsFilteredList);
+        if (frozenNurseTable != null) frozenNurseTable.setItems(nurseCallsFilteredList);
         if (tableClinicals != null) tableClinicals.setItems(clinicalsFilteredList);
+        if (frozenClinicalTable != null) frozenClinicalTable.setItems(clinicalsFilteredList);
         if (tableOrders != null) tableOrders.setItems(ordersFilteredList);
+        if (frozenOrdersTable != null) frozenOrdersTable.setItems(ordersFilteredList);
         
-        // Setup header checkboxes for "In Scope" columns
-        setupHeaderCheckBox(nurseInScopeCol, nurseCallsFilteredList);
-        setupHeaderCheckBox(clinicalInScopeCol, clinicalsFilteredList);
-        setupHeaderCheckBox(ordersInScopeCol, ordersFilteredList);
+        // Setup header checkboxes for "In Scope" columns (on frozen tables)
+        setupHeaderCheckBox(frozenNurseInScopeCol, nurseCallsFilteredList);
+        setupHeaderCheckBox(frozenClinicalInScopeCol, clinicalsFilteredList);
+        setupHeaderCheckBox(frozenOrdersInScopeCol, ordersFilteredList);
         
         // Update filter options
         updateFilterOptions();
@@ -4229,25 +4249,77 @@ public class AppController {
     
     /**
      * Configures the "In Scope" column to be fixed at the left and always visible.
-     * Since JavaFX TableView doesn't natively support frozen columns, we:
-     * 1. Prevent reordering so it stays first
-     * 2. Add visual styling to make it stand out
-     * 3. Ensure checkboxes remain interactive
+     * Synchronizes vertical scrolling between frozen and main tables.
+     * This creates a truly frozen "In Scope" column effect.
      */
-    private <T> void makeStickyColumn(TableView<T> table, TableColumn<T, ?> column) {
-        if (table == null || column == null) {
+    private <T> void synchronizeFrozenTable(TableView<T> frozenTable, TableView<T> mainTable) {
+        if (frozenTable == null || mainTable == null) {
             return;
         }
-
-        // Prevent the column from being moved - it should always be first
-        column.setReorderable(false);
         
-        // Add style class for visual distinction
-        column.getStyleClass().add("sticky-column");
+        // Style the frozen table
+        frozenTable.getStyleClass().add("frozen-table");
         
-        // Ensure minimum width so "In Scope" text is always visible
-        column.setMinWidth(100);
-        column.setPrefWidth(100);
+        // Hide horizontal scrollbar on frozen table
+        frozenTable.setStyle("-fx-hbar-policy: never;");
+        
+        // Synchronize vertical scrolling between tables
+        Platform.runLater(() -> {
+            // Find scrollbars in both tables
+            ScrollBar frozenVBar = findScrollBar(frozenTable, Orientation.VERTICAL);
+            ScrollBar mainVBar = findScrollBar(mainTable, Orientation.VERTICAL);
+            
+            if (frozenVBar != null && mainVBar != null) {
+                // Sync frozen to main
+                frozenVBar.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    mainVBar.setValue(newVal.doubleValue());
+                });
+                
+                // Sync main to frozen
+                mainVBar.valueProperty().addListener((obs, oldVal, newVal) -> {
+                    frozenVBar.setValue(newVal.doubleValue());
+                });
+                
+                // Hide vertical scrollbar on frozen table (main table scrollbar will control both)
+                frozenVBar.setVisible(false);
+                frozenVBar.setManaged(false);
+            }
+            
+            // Hide horizontal scrollbar on frozen table
+            ScrollBar frozenHBar = findScrollBar(frozenTable, Orientation.HORIZONTAL);
+            if (frozenHBar != null) {
+                frozenHBar.setVisible(false);
+                frozenHBar.setManaged(false);
+            }
+        });
+        
+        // Match row selection between tables
+        frozenTable.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.intValue() >= 0) {
+                mainTable.getSelectionModel().select(newVal.intValue());
+            }
+        });
+        
+        mainTable.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.intValue() >= 0) {
+                frozenTable.getSelectionModel().select(newVal.intValue());
+            }
+        });
+    }
+    
+    /**
+     * Finds a ScrollBar in a TableView with the specified orientation.
+     */
+    private ScrollBar findScrollBar(TableView<?> table, Orientation orientation) {
+        for (javafx.scene.Node node : table.lookupAll(".scroll-bar")) {
+            if (node instanceof ScrollBar) {
+                ScrollBar scrollBar = (ScrollBar) node;
+                if (scrollBar.getOrientation() == orientation) {
+                    return scrollBar;
+                }
+            }
+        }
+        return null;
     }
     
     // ---------- Combine Config Group Methods ----------
