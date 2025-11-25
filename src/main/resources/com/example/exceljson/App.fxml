@@ -113,14 +113,6 @@
                                 </Button>
                             </VBox>
                             
-                            <!-- Reset Data (renamed from Clear All, moved to buttons section) -->
-                            <Button fx:id="clearAllButton" text="🔄 Reset Data" disable="true" maxWidth="Infinity" styleClass="side-nav-action-warning">
-                                <userData>🔄</userData>
-                                <tooltip>
-                                    <Tooltip text="Clear all loaded data and reset the application" />
-                                </tooltip>
-                            </Button>
-                            
                             <!-- Save to NDW (CI Mode Only) -->
                             <Button fx:id="saveOnNdwButton" text="💾 Save to NDW" disable="true" maxWidth="Infinity" styleClass="nav-button" visible="false" managed="false">
                                 <userData>💾</userData>
@@ -199,6 +191,17 @@
                                 <userData>🔀</userData>
                                 <tooltip>
                                     <Tooltip text="Generate Visual Flow Diagram" />
+                                </tooltip>
+                            </Button>
+                            
+                            <!-- Separator before Reset Data -->
+                            <Separator style="-fx-background-color: #3E3E3E; -fx-padding: 5 0 5 0;" />
+                            
+                            <!-- Reset Data -->
+                            <Button fx:id="clearAllButton" text="🔄 Reset Data" disable="true" maxWidth="Infinity" styleClass="side-nav-action-warning">
+                                <userData>🔄</userData>
+                                <tooltip>
+                                    <Tooltip text="Clear all loaded data and reset the application" />
                                 </tooltip>
                             </Button>
                         </VBox>
