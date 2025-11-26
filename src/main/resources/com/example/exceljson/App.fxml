@@ -522,10 +522,13 @@
                     
                     <!-- Main Content View with Data Tables -->
                     <center>
-                        <SplitPane orientation="VERTICAL" dividerPositions="0.65">
-                            <items>
-                                <!-- Content Stack - Show/Hide based on navigation selection -->
-                                <StackPane fx:id="contentStack">
+                        <HBox>
+                            <!-- Main Content Area -->
+                            <VBox HBox.hgrow="ALWAYS">
+                                <SplitPane orientation="VERTICAL" dividerPositions="0.65" VBox.vgrow="ALWAYS">
+                                    <items>
+                                        <!-- Content Stack - Show/Hide based on navigation selection -->
+                                        <StackPane fx:id="contentStack">
                                     <!-- Units View -->
                                     <BorderPane fx:id="unitsView" visible="true">
                                         <top>
@@ -718,6 +721,89 @@
                                 </VBox>
                             </items>
                         </SplitPane>
+                            </VBox>
+                            
+                            <!-- Right Tool Panel (Design C: Split Panel) -->
+                            <VBox fx:id="toolPanel" prefWidth="220" minWidth="200" styleClass="tool-panel">
+                                <padding>
+                                    <Insets top="15" right="15" bottom="15" left="15" />
+                                </padding>
+                                
+                                <!-- Tool Panel Title -->
+                                <Label text="⚙️ Quick Settings" styleClass="tool-panel-title" />
+                                
+                                <Separator style="-fx-padding: 8 0;" />
+                                
+                                <!-- Merge Options Section -->
+                                <VBox spacing="6" styleClass="tool-panel-section">
+                                    <Label text="Merge Options" styleClass="tool-panel-label" />
+                                    <CheckBox fx:id="toolPanelNoMergeCheckbox" text="Standard (No Merge)">
+                                        <tooltip>
+                                            <Tooltip text="Standard Mode: Each alarm/alert gets its own separate delivery flow." />
+                                        </tooltip>
+                                    </CheckBox>
+                                    <CheckBox fx:id="toolPanelMergeMultiCheckbox" text="Merge Multiple Groups">
+                                        <tooltip>
+                                            <Tooltip text="Merge Multiple Config Groups: Combines flows across MULTIPLE Config Groups." />
+                                        </tooltip>
+                                    </CheckBox>
+                                    <CheckBox fx:id="toolPanelMergeSingleCheckbox" text="Merge Single Group" selected="true">
+                                        <tooltip>
+                                            <Tooltip text="Merge by Single Config Group: Combines flows ONLY within the same Config Group." />
+                                        </tooltip>
+                                    </CheckBox>
+                                </VBox>
+                                
+                                <Separator style="-fx-padding: 8 0;" />
+                                
+                                <!-- Data Validation Section -->
+                                <VBox spacing="6" styleClass="tool-panel-section">
+                                    <Label text="Data Validation" styleClass="tool-panel-label" />
+                                    <Button fx:id="toolPanelLoadVoiceGroupBtn" text="Load Voice Groups" maxWidth="Infinity" styleClass="tool-panel-btn">
+                                        <tooltip>
+                                            <Tooltip text="Load valid voice groups from Excel/CSV" />
+                                        </tooltip>
+                                    </Button>
+                                    <Button fx:id="toolPanelLoadBedListBtn" text="Load Bed List" maxWidth="Infinity" styleClass="tool-panel-btn">
+                                        <tooltip>
+                                            <Tooltip text="Load valid bed list from Excel/CSV" />
+                                        </tooltip>
+                                    </Button>
+                                </VBox>
+                                
+                                <Separator style="-fx-padding: 8 0;" />
+                                
+                                <!-- Adapter References Section -->
+                                <VBox spacing="6" styleClass="tool-panel-section">
+                                    <Label text="Adapter References" styleClass="tool-panel-label" />
+                                    <HBox spacing="6" alignment="CENTER_LEFT">
+                                        <Label text="Edge:" prefWidth="45" />
+                                        <TextField fx:id="toolPanelEdgeRefField" promptText="OutgoingWCTP" prefWidth="130" styleClass="tool-panel-input">
+                                            <tooltip>
+                                                <Tooltip text="Edge interface reference name" />
+                                            </tooltip>
+                                        </TextField>
+                                    </HBox>
+                                    <HBox spacing="6" alignment="CENTER_LEFT">
+                                        <Label text="VMP:" prefWidth="45" />
+                                        <TextField fx:id="toolPanelVmpRefField" promptText="VMP" prefWidth="130" styleClass="tool-panel-input">
+                                            <tooltip>
+                                                <Tooltip text="VMP interface reference name" />
+                                            </tooltip>
+                                        </TextField>
+                                    </HBox>
+                                </VBox>
+                                
+                                <Region VBox.vgrow="ALWAYS" />
+                                
+                                <!-- Panel Toggle Button -->
+                                <Button fx:id="toolPanelToggleBtn" text="◀ Hide Panel" maxWidth="Infinity" styleClass="tool-panel-toggle">
+                                    <tooltip>
+                                        <Tooltip text="Hide/Show the Quick Settings panel" />
+                                    </tooltip>
+                                </Button>
+                            </VBox>
+                        </HBox>
                     </center>
                 </BorderPane>
             </center>

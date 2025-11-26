@@ -93,6 +93,18 @@ public class AppController {
     @FXML private VBox loadButtonsContainer;
     @FXML private Label exportJsonLabel;
     @FXML private VBox exportButtonsContainer;
+    
+    // ---------- Design C: Split Panel - Right Tool Panel Elements ----------
+    @FXML private VBox toolPanel;
+    @FXML private CheckBox toolPanelNoMergeCheckbox;
+    @FXML private CheckBox toolPanelMergeMultiCheckbox;
+    @FXML private CheckBox toolPanelMergeSingleCheckbox;
+    @FXML private Button toolPanelLoadVoiceGroupBtn;
+    @FXML private Button toolPanelLoadBedListBtn;
+    @FXML private TextField toolPanelEdgeRefField;
+    @FXML private TextField toolPanelVmpRefField;
+    @FXML private Button toolPanelToggleBtn;
+    private boolean isToolPanelCollapsed = false;
 
     // ---------- UI Elements ----------
     @FXML private Button loadNdwButton;
@@ -600,6 +612,127 @@ public class AppController {
             if (combineConfigGroupCheckbox.isSelected()) {
                 combineConfigGroupRows();
             }
+        }
+        
+        // --- Setup Tool Panel (Design C: Split Panel) ---
+        setupToolPanel();
+    }
+    
+    // ---------- Tool Panel Setup (Design C: Split Panel) ----------
+    /**
+     * Sets up the right-side Quick Settings tool panel for Design C: Split Panel layout.
+     * Syncs the tool panel controls with the main settings drawer checkboxes.
+     */
+    private void setupToolPanel() {
+        // Sync tool panel merge checkboxes with settings drawer checkboxes
+        if (toolPanelNoMergeCheckbox != null && noMergeCheckbox != null) {
+            // Bidirectional sync: tool panel -> settings drawer
+            toolPanelNoMergeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (noMergeCheckbox.isSelected() != newV) {
+                    noMergeCheckbox.setSelected(newV);
+                }
+            });
+            // Bidirectional sync: settings drawer -> tool panel
+            noMergeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (toolPanelNoMergeCheckbox.isSelected() != newV) {
+                    toolPanelNoMergeCheckbox.setSelected(newV);
+                }
+            });
+        }
+        
+        if (toolPanelMergeMultiCheckbox != null && mergeByConfigGroupCheckbox != null) {
+            toolPanelMergeMultiCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (mergeByConfigGroupCheckbox.isSelected() != newV) {
+                    mergeByConfigGroupCheckbox.setSelected(newV);
+                }
+            });
+            mergeByConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (toolPanelMergeMultiCheckbox.isSelected() != newV) {
+                    toolPanelMergeMultiCheckbox.setSelected(newV);
+                }
+            });
+        }
+        
+        if (toolPanelMergeSingleCheckbox != null && mergeAcrossConfigGroupCheckbox != null) {
+            toolPanelMergeSingleCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (mergeAcrossConfigGroupCheckbox.isSelected() != newV) {
+                    mergeAcrossConfigGroupCheckbox.setSelected(newV);
+                }
+            });
+            mergeAcrossConfigGroupCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (toolPanelMergeSingleCheckbox.isSelected() != newV) {
+                    toolPanelMergeSingleCheckbox.setSelected(newV);
+                }
+            });
+            // Initialize to match settings drawer state
+            toolPanelMergeSingleCheckbox.setSelected(mergeAcrossConfigGroupCheckbox.isSelected());
+        }
+        
+        // Sync tool panel adapter reference fields with settings drawer fields
+        if (toolPanelEdgeRefField != null && edgeRefNameField != null) {
+            toolPanelEdgeRefField.setText(edgeRefNameField.getText());
+            toolPanelEdgeRefField.textProperty().addListener((obs, oldV, newV) -> {
+                if (!edgeRefNameField.getText().equals(newV)) {
+                    edgeRefNameField.setText(newV);
+                }
+            });
+            edgeRefNameField.textProperty().addListener((obs, oldV, newV) -> {
+                if (!toolPanelEdgeRefField.getText().equals(newV)) {
+                    toolPanelEdgeRefField.setText(newV);
+                }
+            });
+        }
+        
+        if (toolPanelVmpRefField != null && vcsRefNameField != null) {
+            toolPanelVmpRefField.setText(vcsRefNameField.getText());
+            toolPanelVmpRefField.textProperty().addListener((obs, oldV, newV) -> {
+                if (!vcsRefNameField.getText().equals(newV)) {
+                    vcsRefNameField.setText(newV);
+                }
+            });
+            vcsRefNameField.textProperty().addListener((obs, oldV, newV) -> {
+                if (!toolPanelVmpRefField.getText().equals(newV)) {
+                    toolPanelVmpRefField.setText(newV);
+                }
+            });
+        }
+        
+        // Setup tool panel button actions
+        if (toolPanelLoadVoiceGroupBtn != null) {
+            toolPanelLoadVoiceGroupBtn.setOnAction(e -> loadVoiceGroups());
+        }
+        
+        if (toolPanelLoadBedListBtn != null) {
+            toolPanelLoadBedListBtn.setOnAction(e -> loadBedList());
+        }
+        
+        // Setup tool panel toggle button
+        if (toolPanelToggleBtn != null) {
+            toolPanelToggleBtn.setOnAction(e -> toggleToolPanel());
+        }
+    }
+    
+    /**
+     * Toggles the visibility of the right-side tool panel.
+     */
+    private void toggleToolPanel() {
+        if (toolPanel == null) return;
+        
+        isToolPanelCollapsed = !isToolPanelCollapsed;
+        
+        if (isToolPanelCollapsed) {
+            // Collapse the panel
+            toolPanel.setVisible(false);
+            toolPanel.setManaged(false);
+        } else {
+            // Expand the panel
+            toolPanel.setVisible(true);
+            toolPanel.setManaged(true);
+        }
+        
+        // Update button text
+        if (toolPanelToggleBtn != null) {
+            toolPanelToggleBtn.setText(isToolPanelCollapsed ? "▶ Show Panel" : "◀ Hide Panel");
         }
     }
 
