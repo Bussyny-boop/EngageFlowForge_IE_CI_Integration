@@ -4377,13 +4377,13 @@ public class AppController {
     }
 
     /**
-     * Set a button to collapsed mode with a colorful PNG icon
+     * Set a ButtonBase (Button or ToggleButton) to collapsed mode with a colorful PNG icon
      * This method loads the icon and sets it as the button's graphic
-     * @param button The button to modify
+     * @param button The button to modify (can be Button or ToggleButton)
      * @param iconPath Path to the PNG icon resource
      * @param tooltip Tooltip text to display on hover
      */
-    private void setCollapsedButtonWithIcon(Button button, String iconPath, String tooltip) {
+    private void setCollapsedButtonBaseWithIcon(ButtonBase button, String iconPath, String tooltip) {
         if (button != null) {
             ImageView icon = loadIcon(iconPath);
             if (icon != null) {
@@ -4404,29 +4404,17 @@ public class AppController {
     }
 
     /**
+     * Set a button to collapsed mode with a colorful PNG icon
+     */
+    private void setCollapsedButtonWithIcon(Button button, String iconPath, String tooltip) {
+        setCollapsedButtonBaseWithIcon(button, iconPath, tooltip);
+    }
+
+    /**
      * Set a toggle button (tab) to collapsed mode with a colorful PNG icon
-     * @param button The toggle button to modify
-     * @param iconPath Path to the PNG icon resource
-     * @param tooltip Tooltip text to display on hover
      */
     private void setCollapsedTabWithIcon(ToggleButton button, String iconPath, String tooltip) {
-        if (button != null) {
-            ImageView icon = loadIcon(iconPath);
-            if (icon != null) {
-                // Set larger icon size for better visibility in collapsed mode
-                icon.setFitWidth(20);
-                icon.setFitHeight(20);
-                button.setGraphic(icon);
-                button.setText("");  // Clear text to show only icon
-            } else {
-                // Fallback to emoji from userData if icon fails to load
-                button.setGraphic(null);
-                if (button.getUserData() != null) {
-                    button.setText(button.getUserData().toString());
-                }
-            }
-            button.setTooltip(new Tooltip(tooltip));
-        }
+        setCollapsedButtonBaseWithIcon(button, iconPath, tooltip);
     }
 
     /**
