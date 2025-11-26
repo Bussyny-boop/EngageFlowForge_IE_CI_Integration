@@ -101,7 +101,7 @@
                         </VBox>
                     </top>
                     <center>
-                        <VBox fx:id="sidebarContent" spacing="3" styleClass="side-nav" style="-fx-background-color: #1E1E1E; -fx-padding: 4; -fx-spacing: 3;">
+                        <VBox fx:id="sidebarContent" spacing="3" styleClass="side-nav" style="-fx-background-color: #B8C4CE; -fx-padding: 4; -fx-spacing: 3;">
                             <!-- Load Section -->
                             <VBox spacing="2" styleClass="sidebar-section">
                                 <Label fx:id="loadDataLabel" text="📂 LOAD DATA" styleClass="sidebar-section-header" />

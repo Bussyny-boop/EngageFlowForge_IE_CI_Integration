@@ -50,14 +50,14 @@
 
 /* --- Side Navigation --- */
 .side-nav {
-    -fx-background-color: #1E1E1E;
-    -fx-border-color: #3A3A3A;
+    -fx-background-color: #B8C4CE;  /* Bright grey sidebar */
+    -fx-border-color: #9AA8B5;
     -fx-border-width: 0 1 0 0;
 }
 
 /* --- Sidebar Header and Branding --- */
 .sidebar-header {
-    -fx-background-color: #1E1E1E;
+    -fx-background-color: #A8B8C4;  /* Slightly darker grey for header */
 }
 
 .sidebar-header HBox {
@@ -71,18 +71,18 @@
 }
 
 .sidebar-section-header {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: #2E4A62;  /* Dark blue-grey text for bright grey background */
     -fx-font-weight: bold;
     -fx-font-size: 12px;
     -fx-padding: 6 8 4 8;
     -fx-letter-spacing: 0.5px;
-    -fx-opacity: 0.9;
+    -fx-opacity: 0.95;
 }
 
 /* --- Navigation Buttons --- */
 .nav-button {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
-    -fx-text-fill: #E0E0E0;
+    -fx-background-color: rgba(255, 255, 255, 0.65);  /* Light buttons on grey sidebar */
+    -fx-text-fill: #2E4A62;  /* Dark blue-grey text */
     -fx-font-size: 11px;
     -fx-font-weight: 500;
     -fx-alignment: CENTER_LEFT;
@@ -98,8 +98,8 @@
 }
 
 .nav-button:hover {
-    -fx-background-color: #2F2F2F;
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-text-fill: #1A3654;  /* Darker text on hover */
     -fx-translate-x: 2;
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
@@ -203,21 +203,21 @@
 
 /* --- Sidebar Toggle Button --- */
 .sidebar-toggle-btn {
-    -fx-background-color: #2F2F2F;
-    -fx-text-fill: #00D4DD;
+    -fx-background-color: #9AA8B5;  /* Darker grey for toggle on bright grey sidebar */
+    -fx-text-fill: #2E4A62;  /* Dark blue-grey text */
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-padding: 8;
     -fx-background-radius: 0;
-    -fx-border-color: #3A3A3A;
+    -fx-border-color: #8494A3;
     -fx-border-width: 1 0 0 0;
     -fx-cursor: hand;
 }
 
 .sidebar-toggle-btn:hover {
-    -fx-background-color: #3A3A3A;
-    -fx-text-fill: #FFFFFF;
-    -fx-effect: dropshadow(gaussian, rgba(0,212,221,0.4), 6, 0, 0, 2);
+    -fx-background-color: #8494A3;
+    -fx-text-fill: #1A3654;
+    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.4), 6, 0, 0, 2);
 }
 
 .sidebar-toggle-btn:pressed {
@@ -230,7 +230,7 @@
     -fx-alignment: CENTER;
     -fx-padding: 8 5;
     -fx-font-size: 18px;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: #2E4A62;  /* Dark blue-grey text for bright grey */
     -fx-text-alignment: CENTER;
     -fx-wrap-text: false;
     -fx-text-overrun: clip;
@@ -253,13 +253,13 @@
 }
 
 .sidebar-collapsed .nav-button:hover {
-    -fx-text-fill: #00D4DD;
-    -fx-background-color: #3A3A3A;
+    -fx-text-fill: #00979D;  /* Clinical teal on hover */
+    -fx-background-color: rgba(255, 255, 255, 0.85);
 }
 
 .sidebar-collapsed .side-nav-action:hover,
 .sidebar-collapsed .side-nav-action-warning:hover {
-    -fx-text-fill: #00D4DD;
+    -fx-text-fill: #FFFFFF;
 }
 
 /* Hide section header labels in collapsed mode but keep them accessible */
@@ -726,16 +726,16 @@
 }
 
 .side-nav .scroll-pane .viewport {
-    -fx-background-color: #1E1E1E;
+    -fx-background-color: #B8C4CE;  /* Match bright grey sidebar */
 }
 
 .side-nav .scroll-pane .scroll-bar:vertical {
-    -fx-background-color: #1E1E1E;
+    -fx-background-color: #B8C4CE;  /* Match bright grey sidebar */
     -fx-pref-width: 8;
 }
 
 .side-nav .scroll-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: #3A3A3A;
+    -fx-background-color: #8494A3;
     -fx-background-radius: 4;
 }
 
@@ -956,4 +956,58 @@
 .tool-panel .label {
     -fx-text-fill: #B0B0B0;
     -fx-font-size: 11px;
+}
+
+/* =========================================
+   Clinical Colors Palette
+   Healthcare-appropriate color scheme
+   ========================================= */
+
+/* Clinical Blue - Trust, Stability, Healthcare */
+.clinical-blue {
+    -fx-background-color: #4A90E2;
+}
+
+/* Clinical Teal - Primary accent for medical apps */
+.clinical-teal {
+    -fx-background-color: #00979D;
+}
+
+/* Clinical Green - Success, Vitals OK, Completed */
+.clinical-green {
+    -fx-background-color: #27AE60;
+}
+
+/* Clinical Red - Critical alerts, Emergencies */
+.clinical-red {
+    -fx-background-color: #E74C3C;
+}
+
+/* Clinical Orange - Warnings, Moderate Priority */
+.clinical-orange {
+    -fx-background-color: #F39C12;
+}
+
+/* Clinical Purple - Lab results, Special protocols */
+.clinical-purple {
+    -fx-background-color: #9B59B6;
+}
+
+/* Clinical Pink - Nurse call related */
+.clinical-pink {
+    -fx-background-color: #FF6B9D;
+}
+
+/* Colorful icon button style - ensures icons display with proper contrast */
+.icon-button {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-background-radius: 4;
+    -fx-padding: 6;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+}
+
+.icon-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.3), 4, 0, 0, 2);
 }
