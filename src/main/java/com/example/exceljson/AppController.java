@@ -148,8 +148,6 @@ public class AppController {
     
     // Constants for data validation
     private static final String TRAILING_ASTERISK_REGEX = "\\*+$";
-    // Pattern to strip surrounding quotes from CSV values
-    private static final Pattern CSV_QUOTE_PATTERN = Pattern.compile("^\"|\"$");
     private static final double VALIDATED_CELL_HEIGHT = 72.0; // Height for 3 lines of text in recipient columns
     private static final double UNIT_CELL_HEIGHT = 72.0; // Height for unit validation cells (allows up to 3 lines)
     
@@ -4843,8 +4841,9 @@ public class AppController {
     // ---------- Voice Group Validation Methods ----------
 
     /**
-     * Strips surrounding quotes and trailing asterisks from CSV values.
-     * Handles values like "Group Name *" -> "Group Name" or "Whittier Group" -> "Whittier Group"
+     * Strips surrounding quotes from CSV values.
+     * Handles values like "Whittier Group" -> Whittier Group
+     * Note: Asterisk removal is handled separately by the caller using TRAILING_ASTERISK_REGEX
      */
     private String cleanCsvValue(String value) {
         if (value == null) return "";
