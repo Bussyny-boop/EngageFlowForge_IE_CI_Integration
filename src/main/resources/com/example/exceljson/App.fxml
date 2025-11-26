@@ -722,6 +722,14 @@
                         </SplitPane>
                             </VBox>
                             
+                            <!-- Arrow Button to Open Tool Panel (always visible when panel is collapsed) -->
+                            <Button fx:id="toolPanelOpenBtn" text="◀" prefWidth="24" prefHeight="60" 
+                                    styleClass="tool-panel-open-btn" visible="false" managed="false">
+                                <tooltip>
+                                    <Tooltip text="Open Quick Settings Panel" />
+                                </tooltip>
+                            </Button>
+                            
                             <!-- Right Tool Panel (Design C: Split Panel) -->
                             <VBox fx:id="toolPanel" prefWidth="220" minWidth="200" styleClass="tool-panel">
                                 <padding>
