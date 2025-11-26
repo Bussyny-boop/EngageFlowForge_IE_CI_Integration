@@ -1564,9 +1564,12 @@
             // Show selected design
             document.getElementById('design-' + design).classList.add('active');
             
-            // Activate corresponding tab
-            const tabIndex = design.charCodeAt(0) - 'a'.charCodeAt(0);
-            document.querySelectorAll('.design-tab')[tabIndex].classList.add('active');
+            // Activate corresponding tab using explicit mapping
+            const tabIndexMap = { a: 0, b: 1, c: 2 };
+            const tabIndex = tabIndexMap[design];
+            if (tabIndex !== undefined) {
+                document.querySelectorAll('.design-tab')[tabIndex].classList.add('active');
+            }
         }
 
         function scrollToTop() {
