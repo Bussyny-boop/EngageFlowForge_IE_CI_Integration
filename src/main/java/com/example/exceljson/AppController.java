@@ -4391,9 +4391,9 @@ public class AppController {
                 icon.setFitWidth(22);
                 icon.setFitHeight(22);
                 
-                // Create a container (StackPane) for the icon with rounded background
+                // Create a container (StackPane) for the icon using CSS class
                 StackPane iconContainer = new StackPane(icon);
-                iconContainer.setStyle("-fx-background-color: #5D5D5D; -fx-background-radius: 6; -fx-padding: 5;");
+                iconContainer.getStyleClass().add("sidebar-icon-container");
                 iconContainer.setMinSize(32, 32);
                 iconContainer.setPrefSize(32, 32);
                 
@@ -4406,7 +4406,7 @@ public class AppController {
                     Label emojiLabel = new Label(button.getUserData().toString());
                     emojiLabel.setStyle("-fx-font-size: 16px;");
                     StackPane iconContainer = new StackPane(emojiLabel);
-                    iconContainer.setStyle("-fx-background-color: #5D5D5D; -fx-background-radius: 6; -fx-padding: 5;");
+                    iconContainer.getStyleClass().add("sidebar-icon-container");
                     iconContainer.setMinSize(32, 32);
                     iconContainer.setPrefSize(32, 32);
                     button.setGraphic(iconContainer);
