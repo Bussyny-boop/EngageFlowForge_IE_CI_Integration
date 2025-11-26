@@ -4084,24 +4084,23 @@ public class AppController {
             exportJsonLabel.setManaged(false);
         }
         
-        // Set distinct icons for collapsed mode - use PNG icons instead of emojis
-        setCollapsedButton(loadNdwButton, "/icons/load-ndw.png", "Load NDW");
-        setCollapsedButton(loadXmlButton, "/icons/load-xml.png", "Load Engage XML");
-        setCollapsedButton(loadJsonButton, "/icons/load-json.png", "Load Engage Rules");
-        setCollapsedButton(clearAllButton, "/icons/clear.png", "Clear All");
-        setCollapsedButton(saveOnNdwButton, "/icons/save.png", "Save to NDW");
-        setCollapsedButton(generateJsonButton, "/icons/preview.png", "Preview JSON");
-        // Export JSON: use distinct icons
-        setCollapsedButton(exportNurseJsonButton, "/icons/export-nurse.png", "Nursecall");
-        setCollapsedButton(exportClinicalJsonButton, "/icons/export-clinical.png", "Clinicals");
-        setCollapsedButton(exportOrdersJsonButton, "/icons/export-orders.png", "Orders");
-        setCollapsedButton(visualFlowButton, "/icons/visual-flow.png", "Visual CallFlow");
+        // Use emojis from userData for collapsed mode
+        convertButtonToEmojiOnly(loadNdwButton, "Load NDW");
+        convertButtonToEmojiOnly(loadXmlButton, "Load Engage XML");
+        convertButtonToEmojiOnly(loadJsonButton, "Load Engage Rules");
+        convertButtonToEmojiOnly(clearAllButton, "Clear All");
+        convertButtonToEmojiOnly(saveOnNdwButton, "Save to NDW");
+        convertButtonToEmojiOnly(generateJsonButton, "Preview JSON");
+        convertButtonToEmojiOnly(exportNurseJsonButton, "Nursecall");
+        convertButtonToEmojiOnly(exportClinicalJsonButton, "Clinicals");
+        convertButtonToEmojiOnly(exportOrdersJsonButton, "Orders");
+        convertButtonToEmojiOnly(visualFlowButton, "Visual CallFlow");
 
-        // Table tabs: use PNG icons instead of emojis
-        setCollapsedTab(navUnits, "/icons/unit.png", "Units");
-        setCollapsedTab(navNurseCalls, "/icons/nurse.png", "Nurse Calls");
-        setCollapsedTab(navClinicals, "/icons/clinical.png", "Clinicals");
-        setCollapsedTab(navOrders, "/icons/orders.png", "Orders");
+        // Table tabs: use emojis from userData
+        convertToggleButtonToEmojiOnly(navUnits, "Units");
+        convertToggleButtonToEmojiOnly(navNurseCalls, "Nurse Calls");
+        convertToggleButtonToEmojiOnly(navClinicals, "Clinicals");
+        convertToggleButtonToEmojiOnly(navOrders, "Orders");
     }
     
     /**
@@ -4151,6 +4150,34 @@ public class AppController {
         removeTooltip(navNurseCalls);
         removeTooltip(navClinicals);
         removeTooltip(navOrders);
+    }
+    
+    /**
+     * Convert button to show only emoji from userData in collapsed mode
+     */
+    private void convertButtonToEmojiOnly(Button button, String tooltipText) {
+        if (button != null) {
+            Object userData = button.getUserData();
+            if (userData != null) {
+                button.setText(userData.toString());
+                button.setGraphic(null);
+            }
+            button.setTooltip(new Tooltip(tooltipText));
+        }
+    }
+    
+    /**
+     * Convert toggle button to show only emoji from userData in collapsed mode
+     */
+    private void convertToggleButtonToEmojiOnly(ToggleButton button, String tooltipText) {
+        if (button != null) {
+            Object userData = button.getUserData();
+            if (userData != null) {
+                button.setText(userData.toString());
+                button.setGraphic(null);
+            }
+            button.setTooltip(new Tooltip(tooltipText));
+        }
     }
     
     /**
@@ -4835,8 +4862,9 @@ public class AppController {
                         
                         // Check if first line contains "Group Name" keyword in header (case-insensitive)
                         // Ignoring asterisks (e.g., "Group Name *" matches "Group Name")
+                        // Also handles tab-separated values
                         if (headerLine != null) {
-                            String[] headers = headerLine.split(",");
+                            String[] headers = headerLine.split(",|\\t");
                             boolean hasGroupNameHeader = false;
                             
                             for (int i = 0; i < headers.length; i++) {
@@ -4852,7 +4880,7 @@ public class AppController {
                             
                             // If no "Group Name" header found, treat first line as data
                             if (!hasGroupNameHeader) {
-                                String[] parts = headerLine.split(",");
+                                String[] parts = headerLine.split(",|\\t");
                                 if (parts.length > groupNameColumn && !parts[groupNameColumn].trim().isEmpty()) {
                                     groups.add(parts[groupNameColumn].trim());
                                 }
@@ -4862,7 +4890,7 @@ public class AppController {
                         // Read remaining lines
                         String line;
                         while ((line = br.readLine()) != null) {
-                            String[] parts = line.split(",");
+                            String[] parts = line.split(",|\\t");
                             if (parts.length > groupNameColumn && !parts[groupNameColumn].trim().isEmpty()) {
                                 groups.add(parts[groupNameColumn].trim());
                             }
