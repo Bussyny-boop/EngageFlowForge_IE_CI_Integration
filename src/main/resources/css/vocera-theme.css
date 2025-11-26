@@ -856,3 +856,104 @@
     -fx-border-color: transparent #00979D transparent transparent;
     -fx-border-width: 0 1 0 0;
 }
+
+/* =========================================
+   Design C: Split Panel - Right Tool Panel
+   ========================================= */
+
+.tool-panel {
+    -fx-background-color: #1E1E1E;
+    -fx-border-color: #3A3A3A;
+    -fx-border-width: 0 0 0 1;
+}
+
+.tool-panel-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: #00D4DD;
+    -fx-font-weight: 600;
+}
+
+.tool-panel-section {
+    -fx-padding: 8 0;
+}
+
+.tool-panel-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #888;
+    -fx-font-weight: bold;
+}
+
+.tool-panel .check-box {
+    -fx-text-fill: #B0B0B0;
+    -fx-font-size: 11px;
+}
+
+.tool-panel .check-box .box {
+    -fx-background-color: #2A2A2A;
+    -fx-border-color: #3A3A3A;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.tool-panel .check-box:selected .box {
+    -fx-background-color: #00979D;
+    -fx-border-color: #00D4DD;
+}
+
+.tool-panel .check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+.tool-panel .check-box:hover .box {
+    -fx-border-color: #00979D;
+}
+
+.tool-panel-input {
+    -fx-background-color: #2A2A2A;
+    -fx-border-color: #3A3A3A;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #E0E0E0;
+    -fx-font-size: 11px;
+    -fx-padding: 6 8;
+}
+
+.tool-panel-input:focused {
+    -fx-border-color: #00979D;
+    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.2), 4, 0, 0, 0);
+}
+
+.tool-panel-btn {
+    -fx-background-color: linear-gradient(to bottom, #00979D, #007C80);
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 12;
+}
+
+.tool-panel-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #00B8C0, #00979D);
+    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.4), 4, 0, 0, 2);
+}
+
+.tool-panel-toggle {
+    -fx-background-color: rgba(0, 151, 157, 0.2);
+    -fx-border-color: #00979D;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #00D4DD;
+    -fx-font-size: 10px;
+    -fx-padding: 6 10;
+}
+
+.tool-panel-toggle:hover {
+    -fx-background-color: rgba(0, 151, 157, 0.3);
+}
+
+.tool-panel .label {
+    -fx-text-fill: #B0B0B0;
+    -fx-font-size: 11px;
+}
