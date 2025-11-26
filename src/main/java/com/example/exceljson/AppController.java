@@ -148,6 +148,8 @@ public class AppController {
     
     // Constants for data validation
     private static final String TRAILING_ASTERISK_REGEX = "\\*+$";
+    // Pattern to strip surrounding quotes from CSV values
+    private static final Pattern CSV_QUOTE_PATTERN = Pattern.compile("^\"|\"$");
     private static final double VALIDATED_CELL_HEIGHT = 72.0; // Height for 3 lines of text in recipient columns
     private static final double UNIT_CELL_HEIGHT = 72.0; // Height for unit validation cells (allows up to 3 lines)
     
@@ -4840,6 +4842,20 @@ public class AppController {
     
     // ---------- Voice Group Validation Methods ----------
 
+    /**
+     * Strips surrounding quotes and trailing asterisks from CSV values.
+     * Handles values like "Group Name *" -> "Group Name" or "Whittier Group" -> "Whittier Group"
+     */
+    private String cleanCsvValue(String value) {
+        if (value == null) return "";
+        // First remove surrounding quotes
+        String cleaned = value.trim();
+        if (cleaned.startsWith("\"") && cleaned.endsWith("\"")) {
+            cleaned = cleaned.substring(1, cleaned.length() - 1);
+        }
+        return cleaned.trim();
+    }
+
     private void loadVoiceGroups() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select Voice Group File");
@@ -4870,14 +4886,14 @@ public class AppController {
                         
                         // Check if first line contains "Group Name" keyword in header (case-insensitive)
                         // Ignoring asterisks (e.g., "Group Name *" matches "Group Name")
-                        // Also handles tab-separated values
+                        // Also handles tab-separated values and quoted values
                         if (headerLine != null) {
                             String[] headers = headerLine.split(",|\\t");
                             boolean hasGroupNameHeader = false;
                             
                             for (int i = 0; i < headers.length; i++) {
-                                // Remove trailing asterisks and trim to normalize the header
-                                String headerValue = headers[i].trim().replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
+                                // Clean CSV value (strip quotes) then remove trailing asterisks and trim
+                                String headerValue = cleanCsvValue(headers[i]).replaceAll(TRAILING_ASTERISK_REGEX, "").trim();
                                 // Use contains to match "Group Name" keyword anywhere in the header
                                 if (headerValue.toLowerCase().contains("group name")) {
                                     groupNameColumn = i;
@@ -4889,8 +4905,11 @@ public class AppController {
                             // If no "Group Name" header found, treat first line as data
                             if (!hasGroupNameHeader) {
                                 String[] parts = headerLine.split(",|\\t");
-                                if (parts.length > groupNameColumn && !parts[groupNameColumn].trim().isEmpty()) {
-                                    groups.add(parts[groupNameColumn].trim());
+                                if (parts.length > groupNameColumn) {
+                                    String value = cleanCsvValue(parts[groupNameColumn]);
+                                    if (!value.isEmpty()) {
+                                        groups.add(value);
+                                    }
                                 }
                             }
                         }
@@ -4899,8 +4918,11 @@ public class AppController {
                         String line;
                         while ((line = br.readLine()) != null) {
                             String[] parts = line.split(",|\\t");
-                            if (parts.length > groupNameColumn && !parts[groupNameColumn].trim().isEmpty()) {
-                                groups.add(parts[groupNameColumn].trim());
+                            if (parts.length > groupNameColumn) {
+                                String value = cleanCsvValue(parts[groupNameColumn]);
+                                if (!value.isEmpty()) {
+                                    groups.add(value);
+                                }
                             }
                         }
                     }
