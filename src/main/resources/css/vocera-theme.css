@@ -71,7 +71,7 @@
 }
 
 .sidebar-section-header {
-    -fx-text-fill: #00D4DD;
+    -fx-text-fill: #00979D;
     -fx-font-weight: bold;
     -fx-font-size: 12px;
     -fx-padding: 6 8 4 8;
@@ -250,7 +250,7 @@
 }
 
 .sidebar-collapsed .nav-button:hover {
-    -fx-text-fill: #00979D;
+    -fx-text-fill: #00D4DD;
     -fx-background-color: #3A3A3A;
 }
 

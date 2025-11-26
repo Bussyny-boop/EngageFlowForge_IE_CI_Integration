@@ -4662,20 +4662,28 @@ public class AppController {
      * Refresh all flow tables
      */
     private void refreshAllTables() {
+        // Only refresh the tables, DO NOT reset items to avoid breaking filters
+        // The FilteredList is already bound to the underlying data
         if (tableUnits != null) {
             tableUnits.refresh();
         }
         if (tableNurseCalls != null) {
-            tableNurseCalls.setItems(FXCollections.observableArrayList(parser.nurseCalls));
             tableNurseCalls.refresh();
         }
+        if (frozenNurseTable != null) {
+            frozenNurseTable.refresh();
+        }
         if (tableClinicals != null) {
-            tableClinicals.setItems(FXCollections.observableArrayList(parser.clinicals));
             tableClinicals.refresh();
         }
+        if (frozenClinicalTable != null) {
+            frozenClinicalTable.refresh();
+        }
         if (tableOrders != null) {
-            tableOrders.setItems(FXCollections.observableArrayList(parser.orders));
             tableOrders.refresh();
+        }
+        if (frozenOrdersTable != null) {
+            frozenOrdersTable.refresh();
         }
     }
 
