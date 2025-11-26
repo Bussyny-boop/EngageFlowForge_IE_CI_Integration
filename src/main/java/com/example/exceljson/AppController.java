@@ -100,6 +100,7 @@ public class AppController {
     @FXML private CheckBox toolPanelMergeMultiCheckbox;
     @FXML private CheckBox toolPanelMergeSingleCheckbox;
     @FXML private Button toolPanelLoadVoiceGroupBtn;
+    @FXML private Button toolPanelLoadAssignmentRolesBtn;
     @FXML private Button toolPanelLoadBedListBtn;
     @FXML private TextField toolPanelEdgeRefField;
     @FXML private TextField toolPanelVmpRefField;
@@ -715,6 +716,10 @@ public class AppController {
         // Setup tool panel button actions
         if (toolPanelLoadVoiceGroupBtn != null) {
             toolPanelLoadVoiceGroupBtn.setOnAction(e -> loadVoiceGroups());
+        }
+        
+        if (toolPanelLoadAssignmentRolesBtn != null) {
+            toolPanelLoadAssignmentRolesBtn.setOnAction(e -> loadAssignmentRoles());
         }
         
         if (toolPanelLoadBedListBtn != null) {

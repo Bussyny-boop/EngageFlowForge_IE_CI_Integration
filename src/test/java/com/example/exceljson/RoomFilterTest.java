@@ -96,7 +96,7 @@ class RoomFilterTest {
         
         Map<String, Object> filter = filters.get(0);
         assertEquals("bed.room.room_number", filter.get("attributePath"));
-        assertEquals("equal", filter.get("operator"));
+        assertEquals("in", filter.get("operator"));
         assertEquals("123", filter.get("value"));
     }
 
@@ -248,7 +248,7 @@ class RoomFilterTest {
         
         Map<String, Object> filter = filters.get(0);
         assertEquals("bed.room.room_number", filter.get("attributePath"));
-        assertEquals("equal", filter.get("operator"));
+        assertEquals("in", filter.get("operator"));
         assertEquals("456", filter.get("value"));
     }
 

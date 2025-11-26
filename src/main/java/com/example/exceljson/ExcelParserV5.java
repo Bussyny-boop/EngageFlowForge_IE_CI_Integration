@@ -2990,7 +2990,7 @@ public class ExcelParserV5 {
     
     Map<String, Object> filter = new LinkedHashMap<>();
     filter.put("attributePath", "bed.room.room_number");
-    filter.put("operator", "equal");
+    filter.put("operator", "in");
     filter.put("value", roomValue);
     
     Map<String, Object> condition = new LinkedHashMap<>();
