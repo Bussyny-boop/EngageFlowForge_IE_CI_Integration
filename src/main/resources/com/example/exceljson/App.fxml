@@ -566,6 +566,12 @@
                                                 <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
                                                 <Label text="Search:" />
                                                 <TextField fx:id="nurseAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                                <Separator orientation="VERTICAL" />
+                                                <Label fx:id="nurseInScopeCountLabel" text="In Scope: 0 / 0" style="-fx-font-weight: bold; -fx-text-fill: #00A5B5;">
+                                                    <tooltip>
+                                                        <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
+                                                    </tooltip>
+                                                </Label>
                                             </HBox>
                                         </top>
                                         <center>
@@ -618,6 +624,12 @@
                                                 <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
                                                 <Label text="Search:" />
                                                 <TextField fx:id="clinicalAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                                <Separator orientation="VERTICAL" />
+                                                <Label fx:id="clinicalInScopeCountLabel" text="In Scope: 0 / 0" style="-fx-font-weight: bold; -fx-text-fill: #00A5B5;">
+                                                    <tooltip>
+                                                        <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
+                                                    </tooltip>
+                                                </Label>
                                             </HBox>
                                         </top>
                                         <center>
@@ -671,6 +683,12 @@
                                                 <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
                                                 <Label text="Search:" />
                                                 <TextField fx:id="ordersAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                                <Separator orientation="VERTICAL" />
+                                                <Label fx:id="ordersInScopeCountLabel" text="In Scope: 0 / 0" style="-fx-font-weight: bold; -fx-text-fill: #00A5B5;">
+                                                    <tooltip>
+                                                        <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
+                                                    </tooltip>
+                                                </Label>
                                             </HBox>
                                         </top>
                                         <center>
