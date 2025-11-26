@@ -48,20 +48,21 @@
     -fx-background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* --- Side Navigation --- */
+/* --- Side Navigation --- Vocera Dark Theme */
 .side-nav {
-    -fx-background-color: #B8C4CE;  /* Bright grey sidebar */
-    -fx-border-color: #9AA8B5;
+    -fx-background-color: #3D3D3D;  /* Dark charcoal sidebar - matches Vocera design */
+    -fx-border-color: #2D2D2D;
     -fx-border-width: 0 1 0 0;
 }
 
 /* --- Sidebar Header and Branding --- */
 .sidebar-header {
-    -fx-background-color: #A8B8C4;  /* Slightly darker grey for header */
+    -fx-background-color: #3D3D3D;
 }
 
 .sidebar-header HBox {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 2);
+    -fx-background-color: #00A5B5;  /* Vocera teal header */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 8, 0, 0, 2);
 }
 
 /* --- Sidebar Sections --- */
@@ -71,23 +72,23 @@
 }
 
 .sidebar-section-header {
-    -fx-text-fill: #2E4A62;  /* Dark blue-grey text for bright grey background */
+    -fx-text-fill: #A0A0A0;  /* Light gray text for dark background */
     -fx-font-weight: bold;
-    -fx-font-size: 12px;
-    -fx-padding: 6 8 4 8;
+    -fx-font-size: 11px;
+    -fx-padding: 10 8 4 8;
     -fx-letter-spacing: 0.5px;
-    -fx-opacity: 0.95;
+    -fx-opacity: 0.9;
 }
 
-/* --- Navigation Buttons --- */
+/* --- Navigation Buttons --- Vocera Dark Theme */
 .nav-button {
-    -fx-background-color: rgba(255, 255, 255, 0.65);  /* Light buttons on grey sidebar */
-    -fx-text-fill: #2E4A62;  /* Dark blue-grey text */
-    -fx-font-size: 11px;
-    -fx-font-weight: 500;
+    -fx-background-color: transparent;
+    -fx-text-fill: #E8E8E8;  /* White/light text */
+    -fx-font-size: 12px;
+    -fx-font-weight: 400;
     -fx-alignment: CENTER_LEFT;
-    -fx-graphic-text-gap: 6;
-    -fx-padding: 8 8 8 10;
+    -fx-graphic-text-gap: 10;
+    -fx-padding: 10 12 10 12;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
@@ -98,29 +99,25 @@
 }
 
 .nav-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.9);
-    -fx-text-fill: #1A3654;  /* Darker text on hover */
-    -fx-translate-x: 2;
-    -fx-scale-x: 1.02;
-    -fx-scale-y: 1.02;
-    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.3), 4, 0, 0, 2);
+    -fx-background-color: #4A4A4A;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: none;
 }
 
 .nav-button:selected {
-    -fx-background-color: linear-gradient(to right, #00A8B0, #007C80);
+    -fx-background-color: #00A5B5;  /* Vocera teal for selected */
     -fx-text-fill: white;
-    -fx-font-weight: 600;
-    -fx-border-color: #00D4DD;
-    -fx-border-width: 0 0 0 3;
-    -fx-border-radius: 6 0 0 6;
-    -fx-background-radius: 6;
-    -fx-effect: dropshadow(gaussian, rgba(0,168,176,0.5), 6, 0, 0, 3);
+    -fx-font-weight: 500;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 4;
+    -fx-effect: none;
 }
 
 /* Legacy nav-item styles for backward compatibility */
 .nav-item {
     -fx-background-color: transparent;
-    -fx-text-fill: #2C3E50;
+    -fx-text-fill: #E8E8E8;
     -fx-padding: 12 15;
     -fx-font-size: 13px;
     -fx-font-weight: normal;
@@ -131,27 +128,27 @@
 }
 
 .nav-item:hover {
-    -fx-background-color: #E8F5F6;
+    -fx-background-color: #4A4A4A;
 }
 
 .nav-item:selected {
-    -fx-background-color: linear-gradient(to right, #00A8B0, rgba(0, 168, 176, 0.1));
-    -fx-text-fill: #00979D;
+    -fx-background-color: #00A5B5;
+    -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-border-color: #00979D;
-    -fx-border-width: 0 0 0 4;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
 }
 
 .side-nav-action {
-    -fx-background-color: linear-gradient(to bottom, #0084A0, #006880);
-    -fx-text-fill: white;
+    -fx-background-color: transparent;
+    -fx-text-fill: #E8E8E8;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 8 8 8 10;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
+    -fx-padding: 10 12 10 12;
+    -fx-font-size: 12px;
+    -fx-font-weight: 400;
     -fx-background-radius: 4;
-    -fx-border-color: #00B8C0;
-    -fx-border-width: 1;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
     -fx-border-radius: 4;
     -fx-wrap-text: false;
     -fx-min-width: 160;
@@ -159,23 +156,21 @@
 }
 
 .side-nav-action:hover {
-    -fx-background-color: linear-gradient(to bottom, #00A8B0, #0084A0);
-    -fx-translate-x: 2;
-    -fx-scale-x: 1.02;
-    -fx-scale-y: 1.02;
-    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.5), 6, 0, 0, 3);
+    -fx-background-color: #4A4A4A;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: none;
 }
 
 .side-nav-action-warning {
-    -fx-background-color: linear-gradient(to bottom, #B22222, #8B0000);
-    -fx-text-fill: white;
+    -fx-background-color: transparent;
+    -fx-text-fill: #E8E8E8;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 8 8 8 10;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
+    -fx-padding: 10 12 10 12;
+    -fx-font-size: 12px;
+    -fx-font-weight: 400;
     -fx-background-radius: 4;
-    -fx-border-color: #DC143C;
-    -fx-border-width: 1;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
     -fx-border-radius: 4;
     -fx-wrap-text: false;
     -fx-min-width: 160;
@@ -183,61 +178,64 @@
 }
 
 .side-nav-action-warning:hover {
-    -fx-background-color: linear-gradient(to bottom, #DC143C, #B22222);
-    -fx-border-color: #FF6347;
-    -fx-effect: dropshadow(gaussian, rgba(139, 0, 0, 0.6), 4, 0, 0, 2);
+    -fx-background-color: #5A3030;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: none;
 }
 
-/* Sidebar collapse/expand styles - approximately 10% wider */
+/* Sidebar collapse/expand styles */
 .sidebar-collapsed {
-    -fx-pref-width: 51;
-    -fx-min-width: 51;
-    -fx-max-width: 51;
+    -fx-pref-width: 60;
+    -fx-min-width: 60;
+    -fx-max-width: 60;
 }
 
 .sidebar-expanded {
-    -fx-pref-width: 212;
-    -fx-min-width: 212;
-    -fx-max-width: 212;
+    -fx-pref-width: 220;
+    -fx-min-width: 220;
+    -fx-max-width: 220;
 }
 
-/* --- Sidebar Toggle Button --- */
+/* --- Sidebar Toggle Button --- Vocera Theme */
 .sidebar-toggle-btn {
-    -fx-background-color: #9AA8B5;  /* Darker grey for toggle on bright grey sidebar */
-    -fx-text-fill: #2E4A62;  /* Dark blue-grey text */
-    -fx-font-size: 14px;
+    -fx-background-color: #4A4A4A;
+    -fx-text-fill: #E8E8E8;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-padding: 8;
+    -fx-padding: 6;
     -fx-background-radius: 0;
-    -fx-border-color: #8494A3;
+    -fx-border-color: #3D3D3D;
     -fx-border-width: 1 0 0 0;
     -fx-cursor: hand;
 }
 
 .sidebar-toggle-btn:hover {
-    -fx-background-color: #8494A3;
-    -fx-text-fill: #1A3654;
-    -fx-effect: dropshadow(gaussian, rgba(0,151,157,0.4), 6, 0, 0, 2);
+    -fx-background-color: #5A5A5A;
+    -fx-text-fill: #FFFFFF;
 }
 
 .sidebar-toggle-btn:pressed {
-    -fx-background-color: #00979D;
+    -fx-background-color: #00A5B5;
     -fx-text-fill: white;
 }
 
-/* --- Collapsed Sidebar Styles --- */
+/* --- Collapsed Sidebar Styles --- Vocera Theme with Icon Boxes */
 .sidebar-collapsed .nav-button {
     -fx-alignment: CENTER;
-    -fx-padding: 8 5;
-    -fx-font-size: 18px;
-    -fx-text-fill: #2E4A62;  /* Dark blue-grey text for bright grey */
+    -fx-padding: 8;
+    -fx-font-size: 16px;
+    -fx-text-fill: #E8E8E8;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: false;
     -fx-text-overrun: clip;
     -fx-ellipsis-string: "";
-    -fx-max-width: 46;
-    -fx-pref-width: 46;
-    -fx-min-height: 38;
+    -fx-max-width: 50;
+    -fx-pref-width: 50;
+    -fx-min-width: 50;
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-background-color: #5D5D5D;  /* Lighter gray box for icon */
+    -fx-background-radius: 6;
 }
 
 .sidebar-collapsed .nav-button .graphic {
@@ -247,22 +245,35 @@
 .sidebar-collapsed .side-nav-action,
 .sidebar-collapsed .side-nav-action-warning {
     -fx-alignment: CENTER;
-    -fx-padding: 8 5;
-    -fx-font-size: 18px;
-    -fx-text-fill: #FFFFFF;
+    -fx-padding: 8;
+    -fx-font-size: 16px;
+    -fx-text-fill: #E8E8E8;
+    -fx-max-width: 50;
+    -fx-pref-width: 50;
+    -fx-min-width: 50;
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-background-color: #5D5D5D;
+    -fx-background-radius: 6;
 }
 
 .sidebar-collapsed .nav-button:hover {
-    -fx-text-fill: #00979D;  /* Clinical teal on hover */
-    -fx-background-color: rgba(255, 255, 255, 0.85);
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #6D6D6D;
+}
+
+.sidebar-collapsed .nav-button:selected {
+    -fx-background-color: #00A5B5;
+    -fx-text-fill: #FFFFFF;
 }
 
 .sidebar-collapsed .side-nav-action:hover,
 .sidebar-collapsed .side-nav-action-warning:hover {
     -fx-text-fill: #FFFFFF;
+    -fx-background-color: #6D6D6D;
 }
 
-/* Hide section header labels in collapsed mode but keep them accessible */
+/* Hide section header labels in collapsed mode */
 .sidebar-collapsed .sidebar-section-header {
     -fx-opacity: 0;
     -fx-pref-width: 0;
@@ -713,34 +724,34 @@
 }
 
 .scroll-bar .thumb:hover {
-    -fx-background-color: #00979D;
+    -fx-background-color: #00A5B5;
 }
 
 .scroll-bar .thumb:pressed {
     -fx-background-color: #007C80;
 }
 
-/* Sidebar ScrollPane styling */
+/* Sidebar ScrollPane styling - Vocera Dark Theme */
 .side-nav .scroll-pane {
     -fx-background-color: transparent;
 }
 
 .side-nav .scroll-pane .viewport {
-    -fx-background-color: #B8C4CE;  /* Match bright grey sidebar */
+    -fx-background-color: #3D3D3D;  /* Match dark sidebar */
 }
 
 .side-nav .scroll-pane .scroll-bar:vertical {
-    -fx-background-color: #B8C4CE;  /* Match bright grey sidebar */
+    -fx-background-color: #3D3D3D;
     -fx-pref-width: 8;
 }
 
 .side-nav .scroll-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: #8494A3;
+    -fx-background-color: #5D5D5D;
     -fx-background-radius: 4;
 }
 
 .side-nav .scroll-pane .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #00979D;
+    -fx-background-color: #00A5B5;
 }
 
 .side-nav .scroll-pane .scroll-bar:vertical .track {
@@ -1005,6 +1016,41 @@
     -fx-padding: 6;
     -fx-min-width: 32;
     -fx-min-height: 32;
+}
+
+/* =========================================
+   Vocera Sidebar Icon Container Styles
+   Rounded boxes for icons in sidebar
+   ========================================= */
+
+/* Icon wrapper container for sidebar items */
+.sidebar-icon-container {
+    -fx-background-color: #5D5D5D;
+    -fx-background-radius: 6;
+    -fx-padding: 6;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+    -fx-pref-width: 32;
+    -fx-pref-height: 32;
+    -fx-alignment: CENTER;
+}
+
+.sidebar-icon-container:hover {
+    -fx-background-color: #6D6D6D;
+}
+
+/* Nav button graphic styling for Vocera theme */
+.nav-button .graphic-container,
+.side-nav-action .graphic-container {
+    -fx-background-color: #5D5D5D;
+    -fx-background-radius: 6;
+    -fx-padding: 4;
+}
+
+/* Style the ImageView icons in sidebar */
+.side-nav .nav-button ImageView,
+.side-nav .side-nav-action ImageView {
+    -fx-effect: none;
 }
 
 .icon-button:hover {
