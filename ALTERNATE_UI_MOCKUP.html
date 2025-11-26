@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engage FlowForge - Alternate UI Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Open Sans', 'Roboto', sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00D4DD;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        /* Design Concept Selector */
+        .design-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .design-tab {
+            padding: 12px 24px;
+            background: #2a2a2a;
+            color: #888;
+            border: 2px solid #3a3a3a;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .design-tab:hover {
+            border-color: #00979D;
+            color: #00D4DD;
+        }
+
+        .design-tab.active {
+            background: linear-gradient(135deg, #00979D, #007C80);
+            color: white;
+            border-color: #00D4DD;
+            box-shadow: 0 4px 12px rgba(0, 151, 157, 0.4);
+        }
+
+        /* Design Section Container */
+        .design-section {
+            display: none;
+        }
+
+        .design-section.active {
+            display: block;
+        }
+
+        /* App Window Mockup */
+        .app-window {
+            background: #F5F7FA;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid #3a3a3a;
+        }
+
+        /* =====================================
+           DESIGN A: Ribbon-Style Header
+           ===================================== */
+        .design-a .app-header {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border-bottom: 3px solid #00979D;
+            padding: 0;
+        }
+
+        .design-a .header-top {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: linear-gradient(to right, #00979D, #00B8C0);
+        }
+
+        .design-a .header-top .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .design-a .header-top .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .design-a .header-top .logo-text h2 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .design-a .header-top .logo-text span {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .design-a .header-top .header-status {
+            flex: 1;
+            text-align: center;
+            color: white;
+        }
+
+        .design-a .header-top .header-status .status-text {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .design-a .header-top .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .design-a .header-top .action-btn {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .design-a .header-top .action-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+
+        .design-a .ribbon {
+            display: flex;
+            background: #2a2a2a;
+            padding: 5px 10px;
+            gap: 5px;
+        }
+
+        .design-a .ribbon-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 15px;
+            border-right: 1px solid #3a3a3a;
+        }
+
+        .design-a .ribbon-group:last-child {
+            border-right: none;
+        }
+
+        .design-a .ribbon-group-title {
+            font-size: 9px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .design-a .ribbon-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .design-a .ribbon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .design-a .ribbon-btn:hover {
+            background: rgba(0, 151, 157, 0.2);
+            border-color: #00979D;
+        }
+
+        .design-a .ribbon-btn.active {
+            background: linear-gradient(to bottom, #00979D, #007C80);
+            color: white;
+        }
+
+        .design-a .ribbon-btn .icon {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        /* =====================================
+           DESIGN B: Compact Horizontal Layout
+           ===================================== */
+        .design-b .app-header {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(to right, #00979D, #00B8C0);
+            padding: 10px 20px;
+            gap: 20px;
+        }
+
+        .design-b .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            min-width: 180px;
+        }
+
+        .design-b .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .design-b .logo-text h2 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .design-b .logo-text span {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .design-b .nav-tabs {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .design-b .nav-tab {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .design-b .nav-tab:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .design-b .nav-tab.active {
+            background: #F5F7FA;
+            color: #00979D;
+        }
+
+        .design-b .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .design-b .action-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .design-b .action-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.1);
+        }
+
+        .design-b .toolbar-row {
+            display: flex;
+            align-items: center;
+            background: #2a2a2a;
+            padding: 8px 20px;
+            gap: 15px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .design-b .tool-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .design-b .tool-btn {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .design-b .tool-btn:hover {
+            background: rgba(0, 151, 157, 0.2);
+            border-color: #00979D;
+        }
+
+        .design-b .tool-btn.primary {
+            background: linear-gradient(to bottom, #00979D, #007C80);
+            border-color: #00B8C0;
+            color: white;
+        }
+
+        .design-b .tool-separator {
+            width: 1px;
+            height: 24px;
+            background: #3a3a3a;
+            margin: 0 10px;
+        }
+
+        .design-b .search-box {
+            flex: 1;
+            max-width: 300px;
+            display: flex;
+            align-items: center;
+            background: #1e1e1e;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            padding: 0 10px;
+        }
+
+        .design-b .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            padding: 6px;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .design-b .search-box .search-icon {
+            color: #888;
+        }
+
+        /* =====================================
+           DESIGN C: Split Panel with Side Tools
+           ===================================== */
+        .design-c .app-header {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #00979D, #00B8C0);
+            padding: 12px 20px;
+            gap: 20px;
+        }
+
+        .design-c .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .design-c .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .design-c .logo-text h2 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .design-c .logo-text span {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .design-c .header-center {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .design-c .file-info {
+            background: rgba(0,0,0,0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .design-c .file-info .file-icon {
+            font-size: 18px;
+        }
+
+        .design-c .file-info .file-name {
+            font-size: 13px;
+            color: white;
+        }
+
+        .design-c .file-info .file-status {
+            font-size: 11px;
+            color: #4CAF50;
+        }
+
+        .design-c .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .design-c .action-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .design-c .action-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Main Content Layout */
+        .main-layout {
+            display: flex;
+            min-height: 550px;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: 200px;
+            background: #1e1e1e;
+            border-right: 1px solid #3a3a3a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-section {
+            padding: 10px;
+        }
+
+        .sidebar-section-title {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 10px 4px;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            margin-bottom: 2px;
+        }
+
+        .sidebar-btn:hover {
+            background: rgba(0, 151, 157, 0.15);
+            color: #00D4DD;
+        }
+
+        .sidebar-btn.active {
+            background: linear-gradient(to right, #00979D, #007C80);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 151, 157, 0.4);
+        }
+
+        .sidebar-btn .icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-btn.danger:hover {
+            background: rgba(231, 76, 60, 0.15);
+            color: #E74C3C;
+        }
+
+        /* Right Tool Panel */
+        .tool-panel {
+            width: 220px;
+            background: #1e1e1e;
+            border-left: 1px solid #3a3a3a;
+            padding: 15px;
+        }
+
+        .tool-panel-title {
+            font-size: 12px;
+            color: #00D4DD;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #00979D;
+        }
+
+        .tool-panel-section {
+            margin-bottom: 15px;
+        }
+
+        .tool-panel-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+        .tool-panel-input {
+            width: 100%;
+            padding: 8px 10px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .tool-panel-input:focus {
+            border-color: #00979D;
+            outline: none;
+        }
+
+        .tool-panel-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #b0b0b0;
+            margin-bottom: 6px;
+        }
+
+        .tool-panel-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: linear-gradient(to bottom, #00979D, #007C80);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .tool-panel-btn:hover {
+            background: linear-gradient(to bottom, #00B8C0, #00979D);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            background: #F5F7FA;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 15px;
+        }
+
+        .content-toolbar label {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .content-toolbar select {
+            padding: 6px 10px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 12px;
+            background: white;
+        }
+
+        .content-toolbar input[type="text"] {
+            flex: 1;
+            max-width: 300px;
+            padding: 6px 10px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* Data Table */
+        .data-table {
+            flex: 1;
+            overflow: auto;
+            padding: 15px;
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .data-table thead {
+            background: linear-gradient(to bottom, #00979D, #007C80);
+        }
+
+        .data-table th {
+            padding: 12px 15px;
+            text-align: left;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .data-table th:last-child {
+            border-right: none;
+        }
+
+        .data-table td {
+            padding: 10px 15px;
+            font-size: 12px;
+            color: #2c3e50;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .data-table tr:nth-child(odd) td {
+            background: #f9f9f9;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(0, 151, 157, 0.05);
+        }
+
+        .data-table tr.selected td {
+            background: rgba(0, 151, 157, 0.15);
+            border-left: 3px solid #00979D;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-badge.pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        /* JSON Preview Panel */
+        .json-preview {
+            height: 200px;
+            background: #1e1e1e;
+            border-top: 1px solid #3a3a3a;
+            padding: 15px;
+            overflow: auto;
+        }
+
+        .json-preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .json-preview-title {
+            font-size: 12px;
+            color: #00D4DD;
+            font-weight: 600;
+        }
+
+        .json-preview-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .json-preview-btn {
+            padding: 4px 10px;
+            background: rgba(0, 151, 157, 0.2);
+            border: 1px solid #00979D;
+            border-radius: 4px;
+            color: #00D4DD;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .json-preview-content {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            color: #b0b0b0;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        .json-key {
+            color: #00D4DD;
+        }
+
+        .json-string {
+            color: #CE9178;
+        }
+
+        .json-number {
+            color: #B5CEA8;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1a1a1a;
+            padding: 6px 15px;
+            border-top: 1px solid #3a3a3a;
+        }
+
+        .status-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .status-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+
+        /* Feature Cards */
+        .features-section {
+            margin-top: 40px;
+        }
+
+        .features-title {
+            text-align: center;
+            color: #00D4DD;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #3a3a3a;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: #00979D;
+            box-shadow: 0 8px 24px rgba(0, 151, 157, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .feature-card-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00D4DD;
+            margin-bottom: 8px;
+        }
+
+        .feature-card-desc {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        /* Color comparison */
+        .color-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 12px;
+        }
+
+        .color-title {
+            text-align: center;
+            color: #00D4DD;
+            margin-bottom: 20px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .color-swatch {
+            text-align: center;
+        }
+
+        .color-box {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .color-label {
+            font-size: 10px;
+            color: #888;
+        }
+
+        .color-value {
+            font-size: 9px;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* Interactive elements */
+        .interactive-demo {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .demo-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00979D, #007C80);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .demo-btn:hover {
+            background: linear-gradient(135deg, #00B8C0, #00979D);
+            box-shadow: 0 6px 20px rgba(0, 151, 157, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .demo-btn.secondary {
+            background: transparent;
+            border: 2px solid #00979D;
+            color: #00D4DD;
+        }
+
+        .demo-btn.secondary:hover {
+            background: rgba(0, 151, 157, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Engage FlowForge - Alternate UI Mockup</h1>
+        <p class="subtitle">Three design concepts for the application interface - click tabs to preview</p>
+
+        <!-- Design Selector -->
+        <div class="design-tabs">
+            <button class="design-tab active" onclick="showDesign('a')">📋 Design A: Ribbon Style</button>
+            <button class="design-tab" onclick="showDesign('b')">📑 Design B: Compact Tabs</button>
+            <button class="design-tab" onclick="showDesign('c')">🔧 Design C: Split Panel</button>
+        </div>
+
+        <!-- ===== DESIGN A: Ribbon-Style Header ===== -->
+        <div id="design-a" class="design-section active">
+            <div class="app-window design-a">
+                <div class="app-header">
+                    <div class="header-top">
+                        <div class="logo">
+                            <div class="logo-icon">⚡</div>
+                            <div class="logo-text">
+                                <h2>Engage FlowForge</h2>
+                                <span>Version 3.1 · IE Mode</span>
+                            </div>
+                        </div>
+                        <div class="header-status">
+                            <div class="status-text">📂 CDH_3S_Generated.xlsx loaded · 156 rules</div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="action-btn">⚙️ Settings</button>
+                            <button class="action-btn">🌓 Theme</button>
+                            <button class="action-btn">❓ Help</button>
+                        </div>
+                    </div>
+                    <div class="ribbon">
+                        <div class="ribbon-group">
+                            <div class="ribbon-buttons">
+                                <button class="ribbon-btn">
+                                    <span class="icon">📄</span>
+                                    NDW
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">📋</span>
+                                    XML
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">📥</span>
+                                    JSON
+                                </button>
+                            </div>
+                            <span class="ribbon-group-title">Load Data</span>
+                        </div>
+                        <div class="ribbon-group">
+                            <div class="ribbon-buttons">
+                                <button class="ribbon-btn active">
+                                    <span class="icon">📊</span>
+                                    Units
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">🔔</span>
+                                    Nurse Calls
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">🏥</span>
+                                    Clinicals
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">💊</span>
+                                    Orders
+                                </button>
+                            </div>
+                            <span class="ribbon-group-title">Views</span>
+                        </div>
+                        <div class="ribbon-group">
+                            <div class="ribbon-buttons">
+                                <button class="ribbon-btn">
+                                    <span class="icon">👁️</span>
+                                    Preview
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">🩺</span>
+                                    Nursecall
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">🧬</span>
+                                    Clinicals
+                                </button>
+                                <button class="ribbon-btn">
+                                    <span class="icon">📦</span>
+                                    Orders
+                                </button>
+                            </div>
+                            <span class="ribbon-group-title">Export JSON</span>
+                        </div>
+                        <div class="ribbon-group">
+                            <div class="ribbon-buttons">
+                                <button class="ribbon-btn">
+                                    <span class="icon">🔀</span>
+                                    Visual Flow
+                                </button>
+                                <button class="ribbon-btn" style="color: #E74C3C;">
+                                    <span class="icon">🔄</span>
+                                    Reset
+                                </button>
+                            </div>
+                            <span class="ribbon-group-title">Tools</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="main-layout">
+                    <div class="content-area" style="flex: 1;">
+                        <div class="content-toolbar">
+                            <label>Filter by Config Group:</label>
+                            <select>
+                                <option>All Groups</option>
+                                <option>ICU Critical Care</option>
+                                <option>Emergency Room</option>
+                                <option>Med-Surg General</option>
+                            </select>
+                            <label style="margin-left: 20px;">Search:</label>
+                            <input type="text" placeholder="Search all columns...">
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">✓ In Scope</th>
+                                        <th>Config Group</th>
+                                        <th>Alarm Name</th>
+                                        <th>Priority</th>
+                                        <th>Device A</th>
+                                        <th>Ringtone</th>
+                                        <th>1st Recipient</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" checked></td>
+                                        <td>ICU Critical</td>
+                                        <td>Code Blue</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP Badge</td>
+                                        <td>Alert_High</td>
+                                        <td>VGroup: ICU Nurse</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" checked></td>
+                                        <td>ICU Critical</td>
+                                        <td>Rapid Response</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP Badge</td>
+                                        <td>Alert_High</td>
+                                        <td>VGroup: RRT Team</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>Med-Surg</td>
+                                        <td>Staff Assist</td>
+                                        <td><span class="status-badge pending">Medium</span></td>
+                                        <td>Edge</td>
+                                        <td>Alert_Medium</td>
+                                        <td>VGroup: Floor Nurse</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" checked></td>
+                                        <td>Emergency</td>
+                                        <td>Trauma Alert</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP Badge</td>
+                                        <td>Alert_Critical</td>
+                                        <td>VGroup: ER Team</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="json-preview">
+                            <div class="json-preview-header">
+                                <span class="json-preview-title">📋 JSON Preview</span>
+                                <div class="json-preview-actions">
+                                    <button class="json-preview-btn">Copy</button>
+                                    <button class="json-preview-btn">Expand</button>
+                                </div>
+                            </div>
+                            <div class="json-preview-content">
+{
+  <span class="json-key">"rules"</span>: [
+    {
+      <span class="json-key">"name"</span>: <span class="json-string">"Code Blue - ICU Critical"</span>,
+      <span class="json-key">"priority"</span>: <span class="json-string">"High"</span>,
+      <span class="json-key">"ttl"</span>: <span class="json-number">300</span>,
+      <span class="json-key">"recipients"</span>: [<span class="json-string">"VGroup: ICU Nurse"</span>]
+    }
+  ]
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-bar-left">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span>Ready</span>
+                        </div>
+                        <span>4 rules selected · 156 total</span>
+                    </div>
+                    <div class="status-bar-right">
+                        <span>JSON: Merge by Single Config Group</span>
+                        <span>v3.1.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DESIGN B: Compact Horizontal Layout ===== -->
+        <div id="design-b" class="design-section">
+            <div class="app-window design-b">
+                <div class="app-header">
+                    <div class="logo">
+                        <div class="logo-icon">⚡</div>
+                        <div class="logo-text">
+                            <h2>FlowForge</h2>
+                            <span>v3.1 · IE</span>
+                        </div>
+                    </div>
+                    <div class="nav-tabs">
+                        <button class="nav-tab active">📊 Units</button>
+                        <button class="nav-tab">🔔 Nurse Calls</button>
+                        <button class="nav-tab">🏥 Clinicals</button>
+                        <button class="nav-tab">💊 Orders</button>
+                    </div>
+                    <div class="header-actions">
+                        <button class="action-btn">⚙️</button>
+                        <button class="action-btn">🌓</button>
+                        <button class="action-btn">❓</button>
+                    </div>
+                </div>
+                <div class="toolbar-row">
+                    <div class="tool-group">
+                        <button class="tool-btn primary">📄 Load NDW</button>
+                        <button class="tool-btn">📋 Load XML</button>
+                        <button class="tool-btn">📥 Load JSON</button>
+                    </div>
+                    <div class="tool-separator"></div>
+                    <div class="tool-group">
+                        <button class="tool-btn">👁️ Preview</button>
+                        <button class="tool-btn">🩺 Export NC</button>
+                        <button class="tool-btn">🧬 Export CL</button>
+                        <button class="tool-btn">📦 Export OR</button>
+                    </div>
+                    <div class="tool-separator"></div>
+                    <div class="tool-group">
+                        <button class="tool-btn">🔀 Flow</button>
+                        <button class="tool-btn" style="color: #E74C3C;">🔄 Reset</button>
+                    </div>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" placeholder="Search all columns...">
+                    </div>
+                </div>
+                <div class="main-layout">
+                    <div class="content-area" style="flex: 1;">
+                        <div class="content-toolbar">
+                            <label>Config Group:</label>
+                            <select style="min-width: 180px;">
+                                <option>All Groups</option>
+                                <option>ICU Critical Care</option>
+                            </select>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>✓</th>
+                                        <th>Config Group</th>
+                                        <th>Alarm Name</th>
+                                        <th>Priority</th>
+                                        <th>Device</th>
+                                        <th>Ringtone</th>
+                                        <th>1st Recipient</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" checked></td>
+                                        <td>ICU Critical</td>
+                                        <td>Code Blue</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP</td>
+                                        <td>Alert_High</td>
+                                        <td>VGroup: ICU Nurse</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" checked></td>
+                                        <td>ICU Critical</td>
+                                        <td>Rapid Response</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP</td>
+                                        <td>Alert_High</td>
+                                        <td>VGroup: RRT</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>Med-Surg</td>
+                                        <td>Staff Assist</td>
+                                        <td><span class="status-badge pending">Med</span></td>
+                                        <td>Edge</td>
+                                        <td>Alert_Med</td>
+                                        <td>VGroup: Floor</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="json-preview">
+                            <div class="json-preview-header">
+                                <span class="json-preview-title">📋 JSON Preview</span>
+                            </div>
+                            <div class="json-preview-content" style="font-size: 10px;">
+{<span class="json-key">"rules"</span>: [{<span class="json-key">"name"</span>: <span class="json-string">"Code Blue"</span>, <span class="json-key">"priority"</span>: <span class="json-string">"High"</span>}]}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-bar-left">
+                        <span class="status-dot"></span>
+                        <span>Ready · 3 selected</span>
+                    </div>
+                    <div class="status-bar-right">
+                        <span>Merge Mode: Single Config</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DESIGN C: Split Panel with Side Tools ===== -->
+        <div id="design-c" class="design-section">
+            <div class="app-window design-c">
+                <div class="app-header">
+                    <div class="logo">
+                        <div class="logo-icon">⚡</div>
+                        <div class="logo-text">
+                            <h2>Engage FlowForge</h2>
+                            <span>Version 3.1</span>
+                        </div>
+                    </div>
+                    <div class="header-center">
+                        <div class="file-info">
+                            <span class="file-icon">📂</span>
+                            <span class="file-name">CDH_3S_Generated.xlsx</span>
+                            <span class="file-status">✓ Loaded</span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="action-btn">⚙️ Settings</button>
+                        <button class="action-btn">🌓 Toggle Theme</button>
+                        <button class="action-btn">❓ Help</button>
+                    </div>
+                </div>
+                <div class="main-layout">
+                    <div class="sidebar">
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">📂 Load Data</div>
+                            <button class="sidebar-btn"><span class="icon">📄</span> Load NDW File</button>
+                            <button class="sidebar-btn"><span class="icon">📋</span> Load Engage XML</button>
+                            <button class="sidebar-btn"><span class="icon">📥</span> Load Engage JSON</button>
+                        </div>
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">📑 Views</div>
+                            <button class="sidebar-btn active"><span class="icon">📊</span> Units</button>
+                            <button class="sidebar-btn"><span class="icon">🔔</span> Nurse Calls</button>
+                            <button class="sidebar-btn"><span class="icon">🏥</span> Clinicals</button>
+                            <button class="sidebar-btn"><span class="icon">💊</span> Orders</button>
+                        </div>
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">📤 Export JSON</div>
+                            <button class="sidebar-btn"><span class="icon">👁️</span> View JSON</button>
+                            <button class="sidebar-btn"><span class="icon">🩺</span> Export Nursecall</button>
+                            <button class="sidebar-btn"><span class="icon">🧬</span> Export Clinicals</button>
+                            <button class="sidebar-btn"><span class="icon">📦</span> Export Orders</button>
+                        </div>
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">🛠️ Tools</div>
+                            <button class="sidebar-btn"><span class="icon">🔀</span> Visual Flow</button>
+                            <button class="sidebar-btn danger"><span class="icon">🔄</span> Reset Data</button>
+                        </div>
+                    </div>
+                    <div class="content-area">
+                        <div class="content-toolbar">
+                            <label>Filter by Config Group:</label>
+                            <select>
+                                <option>All Groups</option>
+                                <option>ICU Critical Care</option>
+                            </select>
+                            <input type="text" placeholder="🔍 Search all columns..." style="margin-left: auto;">
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>✓ In Scope</th>
+                                        <th>Config Group</th>
+                                        <th>Alarm Name</th>
+                                        <th>Priority</th>
+                                        <th>Device A</th>
+                                        <th>Ringtone</th>
+                                        <th>1st Recipient</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="selected">
+                                        <td><input type="checkbox" checked></td>
+                                        <td>ICU Critical</td>
+                                        <td>Code Blue</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP Badge</td>
+                                        <td>Alert_High</td>
+                                        <td>VGroup: ICU Nurse</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" checked></td>
+                                        <td>ICU Critical</td>
+                                        <td>Rapid Response</td>
+                                        <td><span class="status-badge active">High</span></td>
+                                        <td>VMP Badge</td>
+                                        <td>Alert_High</td>
+                                        <td>VGroup: RRT Team</td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox"></td>
+                                        <td>Med-Surg</td>
+                                        <td>Staff Assist</td>
+                                        <td><span class="status-badge pending">Medium</span></td>
+                                        <td>Edge</td>
+                                        <td>Alert_Medium</td>
+                                        <td>VGroup: Floor Nurse</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="json-preview">
+                            <div class="json-preview-header">
+                                <span class="json-preview-title">📋 JSON Preview</span>
+                                <div class="json-preview-actions">
+                                    <button class="json-preview-btn">Copy</button>
+                                    <button class="json-preview-btn">Expand</button>
+                                </div>
+                            </div>
+                            <div class="json-preview-content">
+{
+  <span class="json-key">"rules"</span>: [{<span class="json-key">"name"</span>: <span class="json-string">"Code Blue"</span>}]
+}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tool-panel">
+                        <div class="tool-panel-title">⚙️ Quick Settings</div>
+                        <div class="tool-panel-section">
+                            <div class="tool-panel-label">Merge Options</div>
+                            <div class="tool-panel-checkbox">
+                                <input type="radio" name="merge" id="no-merge">
+                                <label for="no-merge">Standard (No Merge)</label>
+                            </div>
+                            <div class="tool-panel-checkbox">
+                                <input type="radio" name="merge" id="merge-multi">
+                                <label for="merge-multi">Merge Multiple Groups</label>
+                            </div>
+                            <div class="tool-panel-checkbox">
+                                <input type="radio" name="merge" id="merge-single" checked>
+                                <label for="merge-single">Merge Single Group</label>
+                            </div>
+                        </div>
+                        <div class="tool-panel-section">
+                            <div class="tool-panel-label">Data Validation</div>
+                            <button class="tool-panel-btn">Load Voice Groups</button>
+                            <button class="tool-panel-btn">Load Bed List</button>
+                        </div>
+                        <div class="tool-panel-section">
+                            <div class="tool-panel-label">Adapter References</div>
+                            <input class="tool-panel-input" placeholder="Edge: OutgoingWCTP">
+                            <input class="tool-panel-input" placeholder="VMP: VMP">
+                        </div>
+                    </div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-bar-left">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span>Ready</span>
+                        </div>
+                        <span>3 rules selected · 156 total rules</span>
+                    </div>
+                    <div class="status-bar-right">
+                        <span>IE Mode</span>
+                        <span>|</span>
+                        <span>v3.1.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Highlights -->
+        <div class="features-section">
+            <h2 class="features-title">✨ Key Design Improvements</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-card-icon">📋</div>
+                    <div class="feature-card-title">Ribbon-Style Toolbar</div>
+                    <div class="feature-card-desc">Design A uses a Microsoft Office-style ribbon for organized access to all features grouped by function.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">📑</div>
+                    <div class="feature-card-title">Compact Tab Navigation</div>
+                    <div class="feature-card-desc">Design B offers a streamlined horizontal layout with tabs integrated into the header for maximum screen real estate.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">🔧</div>
+                    <div class="feature-card-title">Split Panel Layout</div>
+                    <div class="feature-card-desc">Design C provides a sidebar for navigation plus a right-side quick settings panel for commonly used options.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">🎨</div>
+                    <div class="feature-card-title">Consistent Teal Theme</div>
+                    <div class="feature-card-desc">All designs maintain the Vocera teal color palette (#00979D) while offering modern visual enhancements.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">📊</div>
+                    <div class="feature-card-title">Enhanced Data Tables</div>
+                    <div class="feature-card-desc">Tables feature gradient headers, row selection highlighting, status badges, and improved visual hierarchy.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card-icon">💡</div>
+                    <div class="feature-card-title">Status Bar Updates</div>
+                    <div class="feature-card-desc">A comprehensive status bar shows current mode, selection count, and application state at a glance.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Palette Reference -->
+        <div class="color-section">
+            <h3 class="color-title">🎨 Teal Color Palette</h3>
+            <div class="color-grid">
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #007C80;"></div>
+                    <div class="color-label">Deep Teal</div>
+                    <div class="color-value">#007C80</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #00979D;"></div>
+                    <div class="color-label">Primary</div>
+                    <div class="color-value">#00979D</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #00A8B0;"></div>
+                    <div class="color-label">Accent</div>
+                    <div class="color-value">#00A8B0</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #00B8C0;"></div>
+                    <div class="color-label">Bright</div>
+                    <div class="color-value">#00B8C0</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #00D4DD;"></div>
+                    <div class="color-label">Vivid</div>
+                    <div class="color-value">#00D4DD</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #1E1E1E;"></div>
+                    <div class="color-label">Dark BG</div>
+                    <div class="color-value">#1E1E1E</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #2A2A2A;"></div>
+                    <div class="color-label">Panel BG</div>
+                    <div class="color-value">#2A2A2A</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #F5F7FA;"></div>
+                    <div class="color-label">Light BG</div>
+                    <div class="color-value">#F5F7FA</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Demo -->
+        <div class="interactive-demo">
+            <p style="color: #888; margin-bottom: 15px;">Click the tabs above to preview different design concepts</p>
+            <button class="demo-btn" onclick="showDesign('a')">View Design A</button>
+            <button class="demo-btn" onclick="showDesign('b')">View Design B</button>
+            <button class="demo-btn" onclick="showDesign('c')">View Design C</button>
+            <button class="demo-btn secondary" onclick="scrollToTop()">⬆️ Back to Top</button>
+        </div>
+    </div>
+
+    <script>
+        function showDesign(design) {
+            // Hide all design sections
+            document.querySelectorAll('.design-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active from all tabs
+            document.querySelectorAll('.design-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected design
+            document.getElementById('design-' + design).classList.add('active');
+            
+            // Activate corresponding tab
+            const tabIndex = design.charCodeAt(0) - 'a'.charCodeAt(0);
+            document.querySelectorAll('.design-tab')[tabIndex].classList.add('active');
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Add hover effects to nav buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.sidebar-btn, .ribbon-btn, .nav-tab, .tool-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // For demo purposes - toggle active state
+                    const siblings = this.parentElement.querySelectorAll('.sidebar-btn, .ribbon-btn, .nav-tab');
+                    siblings.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
