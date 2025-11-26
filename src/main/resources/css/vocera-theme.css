@@ -71,11 +71,12 @@
 }
 
 .sidebar-section-header {
-    -fx-text-fill: #00979D;
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-size: 12px;
     -fx-padding: 6 8 4 8;
     -fx-letter-spacing: 0.5px;
+    -fx-opacity: 0.9;
 }
 
 /* --- Navigation Buttons --- */
@@ -229,6 +230,7 @@
     -fx-alignment: CENTER;
     -fx-padding: 8 5;
     -fx-font-size: 18px;
+    -fx-text-fill: #FFFFFF;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: false;
     -fx-text-overrun: clip;
@@ -247,6 +249,7 @@
     -fx-alignment: CENTER;
     -fx-padding: 8 5;
     -fx-font-size: 18px;
+    -fx-text-fill: #FFFFFF;
 }
 
 .sidebar-collapsed .nav-button:hover {
@@ -254,11 +257,21 @@
     -fx-background-color: #3A3A3A;
 }
 
-.sidebar-collapsed Label {
+.sidebar-collapsed .side-nav-action:hover,
+.sidebar-collapsed .side-nav-action-warning:hover {
+    -fx-text-fill: #00D4DD;
+}
+
+/* Hide section header labels in collapsed mode but keep them accessible */
+.sidebar-collapsed .sidebar-section-header {
     -fx-opacity: 0;
     -fx-pref-width: 0;
     -fx-max-width: 0;
     -fx-min-width: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-padding: 0;
 }
 
 .sidebar-collapsed .separator {
