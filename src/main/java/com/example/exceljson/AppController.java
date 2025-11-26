@@ -4154,10 +4154,10 @@ public class AppController {
      * Collapse sidebar to show only icons
      */
     private void collapseSidebarToIcons() {
-        // Keep sidebar visible but make it narrow (30% reduction from 60 to 42)
+        // Keep sidebar visible but make it narrow - Vocera theme
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(42);
+        sidebarContainer.setPrefWidth(60);  // Wider for icon boxes
         
         // Hide brand text in collapsed mode, keep only logo
         if (sidebarBrandText != null) {
@@ -4184,7 +4184,7 @@ public class AppController {
     private void expandSidebarToFull() {
         sidebarContent.setVisible(true);
         sidebarContent.setManaged(true);
-        sidebarContainer.setPrefWidth(140);  // 30% reduction from 200 to 140
+        sidebarContainer.setPrefWidth(220);  // Vocera theme wider sidebar
         
         // Show brand text in expanded mode
         if (sidebarBrandText != null) {
@@ -4378,7 +4378,7 @@ public class AppController {
 
     /**
      * Set a ButtonBase (Button or ToggleButton) to collapsed mode with a colorful PNG icon
-     * This method loads the icon and sets it as the button's graphic
+     * This method loads the icon inside a rounded container for Vocera theme
      * @param button The button to modify (can be Button or ToggleButton)
      * @param iconPath Path to the PNG icon resource
      * @param tooltip Tooltip text to display on hover
@@ -4387,16 +4387,30 @@ public class AppController {
         if (button != null) {
             ImageView icon = loadIcon(iconPath);
             if (icon != null) {
-                // Set larger icon size for better visibility in collapsed mode
-                icon.setFitWidth(20);
-                icon.setFitHeight(20);
-                button.setGraphic(icon);
+                // Set icon size for Vocera theme collapsed mode
+                icon.setFitWidth(22);
+                icon.setFitHeight(22);
+                
+                // Create a container (StackPane) for the icon with rounded background
+                StackPane iconContainer = new StackPane(icon);
+                iconContainer.setStyle("-fx-background-color: #5D5D5D; -fx-background-radius: 6; -fx-padding: 5;");
+                iconContainer.setMinSize(32, 32);
+                iconContainer.setPrefSize(32, 32);
+                
+                button.setGraphic(iconContainer);
                 button.setText("");  // Clear text to show only icon
             } else {
                 // Fallback to emoji from userData if icon fails to load
-                button.setGraphic(null);
+                // Create emoji in a styled container
                 if (button.getUserData() != null) {
-                    button.setText(button.getUserData().toString());
+                    Label emojiLabel = new Label(button.getUserData().toString());
+                    emojiLabel.setStyle("-fx-font-size: 16px;");
+                    StackPane iconContainer = new StackPane(emojiLabel);
+                    iconContainer.setStyle("-fx-background-color: #5D5D5D; -fx-background-radius: 6; -fx-padding: 5;");
+                    iconContainer.setMinSize(32, 32);
+                    iconContainer.setPrefSize(32, 32);
+                    button.setGraphic(iconContainer);
+                    button.setText("");
                 }
             }
             button.setTooltip(new Tooltip(tooltip));
