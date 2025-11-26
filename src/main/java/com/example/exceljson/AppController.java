@@ -4204,7 +4204,8 @@ public class AppController {
     }
     
     /**
-     * Hide labels and show short text on buttons (collapsed mode)
+     * Hide labels and show colorful icons on buttons (collapsed mode)
+     * Uses PNG icons for consistent cross-platform display
      */
     private void hideLabelsAndShowShortText() {
         // Hide section labels in collapsed mode
@@ -4217,23 +4218,23 @@ public class AppController {
             exportJsonLabel.setManaged(false);
         }
         
-        // Use emojis from userData for collapsed mode
-        convertButtonToEmojiOnly(loadNdwButton, "Load NDW");
-        convertButtonToEmojiOnly(loadXmlButton, "Load Engage XML");
-        convertButtonToEmojiOnly(loadJsonButton, "Load Engage Rules");
-        convertButtonToEmojiOnly(clearAllButton, "Clear All");
-        convertButtonToEmojiOnly(saveOnNdwButton, "Save to NDW");
-        convertButtonToEmojiOnly(generateJsonButton, "Preview JSON");
-        convertButtonToEmojiOnly(exportNurseJsonButton, "Nursecall");
-        convertButtonToEmojiOnly(exportClinicalJsonButton, "Clinicals");
-        convertButtonToEmojiOnly(exportOrdersJsonButton, "Orders");
-        convertButtonToEmojiOnly(visualFlowButton, "Visual CallFlow");
+        // Use colorful PNG icons for collapsed mode (cross-platform compatible)
+        setCollapsedButtonWithIcon(loadNdwButton, "/icons/load-ndw.png", "Load NDW");
+        setCollapsedButtonWithIcon(loadXmlButton, "/icons/load-xml.png", "Load Engage XML");
+        setCollapsedButtonWithIcon(loadJsonButton, "/icons/load-json.png", "Load Engage Rules");
+        setCollapsedButtonWithIcon(clearAllButton, "/icons/clear.png", "Clear All");
+        setCollapsedButtonWithIcon(saveOnNdwButton, "/icons/save.png", "Save to NDW");
+        setCollapsedButtonWithIcon(generateJsonButton, "/icons/preview.png", "Preview JSON");
+        setCollapsedButtonWithIcon(exportNurseJsonButton, "/icons/export-nurse.png", "Nursecall");
+        setCollapsedButtonWithIcon(exportClinicalJsonButton, "/icons/export-clinical.png", "Clinicals");
+        setCollapsedButtonWithIcon(exportOrdersJsonButton, "/icons/export-orders.png", "Orders");
+        setCollapsedButtonWithIcon(visualFlowButton, "/icons/visual-flow.png", "Visual CallFlow");
 
-        // Table tabs: use emojis from userData
-        convertToggleButtonToEmojiOnly(navUnits, "Units");
-        convertToggleButtonToEmojiOnly(navNurseCalls, "Nurse Calls");
-        convertToggleButtonToEmojiOnly(navClinicals, "Clinicals");
-        convertToggleButtonToEmojiOnly(navOrders, "Orders");
+        // Table tabs: use colorful PNG icons
+        setCollapsedTabWithIcon(navUnits, "/icons/unit.png", "Units");
+        setCollapsedTabWithIcon(navNurseCalls, "/icons/nurse.png", "Nurse Calls");
+        setCollapsedTabWithIcon(navClinicals, "/icons/clinical.png", "Clinicals");
+        setCollapsedTabWithIcon(navOrders, "/icons/orders.png", "Orders");
     }
     
     /**
@@ -4373,6 +4374,47 @@ public class AppController {
             }
             button.setTooltip(new Tooltip(tooltip));
         }
+    }
+
+    /**
+     * Set a ButtonBase (Button or ToggleButton) to collapsed mode with a colorful PNG icon
+     * This method loads the icon and sets it as the button's graphic
+     * @param button The button to modify (can be Button or ToggleButton)
+     * @param iconPath Path to the PNG icon resource
+     * @param tooltip Tooltip text to display on hover
+     */
+    private void setCollapsedButtonBaseWithIcon(ButtonBase button, String iconPath, String tooltip) {
+        if (button != null) {
+            ImageView icon = loadIcon(iconPath);
+            if (icon != null) {
+                // Set larger icon size for better visibility in collapsed mode
+                icon.setFitWidth(20);
+                icon.setFitHeight(20);
+                button.setGraphic(icon);
+                button.setText("");  // Clear text to show only icon
+            } else {
+                // Fallback to emoji from userData if icon fails to load
+                button.setGraphic(null);
+                if (button.getUserData() != null) {
+                    button.setText(button.getUserData().toString());
+                }
+            }
+            button.setTooltip(new Tooltip(tooltip));
+        }
+    }
+
+    /**
+     * Set a button to collapsed mode with a colorful PNG icon
+     */
+    private void setCollapsedButtonWithIcon(Button button, String iconPath, String tooltip) {
+        setCollapsedButtonBaseWithIcon(button, iconPath, tooltip);
+    }
+
+    /**
+     * Set a toggle button (tab) to collapsed mode with a colorful PNG icon
+     */
+    private void setCollapsedTabWithIcon(ToggleButton button, String iconPath, String tooltip) {
+        setCollapsedButtonBaseWithIcon(button, iconPath, tooltip);
     }
 
     /**
