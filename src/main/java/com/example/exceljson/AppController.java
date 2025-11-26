@@ -209,6 +209,11 @@ public class AppController {
     @FXML private TextField nurseAlarmNameFilter;
     @FXML private TextField clinicalAlarmNameFilter;
     @FXML private TextField ordersAlarmNameFilter;
+    
+    // ---------- In Scope Counter Labels ----------
+    @FXML private Label nurseInScopeCountLabel;
+    @FXML private Label clinicalInScopeCountLabel;
+    @FXML private Label ordersInScopeCountLabel;
 
     // ---------- Units ----------
     @FXML private TableView<ExcelParserV5.UnitRow> tableUnits;
@@ -2655,8 +2660,8 @@ public class AppController {
         if (tableNurseCalls != null) tableNurseCalls.setEditable(true);
         if (frozenNurseTable != null) frozenNurseTable.setEditable(true);
         
-        // Setup the frozen In Scope column
-        setupCheckBox(frozenNurseInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        // Setup the frozen In Scope column with counter update callback
+        setupCheckBox(frozenNurseInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v, this::updateNurseInScopeCounter);
         
         setupEditable(nurseConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(nurseAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
@@ -2689,8 +2694,8 @@ public class AppController {
         if (tableClinicals != null) tableClinicals.setEditable(true);
         if (frozenClinicalTable != null) frozenClinicalTable.setEditable(true);
         
-        // Setup the frozen In Scope column
-        setupCheckBox(frozenClinicalInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        // Setup the frozen In Scope column with counter update callback
+        setupCheckBox(frozenClinicalInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v, this::updateClinicalInScopeCounter);
         
         setupEditable(clinicalConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(clinicalAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
@@ -2724,8 +2729,8 @@ public class AppController {
         if (tableOrders != null) tableOrders.setEditable(true);
         if (frozenOrdersTable != null) frozenOrdersTable.setEditable(true);
         
-        // Setup the frozen In Scope column
-        setupCheckBox(frozenOrdersInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v);
+        // Setup the frozen In Scope column with counter update callback
+        setupCheckBox(frozenOrdersInScopeCol, f -> f.inScope, (f, v) -> f.inScope = v, this::updateOrdersInScopeCounter);
         
         setupEditable(ordersConfigGroupCol, f -> f.configGroup, (f, v) -> f.configGroup = v);
         setupEditable(ordersAlarmNameCol, f -> f.alarmName, (f, v) -> f.alarmName = v);
@@ -3108,7 +3113,27 @@ public class AppController {
         col.setEditable(true);
     }
 
+    /**
+     * Sets up a checkbox column with default behavior (no callback).
+     * Delegates to the overloaded version with a null callback for backward compatibility.
+     * @param <R> The row type (e.g., ExcelParserV5.FlowRow, ExcelParserV5.UnitRow)
+     * @param col The table column to set up
+     * @param getter Function to get the current boolean value from a row
+     * @param setter BiConsumer to set the new boolean value on a row
+     */
     private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter) {
+        setupCheckBox(col, getter, setter, null);
+    }
+    
+    /**
+     * Sets up a checkbox column with an optional callback that is invoked when the checkbox value changes.
+     * @param <R> The row type (e.g., ExcelParserV5.FlowRow, ExcelParserV5.UnitRow)
+     * @param col The table column to set up
+     * @param getter Function to get the current boolean value from a row
+     * @param setter BiConsumer to set the new boolean value on a row
+     * @param onChangeCallback Optional callback invoked after the value changes (e.g., for updating counters)
+     */
+    private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter, Runnable onChangeCallback) {
         if (col == null) return;
         col.setCellValueFactory(d -> {
             R row = d.getValue();
@@ -3116,6 +3141,10 @@ public class AppController {
             prop.addListener((obs, oldVal, newVal) -> {
                 setter.accept(row, newVal);
                 if (col.getTableView() != null) col.getTableView().refresh();
+                // Call the callback to update the counter
+                if (onChangeCallback != null) {
+                    onChangeCallback.run();
+                }
             });
             return prop;
         });
@@ -3260,7 +3289,7 @@ public class AppController {
     }
 
     // ---------- Setup header checkbox for "In Scope" columns ----------
-    private void setupHeaderCheckBox(TableColumn<ExcelParserV5.FlowRow, Boolean> col, FilteredList<ExcelParserV5.FlowRow> filteredList) {
+    private void setupHeaderCheckBox(TableColumn<ExcelParserV5.FlowRow, Boolean> col, FilteredList<ExcelParserV5.FlowRow> filteredList, Runnable counterUpdateCallback) {
         if (col == null) return;
         
         CheckBox headerCheckBox = new CheckBox();
@@ -3273,10 +3302,70 @@ public class AppController {
                     row.inScope = newVal;
                 }
                 if (col.getTableView() != null) col.getTableView().refresh();
+                // Update the counter after toggling all rows
+                if (counterUpdateCallback != null) {
+                    counterUpdateCallback.run();
+                }
             }
         });
         
         col.setGraphic(headerCheckBox);
+    }
+    
+    // ---------- In Scope Counter Update Methods ----------
+    
+    /**
+     * Updates all "In Scope" counter labels based on the current state of the data.
+     * This method should be called after data is loaded or when checkboxes are toggled.
+     */
+    private void updateAllInScopeCounters() {
+        updateNurseInScopeCounter();
+        updateClinicalInScopeCounter();
+        updateOrdersInScopeCounter();
+    }
+    
+    /**
+     * Generic helper method to count "In Scope" rows and update a counter label.
+     * @param label The label to update with the count
+     * @param filteredList The filtered list of FlowRows to count
+     */
+    private void updateInScopeCounter(Label label, FilteredList<ExcelParserV5.FlowRow> filteredList) {
+        if (label == null) return;
+        
+        int total = 0;
+        int inScope = 0;
+        
+        if (filteredList != null) {
+            total = filteredList.size();
+            for (ExcelParserV5.FlowRow row : filteredList) {
+                if (row.inScope) {
+                    inScope++;
+                }
+            }
+        }
+        
+        label.setText("In Scope: " + inScope + " / " + total);
+    }
+    
+    /**
+     * Updates the Nurse Calls "In Scope" counter label.
+     */
+    private void updateNurseInScopeCounter() {
+        updateInScopeCounter(nurseInScopeCountLabel, nurseCallsFilteredList);
+    }
+    
+    /**
+     * Updates the Clinicals "In Scope" counter label.
+     */
+    private void updateClinicalInScopeCounter() {
+        updateInScopeCounter(clinicalInScopeCountLabel, clinicalsFilteredList);
+    }
+    
+    /**
+     * Updates the Orders "In Scope" counter label.
+     */
+    private void updateOrdersInScopeCounter() {
+        updateInScopeCounter(ordersInScopeCountLabel, ordersFilteredList);
     }
 
     // ---------- Initialize Filters ----------
@@ -3431,6 +3520,9 @@ public class AppController {
         if (tableNurseCalls != null) tableNurseCalls.refresh();
         if (frozenNurseTable != null) frozenNurseTable.refresh();
         updateStatusLabel();
+        
+        // Update counter after filter changes the visible rows
+        updateNurseInScopeCounter();
     }
 
     /**
@@ -3497,6 +3589,9 @@ public class AppController {
         if (tableClinicals != null) tableClinicals.refresh();
         if (frozenClinicalTable != null) frozenClinicalTable.refresh();
         updateStatusLabel();
+        
+        // Update counter after filter changes the visible rows
+        updateClinicalInScopeCounter();
     }
 
     private void applyOrdersFilter() {
@@ -3522,6 +3617,9 @@ public class AppController {
         if (tableOrders != null) tableOrders.refresh();
         if (frozenOrdersTable != null) frozenOrdersTable.refresh();
         updateStatusLabel();
+        
+        // Update counter after filter changes the visible rows
+        updateOrdersInScopeCounter();
     }
 
     private void updateStatusLabel() {
@@ -3569,9 +3667,12 @@ public class AppController {
         if (frozenOrdersTable != null) frozenOrdersTable.setItems(ordersFilteredList);
         
         // Setup header checkboxes for "In Scope" columns (on frozen tables)
-        setupHeaderCheckBox(frozenNurseInScopeCol, nurseCallsFilteredList);
-        setupHeaderCheckBox(frozenClinicalInScopeCol, clinicalsFilteredList);
-        setupHeaderCheckBox(frozenOrdersInScopeCol, ordersFilteredList);
+        setupHeaderCheckBox(frozenNurseInScopeCol, nurseCallsFilteredList, this::updateNurseInScopeCounter);
+        setupHeaderCheckBox(frozenClinicalInScopeCol, clinicalsFilteredList, this::updateClinicalInScopeCounter);
+        setupHeaderCheckBox(frozenOrdersInScopeCol, ordersFilteredList, this::updateOrdersInScopeCounter);
+        
+        // Update the In Scope counters after loading data
+        updateAllInScopeCounters();
         
         // Update filter options
         updateFilterOptions();
@@ -6227,10 +6328,11 @@ public class AppController {
                 customTabMappingsList.setManaged(false);
             }
             
-            // Hide profile switcher in CI mode (users cannot switch back to IE from CI)
+            // Keep profile switcher visible in CI mode to allow switching back to IE
             if (profileSwitcher != null) {
-                profileSwitcher.setVisible(false);
-                profileSwitcher.setManaged(false);
+                profileSwitcher.setVisible(true);
+                profileSwitcher.setManaged(true);
+                profileSwitcher.setDisable(false);
             }
             
             // Note: Data Validation controls (Voice Group, Assignment Roles, Bed List),

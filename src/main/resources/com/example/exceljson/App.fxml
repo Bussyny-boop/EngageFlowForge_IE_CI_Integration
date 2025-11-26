@@ -43,24 +43,52 @@
                 </ToggleButton>
             </VBox>
             
-            <!-- Right: Global Actions -->
+            <!-- Right: Global Actions (Icon-only buttons) -->
             <HBox spacing="6" alignment="CENTER_RIGHT">
-                <Button fx:id="settingsButton" text="⚙️ Settings" styleClass="app-bar-button">
+                <Button fx:id="settingsButton" styleClass="app-bar-icon-button">
+                    <graphic>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image>
+                                <Image url="@/icons/settings.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
                     <tooltip>
                         <Tooltip text="Open Settings" />
                     </tooltip>
                 </Button>
-                <Button fx:id="saveExcelButton" text="💾 Save" disable="true" styleClass="app-bar-button">
+                <Button fx:id="saveExcelButton" disable="true" styleClass="app-bar-icon-button">
+                    <graphic>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image>
+                                <Image url="@/icons/save.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
                     <tooltip>
                         <Tooltip text="Save Changes to Excel" />
                     </tooltip>
                 </Button>
-                <Button fx:id="themeToggleButton" text="🌓 Toggle" styleClass="app-bar-button">
+                <Button fx:id="themeToggleButton" styleClass="app-bar-icon-button">
+                    <graphic>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image>
+                                <Image url="@/icons/darkmode.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
                     <tooltip>
                         <Tooltip text="Switch between light and dark themes" />
                     </tooltip>
                 </Button>
-                <Button fx:id="helpButton" text="❓ Help" styleClass="app-bar-button">
+                <Button fx:id="helpButton" styleClass="app-bar-icon-button">
+                    <graphic>
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
+                            <image>
+                                <Image url="@/icons/help.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
                     <tooltip>
                         <Tooltip text="Help and About" />
                     </tooltip>
@@ -566,6 +594,12 @@
                                                 <ComboBox fx:id="nurseConfigGroupFilter" prefWidth="200" />
                                                 <Label text="Search:" />
                                                 <TextField fx:id="nurseAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                                <Separator orientation="VERTICAL" />
+                                                <Label fx:id="nurseInScopeCountLabel" text="In Scope: 0 / 0" styleClass="in-scope-counter">
+                                                    <tooltip>
+                                                        <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
+                                                    </tooltip>
+                                                </Label>
                                             </HBox>
                                         </top>
                                         <center>
@@ -618,6 +652,12 @@
                                                 <ComboBox fx:id="clinicalConfigGroupFilter" prefWidth="200" />
                                                 <Label text="Search:" />
                                                 <TextField fx:id="clinicalAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                                <Separator orientation="VERTICAL" />
+                                                <Label fx:id="clinicalInScopeCountLabel" text="In Scope: 0 / 0" styleClass="in-scope-counter">
+                                                    <tooltip>
+                                                        <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
+                                                    </tooltip>
+                                                </Label>
                                             </HBox>
                                         </top>
                                         <center>
@@ -671,6 +711,12 @@
                                                 <ComboBox fx:id="ordersConfigGroupFilter" prefWidth="200" />
                                                 <Label text="Search:" />
                                                 <TextField fx:id="ordersAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
+                                                <Separator orientation="VERTICAL" />
+                                                <Label fx:id="ordersInScopeCountLabel" text="In Scope: 0 / 0" styleClass="in-scope-counter">
+                                                    <tooltip>
+                                                        <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
+                                                    </tooltip>
+                                                </Label>
                                             </HBox>
                                         </top>
                                         <center>
