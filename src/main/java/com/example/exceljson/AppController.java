@@ -628,7 +628,7 @@ public class AppController {
         if (toolPanelNoMergeCheckbox != null && noMergeCheckbox != null) {
             // Bidirectional sync: tool panel -> settings drawer
             toolPanelNoMergeCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
-                if (!noMergeCheckbox.isSelected() != !newV) {
+                if (noMergeCheckbox.isSelected() != newV) {
                     noMergeCheckbox.setSelected(newV);
                 }
             });
