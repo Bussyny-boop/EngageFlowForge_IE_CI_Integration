@@ -47,6 +47,30 @@
     -fx-background-color: rgba(0, 212, 221, 0.05);
 }
 
+/* Icon-only buttons for app bar (Settings, Save, Dark Mode, Help) */
+.app-bar-icon-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-padding: 6;
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+.app-bar-icon-button:hover {
+    -fx-background-color: rgba(0, 212, 221, 0.15);
+    -fx-border-color: rgba(0, 212, 221, 0.3);
+}
+
+.app-bar-icon-button:pressed {
+    -fx-background-color: rgba(0, 212, 221, 0.1);
+}
+
+.app-bar-icon-button:disabled {
+    -fx-opacity: 0.4;
+}
+
 /* --- Side Navigation --- */
 .side-nav {
     -fx-background-color: #2A2A2A;

@@ -3113,10 +3113,21 @@ public class AppController {
         col.setEditable(true);
     }
 
+    /**
+     * Sets up a checkbox column with default behavior (no callback).
+     * Delegates to the overloaded version with a null callback for backward compatibility.
+     */
     private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter) {
         setupCheckBox(col, getter, setter, null);
     }
     
+    /**
+     * Sets up a checkbox column with an optional callback that is invoked when the checkbox value changes.
+     * @param col The table column to set up
+     * @param getter Function to get the current boolean value from a row
+     * @param setter BiConsumer to set the new boolean value on a row
+     * @param onChangeCallback Optional callback invoked after the value changes (e.g., for updating counters)
+     */
     private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter, Runnable onChangeCallback) {
         if (col == null) return;
         col.setCellValueFactory(d -> {
@@ -3309,66 +3320,47 @@ public class AppController {
     }
     
     /**
-     * Updates the Nurse Calls "In Scope" counter label.
+     * Generic helper method to count "In Scope" rows and update a counter label.
+     * @param label The label to update with the count
+     * @param filteredList The filtered list of FlowRows to count
      */
-    private void updateNurseInScopeCounter() {
-        if (nurseInScopeCountLabel == null) return;
+    private void updateInScopeCounter(Label label, FilteredList<ExcelParserV5.FlowRow> filteredList) {
+        if (label == null) return;
         
         int total = 0;
         int inScope = 0;
         
-        if (nurseCallsFilteredList != null) {
-            total = nurseCallsFilteredList.size();
-            for (ExcelParserV5.FlowRow row : nurseCallsFilteredList) {
+        if (filteredList != null) {
+            total = filteredList.size();
+            for (ExcelParserV5.FlowRow row : filteredList) {
                 if (row.inScope) {
                     inScope++;
                 }
             }
         }
         
-        nurseInScopeCountLabel.setText("In Scope: " + inScope + " / " + total);
+        label.setText("In Scope: " + inScope + " / " + total);
+    }
+    
+    /**
+     * Updates the Nurse Calls "In Scope" counter label.
+     */
+    private void updateNurseInScopeCounter() {
+        updateInScopeCounter(nurseInScopeCountLabel, nurseCallsFilteredList);
     }
     
     /**
      * Updates the Clinicals "In Scope" counter label.
      */
     private void updateClinicalInScopeCounter() {
-        if (clinicalInScopeCountLabel == null) return;
-        
-        int total = 0;
-        int inScope = 0;
-        
-        if (clinicalsFilteredList != null) {
-            total = clinicalsFilteredList.size();
-            for (ExcelParserV5.FlowRow row : clinicalsFilteredList) {
-                if (row.inScope) {
-                    inScope++;
-                }
-            }
-        }
-        
-        clinicalInScopeCountLabel.setText("In Scope: " + inScope + " / " + total);
+        updateInScopeCounter(clinicalInScopeCountLabel, clinicalsFilteredList);
     }
     
     /**
      * Updates the Orders "In Scope" counter label.
      */
     private void updateOrdersInScopeCounter() {
-        if (ordersInScopeCountLabel == null) return;
-        
-        int total = 0;
-        int inScope = 0;
-        
-        if (ordersFilteredList != null) {
-            total = ordersFilteredList.size();
-            for (ExcelParserV5.FlowRow row : ordersFilteredList) {
-                if (row.inScope) {
-                    inScope++;
-                }
-            }
-        }
-        
-        ordersInScopeCountLabel.setText("In Scope: " + inScope + " / " + total);
+        updateInScopeCounter(ordersInScopeCountLabel, ordersFilteredList);
     }
 
     // ---------- Initialize Filters ----------
@@ -6331,10 +6323,11 @@ public class AppController {
                 customTabMappingsList.setManaged(false);
             }
             
-            // Hide profile switcher in CI mode (users cannot switch back to IE from CI)
+            // Keep profile switcher visible in CI mode to allow switching back to IE
             if (profileSwitcher != null) {
-                profileSwitcher.setVisible(false);
-                profileSwitcher.setManaged(false);
+                profileSwitcher.setVisible(true);
+                profileSwitcher.setManaged(true);
+                profileSwitcher.setDisable(false);
             }
             
             // Note: Data Validation controls (Voice Group, Assignment Roles, Bed List),
