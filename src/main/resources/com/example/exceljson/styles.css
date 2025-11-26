@@ -388,3 +388,16 @@
 .table-row-cell .sticky-column {
     -fx-background-color: -fx-light-gray;
 }
+
+/* ========================================
+   Sidebar Section Headers
+   ======================================== */
+.sidebar-section-header {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-font-size: 10px;
+    -fx-padding: 4 8 2 8;
+    -fx-letter-spacing: 0.5px;
+    -fx-opacity: 1.0;
+}

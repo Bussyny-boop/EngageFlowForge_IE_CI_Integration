@@ -103,7 +103,7 @@
                         <VBox fx:id="sidebarContent" spacing="2" styleClass="side-nav" style="-fx-background-color: #3D3D3D; -fx-padding: 4;">
                             <!-- Load Section -->
                             <VBox spacing="1" styleClass="sidebar-section">
-                                <Label fx:id="loadDataLabel" text="📂 LOAD DATA" styleClass="sidebar-section-header" />
+                                <Label fx:id="loadDataLabel" text="📂 LOAD DATA" styleClass="sidebar-section-header" style="-fx-text-fill: white; -fx-font-style: italic;" />
                                 <VBox fx:id="loadButtonsContainer" spacing="1">
                                 <!-- Load NDW (Excel) -->
                                 <Button fx:id="loadNdwButton" text="📄 NDW File" maxWidth="Infinity" styleClass="nav-button">
@@ -139,7 +139,7 @@
                             
                             <!-- Navigation Section -->
                             <VBox spacing="1" styleClass="sidebar-section">
-                                <Label text="📑 VIEWS" styleClass="sidebar-section-header" />
+                                <Label text="📑 VIEWS" styleClass="sidebar-section-header" style="-fx-text-fill: white; -fx-font-style: italic;" />
                                     
                                     <!-- Units Navigation -->
                                     <ToggleButton fx:id="navUnits" text="📊 Units" maxWidth="Infinity" styleClass="nav-button" selected="true" style="-fx-font-weight: bold;">
@@ -167,7 +167,7 @@
                             
                             <!-- Actions Section -->
                             <VBox spacing="1" styleClass="sidebar-section">
-                                <Label text="⚡ ACTIONS" styleClass="sidebar-section-header" />
+                                <Label text="⚡ ACTIONS" styleClass="sidebar-section-header" style="-fx-text-fill: white; -fx-font-style: italic;" />
                                 
                                 <!-- View JSON -->
                                 <Button fx:id="generateJsonButton" text="👁️ View JSON" maxWidth="Infinity" styleClass="side-nav-action">
@@ -180,7 +180,7 @@
                             
                             <!-- Export JSON Section -->
                             <VBox spacing="1" styleClass="sidebar-section">
-                                <Label fx:id="exportJsonLabel" text="📤 EXPORT" styleClass="sidebar-section-header" />
+                                <Label fx:id="exportJsonLabel" text="📤 EXPORT" styleClass="sidebar-section-header" style="-fx-text-fill: white; -fx-font-style: italic;" />
                                 <VBox fx:id="exportButtonsContainer" spacing="1">
                                 <!-- Export Nursecall JSON -->
                                 <Button fx:id="exportNurseJsonButton" text="🩺 Nursecall" maxWidth="Infinity" styleClass="side-nav-action">
@@ -210,7 +210,7 @@
                             
                             <!-- Tools Section -->
                             <VBox spacing="1" styleClass="sidebar-section">
-                                <Label text="🛠️ TOOLS" styleClass="sidebar-section-header" />
+                                <Label text="🛠️ TOOLS" styleClass="sidebar-section-header" style="-fx-text-fill: white; -fx-font-style: italic;" />
                                     
                                     <!-- Visual Flow (renamed from Visual CallFlow) -->
                                     <Button fx:id="visualFlowButton" text="🔀 Visual Flow" maxWidth="Infinity" styleClass="side-nav-action">
