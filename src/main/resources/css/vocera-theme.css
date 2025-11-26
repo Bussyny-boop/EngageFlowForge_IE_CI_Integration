@@ -68,14 +68,14 @@
 /* --- Sidebar Sections --- */
 .sidebar-section {
     -fx-background-color: transparent;
-    -fx-padding: 4 0;
+    -fx-padding: 2 0;
 }
 
 .sidebar-section-header {
-    -fx-text-fill: #9E9E9E;  /* Grey text - clearly visible against dark background */
+    -fx-text-fill: #FFFFFF;  /* White text - better visibility against dark sidebar background */
     -fx-font-weight: bold;
-    -fx-font-size: 11px;
-    -fx-padding: 10 8 4 8;
+    -fx-font-size: 10px;
+    -fx-padding: 4 8 2 8;
     -fx-letter-spacing: 0.5px;
     -fx-opacity: 1.0;
 }
@@ -84,11 +84,11 @@
 .nav-button {
     -fx-background-color: transparent;
     -fx-text-fill: #E8E8E8;  /* White/light text */
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
     -fx-font-weight: 400;
     -fx-alignment: CENTER_LEFT;
-    -fx-graphic-text-gap: 10;
-    -fx-padding: 10 12 10 12;
+    -fx-graphic-text-gap: 8;
+    -fx-padding: 6 10 6 10;
     -fx-background-radius: 4;
     -fx-border-width: 0;
     -fx-cursor: hand;
@@ -143,8 +143,8 @@
     -fx-background-color: transparent;
     -fx-text-fill: #E8E8E8;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 10 12 10 12;
-    -fx-font-size: 12px;
+    -fx-padding: 6 10 6 10;
+    -fx-font-size: 11px;
     -fx-font-weight: 400;
     -fx-background-radius: 4;
     -fx-border-color: transparent;
@@ -165,8 +165,8 @@
     -fx-background-color: transparent;
     -fx-text-fill: #E8E8E8;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 10 12 10 12;
-    -fx-font-size: 12px;
+    -fx-padding: 6 10 6 10;
+    -fx-font-size: 11px;
     -fx-font-weight: 400;
     -fx-background-radius: 4;
     -fx-border-color: transparent;
