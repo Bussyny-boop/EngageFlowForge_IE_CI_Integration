@@ -72,6 +72,12 @@
     -fx-opacity: 0.4;
 }
 
+/* In Scope Counter Label Style */
+.in-scope-counter {
+    -fx-font-weight: bold;
+    -fx-text-fill: #00A5B5;
+}
+
 /* --- Side Navigation --- Vocera Dark Theme */
 .side-nav {
     -fx-background-color: #3D3D3D;  /* Dark charcoal sidebar - matches Vocera design */

@@ -595,7 +595,7 @@
                                                 <Label text="Search:" />
                                                 <TextField fx:id="nurseAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
                                                 <Separator orientation="VERTICAL" />
-                                                <Label fx:id="nurseInScopeCountLabel" text="In Scope: 0 / 0" style="-fx-font-weight: bold; -fx-text-fill: #00A5B5;">
+                                                <Label fx:id="nurseInScopeCountLabel" text="In Scope: 0 / 0" styleClass="in-scope-counter">
                                                     <tooltip>
                                                         <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
                                                     </tooltip>
@@ -653,7 +653,7 @@
                                                 <Label text="Search:" />
                                                 <TextField fx:id="clinicalAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
                                                 <Separator orientation="VERTICAL" />
-                                                <Label fx:id="clinicalInScopeCountLabel" text="In Scope: 0 / 0" style="-fx-font-weight: bold; -fx-text-fill: #00A5B5;">
+                                                <Label fx:id="clinicalInScopeCountLabel" text="In Scope: 0 / 0" styleClass="in-scope-counter">
                                                     <tooltip>
                                                         <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
                                                     </tooltip>
@@ -712,7 +712,7 @@
                                                 <Label text="Search:" />
                                                 <TextField fx:id="ordersAlarmNameFilter" promptText="Search all columns..." prefWidth="200" />
                                                 <Separator orientation="VERTICAL" />
-                                                <Label fx:id="ordersInScopeCountLabel" text="In Scope: 0 / 0" style="-fx-font-weight: bold; -fx-text-fill: #00A5B5;">
+                                                <Label fx:id="ordersInScopeCountLabel" text="In Scope: 0 / 0" styleClass="in-scope-counter">
                                                     <tooltip>
                                                         <Tooltip text="Number of rows checked as 'In Scope' / Total rows" />
                                                     </tooltip>

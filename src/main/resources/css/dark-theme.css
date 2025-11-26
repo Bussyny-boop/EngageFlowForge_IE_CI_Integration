@@ -71,6 +71,12 @@
     -fx-opacity: 0.4;
 }
 
+/* In Scope Counter Label Style */
+.in-scope-counter {
+    -fx-font-weight: bold;
+    -fx-text-fill: #00D4DD;  /* Brighter teal for dark mode */
+}
+
 /* --- Side Navigation --- */
 .side-nav {
     -fx-background-color: #2A2A2A;

@@ -3116,6 +3116,10 @@ public class AppController {
     /**
      * Sets up a checkbox column with default behavior (no callback).
      * Delegates to the overloaded version with a null callback for backward compatibility.
+     * @param <R> The row type (e.g., ExcelParserV5.FlowRow, ExcelParserV5.UnitRow)
+     * @param col The table column to set up
+     * @param getter Function to get the current boolean value from a row
+     * @param setter BiConsumer to set the new boolean value on a row
      */
     private <R> void setupCheckBox(TableColumn<R, Boolean> col, Function<R, Boolean> getter, BiConsumer<R, Boolean> setter) {
         setupCheckBox(col, getter, setter, null);
@@ -3123,6 +3127,7 @@ public class AppController {
     
     /**
      * Sets up a checkbox column with an optional callback that is invoked when the checkbox value changes.
+     * @param <R> The row type (e.g., ExcelParserV5.FlowRow, ExcelParserV5.UnitRow)
      * @param col The table column to set up
      * @param getter Function to get the current boolean value from a row
      * @param setter BiConsumer to set the new boolean value on a row
