@@ -104,6 +104,7 @@ public class AppController {
     @FXML private TextField toolPanelEdgeRefField;
     @FXML private TextField toolPanelVmpRefField;
     @FXML private Button toolPanelToggleBtn;
+    @FXML private Button toolPanelOpenBtn;  // Arrow button to open collapsed tool panel
     private boolean isToolPanelCollapsed = false;
 
     // ---------- UI Elements ----------
@@ -195,6 +196,9 @@ public class AppController {
     @FXML private Button addCustomTabButton;
     @FXML private ListView<String> customTabMappingsList;
     @FXML private Label customTabStatsLabel;
+    
+    // ---------- Column Visibility ----------
+    @FXML private CheckBox expandAllColumnsCheckbox;
 
     // ---------- Config Group Filters ----------
     @FXML private ComboBox<String> unitConfigGroupFilter;
@@ -614,6 +618,17 @@ public class AppController {
             }
         }
         
+        // --- Expand All Columns checkbox listener ---
+        if (expandAllColumnsCheckbox != null) {
+            expandAllColumnsCheckbox.selectedProperty().addListener((obs, oldV, newV) -> {
+                if (newV) {
+                    showAllColumns();
+                } else {
+                    hideEmptyColumns();
+                }
+            });
+        }
+        
         // --- Setup Tool Panel (Design C: Split Panel) ---
         setupToolPanel();
     }
@@ -710,6 +725,11 @@ public class AppController {
         if (toolPanelToggleBtn != null) {
             toolPanelToggleBtn.setOnAction(e -> toggleToolPanel());
         }
+        
+        // Setup open button for collapsed panel
+        if (toolPanelOpenBtn != null) {
+            toolPanelOpenBtn.setOnAction(e -> toggleToolPanel());
+        }
     }
     
     /**
@@ -724,10 +744,20 @@ public class AppController {
             // Collapse the panel
             toolPanel.setVisible(false);
             toolPanel.setManaged(false);
+            // Show the open button arrow
+            if (toolPanelOpenBtn != null) {
+                toolPanelOpenBtn.setVisible(true);
+                toolPanelOpenBtn.setManaged(true);
+            }
         } else {
             // Expand the panel
             toolPanel.setVisible(true);
             toolPanel.setManaged(true);
+            // Hide the open button arrow
+            if (toolPanelOpenBtn != null) {
+                toolPanelOpenBtn.setVisible(false);
+                toolPanelOpenBtn.setManaged(false);
+            }
         }
         
         // Update button text
@@ -4644,6 +4674,61 @@ public class AppController {
             
             // Hide the column if it has no data
             column.setVisible(hasData);
+        }
+    }
+    
+    /**
+     * Shows all columns in all tables regardless of whether they contain data.
+     * This is the opposite of hideEmptyColumns and is triggered when "Expand All Columns" checkbox is checked.
+     */
+    private void showAllColumns() {
+        // Show all columns in Units table
+        if (tableUnits != null) {
+            for (TableColumn<ExcelParserV5.UnitRow, ?> column : tableUnits.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in Nurse Calls table
+        if (tableNurseCalls != null) {
+            for (TableColumn<ExcelParserV5.FlowRow, ?> column : tableNurseCalls.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in frozen Nurse table
+        if (frozenNurseTable != null) {
+            for (TableColumn<ExcelParserV5.FlowRow, ?> column : frozenNurseTable.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in Clinicals table
+        if (tableClinicals != null) {
+            for (TableColumn<ExcelParserV5.FlowRow, ?> column : tableClinicals.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in frozen Clinical table
+        if (frozenClinicalTable != null) {
+            for (TableColumn<ExcelParserV5.FlowRow, ?> column : frozenClinicalTable.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in Orders table
+        if (tableOrders != null) {
+            for (TableColumn<ExcelParserV5.FlowRow, ?> column : tableOrders.getColumns()) {
+                column.setVisible(true);
+            }
+        }
+        
+        // Show all columns in frozen Orders table
+        if (frozenOrdersTable != null) {
+            for (TableColumn<ExcelParserV5.FlowRow, ?> column : frozenOrdersTable.getColumns()) {
+                column.setVisible(true);
+            }
         }
     }
     
