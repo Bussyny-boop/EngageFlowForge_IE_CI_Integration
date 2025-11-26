@@ -79,17 +79,17 @@
     -fx-opacity: 0.9;
 }
 
-/* Sidebar collapse/expand styles - approximately 10% wider */
+/* Sidebar collapse/expand styles */
 .sidebar-collapsed {
-    -fx-pref-width: 51;
-    -fx-min-width: 51;
-    -fx-max-width: 51;
+    -fx-pref-width: 60;
+    -fx-min-width: 60;
+    -fx-max-width: 60;
 }
 
 .sidebar-expanded {
-    -fx-pref-width: 212;
-    -fx-min-width: 212;
-    -fx-max-width: 212;
+    -fx-pref-width: 220;
+    -fx-min-width: 220;
+    -fx-max-width: 220;
 }
 
 /* --- Navigation Buttons --- */
@@ -231,16 +231,20 @@
 /* --- Collapsed Sidebar Styles --- */
 .sidebar-collapsed .nav-button {
     -fx-alignment: CENTER;
-    -fx-padding: 8 5;
-    -fx-font-size: 18px;
-    -fx-text-fill: #FFFFFF;
+    -fx-padding: 8;
+    -fx-font-size: 16px;
+    -fx-text-fill: #E8E8E8;
     -fx-text-alignment: CENTER;
     -fx-wrap-text: false;
     -fx-text-overrun: clip;
     -fx-ellipsis-string: "";
-    -fx-max-width: 46;
-    -fx-pref-width: 46;
-    -fx-min-height: 38;
+    -fx-max-width: 50;
+    -fx-pref-width: 50;
+    -fx-min-width: 50;
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-background-color: #4A4A4A;
+    -fx-background-radius: 6;
 }
 
 .sidebar-collapsed .nav-button .graphic {
@@ -250,22 +254,35 @@
 .sidebar-collapsed .side-nav-action,
 .sidebar-collapsed .side-nav-action-warning {
     -fx-alignment: CENTER;
-    -fx-padding: 8 5;
-    -fx-font-size: 18px;
-    -fx-text-fill: #FFFFFF;
+    -fx-padding: 8;
+    -fx-font-size: 16px;
+    -fx-text-fill: #E8E8E8;
+    -fx-max-width: 50;
+    -fx-pref-width: 50;
+    -fx-min-width: 50;
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-background-color: #4A4A4A;
+    -fx-background-radius: 6;
 }
 
 .sidebar-collapsed .nav-button:hover {
-    -fx-text-fill: #00D4DD;
-    -fx-background-color: #4A4A4A;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #5A5A5A;
+}
+
+.sidebar-collapsed .nav-button:selected {
+    -fx-background-color: #00A5B5;
+    -fx-text-fill: #FFFFFF;
 }
 
 .sidebar-collapsed .side-nav-action:hover,
 .sidebar-collapsed .side-nav-action-warning:hover {
-    -fx-text-fill: #00D4DD;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #5A5A5A;
 }
 
-/* Hide section header labels in collapsed mode but keep them accessible */
+/* Hide section header labels in collapsed mode */
 .sidebar-collapsed .sidebar-section-header {
     -fx-opacity: 0;
     -fx-pref-width: 0;
@@ -970,4 +987,19 @@
 .tool-panel .label {
     -fx-text-fill: #B0B0B0;
     -fx-font-size: 11px;
+}
+
+/* =========================================
+   Sidebar Icon Container Styles (Dark Theme)
+   Rounded boxes for icons in collapsed sidebar
+   ========================================= */
+
+.sidebar-icon-container {
+    -fx-background-color: #4A4A4A;
+    -fx-background-radius: 6;
+    -fx-padding: 5;
+}
+
+.sidebar-icon-container:hover {
+    -fx-background-color: #5A5A5A;
 }
