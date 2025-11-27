@@ -387,6 +387,8 @@ public class AppController {
         // Load Vocera-style accordion sidebar into sidebarContainer if available
         try {
             if (sidebarContainer != null) {
+                System.out.println("DEBUG: sidebarContainer found, attempting to load voceraSidebar.fxml...");
+                
                 // Clear all existing content from sidebarContainer
                 sidebarContainer.setTop(null);
                 sidebarContainer.setCenter(null);
@@ -394,14 +396,20 @@ public class AppController {
                 sidebarContainer.setLeft(null);
                 sidebarContainer.setRight(null);
                 
+                System.out.println("DEBUG: Cleared sidebarContainer content");
+                
                 // Load the new accordion sidebar
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/voceraSidebar.fxml"));
+                System.out.println("DEBUG: FXMLLoader created, loading FXML...");
                 Node sidebar = fxmlLoader.load();
+                System.out.println("DEBUG: FXML loaded successfully, sidebar node: " + sidebar);
                 sidebarContainer.setCenter(sidebar);
+                System.out.println("DEBUG: Sidebar set to sidebarContainer center");
                 // Wire button actions to existing handlers
                 Object ctrl = fxmlLoader.getController();
                 // If a dedicated controller is not provided, bind by lookup of fx:id
                 if (ctrl == null && sidebar instanceof Parent) {
+                    System.out.println("DEBUG: Wiring button handlers...");
                     Node ndwBtn = ((Parent) sidebar).lookup("#btnNdw");
                     if (ndwBtn instanceof Button && loadNdwButton != null) {
                         ((Button) ndwBtn).setOnAction(e -> loadNdw());
@@ -454,10 +462,14 @@ public class AppController {
                     if (resetDataBtn instanceof Button && clearAllButton != null) {
                         ((Button) resetDataBtn).setOnAction(e -> clearAllData());
                     }
+                    System.out.println("DEBUG: Button handlers wired successfully");
                 }
+            } else {
+                System.err.println("WARNING: sidebarContainer is null!");
             }
         } catch (Exception ex) {
-            System.err.println("Warning: Failed to load voceraSidebar.fxml: " + ex.getMessage());
+            System.err.println("ERROR: Failed to load voceraSidebar.fxml: " + ex.getMessage());
+            ex.printStackTrace();
         }
 
         // Load saved directories from preferences
