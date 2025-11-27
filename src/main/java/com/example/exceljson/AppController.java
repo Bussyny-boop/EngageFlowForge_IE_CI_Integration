@@ -387,6 +387,14 @@ public class AppController {
         // Load Vocera-style accordion sidebar into sidebarContainer if available
         try {
             if (sidebarContainer != null) {
+                // Clear all existing content from sidebarContainer
+                sidebarContainer.setTop(null);
+                sidebarContainer.setCenter(null);
+                sidebarContainer.setBottom(null);
+                sidebarContainer.setLeft(null);
+                sidebarContainer.setRight(null);
+                
+                // Load the new accordion sidebar
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/voceraSidebar.fxml"));
                 Node sidebar = fxmlLoader.load();
                 sidebarContainer.setCenter(sidebar);
