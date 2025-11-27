@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accordion Sidebar Mockup (Vocera Style)</title>
+  <style>
+    :root {
+      --teal-700: #0e6f75;
+      --teal-600: #12848b;
+      --teal-500: #149aa3;
+      --teal-400: #16afbb;
+      --teal-300: #4dc9d2;
+      --teal-200: #8fe0e6;
+      --bg-900: #0e1619;
+      --bg-800: #122026;
+      --bg-700: #172b33;
+      --text: #ffffff;
+      --muted: #cfeff2;
+      --shadow: rgba(0,0,0,0.25);
+      --radius: 8px;
+      --radius-sm: 6px;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: linear-gradient(180deg, var(--bg-800) 0%, var(--bg-900) 100%);
+      color: var(--text);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .frame {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #3E494A;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+    }
+
+    .accordion {
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    /* Section header */
+    .section {
+      border-radius: 0;
+      margin: 8px 0 12px;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      text-align: left;
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .section-header:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .section-header .icon {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border-radius: 0;
+    }
+    
+    .section-header .icon img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+
+    .section-header .title {
+      text-transform: uppercase;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+    }
+
+    .section-header .chevron {
+      display: none;
+    }
+
+    /* Section content */
+    .section-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 200ms ease;
+      background: transparent;
+      border-top: none;
+    }
+    .section.open .section-content {
+      max-height: 1000px; /* sufficient for demo */
+    }
+
+    .button-list {
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      all: unset;
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn .bullet {
+      width: 20px;
+      height: 20px;
+      border-radius: 0;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .nav-btn .bullet img {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateX(4px);
+    }
+
+    .content {
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.02) 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      padding: 24px;
+    }
+
+    .hint {
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <aside class="sidebar">
+      <div class="sidebar-header">Vocera-style Accordion Sidebar (Mockup)</div>
+      <div class="accordion" id="accordion">
+
+        <!-- LOAD DATA -->
+        <section class="section open">
+          <button class="section-header" data-section>
+            <span class="icon">📂</span>
+            <span class="title">LOAD DATA</span>
+            <span class="chevron">▶</span>
+          </button>
+          <div class="section-content">
+            <div class="button-list">
+              <button class="nav-btn"><span class="bullet">•</span>NDW File</button>
+              <button class="nav-btn"><span class="bullet">•</span>Engage XML</button>
+              <button class="nav-btn"><span class="bullet">•</span>Engage JSON</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEWS -->
+        <section class="section open">
+          <button class="section-header" data-section>
+            <span class="icon">👁️</span>
+            <span class="title">VIEWS</span>
+            <span class="chevron">▶</span>
+          </button>
+          <div class="section-content">
+            <div class="button-list">
+              <button class="nav-btn"><span class="bullet">•</span>Units</button>
+              <button class="nav-btn"><span class="bullet">•</span>Nurse Calls</button>
+              <button class="nav-btn"><span class="bullet">•</span>Clinicals</button>
+              <button class="nav-btn"><span class="bullet">•</span>Orders</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ACTIONS -->
+        <section class="section">
+          <button class="section-header" data-section>
+            <span class="icon">⚡</span>
+            <span class="title">ACTIONS</span>
+            <span class="chevron">▶</span>
+          </button>
+          <div class="section-content">
+            <div class="button-list">
+              <button class="nav-btn"><span class="bullet">•</span>View JSON</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- EXPORT -->
+        <section class="section">
+          <button class="section-header" data-section>
+            <span class="icon">📤</span>
+            <span class="title">EXPORT</span>
+            <span class="chevron">▶</span>
+          </button>
+          <div class="section-content">
+            <div class="button-list">
+              <button class="nav-btn"><span class="bullet">•</span>Nursecall</button>
+              <button class="nav-btn"><span class="bullet">•</span>Clinicals</button>
+              <button class="nav-btn"><span class="bullet">•</span>Orders</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TOOLS -->
+        <section class="section">
+          <button class="section-header" data-section>
+            <span class="icon">🛠️</span>
+            <span class="title">TOOLS</span>
+            <span class="chevron">▶</span>
+          </button>
+          <div class="section-content">
+            <div class="button-list">
+              <button class="nav-btn"><span class="bullet">•</span>Visual Flow</button>
+              <button class="nav-btn"><span class="bullet">•</span>Reset Data</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <main class="content">
+      <h2>Accordion Sidebar (Vocera-style) — UI Mockup</h2>
+      <p class="hint">This is a static HTML/CSS mockup illustrating the desired look & behavior. Buttons and sections reflect the required structure and teal styling. The JavaFX implementation will mirror this using <code>Accordion</code> and <code>TitledPane</code> components.</p>
+      <ul>
+        <li>Headers have teal gradient, uppercase, left icon, right chevron rotates.</li>
+        <li>Nested buttons have rounded teal gradient, left icons, hover lift effect.</li>
+        <li>Sections expand/collapse with smooth animation.</li>
+      </ul>
+    </main>
+  </div>
+
+  <script>
+    // Simple accordion behavior
+    document.querySelectorAll('[data-section]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const section = btn.closest('.section');
+        section.classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+/* Light theme variant for Vocera-style sidebar */
+
+.sidebar-root {
+    -fx-padding: 12;
+    -fx-background-color: #F5F5F5;
+}
+
+.sidebar-title {
+    -fx-text-fill: #027381;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-padding: 0 0 12 4;
+}
+
+.sidebar-accordion {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.sidebar-section > .title {
+    -fx-background-radius: 12;
+    -fx-background-color: linear-gradient(#E0F7FA, #B2EBF2);
+    -fx-padding: 10 16 10 16;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: #00695C;
+}
+
+.sidebar-section > .title > .arrow-button .arrow {
+    -fx-background-color: #00695C;
+}
+
+.sidebar-section-content {
+    -fx-padding: 8 6 10 6;
+    -fx-spacing: 6;
+}
+
+.sidebar-button {
+    -fx-background-radius: 10;
+    -fx-background-color: linear-gradient(#B2DFDB, #80CBC4);
+    -fx-text-fill: #004D40;
+    -fx-font-size: 11px;
+    -fx-padding: 6 12 6 24;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-weight: bold;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: linear-gradient(#80CBC4, #4DB6AC);
+    -fx-text-fill: #00251A;
+}
+
+.sidebar-button:focused {
+    -fx-effect: none;
+    -fx-background-insets: 0;
+}

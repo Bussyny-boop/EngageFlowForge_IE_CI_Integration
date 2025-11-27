@@ -1,0 +1,56 @@
+/* JavaFX CSS to emulate Vocera teal accordion look (mockup) */
+
+/* Container */
+.vocera-sidebar {
+    -fx-padding: 12;
+    -fx-background-color: linear-gradient(to bottom, #172b33, #122026);
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.sidebar-header {
+    -fx-text-fill: #cfeff2;
+    -fx-font-weight: bold;
+    -fx-padding: 8 8 12 8;
+}
+
+/* Accordion/TitledPane header */
+.vocera-accordion .titled-pane > .title {
+    -fx-background-color: linear-gradient(to bottom, #0e6f75, #12848b);
+    -fx-padding: 10 12 10 12;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-background-radius: 8 8 0 0;
+    -fx-border-color: rgba(255,255,255,0.15);
+    -fx-border-radius: 8 8 0 0;
+}
+
+/* Content area */
+.vocera-accordion .titled-pane > *.content {
+    -fx-background-color: linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.12));
+    -fx-padding: 8;
+    -fx-background-radius: 0 0 8 8;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-width: 0 1 1 1;
+    -fx-border-radius: 0 0 8 8;
+}
+
+/* Buttons */
+.vocera-btn {
+    -fx-background-color: linear-gradient(to bottom, #149aa3, #16afbb);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 12 10 12;
+    -fx-background-radius: 6;
+    -fx-border-color: rgba(255,255,255,0.2);
+    -fx-border-radius: 6;
+}
+.vocera-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #16afbb, #4dc9d2);
+}
+
+.mockup-title {
+    -fx-font-size: 18;
+    -fx-font-weight: bold;
+}

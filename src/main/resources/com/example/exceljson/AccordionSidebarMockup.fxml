@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<!-- JavaFX mockup of Vocera-style accordion sidebar -->
+<BorderPane prefWidth="1000.0" prefHeight="640.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml">
+    <left>
+        <VBox spacing="8.0" BorderPane.alignment="CENTER_LEFT" styleClass="vocera-sidebar">
+            <children>
+                <Label text="Vocera-style Accordion" styleClass="sidebar-header"/>
+                <Accordion VBox.vgrow="ALWAYS" styleClass="vocera-accordion">
+                    <panes>
+                        <!-- LOAD DATA -->
+                        <TitledPane text="LOAD DATA" expanded="true" styleClass="vocera-section">
+                            <content>
+                                <VBox spacing="8.0" padding="10">
+                                    <Button text="NDW File" styleClass="vocera-btn"/>
+                                    <Button text="Engage XML" styleClass="vocera-btn"/>
+                                    <Button text="Engage JSON" styleClass="vocera-btn"/>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                        
+                        <!-- VIEWS -->
+                        <TitledPane text="VIEWS" expanded="true" styleClass="vocera-section">
+                            <content>
+                                <VBox spacing="8.0" padding="10">
+                                    <Button text="Units" styleClass="vocera-btn"/>
+                                    <Button text="Nurse Calls" styleClass="vocera-btn"/>
+                                    <Button text="Clinicals" styleClass="vocera-btn"/>
+                                    <Button text="Orders" styleClass="vocera-btn"/>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                        
+                        <!-- ACTIONS -->
+                        <TitledPane text="ACTIONS" styleClass="vocera-section">
+                            <content>
+                                <VBox spacing="8.0" padding="10">
+                                    <Button text="View JSON" styleClass="vocera-btn"/>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                        
+                        <!-- EXPORT -->
+                        <TitledPane text="EXPORT" styleClass="vocera-section">
+                            <content>
+                                <VBox spacing="8.0" padding="10">
+                                    <Button text="Nursecall" styleClass="vocera-btn"/>
+                                    <Button text="Clinicals" styleClass="vocera-btn"/>
+                                    <Button text="Orders" styleClass="vocera-btn"/>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                        
+                        <!-- TOOLS -->
+                        <TitledPane text="TOOLS" styleClass="vocera-section">
+                            <content>
+                                <VBox spacing="8.0" padding="10">
+                                    <Button text="Visual Flow" styleClass="vocera-btn"/>
+                                    <Button text="Reset Data" styleClass="vocera-btn"/>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                    </panes>
+                </Accordion>
+            </children>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="10" padding="20">
+            <Label text="Accordion Sidebar (Mockup)" styleClass="mockup-title"/>
+            <Label wrapText="true" text="This FXML mirrors the HTML mockup using JavaFX components. Styling comes from accordion-mockup.css to emulate Vocera's teal look. Actions are not wired—this is a structural/visual mockup only."/>
+        </VBox>
+    </center>
+</BorderPane>

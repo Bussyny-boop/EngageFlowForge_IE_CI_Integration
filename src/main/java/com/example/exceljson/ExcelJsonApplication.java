@@ -74,6 +74,13 @@ public class ExcelJsonApplication extends Application {
             } else {
                 System.err.println("Warning: " + themePath + " not found in resources. Using default styling.");
             }
+            // Add global sidebar stylesheet for Vocera-style accordion
+            var sidebarCss = getClass().getResource("/css/sidebar.css");
+            if (sidebarCss != null) {
+                scene.getStylesheets().add(sidebarCss.toExternalForm());
+            } else {
+                System.err.println("Warning: /css/sidebar.css not found in resources.");
+            }
         } catch (Exception e) {
             System.err.println("Warning: Failed to load " + themePath + ": " + e.getMessage());
         }

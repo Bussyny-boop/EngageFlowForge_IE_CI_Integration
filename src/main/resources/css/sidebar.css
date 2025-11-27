@@ -1,0 +1,67 @@
+.sidebar-root {
+    -fx-padding: 12;
+    -fx-background-color: #3E494A;
+}
+
+.sidebar-title {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-padding: 0 0 12 4;
+}
+
+.sidebar-accordion {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.sidebar-section > .title {
+    -fx-background-radius: 6;
+    -fx-background-color: transparent;
+    -fx-padding: 12 12 12 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: white;
+    -fx-letter-spacing: 1px;
+}
+
+.sidebar-section > .title:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+.sidebar-section > .title > .arrow-button {
+    -fx-padding: 0;
+}
+
+.sidebar-section > .title > .arrow-button .arrow {
+    -fx-background-color: transparent;
+    -fx-shape: null;
+}
+
+.sidebar-section-content {
+    -fx-padding: 8 6 10 6;
+    -fx-spacing: 6;
+    -fx-background-color: transparent;
+}
+
+.sidebar-button {
+    -fx-background-radius: 0;
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-padding: 10 12 10 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-button:focused {
+    -fx-effect: none;
+    -fx-background-insets: 0;
+}

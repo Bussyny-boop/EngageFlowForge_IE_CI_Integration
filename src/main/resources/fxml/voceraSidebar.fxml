@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+
+<VBox fx:id="sidebarRoot"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      spacing="8"
+      styleClass="sidebar-root">
+
+    <!-- Vocera branding -->
+    <Label text="vocera" styleClass="sidebar-title" />
+
+    <Accordion fx:id="voceraAccordion" styleClass="sidebar-accordion">
+
+        <TitledPane text="LOAD DATA" expanded="false" styleClass="sidebar-section">
+            <graphic>
+                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                    <image>
+                        <Image url="@/icons/load_data_icon.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+            <content>
+                <VBox spacing="6" styleClass="sidebar-section-content">
+                    <Button text="NDW File"    fx:id="btnNdw"       styleClass="sidebar-button" />
+                    <Button text="Engage XML"  fx:id="btnXml"       styleClass="sidebar-button" />
+                    <Button text="Engage JSON" fx:id="btnJson"      styleClass="sidebar-button" />
+                </VBox>
+            </content>
+        </TitledPane>
+
+        <TitledPane text="VIEWS" expanded="false" styleClass="sidebar-section">
+            <graphic>
+                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                    <image>
+                        <Image url="@/icons/views_icon.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+            <content>
+                <VBox spacing="6" styleClass="sidebar-section-content">
+                    <Button text="Units"       fx:id="btnUnits"      styleClass="sidebar-button" />
+                    <Button text="Nurse Calls" fx:id="btnNurseCalls" styleClass="sidebar-button" />
+                    <Button text="Clinicals"   fx:id="btnClinicals"  styleClass="sidebar-button" />
+                    <Button text="Orders"      fx:id="btnOrders"     styleClass="sidebar-button" />
+                </VBox>
+            </content>
+        </TitledPane>
+
+        <TitledPane text="ACTIONS" expanded="false" styleClass="sidebar-section">
+            <graphic>
+                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                    <image>
+                        <Image url="@/icons/actions_icon.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+            <content>
+                <VBox spacing="6" styleClass="sidebar-section-content">
+                    <Button text="View JSON" fx:id="btnViewJson"    styleClass="sidebar-button" />
+                </VBox>
+            </content>
+        </TitledPane>
+
+        <TitledPane text="EXPORT" expanded="false" styleClass="sidebar-section">
+            <graphic>
+                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                    <image>
+                        <Image url="@/icons/export_icon.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+            <content>
+                <VBox spacing="6" styleClass="sidebar-section-content">
+                    <Button text="Nursecall" fx:id="btnExportNursecall" styleClass="sidebar-button" />
+                    <Button text="Clinicals" fx:id="btnExportClinicals" styleClass="sidebar-button" />
+                    <Button text="Orders"    fx:id="btnExportOrders"    styleClass="sidebar-button" />
+                </VBox>
+            </content>
+        </TitledPane>
+
+        <TitledPane text="TOOLS" expanded="false" styleClass="sidebar-section">
+            <graphic>
+                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
+                    <image>
+                        <Image url="@/icons/tools_icon.png" />
+                    </image>
+                </ImageView>
+            </graphic>
+            <content>
+                <VBox spacing="6" styleClass="sidebar-section-content">
+                    <Button text="Visual Flow" fx:id="btnVisualFlow" styleClass="sidebar-button" />
+                    <Button text="Reset Data"  fx:id="btnResetData"  styleClass="sidebar-button" />
+                </VBox>
+            </content>
+        </TitledPane>
+
+    </Accordion>
+</VBox>

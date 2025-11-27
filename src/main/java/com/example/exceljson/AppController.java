@@ -382,6 +382,74 @@ public class AppController {
     public void initialize() {
         parser = new ExcelParserV5();
 
+        // Load Vocera-style accordion sidebar into sidebarContainer if available
+        try {
+            if (sidebarContainer != null) {
+                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/voceraSidebar.fxml"));
+                Node sidebar = fxmlLoader.load();
+                sidebarContainer.setCenter(sidebar);
+                // Wire button actions to existing handlers
+                Object ctrl = fxmlLoader.getController();
+                // If a dedicated controller is not provided, bind by lookup of fx:id
+                if (ctrl == null && sidebar instanceof Parent) {
+                    Node ndwBtn = ((Parent) sidebar).lookup("#btnNdw");
+                    if (ndwBtn instanceof Button && loadNdwButton != null) {
+                        ((Button) ndwBtn).setOnAction(e -> loadNdw());
+                    }
+                    Node xmlBtn = ((Parent) sidebar).lookup("#btnXml");
+                    if (xmlBtn instanceof Button && loadXmlButton != null) {
+                        ((Button) xmlBtn).setOnAction(e -> loadXml());
+                    }
+                    Node jsonBtn = ((Parent) sidebar).lookup("#btnJson");
+                    if (jsonBtn instanceof Button && loadJsonButton != null) {
+                        ((Button) jsonBtn).setOnAction(e -> loadJson());
+                    }
+                    Node unitsBtn = ((Parent) sidebar).lookup("#btnUnits");
+                    if (unitsBtn instanceof Button && navUnits != null) {
+                        ((Button) unitsBtn).setOnAction(e -> navUnits.fire());
+                    }
+                    Node nurseBtn = ((Parent) sidebar).lookup("#btnNurseCalls");
+                    if (nurseBtn instanceof Button && navNurseCalls != null) {
+                        ((Button) nurseBtn).setOnAction(e -> navNurseCalls.fire());
+                    }
+                    Node clinicalsBtn = ((Parent) sidebar).lookup("#btnClinicals");
+                    if (clinicalsBtn instanceof Button && navClinicals != null) {
+                        ((Button) clinicalsBtn).setOnAction(e -> navClinicals.fire());
+                    }
+                    Node ordersBtn = ((Parent) sidebar).lookup("#btnOrders");
+                    if (ordersBtn instanceof Button && navOrders != null) {
+                        ((Button) ordersBtn).setOnAction(e -> navOrders.fire());
+                    }
+                    Node viewJsonBtn = ((Parent) sidebar).lookup("#btnViewJson");
+                    if (viewJsonBtn instanceof Button && generateJsonButton != null) {
+                        ((Button) viewJsonBtn).setOnAction(e -> generateCombinedJson());
+                    }
+                    Node exportNurseBtn = ((Parent) sidebar).lookup("#btnExportNursecall");
+                    if (exportNurseBtn instanceof Button && exportNurseJsonButton != null) {
+                        ((Button) exportNurseBtn).setOnAction(e -> exportJson("NurseCalls"));
+                    }
+                    Node exportClinicalsBtn = ((Parent) sidebar).lookup("#btnExportClinicals");
+                    if (exportClinicalsBtn instanceof Button && exportClinicalJsonButton != null) {
+                        ((Button) exportClinicalsBtn).setOnAction(e -> exportJson("Clinicals"));
+                    }
+                    Node exportOrdersBtn = ((Parent) sidebar).lookup("#btnExportOrders");
+                    if (exportOrdersBtn instanceof Button && exportOrdersJsonButton != null) {
+                        ((Button) exportOrdersBtn).setOnAction(e -> exportJson("Orders"));
+                    }
+                    Node visualFlowBtn = ((Parent) sidebar).lookup("#btnVisualFlow");
+                    if (visualFlowBtn instanceof Button && visualFlowButton != null) {
+                        ((Button) visualFlowBtn).setOnAction(e -> generateVisualFlow());
+                    }
+                    Node resetDataBtn = ((Parent) sidebar).lookup("#btnResetData");
+                    if (resetDataBtn instanceof Button && clearAllButton != null) {
+                        ((Button) resetDataBtn).setOnAction(e -> clearAllData());
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Warning: Failed to load voceraSidebar.fxml: " + ex.getMessage());
+        }
+
         // Load saved directories from preferences
         Preferences prefs = Preferences.userNodeForPackage(AppController.class);
         String excelDirPath = prefs.get(PREF_KEY_LAST_EXCEL_DIR, null);
