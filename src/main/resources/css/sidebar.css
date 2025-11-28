@@ -8,7 +8,44 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-font-style: italic;
-    -fx-padding: 0 0 12 4;
+    -fx-padding: 0;
+}
+
+.toggle-sidebar-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-padding: 4 8;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-background-radius: 4;
+}
+
+.toggle-sidebar-btn:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-sidebar-btn:focused,
+.toggle-sidebar-btn:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* Collapsed icon-only buttons */
+.collapsed-icon-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-padding: 6 8;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+}
+
+.collapsed-icon-btn:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
 }
 
 .sidebar-accordion {
@@ -16,14 +53,23 @@
     -fx-border-width: 0;
 }
 
+/* Section headers - the collapsed/expanded titles */
+.sidebar-section {
+    -fx-background-color: transparent;
+}
+
 .sidebar-section > .title {
-    -fx-background-radius: 6;
     -fx-background-color: transparent;
     -fx-padding: 12 12 12 12;
     -fx-font-weight: bold;
     -fx-font-size: 12px;
-    -fx-text-fill: white;
+    -fx-text-fill: white !important;
     -fx-letter-spacing: 1px;
+    -fx-background-radius: 6;
+}
+
+.sidebar-section > .title > .text {
+    -fx-fill: white !important;
 }
 
 .sidebar-section > .title:hover {
@@ -42,8 +88,16 @@
     -fx-shape: null;
 }
 
+/* Content area - must be transparent, no white box */
+.sidebar-section > .content {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+
 .sidebar-section-content {
-    -fx-padding: 8 6 10 6;
+    /* top, right, bottom, left */
+    -fx-padding: 8 6 10 18; /* indent content so buttons are not on same line as headers */
     -fx-spacing: 6;
     -fx-background-color: transparent;
 }
@@ -53,15 +107,273 @@
     -fx-background-color: transparent;
     -fx-text-fill: white;
     -fx-font-size: 11px;
+    -fx-font-weight: bold;
     -fx-padding: 10 12 10 12;
     -fx-alignment: CENTER_LEFT;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
 }
 
 .sidebar-button:hover {
     -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 0;
 }
 
-.sidebar-button:focused {
-    -fx-effect: none;
+.sidebar-button:focused,
+.sidebar-button:pressed,
+.sidebar-button:armed {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
     -fx-background-insets: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* Remove default TitledPane styling */
+.titled-pane {
+    -fx-background-color: transparent;
+}
+
+.titled-pane > .title {
+    -fx-background-color: transparent;
+    -fx-text-fill: white !important;
+}
+
+.titled-pane > .title > .text {
+    -fx-fill: white !important;
+}
+
+.titled-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.titled-pane:expanded > .content {
+    -fx-background-color: transparent;
+}
+
+/* Collapsed sidebar context menu styling */
+.context-menu.collapsed-sidebar-menu {
+    -fx-background-color: #3E494A;
+    -fx-padding: 4 0 4 0;
+    -fx-background-radius: 6;
+    -fx-border-color: rgba(255,255,255,0.15);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+.context-menu.collapsed-sidebar-menu .menu-item {
+    -fx-background-color: #3E494A;
+    -fx-padding: 6 18 6 18;
+}
+
+.context-menu.collapsed-sidebar-menu .menu-item:focused,
+.context-menu.collapsed-sidebar-menu .menu-item:hover {
+    -fx-background-color: #4A5859;
+}
+
+.context-menu.collapsed-sidebar-menu .label {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* --------------------------------------------------------- */
+/* Added: Vocera-style menu item styling (override section)  */
+/* --------------------------------------------------------- */
+.sidebar-root, .sidebar {
+    -fx-padding: 10 0 0 0;
+    -fx-background-color: #3E494A;
+    -fx-font-family: "Helvetica Neue", Arial, sans-serif;
+    -fx-pref-width: 260px;
+}
+
+/* New unified menu item class */
+.sidebar-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 12 18 12 18; /* Slightly tighter for visibility */
+    -fx-text-fill: white; /* High contrast default */
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
+}
+.sidebar-item .icon { -fx-text-fill: #D0D0D0; -fx-font-size: 18px; }
+.sidebar-item:hover { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }
+.sidebar-item:hover .icon { -fx-text-fill: #FFFFFF; }
+.sidebar-item.active { -fx-background-color: #2B7A78; -fx-text-fill: #FFFFFF; }
+.sidebar-item.active .icon { -fx-text-fill: #FFFFFF; }
+
+/* Map legacy sidebar-button to new look */
+.sidebar-button { -fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 12 18 12 18; -fx-alignment: CENTER_LEFT; -fx-cursor: hand; -fx-border-width: 0; }
+.sidebar-button:hover { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }
+.sidebar-button:pressed, .sidebar-button:focused { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }
+.sidebar-button.active { -fx-background-color: #2B7A78; -fx-text-fill: #FFFFFF; }
+
+/* Teal highlight for last loaded button - must override all states */
+.sidebar-button.last-loaded-highlight,
+.sidebar-button.last-loaded-highlight:hover,
+.sidebar-button.last-loaded-highlight:pressed,
+.sidebar-button.last-loaded-highlight:focused,
+.sidebar-item.last-loaded-highlight,
+.sidebar-item.last-loaded-highlight:hover,
+.sidebar-item.last-loaded-highlight:pressed,
+.sidebar-item.last-loaded-highlight:focused {
+    /* Brighter teal and left accent bar to distinguish from active */
+    -fx-background-color: #36A9A1 !important; /* distinct from #2B7A78 */
+    -fx-text-fill: #FFFFFF !important;
+    -fx-border-color: #36A9A1 !important;
+    -fx-border-width: 0 0 0 4; /* accent bar */
+    -fx-border-radius: 0; /* keep square edge */
+}
+
+/* Optional icon spacing */
+.sidebar-item > .graphic, .sidebar-button > .graphic { -fx-padding: 0 8 0 0; }
+
+/* ---------------- Collapsed Hover Flyout ---------------- */
+.collapsed-flyout {
+    -fx-background-color: #3E494A;
+    /* Remove all borders for seamless attachment */
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 0 10 10 0;
+    -fx-border-radius: 0 10 10 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.40), 10, 0, 0, 3);
+    -fx-padding: 0;
+    -fx-spacing: 0;
+    -fx-min-width: 170;
+}
+
+.collapsed-flyout-header {
+    -fx-background-color: #3E494A; /* unified charcoal */
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-style: italic; /* differentiate from item buttons */
+    -fx-font-size: 12px;
+    -fx-padding: 5 16 6 16; /* add more separation from first item */
+    -fx-background-radius: 0 10 0 0;
+    -fx-border-width: 0; /* no divider */
+    -fx-font-family: "Segoe UI Semibold", "Segoe UI", Arial, sans-serif;
+}
+
+.collapsed-flyout-items {
+    -fx-padding: 4 0 8 0; /* space below header and at bottom */
+    -fx-spacing: 4; /* more vertical separation between items */
+}
+
+.collapsed-flyout-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E4E7E7;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold; /* heavier to avoid thin appearance */
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 7 16 7 16; /* increase internal padding for text breathing room */
+    -fx-cursor: hand;
+    -fx-background-radius: 0;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.collapsed-flyout-item:hover {
+    -fx-background-color: #2F3839;
+    -fx-text-fill: white;
+}
+
+.collapsed-flyout-item:pressed {
+    -fx-background-color: #2F3839; /* remove teal, use dark charcoal */
+    -fx-text-fill: white;
+}
+/* Ensure focused state doesn't introduce teal or borders */
+.collapsed-flyout-item:focused {
+    -fx-background-color: #2F3839;
+    -fx-text-fill: white;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
+}
+
+/* ---------------- Colored Icon Backgrounds ---------------- */
+/* Uniform icon box (rounded pill/circle) */
+.icon-box { -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28; -fx-max-width: 28; -fx-max-height: 28; -fx-alignment: CENTER; -fx-background-radius: 14; -fx-padding: 0; }
+
+/* Saturated palette (expanded) */
+.icon-bg-teal { -fx-background-color: #00979D; }
+.icon-bg-green { -fx-background-color: #27AE60; }
+.icon-bg-purple { -fx-background-color: #9B59B6; }
+.icon-bg-orange { -fx-background-color: #F39C12; }
+.icon-bg-pink { -fx-background-color: #FF6B9D; }
+.icon-bg-red { -fx-background-color: #E74C3C; }
+.icon-bg-blue { -fx-background-color: #4A90E2; }
+
+/* Soft tint palette (collapsed) */
+.icon-soft-teal { -fx-background-color: #33B3B8; }
+.icon-soft-green { -fx-background-color: #5BCB86; }
+.icon-soft-purple { -fx-background-color: #B784C8; }
+.icon-soft-orange { -fx-background-color: #F8B547; }
+.icon-soft-pink { -fx-background-color: #FF94B8; }
+.icon-soft-red { -fx-background-color: #EF7B6F; }
+.icon-soft-blue { -fx-background-color: #76ADEE; }
+
+/* Icon container hover lighten */
+.icon-box.icon-bg-teal:hover { -fx-background-color: #00B8C0; }
+.icon-box.icon-bg-green:hover { -fx-background-color: #2ECC71; }
+.icon-box.icon-bg-purple:hover { -fx-background-color: #B07ED1; }
+.icon-box.icon-bg-orange:hover { -fx-background-color: #F8AE3D; }
+.icon-box.icon-bg-pink:hover { -fx-background-color: #FF86AD; }
+.icon-box.icon-bg-red:hover { -fx-background-color: #FF6B57; }
+.icon-box.icon-bg-blue:hover { -fx-background-color: #6AA9E9; }
+
+/* Soft tint hover (slight brighten) */
+.icon-box.icon-soft-teal:hover { -fx-background-color: #55C6CB; }
+.icon-box.icon-soft-green:hover { -fx-background-color: #74D99A; }
+.icon-box.icon-soft-purple:hover { -fx-background-color: #C89AD7; }
+.icon-box.icon-soft-orange:hover { -fx-background-color: #F9C068; }
+.icon-box.icon-soft-pink:hover { -fx-background-color: #FFA9C6; }
+.icon-box.icon-soft-red:hover { -fx-background-color: #F29085; }
+.icon-box.icon-soft-blue:hover { -fx-background-color: #8EBBEF; }
+
+/* Ensure ImageView inside icon boxes scales consistently */
+/* Icon image sizing (reduce to 16px) */
+.icon-box ImageView { -fx-fit-width: 16; -fx-fit-height: 16; }
+
+/* Expanded (not collapsed) custom menu without bar lines */
+.context-menu.expanded-sidebar-menu {
+    -fx-background-color: #3E494A;
+    -fx-padding: 4 0 4 0;
+    -fx-background-radius: 6;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-insets: 0;
+    -fx-border-radius: 6;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.context-menu.expanded-sidebar-menu .menu-item {
+    -fx-background-color: #3E494A;
+    -fx-padding: 6 18 6 18;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.context-menu.expanded-sidebar-menu .menu-item:focused,
+.context-menu.expanded-sidebar-menu .menu-item:hover {
+    -fx-background-color: #2F3839;
+}
+.context-menu.expanded-sidebar-menu .label {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* Remove separators globally in custom menus */
+.context-menu.expanded-sidebar-menu .separator, .context-menu.collapsed-sidebar-menu .separator {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
 }

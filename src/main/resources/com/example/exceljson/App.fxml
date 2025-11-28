@@ -103,7 +103,7 @@
         <BorderPane>
             <!-- Left: Side Navigation Panel -->
             <left>
-                <BorderPane fx:id="sidebarContainer" prefWidth="220" minWidth="60">
+                <BorderPane fx:id="sidebarContainer" prefWidth="220" minWidth="60" styleClass="sidebar-container">
                     <top>
                         <!-- Branding Bar with Icon and Toggle -->
                         <VBox spacing="0" styleClass="sidebar-header">

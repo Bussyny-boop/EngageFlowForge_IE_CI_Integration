@@ -25,6 +25,7 @@ import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.util.Duration;
 import javafx.concurrent.Task;
 import javafx.scene.control.SpinnerValueFactory;
@@ -35,6 +36,7 @@ import javafx.scene.text.TextFlow;
 import javafx.scene.text.Text;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Circle;
 import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -67,6 +69,18 @@ import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class AppController {
+    // Sidebar node references for collapse/expand logic
+    private VBox sidebarSections;
+    private VBox collapsedIconsBar;
+    private Label sidebarTitleLabel;
+    private Button toggleSidebarBtn;
+    private java.util.LinkedList<TitledPane> expandedPanes = new java.util.LinkedList<>();
+    private Button lastLoadedButton = null;
+    
+    // Sidebar buttons for load highlighting
+    private Button btnNdw;
+    private Button btnXml;
+    private Button btnJson;
 
     // ---------- New UI Elements for Redesigned Layout ----------
     @FXML private Label currentFileLabel;
@@ -344,7 +358,10 @@ public class AppController {
     
     // ---------- Button Text Storage for Animation/Progress ----------
     private final Map<Button, String> originalButtonTexts = new HashMap<>();
+    private final Map<Button, String> originalButtonStyles = new HashMap<>();
+    private final Map<Button, Node> originalButtonGraphics = new HashMap<>();
     private final Map<ToggleButton, String> originalToggleTexts = new HashMap<>();
+    private final Map<ToggleButton, Node> originalToggleGraphics = new HashMap<>();
 
     // ---------- Directory Persistence ----------
     private File lastExcelDir = null;
@@ -403,67 +420,215 @@ public class AppController {
                 System.out.println("DEBUG: FXMLLoader created, loading FXML...");
                 Node sidebar = fxmlLoader.load();
                 System.out.println("DEBUG: FXML loaded successfully, sidebar node: " + sidebar);
-                sidebarContainer.setCenter(sidebar);
-                System.out.println("DEBUG: Sidebar set to sidebarContainer center");
-                // Wire button actions to existing handlers
-                Object ctrl = fxmlLoader.getController();
-                // If a dedicated controller is not provided, bind by lookup of fx:id
-                if (ctrl == null && sidebar instanceof Parent) {
-                    System.out.println("DEBUG: Wiring button handlers...");
-                    Node ndwBtn = ((Parent) sidebar).lookup("#btnNdw");
-                    if (ndwBtn instanceof Button && loadNdwButton != null) {
-                        ((Button) ndwBtn).setOnAction(e -> loadNdw());
+                
+                    // Store references for collapse/expand control
+                    if (sidebar instanceof Parent) {
+                    sidebarSections = (VBox) ((Parent) sidebar).lookup("#voceraSections");
+                    collapsedIconsBar = (VBox) ((Parent) sidebar).lookup("#collapsedIconBar");
+                    System.out.println("DEBUG: Sections container: " + sidebarSections);
+                    
+                    // Setup accordion auto-collapse logic (max 3 expanded)
+                    if (sidebarSections != null) {
+                        for (Node node : sidebarSections.getChildren()) {
+                            if (node instanceof TitledPane) {
+                                TitledPane pane = (TitledPane) node;
+                                pane.expandedProperty().addListener((obs, wasExpanded, isExpanded) -> {
+                                    if (isExpanded) {
+                                        expandedPanes.remove(pane);
+                                        expandedPanes.add(pane);
+                                        if (expandedPanes.size() > 3) {
+                                            TitledPane oldest = expandedPanes.removeFirst();
+                                            oldest.setExpanded(false);
+                                        }
+                                    } else {
+                                        expandedPanes.remove(pane);
+                                    }
+                                });
+                            }
+                        }
                     }
-                    Node xmlBtn = ((Parent) sidebar).lookup("#btnXml");
-                    if (xmlBtn instanceof Button && loadXmlButton != null) {
-                        ((Button) xmlBtn).setOnAction(e -> loadXml());
+                    
+                    // Setup sidebar toggle functionality
+                    toggleSidebarBtn = (Button) ((Parent) sidebar).lookup("#toggleSidebarBtn");
+                    sidebarTitleLabel = (Label) ((Parent) sidebar).lookup("#sidebarTitleLabel");
+                    if (toggleSidebarBtn != null) {
+                        toggleSidebarBtn.setOnAction(e -> {
+                            boolean isCollapsed = sidebarContainer.getPrefWidth() <= 60;
+                            Preferences prefsLocal = Preferences.userNodeForPackage(AppController.class);
+                            if (isCollapsed) {
+                                // Expand - change arrow to point left
+                                sidebarContainer.setMinWidth(50);
+                                sidebarContainer.setPrefWidth(220);
+                                toggleSidebarBtn.setText("◀"); // ◀ left arrow
+                                if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(true);
+                                if (sidebarSections != null) {
+                                    sidebarSections.setVisible(true);
+                                    sidebarSections.setManaged(true);
+                                }
+                                if (collapsedIconsBar != null) {
+                                    collapsedIconsBar.setVisible(false);
+                                    collapsedIconsBar.setManaged(false);
+                                }
+                                isSidebarCollapsed = false;
+                            } else {
+                                // Collapse - change arrow to point right, show only toggle button
+                                sidebarContainer.setMinWidth(50);
+                                sidebarContainer.setPrefWidth(60);
+                                toggleSidebarBtn.setText("▶"); // ▶ right arrow
+                                if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(false);
+                                if (sidebarSections != null) {
+                                    sidebarSections.setVisible(false);
+                                    sidebarSections.setManaged(false);
+                                }
+                                if (collapsedIconsBar != null) {
+                                    collapsedIconsBar.setVisible(true);
+                                    collapsedIconsBar.setManaged(true);
+                                }
+                                isSidebarCollapsed = true;
+                            }
+                            prefsLocal.putBoolean(PREF_KEY_SIDEBAR_COLLAPSED, isSidebarCollapsed);
+                        });
                     }
-                    Node jsonBtn = ((Parent) sidebar).lookup("#btnJson");
-                    if (jsonBtn instanceof Button && loadJsonButton != null) {
-                        ((Button) jsonBtn).setOnAction(e -> loadJson());
-                    }
-                    Node unitsBtn = ((Parent) sidebar).lookup("#btnUnits");
-                    if (unitsBtn instanceof Button && navUnits != null) {
-                        ((Button) unitsBtn).setOnAction(e -> navUnits.fire());
-                    }
-                    Node nurseBtn = ((Parent) sidebar).lookup("#btnNurseCalls");
-                    if (nurseBtn instanceof Button && navNurseCalls != null) {
-                        ((Button) nurseBtn).setOnAction(e -> navNurseCalls.fire());
-                    }
-                    Node clinicalsBtn = ((Parent) sidebar).lookup("#btnClinicals");
-                    if (clinicalsBtn instanceof Button && navClinicals != null) {
-                        ((Button) clinicalsBtn).setOnAction(e -> navClinicals.fire());
-                    }
-                    Node ordersBtn = ((Parent) sidebar).lookup("#btnOrders");
-                    if (ordersBtn instanceof Button && navOrders != null) {
-                        ((Button) ordersBtn).setOnAction(e -> navOrders.fire());
-                    }
-                    Node viewJsonBtn = ((Parent) sidebar).lookup("#btnViewJson");
-                    if (viewJsonBtn instanceof Button && generateJsonButton != null) {
-                        ((Button) viewJsonBtn).setOnAction(e -> generateCombinedJson());
-                    }
-                    Node exportNurseBtn = ((Parent) sidebar).lookup("#btnExportNursecall");
-                    if (exportNurseBtn instanceof Button && exportNurseJsonButton != null) {
-                        ((Button) exportNurseBtn).setOnAction(e -> exportJson("NurseCalls"));
-                    }
-                    Node exportClinicalsBtn = ((Parent) sidebar).lookup("#btnExportClinicals");
-                    if (exportClinicalsBtn instanceof Button && exportClinicalJsonButton != null) {
-                        ((Button) exportClinicalsBtn).setOnAction(e -> exportJson("Clinicals"));
-                    }
-                    Node exportOrdersBtn = ((Parent) sidebar).lookup("#btnExportOrders");
-                    if (exportOrdersBtn instanceof Button && exportOrdersJsonButton != null) {
-                        ((Button) exportOrdersBtn).setOnAction(e -> exportJson("Orders"));
-                    }
-                    Node visualFlowBtn = ((Parent) sidebar).lookup("#btnVisualFlow");
-                    if (visualFlowBtn instanceof Button && visualFlowButton != null) {
-                        ((Button) visualFlowBtn).setOnAction(e -> generateVisualFlow());
-                    }
-                    Node resetDataBtn = ((Parent) sidebar).lookup("#btnResetData");
-                    if (resetDataBtn instanceof Button && clearAllButton != null) {
-                        ((Button) resetDataBtn).setOnAction(e -> clearAllData());
-                    }
-                    System.out.println("DEBUG: Button handlers wired successfully");
+
+                    // Wire collapsed icon hover menus
+                    Button iconLoad = (Button) ((Parent) sidebar).lookup("#btnIconLoad");
+                    if (iconLoad != null) attachHoverMenu(iconLoad,
+                        // Removed leading bullet characters for cleaner flyout
+                        new String[]{"NDW File", "Engage XML", "Engage JSON"},
+                        new Runnable[]{this::loadNdw, this::loadXml, this::loadJson});
+
+                    Button iconViews = (Button) ((Parent) sidebar).lookup("#btnIconViews");
+                    if (iconViews != null) attachHoverMenu(iconViews,
+                        // Removed leading bullet characters
+                        new String[]{"Units", "Nurse Calls", "Clinicals", "Orders"},
+                        new Runnable[]{() -> { if (navUnits!=null) navUnits.fire(); },
+                                       () -> { if (navNurseCalls!=null) navNurseCalls.fire(); },
+                                       () -> { if (navClinicals!=null) navClinicals.fire(); },
+                                       () -> { if (navOrders!=null) navOrders.fire(); }});
+
+                    Button iconActions = (Button) ((Parent) sidebar).lookup("#btnIconActions");
+                    if (iconActions != null) attachHoverMenu(iconActions,
+                        // Removed leading bullet character
+                        new String[]{"View JSON"},
+                        new Runnable[]{this::generateCombinedJson});
+
+                    Button iconExport = (Button) ((Parent) sidebar).lookup("#btnIconExport");
+                    if (iconExport != null) attachHoverMenu(iconExport,
+                        // Removed leading bullet characters
+                        new String[]{"Nursecall", "Clinicals", "Orders"},
+                        new Runnable[]{() -> exportJson("NurseCalls"),
+                                       () -> exportJson("Clinicals"),
+                                       () -> exportJson("Orders")});
+
+                    Button iconTools = (Button) ((Parent) sidebar).lookup("#btnIconTools");
+                    if (iconTools != null) attachHoverMenu(iconTools,
+                        // Removed leading bullet characters
+                        new String[]{"Visual Flow", "Reset Data"},
+                        new Runnable[]{this::generateVisualFlow, this::clearAllData});
                 }
+                
+                sidebarContainer.setCenter(sidebar);
+                
+                // Wire button actions - need to wait for scene graph to be fully constructed
+                Platform.runLater(() -> {
+                    
+                    // Use lookupAll to search entire tree since buttons are inside TitledPanes
+                    btnNdw = (Button) sidebarContainer.lookup("#btnNdw");
+                    if (btnNdw != null) {
+                        if (!originalButtonGraphics.containsKey(btnNdw)) { originalButtonGraphics.put(btnNdw, btnNdw.getGraphic()); }
+                        btnNdw.setOnAction(e -> { 
+                            loadNdw(); 
+                            markSidebarActive(btnNdw); 
+                        });
+                        if (btnNdw.getGraphic() != null) {
+                            btnNdw.getGraphic().setMouseTransparent(true);
+                        }
+                    }
+                    
+                    btnXml = (Button) sidebarContainer.lookup("#btnXml");
+                    if (btnXml != null) {
+                        if (!originalButtonGraphics.containsKey(btnXml)) { originalButtonGraphics.put(btnXml, btnXml.getGraphic()); }
+                        btnXml.setOnAction(e -> { loadXml(); markSidebarActive(btnXml); });
+                        if (btnXml.getGraphic() != null) btnXml.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    btnJson = (Button) sidebarContainer.lookup("#btnJson");
+                    if (btnJson != null) {
+                        if (!originalButtonGraphics.containsKey(btnJson)) { originalButtonGraphics.put(btnJson, btnJson.getGraphic()); }
+                        btnJson.setOnAction(e -> { loadJson(); markSidebarActive(btnJson); });
+                        if (btnJson.getGraphic() != null) btnJson.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button unitsBtn = (Button) sidebarContainer.lookup("#btnUnits");
+                    if (unitsBtn != null) {
+                        unitsBtn.setOnAction(e -> { if (navUnits!=null) navUnits.fire(); markSidebarActive(unitsBtn); });
+                        if (unitsBtn.getGraphic() != null) unitsBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button nurseBtn = (Button) sidebarContainer.lookup("#btnNurseCalls");
+                    if (nurseBtn != null) {
+                        nurseBtn.setOnAction(e -> { if (navNurseCalls!=null) navNurseCalls.fire(); markSidebarActive(nurseBtn); });
+                        if (nurseBtn.getGraphic() != null) nurseBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button clinicalsBtn = (Button) sidebarContainer.lookup("#btnClinicals");
+                    if (clinicalsBtn != null) {
+                        clinicalsBtn.setOnAction(e -> { if (navClinicals!=null) navClinicals.fire(); markSidebarActive(clinicalsBtn); });
+                        if (clinicalsBtn.getGraphic() != null) clinicalsBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button ordersBtn = (Button) sidebarContainer.lookup("#btnOrders");
+                    if (ordersBtn != null) {
+                        ordersBtn.setOnAction(e -> { if (navOrders!=null) navOrders.fire(); markSidebarActive(ordersBtn); });
+                        if (ordersBtn.getGraphic() != null) ordersBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button viewJsonBtn = (Button) sidebarContainer.lookup("#btnViewJson");
+                    if (viewJsonBtn != null) {
+                        viewJsonBtn.setOnAction(e -> { generateCombinedJson(); markSidebarActive(viewJsonBtn); });
+                        if (viewJsonBtn.getGraphic() != null) viewJsonBtn.getGraphic().setMouseTransparent(true);
+                    }
+
+                    // New Save to NDW sidebar action (CI mode only)
+                    Button saveNdwBtn = (Button) sidebarContainer.lookup("#btnSaveNdw");
+                    if (saveNdwBtn != null) {
+                        saveNdwBtn.setOnAction(e -> { saveOnNdw(); markSidebarActive(saveNdwBtn); });
+                        if (saveNdwBtn.getGraphic() != null) saveNdwBtn.getGraphic().setMouseTransparent(true);
+                        // Only show in CI mode
+                        saveNdwBtn.setVisible(userProfile == UserProfile.CI);
+                        saveNdwBtn.setManaged(userProfile == UserProfile.CI);
+                    }
+                    
+                    Button exportNurseBtn = (Button) sidebarContainer.lookup("#btnExportNursecall");
+                    if (exportNurseBtn != null) {
+                        exportNurseBtn.setOnAction(e -> { exportJson("NurseCalls"); markSidebarActive(exportNurseBtn); });
+                        if (exportNurseBtn.getGraphic() != null) exportNurseBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button exportClinicalsBtn = (Button) sidebarContainer.lookup("#btnExportClinicals");
+                    if (exportClinicalsBtn != null) {
+                        exportClinicalsBtn.setOnAction(e -> { exportJson("Clinicals"); markSidebarActive(exportClinicalsBtn); });
+                        if (exportClinicalsBtn.getGraphic() != null) exportClinicalsBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button exportOrdersBtn = (Button) sidebarContainer.lookup("#btnExportOrders");
+                    if (exportOrdersBtn != null) {
+                        exportOrdersBtn.setOnAction(e -> { exportJson("Orders"); markSidebarActive(exportOrdersBtn); });
+                        if (exportOrdersBtn.getGraphic() != null) exportOrdersBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button visualFlowBtn = (Button) sidebarContainer.lookup("#btnVisualFlow");
+                    if (visualFlowBtn != null) {
+                        visualFlowBtn.setOnAction(e -> { generateVisualFlow(); markSidebarActive(visualFlowBtn); });
+                        if (visualFlowBtn.getGraphic() != null) visualFlowBtn.getGraphic().setMouseTransparent(true);
+                    }
+                    
+                    Button resetDataBtn = (Button) sidebarContainer.lookup("#btnResetData");
+                    if (resetDataBtn != null) {
+                        resetDataBtn.setOnAction(e -> { clearAllData(); markSidebarActive(resetDataBtn); });
+                        if (resetDataBtn.getGraphic() != null) resetDataBtn.getGraphic().setMouseTransparent(true);
+                    }
+                });
             } else {
                 System.err.println("WARNING: sidebarContainer is null!");
             }
@@ -727,6 +892,35 @@ public class AppController {
         
         // --- Setup Tool Panel (Design C: Split Panel) ---
         setupToolPanel();
+    }
+
+    /**
+     * Applies the 'active' style class to the clicked sidebar button and removes it from others.
+     * This supports the new Vocera-style CSS provided by user (.sidebar-item.active).
+     */
+    private void markSidebarActive(Button btn) {
+        if (btn == null) return;
+        // Attempt to get the loaded sidebar root from sidebarContainer
+        Parent sidebarRoot = null;
+        if (sidebarContainer != null && sidebarContainer.getCenter() instanceof Parent) {
+            sidebarRoot = (Parent) sidebarContainer.getCenter();
+        }
+        // Fallback: walk up from button to find VBox root
+        if (sidebarRoot == null) {
+            Parent current = btn.getParent();
+            while (current != null) {
+                if (current instanceof VBox) { sidebarRoot = current; break; }
+                current = current.getParent();
+            }
+        }
+        if (sidebarRoot != null) {
+            // Remove active from all sidebar items/buttons
+            sidebarRoot.lookupAll(".sidebar-item").forEach(n -> n.getStyleClass().remove("active"));
+            sidebarRoot.lookupAll(".sidebar-button").forEach(n -> n.getStyleClass().remove("active"));
+        }
+        if (!btn.getStyleClass().contains("active")) {
+            btn.getStyleClass().add("active");
+        }
     }
     
     // ---------- Tool Panel Setup (Design C: Split Panel) ----------
@@ -1677,12 +1871,14 @@ public class AppController {
 
     private void setButtonLoaded(Button button, boolean loaded) {
         if (button == null) return;
+        
         boolean isCollapsed = sidebarContent.getStyleClass().contains("sidebar-collapsed");
         button.getStyleClass().remove("loading");
         if (loaded) {
             if (!button.getStyleClass().contains("loaded")) {
                 button.getStyleClass().add("loaded");
             }
+            
             // Ensure original text captured
             if (!button.getProperties().containsKey("origText")) {
                 button.getProperties().put("origText", button.getText());
@@ -1698,9 +1894,105 @@ public class AppController {
             button.getStyleClass().remove("loaded");
             Object orig = button.getProperties().get("origText");
             if (orig != null) button.setText(String.valueOf(orig));
-            button.setGraphic(null);
+            
+            // Restore original graphic if available, otherwise clear it
+            if (originalButtonGraphics.containsKey(button)) {
+                button.setGraphic(originalButtonGraphics.get(button));
+            } else {
+                button.setGraphic(null);
+            }
+            
             button.setTooltip(null);
         }
+    }
+
+    /**
+     * Highlights the sidebar button with teal color when loaded.
+     * This method ONLY handles the teal highlighting and does NOT modify
+     * the loaded state or checkmark text (that's handled by setButtonLoaded for main buttons).
+     */
+    private void setButtonLoadedWithHighlight(Button button, boolean loaded) {
+        if (button == null) return;
+        
+        Platform.runLater(() -> {
+            if (loaded) {
+                // Clear previous lastLoadedButton highlight
+                if (lastLoadedButton != null && lastLoadedButton != button) {
+                    lastLoadedButton.getStyleClass().removeAll("last-loaded-highlight");
+                    
+                    // Restore original style and text
+                    if (originalButtonStyles.containsKey(lastLoadedButton)) {
+                        lastLoadedButton.setStyle(originalButtonStyles.get(lastLoadedButton));
+                    } else {
+                        lastLoadedButton.setStyle("");
+                    }
+                    
+                    if (originalButtonTexts.containsKey(lastLoadedButton)) {
+                        lastLoadedButton.setText(originalButtonTexts.get(lastLoadedButton));
+                    }
+                }
+                
+                // Store original style and text if not already stored
+                if (!originalButtonStyles.containsKey(button)) {
+                    originalButtonStyles.put(button, button.getStyle());
+                }
+                if (!originalButtonTexts.containsKey(button)) {
+                    originalButtonTexts.put(button, button.getText());
+                }
+                // Ensure we capture the graphic BEFORE we potentially change it or apply styles that might hide it
+                if (!originalButtonGraphics.containsKey(button)) {
+                    originalButtonGraphics.put(button, button.getGraphic());
+                }
+                
+                // Add teal highlight for this button
+                if (!button.getStyleClass().contains("last-loaded-highlight")) {
+                    button.getStyleClass().add("last-loaded-highlight");
+                }
+                // Remove the generic active state so highlight stands out with distinct styling
+                button.getStyleClass().remove("active");
+                
+                // Force inline style for visibility (Teal gradient + Glow + Border)
+                button.setStyle(
+                    "-fx-background-color: linear-gradient(to right, #15D9CF, #0DB4AB); " +
+                    "-fx-text-fill: white; " +
+                    "-fx-border-color: #00D6C6; " +
+                    "-fx-border-width: 0 0 0 4; " +
+                    "-fx-effect: dropshadow(three-pass-box, rgba(21, 217, 207, 0.6), 10, 0, 0, 0);"
+                );
+                
+                // Do NOT append (LOADED) text badge as per user request
+                // Just keep the original text
+                String originalText = originalButtonTexts.get(button);
+                if (originalText != null) {
+                    button.setText(originalText);
+                }
+
+                lastLoadedButton = button;
+            } else {
+                // Remove teal highlight
+                button.getStyleClass().removeAll("last-loaded-highlight");
+                
+                // Restore original style and text
+                if (originalButtonStyles.containsKey(button)) {
+                    button.setStyle(originalButtonStyles.get(button));
+                } else {
+                    button.setStyle("");
+                }
+                
+                if (originalButtonTexts.containsKey(button)) {
+                    button.setText(originalButtonTexts.get(button));
+                }
+                
+                // Restore original graphic if available
+                if (originalButtonGraphics.containsKey(button)) {
+                    button.setGraphic(originalButtonGraphics.get(button));
+                }
+                
+                if (lastLoadedButton == button) {
+                    lastLoadedButton = null;
+                }
+            }
+        });
     }
 
     private void autoClearLoaded(Button button, double seconds) {
@@ -1785,6 +2077,9 @@ public class AppController {
 
                     // Reapply sidebar state to restore icons if collapsed
                     applySidebarState();
+                    
+                    // Apply highlight after sidebar state to ensure visibility
+                    if (btnNdw != null) setButtonLoadedWithHighlight(btnNdw, true);
 
                     // Build success message
                     StringBuilder successMsg = new StringBuilder("✅ Excel loaded successfully");
@@ -1937,6 +2232,9 @@ public class AppController {
 
                         // Reapply sidebar state to restore icons if collapsed
                         applySidebarState();
+                        
+                        // Apply highlight after sidebar state to ensure visibility
+                        if (btnXml != null) setButtonLoadedWithHighlight(btnXml, true);
 
                         // Success message
                         int nurseFlows = parser.nurseCalls.size();
@@ -2067,6 +2365,9 @@ public class AppController {
 
                     // Reapply sidebar state to restore icons if collapsed
                     applySidebarState();
+                    
+                    // Apply highlight after sidebar state to ensure visibility
+                    if (btnJson != null) setButtonLoadedWithHighlight(btnJson, true);
 
                     showInfo("✅ JSON loaded successfully\n\n" +
                         "Loaded " + parser.nurseCalls.size() + " Nurse Calls, " +
@@ -2158,17 +2459,16 @@ public class AppController {
                 statusLabel.setText("✅ Excel saved successfully");
             }
             showInfo("💾 Excel generated successfully:\n" + out.getAbsolutePath());
+
         } catch (Exception ex) {
             hideProgressBar();
             showError("Error saving Excel: " + ex.getMessage());
         }
     }
     
-    // ---------- Save to NDW (CI Mode Only) ----------
     /**
-     * Saves modified data back to the originally loaded NDW Excel file.
-     * Only updates values that were changed by the user.
-     * This is a CI-mode only feature.
+     * Saves modified data back into the original NDW Excel file.
+     * Only updates values that were changed by the user (CI mode feature).
      */
     private void saveOnNdw() {
         try {
@@ -3832,6 +4132,21 @@ public class AppController {
                 if (loadXmlButton != null) loadXmlButton.setTooltip(null);
                 if (loadJsonButton != null) loadJsonButton.setTooltip(null);
                 
+                // Clear sidebar button highlights
+                if (btnNdw != null) {
+                    setButtonLoadedWithHighlight(btnNdw, false);
+                    setButtonLoaded(btnNdw, false);
+                }
+                if (btnXml != null) {
+                    setButtonLoadedWithHighlight(btnXml, false);
+                    setButtonLoaded(btnXml, false);
+                }
+                if (btnJson != null) {
+                    setButtonLoadedWithHighlight(btnJson, false);
+                    setButtonLoaded(btnJson, false);
+                }
+                lastLoadedButton = null;
+                
                 // Clear voice groups, assignment roles, and bed list data and button states
                 clearVoiceGroups();
                 clearAssignmentRoles();
@@ -4208,6 +4523,14 @@ public class AppController {
                 } else {
                     System.err.println("Warning: " + themePath + " not found in resources.");
                 }
+
+                // Always re-apply sidebar styling after theme switch
+                var sidebarCss = getClass().getResource("/css/sidebar.css");
+                if (sidebarCss != null) {
+                    scene.getStylesheets().add(sidebarCss.toExternalForm());
+                } else {
+                    System.err.println("Warning: /css/sidebar.css not found in resources.");
+                }
             }
         } catch (Exception ex) {
             System.err.println("Failed to apply theme: " + ex.getMessage());
@@ -4215,18 +4538,274 @@ public class AppController {
     }
     
     private void updateThemeButton() {
-        if (themeToggleButton != null) {
-            if (isTopBarCollapsed) {
-                // If collapsed, keep the icon and update tooltip
-                setCollapsedButton(themeToggleButton, "/icons/darkmode.png", isDarkMode ? "Light Mode" : "Dark Mode");
+        if (themeToggleButton == null) return;
+        // Always icon-only per new requirement
+        String tooltip = isDarkMode ? "Light Mode" : "Dark Mode";
+        setCollapsedButton(themeToggleButton, "/icons/darkmode.png", tooltip);
+        themeToggleButton.setText(""); // ensure no text
+    }
 
+    // ---------- Collapsed Sidebar Menu (single active at a time) ----------
+    private final ContextMenu collapsedMenu = new ContextMenu();
+    private Button collapsedMenuOwner = null;
 
-            } else {
-                // If expanded, show full text
-                themeToggleButton.setText(isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode");
-                themeToggleButton.setGraphic(null); // Clear icon
+    private void showCollapsedMenu(Button anchor, String[] itemLabels, Runnable[] actions) {
+        if (anchor == null || itemLabels == null || actions == null) return;
+        if (itemLabels.length != actions.length) return;
+
+        // Ensure only used in collapsed mode for hover; allow click either way
+        boolean isCollapsed = sidebarContainer != null && sidebarContainer.getPrefWidth() <= 60;
+
+        // Rebuild menu items for the requested anchor
+        collapsedMenu.getItems().clear();
+        for (int i = 0; i < itemLabels.length; i++) {
+            final int idx = i;
+            MenuItem mi = new MenuItem(itemLabels[i]);
+            mi.setOnAction(e -> {
+                collapsedMenu.hide();
+                Platform.runLater(actions[idx]);
+            });
+            collapsedMenu.getItems().add(mi);
+        }
+
+        // Hide any existing menu shown for a different owner
+        if (collapsedMenu.isShowing() && collapsedMenuOwner != anchor) {
+            collapsedMenu.hide();
+        }
+
+        collapsedMenuOwner = anchor;
+
+        // Style menu for collapsed mode (Vocera charcoal + white text)
+        var styleClasses = collapsedMenu.getStyleClass();
+        styleClasses.remove("collapsed-sidebar-menu");
+        styleClasses.remove("expanded-sidebar-menu");
+        if (isCollapsed) {
+            if (!styleClasses.contains("collapsed-sidebar-menu")) {
+                styleClasses.add("collapsed-sidebar-menu");
+            }
+        } else {
+            if (!styleClasses.contains("expanded-sidebar-menu")) {
+                styleClasses.add("expanded-sidebar-menu");
             }
         }
+
+        // Always show to the right of the icon
+        collapsedMenu.show(anchor, javafx.geometry.Side.RIGHT, 8, 0);
+    }
+
+    // Attaches handlers to an icon button; uses flyout popup when collapsed
+    private void attachHoverMenu(Button anchor, String[] itemLabels, Runnable[] actions) {
+        if (anchor == null) return;
+
+        anchor.setOnMouseEntered(e -> {
+            if (sidebarContainer != null && sidebarContainer.getPrefWidth() <= 60) {
+                String headerText = deriveHeaderText(anchor);
+                showCollapsedFlyout(anchor, headerText, itemLabels, actions);
+            }
+        });
+        anchor.setOnAction(e -> {
+            boolean isCollapsed = sidebarContainer != null && sidebarContainer.getPrefWidth() <= 60;
+            if (isCollapsed) {
+                // New behavior: clicking an icon expands the sidebar instead of showing flyout
+                expandSidebarAndFocus(anchor);
+            } else {
+                // Fallback to legacy context menu when expanded
+                showCollapsedMenu(anchor, itemLabels, actions);
+            }
+        });
+    }
+
+    // Expands sidebar and optionally focuses related titled pane
+    private void expandSidebarAndFocus(Button anchor) {
+        if (sidebarContainer == null) return;
+        sidebarContainer.setMinWidth(50);
+        sidebarContainer.setPrefWidth(220);
+        if (toggleSidebarBtn != null) toggleSidebarBtn.setText("◀");
+        if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(true);
+        if (sidebarSections != null) { sidebarSections.setVisible(true); sidebarSections.setManaged(true); }
+        if (collapsedIconsBar != null) { collapsedIconsBar.setVisible(false); collapsedIconsBar.setManaged(false); }
+        // Expand matching titled pane
+        if (anchor != null) {
+            String id = anchor.getId();
+            if (id != null) {
+                TitledPane pane = null;
+                switch (id) {
+                    case "btnIconLoad": pane = (TitledPane) sidebarSections.lookup("#paneLoad"); break;
+                    case "btnIconViews": pane = (TitledPane) sidebarSections.lookup("#paneViews"); break;
+                    case "btnIconActions": pane = (TitledPane) sidebarSections.lookup("#paneActions"); break;
+                    case "btnIconExport": pane = (TitledPane) sidebarSections.lookup("#paneExport"); break;
+                    case "btnIconTools": pane = (TitledPane) sidebarSections.lookup("#paneTools"); break;
+                }
+                if (pane != null) pane.setExpanded(true);
+            }
+        }
+    }
+
+    // Popup state for collapsed flyout
+    private Popup collapsedFlyout = null;
+    private Button collapsedFlyoutOwner = null;
+
+    private void showCollapsedFlyout(Button anchor, String headerText, String[] itemLabels, Runnable[] actions) {
+        if (anchor == null || itemLabels == null || actions == null) return;
+        if (itemLabels.length != actions.length) return;
+
+        if (collapsedFlyout != null && collapsedFlyout.isShowing() && collapsedFlyoutOwner != anchor) {
+            collapsedFlyout.hide();
+        }
+        collapsedFlyoutOwner = anchor;
+
+        VBox root = new VBox();
+        root.getStyleClass().add("collapsed-flyout");
+
+        // Compute fallback header if derived header is blank or generic
+        String effectiveHeader = headerText;
+        if (effectiveHeader == null || effectiveHeader.isBlank() || "MENU".equalsIgnoreCase(effectiveHeader)) {
+            effectiveHeader = computeSectionHeader(itemLabels);
+        }
+        // Override with anchor-specific canonical header if available
+        String mapped = mapAnchorToHeader(anchor);
+        if (mapped != null) {
+            effectiveHeader = mapped;
+        }
+
+        boolean includeHeader = effectiveHeader != null && !effectiveHeader.isBlank();
+        if (includeHeader) {
+            Label header = new Label(effectiveHeader);
+            header.getStyleClass().add("collapsed-flyout-header");
+            root.getChildren().add(header);
+        }
+
+        VBox listBox = new VBox();
+        listBox.getStyleClass().add("collapsed-flyout-items");
+        for (int i = 0; i < itemLabels.length; i++) {
+            final int idx = i;
+            Button b = new Button(itemLabels[i]);
+            b.getStyleClass().add("collapsed-flyout-item");
+            b.setMaxWidth(Double.MAX_VALUE);
+            b.setOnAction(ev -> {
+                if (collapsedFlyout != null) collapsedFlyout.hide();
+                Platform.runLater(actions[idx]);
+            });
+            listBox.getChildren().add(b);
+        }
+        root.getChildren().add(listBox);
+
+        root.setOnMouseExited(ev -> {
+            if (anchor.isHover()) return; // keep open if returning to icon
+            PauseTransition pt = new PauseTransition(Duration.millis(160));
+            pt.setOnFinished(done -> { if (collapsedFlyout != null) collapsedFlyout.hide(); });
+            pt.play();
+        });
+
+        if (collapsedFlyout == null) {
+            collapsedFlyout = new Popup();
+            collapsedFlyout.setAutoHide(true);
+        } else {
+            collapsedFlyout.getContent().clear();
+        }
+        collapsedFlyout.getContent().add(root);
+        double x = anchor.localToScreen(anchor.getBoundsInLocal()).getMaxX();
+        double y = anchor.localToScreen(anchor.getBoundsInLocal()).getMinY() - 1; // nudge up to remove perceived gap
+        collapsedFlyout.show(getStage(), x, y);
+
+        // Animate flyout (slide + fade) for smoother UX
+        root.setOpacity(0);
+        root.setTranslateX(-8); // small slide from icon
+        FadeTransition fade = new FadeTransition(Duration.millis(140), root);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        TranslateTransition slide = new TranslateTransition(Duration.millis(140), root);
+        slide.setFromX(-8);
+        slide.setToX(0);
+        ParallelTransition combo = new ParallelTransition(fade, slide);
+        combo.play();
+    }
+
+    /**
+     * Determines a concise section header based on the flyout's item labels.
+     * Priority keywords mapped to canonical uppercase headers. Falls back to first item word.
+     */
+    private String computeSectionHeader(String[] itemLabels) {
+        if (itemLabels == null || itemLabels.length == 0) return null;
+        // Normalize & sanitize labels (remove leading emoji/pictograph/punctuation)
+        List<String> labels = Arrays.stream(itemLabels)
+            .filter(Objects::nonNull)
+            .map(s -> sanitizeLeadingSymbols(s).trim().toLowerCase(Locale.ROOT))
+            .filter(s -> !s.isBlank())
+            .collect(Collectors.toList());
+        if (labels.isEmpty()) return null;
+
+        // Keyword mapping
+        Map<String, String> keywordMap = new LinkedHashMap<>();
+        keywordMap.put("load", "LOAD");
+        keywordMap.put("import", "LOAD");
+        keywordMap.put("view", "VIEW");
+        keywordMap.put("display", "VIEW");
+        keywordMap.put("manage", "MANAGE");
+        keywordMap.put("users", "MANAGE");
+        keywordMap.put("groups", "MANAGE");
+        keywordMap.put("facilities", "MANAGE");
+        keywordMap.put("contacts", "MANAGE");
+        keywordMap.put("templates", "MANAGE");
+        keywordMap.put("bulk", "MANAGE");
+        keywordMap.put("settings", "SETTINGS");
+        keywordMap.put("config", "SETTINGS");
+        keywordMap.put("security", "SECURITY");
+        keywordMap.put("workflow", "WORKFLOW");
+        keywordMap.put("about", "ABOUT");
+
+        for (String l : labels) {
+            for (String key : keywordMap.keySet()) {
+                if (l.startsWith(key)) {
+                    return keywordMap.get(key);
+                }
+            }
+        }
+
+        // Fallback: first word of first item uppercased
+        String first = labels.get(0);
+        if (first.isBlank()) return null;
+        String word = sanitizeLeadingSymbols(first).split("\\s+")[0];
+        // If word is only symbol(s) then skip header
+        if (word.matches("^[\\p{So}\\p{Sk}\\p{Sc}\\p{Punct}]+$")) return null;
+        if (word.length() > 14) word = word.substring(0, 14);
+        return word.toUpperCase(Locale.ROOT);
+    }
+
+    // Maps specific collapsed icon buttons to canonical headers
+    private String mapAnchorToHeader(Button anchor) {
+        if (anchor == null) return null;
+        String id = anchor.getId();
+        if (id == null) return null;
+        switch (id) {
+            case "btnIconLoad": return "LOAD";
+            case "btnIconViews": return "VIEW";
+            case "btnIconActions": return "ACTIONS";
+            case "btnIconExport": return "EXPORT";
+            case "btnIconTools": return "TOOLS";
+            default: return null;
+        }
+    }
+
+    private String sanitizeLeadingSymbols(String raw) {
+        if (raw == null) return "";
+        return raw.replaceFirst("^[\\p{So}\\p{Sk}\\p{Sc}\\p{Punct}]+\\s*", "");
+    }
+
+    private String deriveHeaderText(Button anchor) {
+        if (anchor == null) return "MENU";
+        Object ud = anchor.getUserData();
+        if (ud != null) return sanitizeHeader(String.valueOf(ud));
+        return sanitizeHeader(anchor.getText());
+    }
+
+    private String sanitizeHeader(String raw) {
+        if (raw == null) return "MENU";
+        String cleaned = raw.replaceFirst("^[\\p{So}\\p{Sk}\\p{Sc}\\p{Punct}]+\\s*", "");
+        if (cleaned.isBlank()) cleaned = raw.trim();
+        cleaned = cleaned.toUpperCase(Locale.ROOT);
+        if (cleaned.length() > 24) cleaned = cleaned.substring(0,21) + "…";
+        return cleaned;
     }
     
     // ---------- Profile Switcher ----------
@@ -4334,15 +4913,37 @@ public class AppController {
     }
     
     private void applySidebarState() {
+        // If new voceraSidebar is active (sidebarSections present), skip legacy apply logic
+        if (sidebarSections != null) {
+            // Honor stored preference by adjusting width only if mismatch
+            if (sidebarContainer != null) {
+                boolean currentlyCollapsed = sidebarContainer.getPrefWidth() <= 60;
+                if (isSidebarCollapsed && !currentlyCollapsed) {
+                    // Force collapse without toggling visuals beyond needed state
+                    sidebarContainer.setMinWidth(50);
+                    sidebarContainer.setPrefWidth(60);
+                    if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(false);
+                    if (sidebarSections != null) { sidebarSections.setVisible(false); sidebarSections.setManaged(false); }
+                    if (collapsedIconsBar != null) { collapsedIconsBar.setVisible(true); collapsedIconsBar.setManaged(true); }
+                    if (toggleSidebarBtn != null) toggleSidebarBtn.setText("▶");
+                } else if (!isSidebarCollapsed && currentlyCollapsed) {
+                    sidebarContainer.setMinWidth(50);
+                    sidebarContainer.setPrefWidth(220);
+                    if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(true);
+                    if (sidebarSections != null) { sidebarSections.setVisible(true); sidebarSections.setManaged(true); }
+                    if (collapsedIconsBar != null) { collapsedIconsBar.setVisible(false); collapsedIconsBar.setManaged(false); }
+                    if (toggleSidebarBtn != null) toggleSidebarBtn.setText("◀");
+                }
+            }
+            return; // Do not execute legacy path
+        }
         if (sidebarContainer != null && sidebarContent != null && sidebarToggleButton != null) {
             if (isSidebarCollapsed) {
-                // Collapse: show icons only, make container narrow but visible
                 collapseSidebarToIcons();
-                sidebarToggleButton.setText("▶"); // Arrow pointing right
+                sidebarToggleButton.setText("▶");
             } else {
-                // Expand: show full content, make container normal width
                 expandSidebarToFull();
-                sidebarToggleButton.setText("◀"); // Arrow pointing left
+                sidebarToggleButton.setText("◀");
             }
         }
     }
@@ -4351,29 +4952,29 @@ public class AppController {
      * Store original button texts for sidebar collapse/expand functionality
      */
     private void storeOriginalButtonTexts() {
-        // Store regular button texts
-        if (loadNdwButton != null) originalButtonTexts.put(loadNdwButton, loadNdwButton.getText());
-        if (loadXmlButton != null) originalButtonTexts.put(loadXmlButton, loadXmlButton.getText());
-        if (loadJsonButton != null) originalButtonTexts.put(loadJsonButton, loadJsonButton.getText());
-        if (clearAllButton != null) originalButtonTexts.put(clearAllButton, clearAllButton.getText());
-        if (saveOnNdwButton != null) originalButtonTexts.put(saveOnNdwButton, saveOnNdwButton.getText());
-        if (generateJsonButton != null) originalButtonTexts.put(generateJsonButton, generateJsonButton.getText());
-        if (exportNurseJsonButton != null) originalButtonTexts.put(exportNurseJsonButton, exportNurseJsonButton.getText());
-        if (exportClinicalJsonButton != null) originalButtonTexts.put(exportClinicalJsonButton, exportClinicalJsonButton.getText());
-        if (exportOrdersJsonButton != null) originalButtonTexts.put(exportOrdersJsonButton, exportOrdersJsonButton.getText());
-        if (visualFlowButton != null) originalButtonTexts.put(visualFlowButton, visualFlowButton.getText());
+        // Store regular button texts and graphics
+        if (loadNdwButton != null) { originalButtonTexts.put(loadNdwButton, loadNdwButton.getText()); originalButtonGraphics.put(loadNdwButton, loadNdwButton.getGraphic()); }
+        if (loadXmlButton != null) { originalButtonTexts.put(loadXmlButton, loadXmlButton.getText()); originalButtonGraphics.put(loadXmlButton, loadXmlButton.getGraphic()); }
+        if (loadJsonButton != null) { originalButtonTexts.put(loadJsonButton, loadJsonButton.getText()); originalButtonGraphics.put(loadJsonButton, loadJsonButton.getGraphic()); }
+        if (clearAllButton != null) { originalButtonTexts.put(clearAllButton, clearAllButton.getText()); originalButtonGraphics.put(clearAllButton, clearAllButton.getGraphic()); }
+        if (saveOnNdwButton != null) { originalButtonTexts.put(saveOnNdwButton, saveOnNdwButton.getText()); originalButtonGraphics.put(saveOnNdwButton, saveOnNdwButton.getGraphic()); }
+        if (generateJsonButton != null) { originalButtonTexts.put(generateJsonButton, generateJsonButton.getText()); originalButtonGraphics.put(generateJsonButton, generateJsonButton.getGraphic()); }
+        if (exportNurseJsonButton != null) { originalButtonTexts.put(exportNurseJsonButton, exportNurseJsonButton.getText()); originalButtonGraphics.put(exportNurseJsonButton, exportNurseJsonButton.getGraphic()); }
+        if (exportClinicalJsonButton != null) { originalButtonTexts.put(exportClinicalJsonButton, exportClinicalJsonButton.getText()); originalButtonGraphics.put(exportClinicalJsonButton, exportClinicalJsonButton.getGraphic()); }
+        if (exportOrdersJsonButton != null) { originalButtonTexts.put(exportOrdersJsonButton, exportOrdersJsonButton.getText()); originalButtonGraphics.put(exportOrdersJsonButton, exportOrdersJsonButton.getGraphic()); }
+        if (visualFlowButton != null) { originalButtonTexts.put(visualFlowButton, visualFlowButton.getText()); originalButtonGraphics.put(visualFlowButton, visualFlowButton.getGraphic()); }
         
-        // Store top bar button texts
-        if (settingsButton != null) originalButtonTexts.put(settingsButton, settingsButton.getText());
-        if (saveExcelButton != null) originalButtonTexts.put(saveExcelButton, saveExcelButton.getText());
-        if (themeToggleButton != null) originalButtonTexts.put(themeToggleButton, themeToggleButton.getText());
-        if (helpButton != null) originalButtonTexts.put(helpButton, helpButton.getText());
+        // Store top bar button texts and graphics
+        if (settingsButton != null) { originalButtonTexts.put(settingsButton, settingsButton.getText()); originalButtonGraphics.put(settingsButton, settingsButton.getGraphic()); }
+        if (saveExcelButton != null) { originalButtonTexts.put(saveExcelButton, saveExcelButton.getText()); originalButtonGraphics.put(saveExcelButton, saveExcelButton.getGraphic()); }
+        if (themeToggleButton != null) { originalButtonTexts.put(themeToggleButton, themeToggleButton.getText()); originalButtonGraphics.put(themeToggleButton, themeToggleButton.getGraphic()); }
+        if (helpButton != null) { originalButtonTexts.put(helpButton, helpButton.getText()); originalButtonGraphics.put(helpButton, helpButton.getGraphic()); }
         
-        // Store toggle button texts
-        if (navUnits != null) originalToggleTexts.put(navUnits, navUnits.getText());
-        if (navNurseCalls != null) originalToggleTexts.put(navNurseCalls, navNurseCalls.getText());
-        if (navClinicals != null) originalToggleTexts.put(navClinicals, navClinicals.getText());
-        if (navOrders != null) originalToggleTexts.put(navOrders, navOrders.getText());
+        // Store toggle button texts and graphics
+        if (navUnits != null) { originalToggleTexts.put(navUnits, navUnits.getText()); originalToggleGraphics.put(navUnits, navUnits.getGraphic()); }
+        if (navNurseCalls != null) { originalToggleTexts.put(navNurseCalls, navNurseCalls.getText()); originalToggleGraphics.put(navNurseCalls, navNurseCalls.getGraphic()); }
+        if (navClinicals != null) { originalToggleTexts.put(navClinicals, navClinicals.getText()); originalToggleGraphics.put(navClinicals, navClinicals.getGraphic()); }
+        if (navOrders != null) { originalToggleTexts.put(navOrders, navOrders.getText()); originalToggleGraphics.put(navOrders, navOrders.getGraphic()); }
     }
     
     /**
@@ -4708,7 +5309,12 @@ public class AppController {
             String originalText = originalButtonTexts.get(button);
             if (originalText != null) {
                 button.setText(originalText);
-                button.setGraphic(null);  // Clear the icon graphic
+                // Restore original graphic if available, otherwise clear it
+                if (originalButtonGraphics.containsKey(button)) {
+                    button.setGraphic(originalButtonGraphics.get(button));
+                } else {
+                    button.setGraphic(null);
+                }
                 button.setTooltip(null);
             }
         }
@@ -4722,7 +5328,12 @@ public class AppController {
             String originalText = originalToggleTexts.get(button);
             if (originalText != null) {
                 button.setText(originalText);
-                button.setGraphic(null);  // Clear the icon graphic
+                // Restore original graphic if available, otherwise clear it
+                if (originalToggleGraphics.containsKey(button)) {
+                    button.setGraphic(originalToggleGraphics.get(button));
+                } else {
+                    button.setGraphic(null);
+                }
                 button.setTooltip(null);
             }
         }
@@ -6287,6 +6898,15 @@ public class AppController {
                 saveOnNdwButton.setManaged(true);
             }
             
+            // Show Save to NDW sidebar button (CI only)
+            if (sidebarContainer != null) {
+                Button saveNdwBtn = (Button) sidebarContainer.lookup("#btnSaveNdw");
+                if (saveNdwBtn != null) {
+                    saveNdwBtn.setVisible(true);
+                    saveNdwBtn.setManaged(true);
+                }
+            }
+            
             // Hide Export JSON section entirely in CI mode
             if (exportJsonLabel != null) {
                 exportJsonLabel.setVisible(false);
@@ -6432,6 +7052,15 @@ public class AppController {
             if (saveOnNdwButton != null) {
                 saveOnNdwButton.setVisible(false);
                 saveOnNdwButton.setManaged(false);
+            }
+            
+            // Hide Save to NDW sidebar button (IE mode)
+            if (sidebarContainer != null) {
+                Button saveNdwBtn = (Button) sidebarContainer.lookup("#btnSaveNdw");
+                if (saveNdwBtn != null) {
+                    saveNdwBtn.setVisible(false);
+                    saveNdwBtn.setManaged(false);
+                }
             }
             
             // IE mode: ensure Export JSON section is visible

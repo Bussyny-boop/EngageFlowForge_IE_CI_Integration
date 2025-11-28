@@ -4,98 +4,217 @@
 <?import javafx.scene.image.*?>
 
 <VBox fx:id="sidebarRoot"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      spacing="8"
-      styleClass="sidebar-root">
+    xmlns="http://javafx.com/javafx/21"
+    xmlns:fx="http://javafx.com/fxml/1"
+    spacing="8"
+    styleClass="sidebar-root sidebar"
+    prefWidth="220.0" minWidth="50.0">
 
-    <!-- Vocera branding -->
-    <Label text="vocera" styleClass="sidebar-title" />
+    <!-- Header with toggle button -->
+    <HBox alignment="CENTER_LEFT" spacing="8">
+        <Button fx:id="toggleSidebarBtn" text="◀" styleClass="toggle-sidebar-btn" />
+        <Label fx:id="sidebarTitleLabel" text="vocera" styleClass="sidebar-title" />
+    </HBox>
 
-    <Accordion fx:id="voceraAccordion" styleClass="sidebar-accordion">
-
-        <TitledPane text="LOAD DATA" expanded="false" styleClass="sidebar-section">
+    <!-- Collapsed icons bar (shown only when sidebar is collapsed) -->
+    <VBox fx:id="collapsedIconBar" spacing="10" visible="false" managed="false">
+        <Button fx:id="btnIconLoad" styleClass="collapsed-icon-btn">
             <graphic>
-                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                    <image>
-                        <Image url="@/icons/load_data_icon.png" />
-                    </image>
-                </ImageView>
+                <StackPane styleClass="icon-box icon-soft-teal">
+                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                        <image><Image url="@/icons/load-ndw.png" /></image>
+                    </ImageView>
+                </StackPane>
             </graphic>
-            <content>
-                <VBox spacing="6" styleClass="sidebar-section-content">
-                    <Button text="NDW File"    fx:id="btnNdw"       styleClass="sidebar-button" />
-                    <Button text="Engage XML"  fx:id="btnXml"       styleClass="sidebar-button" />
-                    <Button text="Engage JSON" fx:id="btnJson"      styleClass="sidebar-button" />
-                </VBox>
-            </content>
+        </Button>
+        <Button fx:id="btnIconViews" styleClass="collapsed-icon-btn">
+            <graphic>
+                <StackPane styleClass="icon-box icon-soft-green">
+                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                        <image><Image url="@/icons/views_icon.png" /></image>
+                    </ImageView>
+                </StackPane>
+            </graphic>
+        </Button>
+        <Button fx:id="btnIconActions" styleClass="collapsed-icon-btn">
+            <graphic>
+                <StackPane styleClass="icon-box icon-soft-purple">
+                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                        <image><Image url="@/icons/preview.png" /></image>
+                    </ImageView>
+                </StackPane>
+            </graphic>
+        </Button>
+        <Button fx:id="btnIconExport" styleClass="collapsed-icon-btn">
+            <graphic>
+                <StackPane styleClass="icon-box icon-soft-orange">
+                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                        <image><Image url="@/icons/export_icon.png" /></image>
+                    </ImageView>
+                </StackPane>
+            </graphic>
+        </Button>
+        <Button fx:id="btnIconTools" styleClass="collapsed-icon-btn">
+            <graphic>
+                <StackPane styleClass="icon-box icon-soft-blue">
+                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                        <image><Image url="@/icons/tools_icon.png" /></image>
+                    </ImageView>
+                </StackPane>
+            </graphic>
+        </Button>
+    </VBox>
+
+    <VBox fx:id="voceraSections" styleClass="sidebar-accordion" spacing="6">
+        <TitledPane fx:id="paneLoad" text="📂 LOAD DATA" expanded="false" styleClass="sidebar-section">
+            <VBox spacing="6" styleClass="sidebar-section-content">
+                <Button text="NDW File"    fx:id="btnNdw"       styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-teal">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/load-ndw.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Engage XML"  fx:id="btnXml"       styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-blue">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/load-xml.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Engage JSON" fx:id="btnJson"      styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-purple">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/load-json.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+            </VBox>
         </TitledPane>
 
-        <TitledPane text="VIEWS" expanded="false" styleClass="sidebar-section">
-            <graphic>
-                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                    <image>
-                        <Image url="@/icons/views_icon.png" />
-                    </image>
-                </ImageView>
-            </graphic>
-            <content>
-                <VBox spacing="6" styleClass="sidebar-section-content">
-                    <Button text="Units"       fx:id="btnUnits"      styleClass="sidebar-button" />
-                    <Button text="Nurse Calls" fx:id="btnNurseCalls" styleClass="sidebar-button" />
-                    <Button text="Clinicals"   fx:id="btnClinicals"  styleClass="sidebar-button" />
-                    <Button text="Orders"      fx:id="btnOrders"     styleClass="sidebar-button" />
-                </VBox>
-            </content>
+        <TitledPane fx:id="paneViews" text="👁️ VIEWS" expanded="false" styleClass="sidebar-section">
+            <VBox spacing="6" styleClass="sidebar-section-content">
+                <Button text="Units"       fx:id="btnUnits"      styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-green">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/unit.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Nurse Calls" fx:id="btnNurseCalls" styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-teal">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/nurse.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Clinicals"   fx:id="btnClinicals"  styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-orange">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/clinical.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Orders"      fx:id="btnOrders"     styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-blue">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/orders.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+            </VBox>
         </TitledPane>
 
-        <TitledPane text="ACTIONS" expanded="false" styleClass="sidebar-section">
-            <graphic>
-                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                    <image>
-                        <Image url="@/icons/actions_icon.png" />
-                    </image>
-                </ImageView>
-            </graphic>
-            <content>
-                <VBox spacing="6" styleClass="sidebar-section-content">
-                    <Button text="View JSON" fx:id="btnViewJson"    styleClass="sidebar-button" />
-                </VBox>
-            </content>
+        <TitledPane fx:id="paneActions" text="⚡ ACTIONS" expanded="false" styleClass="sidebar-section">
+            <VBox spacing="6" styleClass="sidebar-section-content">
+                <Button text="View JSON" fx:id="btnViewJson"    styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-purple">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/preview.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Save to NDW" fx:id="btnSaveNdw" styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-green">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/save.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+            </VBox>
         </TitledPane>
 
-        <TitledPane text="EXPORT" expanded="false" styleClass="sidebar-section">
-            <graphic>
-                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                    <image>
-                        <Image url="@/icons/export_icon.png" />
-                    </image>
-                </ImageView>
-            </graphic>
-            <content>
-                <VBox spacing="6" styleClass="sidebar-section-content">
-                    <Button text="Nursecall" fx:id="btnExportNursecall" styleClass="sidebar-button" />
-                    <Button text="Clinicals" fx:id="btnExportClinicals" styleClass="sidebar-button" />
-                    <Button text="Orders"    fx:id="btnExportOrders"    styleClass="sidebar-button" />
-                </VBox>
-            </content>
+        <TitledPane fx:id="paneExport" text="📤 EXPORT" expanded="false" styleClass="sidebar-section">
+            <VBox spacing="6" styleClass="sidebar-section-content">
+                <Button text="Nursecall" fx:id="btnExportNursecall" styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-teal">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/export-nurse.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Clinicals" fx:id="btnExportClinicals" styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-orange">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/export-clinical.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Orders"    fx:id="btnExportOrders"    styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-blue">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/export-orders.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+            </VBox>
         </TitledPane>
 
-        <TitledPane text="TOOLS" expanded="false" styleClass="sidebar-section">
-            <graphic>
-                <ImageView fitHeight="16" fitWidth="16" preserveRatio="true">
-                    <image>
-                        <Image url="@/icons/tools_icon.png" />
-                    </image>
-                </ImageView>
-            </graphic>
-            <content>
-                <VBox spacing="6" styleClass="sidebar-section-content">
-                    <Button text="Visual Flow" fx:id="btnVisualFlow" styleClass="sidebar-button" />
-                    <Button text="Reset Data"  fx:id="btnResetData"  styleClass="sidebar-button" />
-                </VBox>
-            </content>
+        <TitledPane fx:id="paneTools" text="🛠️ TOOLS" expanded="false" styleClass="sidebar-section">
+            <VBox spacing="6" styleClass="sidebar-section-content">
+                <Button text="Visual Flow" fx:id="btnVisualFlow" styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-green">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/visual-flow.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+                <Button text="Reset Data"  fx:id="btnResetData"  styleClass="sidebar-button sidebar-item">
+                    <graphic>
+                        <StackPane styleClass="icon-box icon-soft-orange">
+                            <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                                <image><Image url="@/icons/clear.png" /></image>
+                            </ImageView>
+                        </StackPane>
+                    </graphic>
+                </Button>
+            </VBox>
         </TitledPane>
-
-    </Accordion>
+    </VBox>
 </VBox>

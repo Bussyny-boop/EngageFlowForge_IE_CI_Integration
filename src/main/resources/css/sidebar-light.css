@@ -55,3 +55,19 @@
     -fx-effect: none;
     -fx-background-insets: 0;
 }
+
+/* Highlight for last loaded button (light theme) */
+.sidebar-button.last-loaded-highlight,
+.sidebar-button.last-loaded-highlight:hover,
+.sidebar-button.last-loaded-highlight:pressed,
+.sidebar-button.last-loaded-highlight:focused,
+.sidebar-item.last-loaded-highlight,
+.sidebar-item.last-loaded-highlight:hover,
+.sidebar-item.last-loaded-highlight:pressed,
+.sidebar-item.last-loaded-highlight:focused {
+    -fx-background-color: linear-gradient(#00D6C6, #00B3A6) !important;
+    -fx-text-fill: #FFFFFF !important;
+    -fx-border-color: #009287 !important;
+    -fx-border-width: 0 0 0 4; /* accent bar on left */
+    -fx-border-radius: 10;
+}

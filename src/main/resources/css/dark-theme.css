@@ -924,7 +924,7 @@
    ========================================= */
 
 .tool-panel {
-    -fx-background-color: #2A2A2A;
+    -fx-background-color: #3E494A; /* Requested charcoal color */
     -fx-border-color: #3A3A3A;
     -fx-border-width: 0 0 0 1;
 }

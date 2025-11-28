@@ -11,9 +11,70 @@
     -fx-text-fill: #2C3E50;
 }
 
+/* Force sidebar background + text in light mode (was appearing white/blank) */
+.sidebar-root, .sidebar {
+    -fx-background-color: #3E494A !important; /* Charcoal */
+    -fx-text-fill: white;
+}
+.sidebar-root .sidebar-item, .sidebar-root .sidebar-button {
+    -fx-text-fill: white !important;
+}
+.sidebar-root .titled-pane > .title, .sidebar-root .titled-pane > .title > .text {
+    -fx-text-fill: white !important;
+}
+.sidebar-root .titled-pane > .content {
+    -fx-background-color: transparent;
+}
+/* Additional specificity: ensure internal BorderPane/VBox containers do not revert to white */
+.sidebar-root .titled-pane > .title, 
+.sidebar-root .titled-pane > .content, 
+.sidebar-root .titled-pane, 
+.sidebar-root .accordion, 
+.sidebar-root .scroll-pane, 
+.sidebar-root .scroll-pane .viewport, 
+.sidebar-root .vbox, 
+.sidebar-root .hbox {
+    -fx-background-color: #3E494A !important;
+}
+/* Preserve transparent look for interactive items while keeping base charcoal */
+.sidebar-root .sidebar-item:hover,
+.sidebar-root .sidebar-button:hover {
+    -fx-background-color: #2F3839 !important;
+}
+.sidebar-root .sidebar-item.active,
+.sidebar-root .sidebar-button.active {
+    -fx-background-color: #2B7A78 !important;
+}
+
 /* --- BorderPane --- */
 .border-pane {
     -fx-background-color: #ffffff;
+}
+
+/* Ensure the sidebar container never shows white in light mode */
+.sidebar-container {
+    -fx-background-color: #3E494A !important;
+}
+.sidebar-container > .top,
+.sidebar-container > .center,
+.sidebar-container > .bottom,
+.sidebar-container > .left,
+.sidebar-container > .right {
+    -fx-background-color: #3E494A !important;
+}
+.sidebar-container .scroll-pane,
+.sidebar-container .scroll-pane .viewport {
+    -fx-background-color: #3E494A !important;
+}
+.sidebar-container .titled-pane,
+.sidebar-container .titled-pane > .title,
+.sidebar-container .titled-pane > .content,
+.sidebar-container .vbox,
+.sidebar-container .hbox,
+.sidebar-container .button,
+.sidebar-container .label {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
 }
 
 /* --- Header Bar --- */
@@ -904,9 +965,10 @@
    ========================================= */
 
 .tool-panel {
-    -fx-background-color: #1E1E1E;
+    -fx-background-color: #3E494A; /* Requested charcoal color */
     -fx-border-color: #3A3A3A;
     -fx-border-width: 0 0 0 1;
+    -fx-font-family: "Segoe UI", "Segoe UI Semibold", Arial, sans-serif; /* Heavier font for right panels */
 }
 
 .tool-panel-title {
