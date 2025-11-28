@@ -75,6 +75,12 @@ public class VoiceGroupValidator {
             }
         } else {
             // No VGROUP keyword - validate comma/semicolon-separated values individually
+            // Only validate if there are delimiters - plain text without delimiters should remain PLAIN
+            if (text.indexOf(',') < 0 && text.indexOf(';') < 0) {
+                segments.add(new Segment(text, ValidationStatus.PLAIN));
+                return segments;
+            }
+            
             // Use regex to split while preserving delimiters and spaces
             int lastIndex = 0;
             Pattern delimiterPattern = Pattern.compile("[,;]");
