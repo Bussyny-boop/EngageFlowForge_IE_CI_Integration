@@ -80,6 +80,15 @@ public class VoiceGroupValidator {
             Pattern delimiterPattern = Pattern.compile("[,;]");
             Matcher delimiterMatcher = delimiterPattern.matcher(text);
             
+            // Only validate if there are delimiters - plain text without delimiters should remain PLAIN
+            if (!delimiterMatcher.find()) {
+                segments.add(new Segment(text, ValidationStatus.PLAIN));
+                return segments;
+            }
+            
+            // Reset matcher to start from beginning since find() moved position
+            delimiterMatcher.reset();
+            
             while (delimiterMatcher.find()) {
                 // Get the text before the delimiter
                 String beforeDelimiter = text.substring(lastIndex, delimiterMatcher.start());
