@@ -513,6 +513,15 @@ public class AppController {
                 
                 // Wire button actions - need to wait for scene graph to be fully constructed
                 Platform.runLater(() -> {
+                    // Ensure all sidebar buttons fill available width for uniform highlight length
+                    if (sidebar instanceof Parent) {
+                        ((Parent) sidebar).lookupAll(".sidebar-button").forEach(node -> {
+                            if (node instanceof Button b) {
+                                b.setMaxWidth(Double.MAX_VALUE);
+                                b.setPrefWidth(Double.MAX_VALUE);
+                            }
+                        });
+                    }
                     
                     // Use lookupAll to search entire tree since buttons are inside TitledPanes
                     btnNdw = (Button) sidebarContainer.lookup("#btnNdw");
@@ -1955,8 +1964,16 @@ public class AppController {
 
     private void setButtonLoaded(Button button, boolean loaded) {
         if (button == null) return;
-        
-        boolean isCollapsed = sidebarContent.getStyleClass().contains("sidebar-collapsed");
+        // Determine if this button lives inside the left sidebar
+        boolean insideSidebar = false;
+        if (sidebarContent != null) {
+            Node cur = button;
+            while (cur != null) {
+                if (cur == sidebarContent) { insideSidebar = true; break; }
+                cur = cur.getParent();
+            }
+        }
+        boolean isCollapsed = insideSidebar && sidebarContent.getStyleClass().contains("sidebar-collapsed");
         button.getStyleClass().remove("loading");
         if (loaded) {
             if (!button.getStyleClass().contains("loaded")) {
@@ -1967,8 +1984,8 @@ public class AppController {
             if (!button.getProperties().containsKey("origText")) {
                 button.getProperties().put("origText", button.getText());
             }
-            // Only update text if sidebar is expanded
-            if (!isCollapsed) {
+            // Update text: always show ✓ for non-sidebar buttons; respect collapse for sidebar
+            if (!isCollapsed || !insideSidebar) {
                 String base = String.valueOf(button.getProperties().get("origText"));
                 button.setText(base + " ✓");
             }
@@ -6209,6 +6226,11 @@ public class AppController {
             setButtonLoading(loadVoiceGroupButton, false);
             setButtonLoaded(loadVoiceGroupButton, true);
             autoClearLoaded(loadVoiceGroupButton, loadedTimeoutSeconds);
+            // Mirror status in Quick Settings (right tool panel)
+            if (toolPanelLoadVoiceGroupBtn != null) {
+                setButtonLoaded(toolPanelLoadVoiceGroupBtn, true);
+                autoClearLoaded(toolPanelLoadVoiceGroupBtn, loadedTimeoutSeconds);
+            }
             
             updateVoiceGroupStats();
             refreshAllTables(); // Trigger re-validation/repainting
@@ -6235,6 +6257,11 @@ public class AppController {
             setButtonLoaded(loadVoiceGroupButton, false);
             setButtonLoading(loadVoiceGroupButton, false);
             loadVoiceGroupButton.setTooltip(null);
+        }
+        if (toolPanelLoadVoiceGroupBtn != null) {
+            setButtonLoaded(toolPanelLoadVoiceGroupBtn, false);
+            setButtonLoading(toolPanelLoadVoiceGroupBtn, false);
+            toolPanelLoadVoiceGroupBtn.setTooltip(null);
         }
         
         if (statusLabel != null) statusLabel.setText("Voice groups cleared.");
@@ -6371,6 +6398,10 @@ public class AppController {
             setButtonLoading(loadAssignmentRolesButton, false);
             setButtonLoaded(loadAssignmentRolesButton, true);
             autoClearLoaded(loadAssignmentRolesButton, loadedTimeoutSeconds);
+            if (toolPanelLoadAssignmentRolesBtn != null) {
+                setButtonLoaded(toolPanelLoadAssignmentRolesBtn, true);
+                autoClearLoaded(toolPanelLoadAssignmentRolesBtn, loadedTimeoutSeconds);
+            }
             
             updateAssignmentRolesStats();
             refreshAllTables(); // Trigger re-validation/repainting
@@ -6407,6 +6438,11 @@ public class AppController {
             setButtonLoaded(loadAssignmentRolesButton, false);
             setButtonLoading(loadAssignmentRolesButton, false);
             loadAssignmentRolesButton.setTooltip(null);
+        }
+        if (toolPanelLoadAssignmentRolesBtn != null) {
+            setButtonLoaded(toolPanelLoadAssignmentRolesBtn, false);
+            setButtonLoading(toolPanelLoadAssignmentRolesBtn, false);
+            toolPanelLoadAssignmentRolesBtn.setTooltip(null);
         }
         
         if (statusLabel != null) statusLabel.setText("Assignment roles cleared.");
@@ -6536,6 +6572,10 @@ public class AppController {
             setButtonLoading(loadBedListButton, false);
             setButtonLoaded(loadBedListButton, true);
             autoClearLoaded(loadBedListButton, loadedTimeoutSeconds);
+            if (toolPanelLoadBedListBtn != null) {
+                setButtonLoaded(toolPanelLoadBedListBtn, true);
+                autoClearLoaded(toolPanelLoadBedListBtn, loadedTimeoutSeconds);
+            }
             
             updateBedListStats();
             refreshAllTables(); // Trigger re-validation/repainting
@@ -6580,6 +6620,11 @@ public class AppController {
             setButtonLoaded(loadBedListButton, false);
             setButtonLoading(loadBedListButton, false);
             loadBedListButton.setTooltip(null);
+        }
+        if (toolPanelLoadBedListBtn != null) {
+            setButtonLoaded(toolPanelLoadBedListBtn, false);
+            setButtonLoading(toolPanelLoadBedListBtn, false);
+            toolPanelLoadBedListBtn.setTooltip(null);
         }
         
         if (statusLabel != null) statusLabel.setText("Bed list cleared.");
