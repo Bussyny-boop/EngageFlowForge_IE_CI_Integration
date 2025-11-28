@@ -6813,7 +6813,7 @@ public class AppController {
                                 if (!aStarts && bStarts) return 1;
                                 return a.compareTo(b);  // Alphabetical if both start or both don't start
                             })
-                            .limit(5)  // TOP 5 matches as requested
+                            .limit(10)  // TOP 10 matches as requested
                             .collect(Collectors.toList());
                     }
                 } else if (!loadedVoiceGroups.isEmpty()) {
@@ -6830,7 +6830,7 @@ public class AppController {
                                 if (!aStarts && bStarts) return 1;
                                 return a.compareTo(b);  // Alphabetical if both start or both don't start
                             })
-                            .limit(5)  // TOP 5 matches as requested
+                            .limit(10)  // TOP 10 matches as requested
                             .collect(Collectors.toList());
                     }
                 } else {
@@ -6872,7 +6872,11 @@ public class AppController {
                 int searchIndex = beforeCaret.lastIndexOf(partial);
                 
                 if (searchIndex >= 0) {
-                    String newText = text.substring(0, searchIndex) + match + text.substring(searchIndex + partial.length());
+                    // Calculate end position after the partial text (not the caret position)
+                    int endIndex = searchIndex + partial.length();
+                    
+                    // Replace only the partial text with the match, preserving everything else
+                    String newText = text.substring(0, searchIndex) + match + text.substring(endIndex);
                     input.setText(newText);
                     input.positionCaret(searchIndex + match.length());
                 }
@@ -6924,7 +6928,7 @@ public class AppController {
                             if (!aStarts && bStarts) return 1;
                             return a.compareTo(b);  // Alphabetical if both start or both don't start
                         })
-                        .limit(5)  // TOP 5 matches
+                        .limit(10)  // TOP 10 matches
                         .collect(Collectors.toList());
                 }
                 
