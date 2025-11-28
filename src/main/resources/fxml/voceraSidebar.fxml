@@ -13,6 +13,9 @@
     <!-- Header with toggle button -->
     <HBox alignment="CENTER_LEFT" spacing="8">
         <Button fx:id="toggleSidebarBtn" text="◀" styleClass="toggle-sidebar-btn" />
+        <ImageView fitWidth="24" fitHeight="24" preserveRatio="true">
+            <image><Image url="@/icon_32.png" /></image>
+        </ImageView>
         <Label fx:id="sidebarTitleLabel" text="vocera" styleClass="sidebar-title" />
     </HBox>
 
