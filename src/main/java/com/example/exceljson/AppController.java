@@ -7119,6 +7119,35 @@ public class AppController {
                 exportOrdersJsonButton.setManaged(false);
             }
             
+            // Hide sidebar Actions section (View JSON) in CI mode
+            if (sidebarContainer != null) {
+                TitledPane actionsPane = (TitledPane) sidebarContainer.lookup("#paneActions");
+                if (actionsPane != null) {
+                    actionsPane.setVisible(false);
+                    actionsPane.setManaged(false);
+                }
+                
+                // Hide sidebar Export section in CI mode
+                TitledPane exportPane = (TitledPane) sidebarContainer.lookup("#paneExport");
+                if (exportPane != null) {
+                    exportPane.setVisible(false);
+                    exportPane.setManaged(false);
+                }
+                
+                // Hide collapsed Actions and Export icons in CI mode
+                Button iconActions = (Button) sidebarContainer.lookup("#btnIconActions");
+                if (iconActions != null) {
+                    iconActions.setVisible(false);
+                    iconActions.setManaged(false);
+                }
+                
+                Button iconExport = (Button) sidebarContainer.lookup("#btnIconExport");
+                if (iconExport != null) {
+                    iconExport.setVisible(false);
+                    iconExport.setManaged(false);
+                }
+            }
+
             // Keep Visual Flow button visible in CI mode
             if (visualFlowButton != null) {
                 visualFlowButton.setVisible(true);
@@ -7282,6 +7311,34 @@ public class AppController {
                 visualFlowButton.setVisible(true);
                 visualFlowButton.setManaged(true);
                 visualFlowButton.setDisable(false);
+            }
+            
+            // Show sidebar Actions and Export sections in IE mode
+            if (sidebarContainer != null) {
+                TitledPane actionsPane = (TitledPane) sidebarContainer.lookup("#paneActions");
+                if (actionsPane != null) {
+                    actionsPane.setVisible(true);
+                    actionsPane.setManaged(true);
+                }
+                
+                TitledPane exportPane = (TitledPane) sidebarContainer.lookup("#paneExport");
+                if (exportPane != null) {
+                    exportPane.setVisible(true);
+                    exportPane.setManaged(true);
+                }
+                
+                // Show collapsed Actions and Export icons in IE mode
+                Button iconActions = (Button) sidebarContainer.lookup("#btnIconActions");
+                if (iconActions != null) {
+                    iconActions.setVisible(true);
+                    iconActions.setManaged(true);
+                }
+                
+                Button iconExport = (Button) sidebarContainer.lookup("#btnIconExport");
+                if (iconExport != null) {
+                    iconExport.setVisible(true);
+                    iconExport.setManaged(true);
+                }
             }
             if (noMergeCheckbox != null) {
                 noMergeCheckbox.setVisible(true);
