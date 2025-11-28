@@ -71,7 +71,7 @@
     <VBox fx:id="voceraSections" styleClass="sidebar-accordion" spacing="6">
         <TitledPane fx:id="paneLoad" text="📂 LOAD DATA" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
-                <Button text="NDW File"    fx:id="btnNdw"       styleClass="sidebar-button sidebar-item">
+                <Button text="NDW File"    fx:id="btnNdw" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-teal">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -80,7 +80,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Engage XML"  fx:id="btnXml"       styleClass="sidebar-button sidebar-item">
+                <Button text="Engage XML"  fx:id="btnXml" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-blue">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -89,7 +89,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Engage JSON" fx:id="btnJson"      styleClass="sidebar-button sidebar-item">
+                <Button text="Engage JSON" fx:id="btnJson" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-purple">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -103,7 +103,7 @@
 
         <TitledPane fx:id="paneViews" text="👁️ TABLE VIEWS" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
-                <Button text="Units"       fx:id="btnUnits"      styleClass="sidebar-button sidebar-item">
+                <Button text="Units"       fx:id="btnUnits" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-green">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -112,7 +112,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Nurse Calls" fx:id="btnNurseCalls" styleClass="sidebar-button sidebar-item">
+                <Button text="Nurse Calls" fx:id="btnNurseCalls" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-teal">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -121,7 +121,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Clinicals"   fx:id="btnClinicals"  styleClass="sidebar-button sidebar-item">
+                <Button text="Clinicals"   fx:id="btnClinicals" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-orange">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -130,7 +130,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Orders"      fx:id="btnOrders"     styleClass="sidebar-button sidebar-item">
+                <Button text="Orders"      fx:id="btnOrders" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-blue">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -144,7 +144,7 @@
 
         <TitledPane fx:id="paneActions" text="⚡ ACTIONS" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
-                <Button text="View JSON" fx:id="btnViewJson"    styleClass="sidebar-button sidebar-item">
+                <Button text="View JSON" fx:id="btnViewJson" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-purple">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -153,7 +153,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Save to NDW" fx:id="btnSaveNdw" styleClass="sidebar-button sidebar-item">
+                <Button text="Save NDW" fx:id="btnSaveNdw" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-green">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -167,7 +167,7 @@
 
         <TitledPane fx:id="paneExport" text="📤 EXPORT" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
-                <Button text="Nursecall" fx:id="btnExportNursecall" styleClass="sidebar-button sidebar-item">
+                <Button text="Nursecall" fx:id="btnExportNursecall" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-teal">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -176,7 +176,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Clinicals" fx:id="btnExportClinicals" styleClass="sidebar-button sidebar-item">
+                <Button text="Clinicals" fx:id="btnExportClinicals" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-orange">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -185,7 +185,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Orders"    fx:id="btnExportOrders"    styleClass="sidebar-button sidebar-item">
+                <Button text="Orders"    fx:id="btnExportOrders" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-blue">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -199,8 +199,8 @@
 
         <TitledPane fx:id="paneTools" text="🛠️ TOOLS" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
-                <Button text="⚙ Settings"  fx:id="btnSettings"  styleClass="sidebar-button sidebar-item" />
-                <Button text="Visual Flow" fx:id="btnVisualFlow" styleClass="sidebar-button sidebar-item">
+                <Button text="⚙ Settings"  fx:id="btnSettings" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item" />
+                <Button text="Visual Flow" fx:id="btnVisualFlow" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-green">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
@@ -209,7 +209,7 @@
                         </StackPane>
                     </graphic>
                 </Button>
-                <Button text="Reset Data"  fx:id="btnResetData"  styleClass="sidebar-button sidebar-item">
+                <Button text="Reset Data"  fx:id="btnResetData" maxWidth="Infinity" prefWidth="-1" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-orange">
                             <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">

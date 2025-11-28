@@ -485,8 +485,8 @@ public class AppController {
                     Button iconActions = (Button) ((Parent) sidebar).lookup("#btnIconActions");
                     if (iconActions != null) attachHoverMenu(iconActions,
                         // Removed leading bullet character
-                        new String[]{"View JSON"},
-                        new Runnable[]{this::generateCombinedJson});
+                        new String[]{"View JSON", "Save NDW"},
+                        new Runnable[]{this::generateCombinedJson, this::saveOnNdw});
 
                     Button iconExport = (Button) ((Parent) sidebar).lookup("#btnIconExport");
                     if (iconExport != null) attachHoverMenu(iconExport,
@@ -917,21 +917,28 @@ public class AppController {
                 Button clinicalsBtn = (Button) sidebarRoot.lookup("#btnClinicals");
                 Button ordersBtn = (Button) sidebarRoot.lookup("#btnOrders");
                 
-                if (unitsBtn != null) { unitsBtn.setStyle(""); unitsBtn.getStyleClass().remove("active"); }
-                if (nurseBtn != null) { nurseBtn.setStyle(""); nurseBtn.getStyleClass().remove("active"); }
-                if (clinicalsBtn != null) { clinicalsBtn.setStyle(""); clinicalsBtn.getStyleClass().remove("active"); }
-                if (ordersBtn != null) { ordersBtn.setStyle(""); ordersBtn.getStyleClass().remove("active"); }
+                if (unitsBtn != null) { 
+                    unitsBtn.getStyleClass().remove("active"); 
+                    unitsBtn.setStyle(""); // Clear any inline styles
+                }
+                if (nurseBtn != null) { 
+                    nurseBtn.getStyleClass().remove("active"); 
+                    nurseBtn.setStyle(""); // Clear any inline styles
+                }
+                if (clinicalsBtn != null) { 
+                    clinicalsBtn.getStyleClass().remove("active"); 
+                    clinicalsBtn.setStyle(""); // Clear any inline styles
+                }
+                if (ordersBtn != null) { 
+                    ordersBtn.getStyleClass().remove("active"); 
+                    ordersBtn.setStyle(""); // Clear any inline styles
+                }
             }
             
-            // Apply teal gradient to clicked View button
+            // Apply teal gradient to clicked View button using CSS class
             btn.getStyleClass().add("active");
-            btn.setStyle(
-                "-fx-background-color: linear-gradient(to right, #15D9CF, #0DB4AB);" +
-                "-fx-text-fill: #FFFFFF;" +
-                "-fx-border-color: #0EB7AF;" +
-                "-fx-border-width: 0 0 0 4;" +
-                "-fx-effect: dropshadow(gaussian, rgba(21, 217, 207, 0.40), 10, 0, 0, 2);"
-            );
+            // Remove any previous inline styles to let CSS take full control
+            btn.setStyle("");
         } else {
             // For non-View buttons, just add active class without teal inline style
             Parent sidebarRoot = null;
