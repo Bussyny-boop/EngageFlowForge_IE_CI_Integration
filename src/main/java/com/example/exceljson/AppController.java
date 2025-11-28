@@ -123,6 +123,11 @@ public class AppController {
     @FXML private Button toolPanelToggleBtn;
     @FXML private Button toolPanelOpenBtn;  // Arrow button to open collapsed tool panel
     private boolean isToolPanelCollapsed = false;
+    private PauseTransition toolPanelAutoHide;
+    
+    // Sidebar Settings button reference and click guard
+    private Button sidebarSettingsButton;
+    private boolean ignoreNextOutsideClick = false;
 
     // ---------- UI Elements ----------
     @FXML private Button loadNdwButton;
@@ -628,6 +633,20 @@ public class AppController {
                         resetDataBtn.setOnAction(e -> { clearAllData(); markSidebarActive(resetDataBtn); });
                         if (resetDataBtn.getGraphic() != null) resetDataBtn.getGraphic().setMouseTransparent(true);
                     }
+
+                    // New: Settings button under TOOLS
+                    Button settingsBtn = (Button) sidebarContainer.lookup("#btnSettings");
+                    if (settingsBtn != null) {
+                        sidebarSettingsButton = settingsBtn;
+                        // Consume the opening click so the scene filter doesn't immediately close
+                        settingsBtn.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, ev -> {
+                            ignoreNextOutsideClick = true;
+                            // don't prevent the ActionEvent; only stop the mouse event bubbling
+                            ev.consume();
+                        });
+                        settingsBtn.setOnAction(e -> { toggleSettingsDrawer(); markSidebarActive(settingsBtn); });
+                        if (settingsBtn.getGraphic() != null) settingsBtn.getGraphic().setMouseTransparent(true);
+                    }
                 });
             } else {
                 System.err.println("WARNING: sidebarContainer is null!");
@@ -1062,6 +1081,25 @@ public class AppController {
         if (toolPanelOpenBtn != null) {
             toolPanelOpenBtn.setOnAction(e -> toggleToolPanel());
         }
+
+        // Auto-hide the tool panel after 10 seconds of inactivity when expanded
+        if (toolPanel != null) {
+            toolPanelAutoHide = new PauseTransition(Duration.seconds(10));
+            toolPanelAutoHide.setOnFinished(e -> {
+                if (!isToolPanelCollapsed) {
+                    toggleToolPanel();
+                }
+            });
+            toolPanel.setOnMouseEntered(e -> {
+                if (toolPanelAutoHide != null) toolPanelAutoHide.stop();
+            });
+            toolPanel.setOnMouseMoved(e -> {
+                if (!isToolPanelCollapsed && toolPanelAutoHide != null) {
+                    toolPanelAutoHide.stop();
+                    toolPanelAutoHide.playFromStart();
+                }
+            });
+        }
     }
     
     /**
@@ -1081,6 +1119,8 @@ public class AppController {
                 toolPanelOpenBtn.setVisible(true);
                 toolPanelOpenBtn.setManaged(true);
             }
+            // Stop auto-hide when collapsed
+            if (toolPanelAutoHide != null) toolPanelAutoHide.stop();
         } else {
             // Expand the panel
             toolPanel.setVisible(true);
@@ -1089,6 +1129,11 @@ public class AppController {
             if (toolPanelOpenBtn != null) {
                 toolPanelOpenBtn.setVisible(false);
                 toolPanelOpenBtn.setManaged(false);
+            }
+            // Start auto-hide countdown
+            if (toolPanelAutoHide != null) {
+                toolPanelAutoHide.stop();
+                toolPanelAutoHide.playFromStart();
             }
         }
         
@@ -1408,7 +1453,9 @@ public class AppController {
     // ---------- Settings Drawer Setup ----------
     private void setupSettingsDrawer() {
         if (settingsButton != null) {
-            settingsButton.setOnAction(e -> toggleSettingsDrawer());
+            // Moved to sidebar Tools; hide top-right Settings button
+            settingsButton.setVisible(false);
+            settingsButton.setManaged(false);
         }
         if (closeSettingsButton != null) {
             closeSettingsButton.setOnAction(e -> toggleSettingsDrawer());
@@ -1444,6 +1491,11 @@ public class AppController {
      */
     private void setupSettingsAutoClose(javafx.scene.Scene scene) {
         scene.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, event -> {
+            // If we just opened via the Settings button, skip closing once
+            if (ignoreNextOutsideClick) {
+                ignoreNextOutsideClick = false;
+                return;
+            }
             // Only process if settings drawer is visible
             if (settingsDrawer != null && settingsDrawer.isVisible()) {
                 // Check if the click was outside the settings drawer
@@ -1459,7 +1511,8 @@ public class AppController {
                         clickedInsideDrawer = true;
                         break;
                     }
-                    if (current == settingsButton) {
+                    // Consider both the (hidden) top bar settings button and the sidebar settings button
+                    if (current == settingsButton || current == sidebarSettingsButton) {
                         clickedSettingsButton = true;
                         break;
                     }
@@ -1928,6 +1981,17 @@ public class AppController {
             }
             button.setGraphic(null);
             button.setTooltip(new Tooltip("Last load succeeded"));
+
+            // Apply darker teal style to indicate loaded state (and store original style once)
+            if (!button.getProperties().containsKey("origStyle")) {
+                button.getProperties().put("origStyle", button.getStyle());
+            }
+            button.setStyle(
+                "-fx-background-color: linear-gradient(to right, #0FB3AB, #0A9C95);" +
+                "-fx-text-fill: #FFFFFF;" +
+                "-fx-border-color: #0A9C95;" +
+                "-fx-border-width: 0 0 0 4;"
+            );
         } else {
             button.getStyleClass().remove("loaded");
             Object orig = button.getProperties().get("origText");
@@ -1941,6 +2005,14 @@ public class AppController {
             }
             
             button.setTooltip(null);
+
+            // Restore original style if we modified it for loaded state
+            Object origStyle = button.getProperties().get("origStyle");
+            if (origStyle != null) {
+                button.setStyle(String.valueOf(origStyle));
+            } else {
+                button.setStyle("");
+            }
         }
     }
 

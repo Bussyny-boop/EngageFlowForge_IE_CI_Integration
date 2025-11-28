@@ -101,7 +101,7 @@
             </VBox>
         </TitledPane>
 
-        <TitledPane fx:id="paneViews" text="👁️ VIEWS" expanded="false" styleClass="sidebar-section">
+        <TitledPane fx:id="paneViews" text="👁️ TABLE VIEWS" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content">
                 <Button text="Units"       fx:id="btnUnits"      styleClass="sidebar-button sidebar-item">
                     <graphic>
@@ -199,6 +199,7 @@
 
         <TitledPane fx:id="paneTools" text="🛠️ TOOLS" expanded="false" styleClass="sidebar-section">
             <VBox spacing="6" styleClass="sidebar-section-content">
+                <Button text="⚙ Settings"  fx:id="btnSettings"  styleClass="sidebar-button sidebar-item" />
                 <Button text="Visual Flow" fx:id="btnVisualFlow" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-green">
