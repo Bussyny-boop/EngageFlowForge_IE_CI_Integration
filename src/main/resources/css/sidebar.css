@@ -113,6 +113,8 @@
     -fx-border-width: 0;
     -fx-border-color: transparent;
     -fx-max-width: infinity; /* ensure full-width buttons in VBox */
+    -fx-pref-width: -1; /* use available width */
+    -fx-min-width: -1; /* minimum width from content */
 }
 
 .sidebar-button:hover {
@@ -202,6 +204,9 @@
     -fx-cursor: hand;
     -fx-border-width: 0;
     -fx-border-color: transparent;
+    -fx-max-width: infinity;
+    -fx-pref-width: -1;
+    -fx-min-width: -1;
 }
 .sidebar-item .icon { -fx-text-fill: #D0D0D0; -fx-font-size: 18px; }
 .sidebar-item:hover { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }

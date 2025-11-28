@@ -499,14 +499,8 @@ public class AppController {
                     Button iconTools = (Button) ((Parent) sidebar).lookup("#btnIconTools");
                     if (iconTools != null) attachHoverMenu(iconTools,
                         // Removed leading bullet characters
-                        new String[]{"Visual Flow", "Reset Data"},
-                        new Runnable[]{this::generateVisualFlow, this::clearAllData});
-
-                    // Collapsed Settings icon
-                    Button iconSettings = (Button) ((Parent) sidebar).lookup("#btnIconSettings");
-                    if (iconSettings != null) {
-                        iconSettings.setOnAction(e -> toggleSettingsDrawer());
-                    }
+                        new String[]{"Settings", "Visual Flow", "Reset Data"},
+                        new Runnable[]{this::toggleSettingsDrawer, this::generateVisualFlow, this::clearAllData});
                 }
                 
                 sidebarContainer.setCenter(sidebar);

@@ -66,15 +66,6 @@
                 </StackPane>
             </graphic>
         </Button>
-        <Button fx:id="btnIconSettings" styleClass="collapsed-icon-btn">
-            <graphic>
-                <StackPane styleClass="icon-box icon-soft-blue">
-                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
-                        <image><Image url="@/icons/settings.png" /></image>
-                    </ImageView>
-                </StackPane>
-            </graphic>
-        </Button>
     </VBox>
 
     <VBox fx:id="voceraSections" styleClass="sidebar-accordion" spacing="6">
