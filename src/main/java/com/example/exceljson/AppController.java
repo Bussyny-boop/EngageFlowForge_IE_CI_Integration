@@ -483,10 +483,18 @@ public class AppController {
                                        () -> { if (navOrders!=null) navOrders.fire(); }});
 
                     Button iconActions = (Button) ((Parent) sidebar).lookup("#btnIconActions");
-                    if (iconActions != null) attachHoverMenu(iconActions,
-                        // Removed leading bullet character
-                        new String[]{"View JSON", "Save NDW"},
-                        new Runnable[]{this::generateCombinedJson, this::saveOnNdw});
+                    if (iconActions != null) {
+                        // Show different menu options based on profile
+                        if (userProfile == UserProfile.CI) {
+                            attachHoverMenu(iconActions,
+                                new String[]{"Save NDW"},
+                                new Runnable[]{this::saveOnNdw});
+                        } else {
+                            attachHoverMenu(iconActions,
+                                new String[]{"View JSON", "Save NDW"},
+                                new Runnable[]{this::generateCombinedJson, this::saveOnNdw});
+                        }
+                    }
 
                     Button iconExport = (Button) ((Parent) sidebar).lookup("#btnIconExport");
                     if (iconExport != null) attachHoverMenu(iconExport,
@@ -7119,12 +7127,12 @@ public class AppController {
                 exportOrdersJsonButton.setManaged(false);
             }
             
-            // Hide sidebar Actions section (View JSON) in CI mode
+            // Hide only View JSON button in Actions section (keep Save NDW visible in CI mode)
             if (sidebarContainer != null) {
-                TitledPane actionsPane = (TitledPane) sidebarContainer.lookup("#paneActions");
-                if (actionsPane != null) {
-                    actionsPane.setVisible(false);
-                    actionsPane.setManaged(false);
+                Button viewJsonBtn = (Button) sidebarContainer.lookup("#btnViewJson");
+                if (viewJsonBtn != null) {
+                    viewJsonBtn.setVisible(false);
+                    viewJsonBtn.setManaged(false);
                 }
                 
                 // Hide sidebar Export section in CI mode
@@ -7134,17 +7142,19 @@ public class AppController {
                     exportPane.setManaged(false);
                 }
                 
-                // Hide collapsed Actions and Export icons in CI mode
-                Button iconActions = (Button) sidebarContainer.lookup("#btnIconActions");
-                if (iconActions != null) {
-                    iconActions.setVisible(false);
-                    iconActions.setManaged(false);
-                }
-                
+                // Hide collapsed Export icon in CI mode (keep Actions icon for Save NDW access)
                 Button iconExport = (Button) sidebarContainer.lookup("#btnIconExport");
                 if (iconExport != null) {
                     iconExport.setVisible(false);
                     iconExport.setManaged(false);
+                }
+                
+                // Update Actions hover menu to show only Save NDW in CI mode
+                Button iconActions = (Button) sidebarContainer.lookup("#btnIconActions");
+                if (iconActions != null) {
+                    attachHoverMenu(iconActions,
+                        new String[]{"Save NDW"},
+                        new Runnable[]{this::saveOnNdw});
                 }
             }
 
@@ -7313,12 +7323,12 @@ public class AppController {
                 visualFlowButton.setDisable(false);
             }
             
-            // Show sidebar Actions and Export sections in IE mode
+            // Show View JSON button and Export sections in IE mode
             if (sidebarContainer != null) {
-                TitledPane actionsPane = (TitledPane) sidebarContainer.lookup("#paneActions");
-                if (actionsPane != null) {
-                    actionsPane.setVisible(true);
-                    actionsPane.setManaged(true);
+                Button viewJsonBtn = (Button) sidebarContainer.lookup("#btnViewJson");
+                if (viewJsonBtn != null) {
+                    viewJsonBtn.setVisible(true);
+                    viewJsonBtn.setManaged(true);
                 }
                 
                 TitledPane exportPane = (TitledPane) sidebarContainer.lookup("#paneExport");
@@ -7327,17 +7337,19 @@ public class AppController {
                     exportPane.setManaged(true);
                 }
                 
-                // Show collapsed Actions and Export icons in IE mode
-                Button iconActions = (Button) sidebarContainer.lookup("#btnIconActions");
-                if (iconActions != null) {
-                    iconActions.setVisible(true);
-                    iconActions.setManaged(true);
-                }
-                
+                // Show collapsed Export icon in IE mode
                 Button iconExport = (Button) sidebarContainer.lookup("#btnIconExport");
                 if (iconExport != null) {
                     iconExport.setVisible(true);
                     iconExport.setManaged(true);
+                }
+                
+                // Restore Actions hover menu with both options in IE mode
+                Button iconActions = (Button) sidebarContainer.lookup("#btnIconActions");
+                if (iconActions != null) {
+                    attachHoverMenu(iconActions,
+                        new String[]{"View JSON", "Save NDW"},
+                        new Runnable[]{this::generateCombinedJson, this::saveOnNdw});
                 }
             }
             if (noMergeCheckbox != null) {
