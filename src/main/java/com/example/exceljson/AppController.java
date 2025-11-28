@@ -3513,14 +3513,16 @@ public class AppController {
                     setGraphic(null);
                     setStyle("");
                 } else {
-                    // Voice Group Validation Logic
-                    boolean hasVGroupKeywords = VGROUP_KEYWORD_PATTERN.matcher(item).find();
+                    // Voice Group Validation Logic for No Caregiver Group column
+                    // Always validate when voice groups are loaded, even without VGroup: keyword
+                    // This allows validation of plain group names like "Charge Nurse" as well as
+                    // prefixed names like "VGroup:Charge Nurse"
                     
-                    if (!loadedVoiceGroups.isEmpty() && hasVGroupKeywords) {
-                        // Parse and validate Voice Groups
+                    if (!loadedVoiceGroups.isEmpty()) {
+                        // Parse and validate Voice Groups using the "always validate" method
                         List<List<com.example.exceljson.util.VoiceGroupValidator.Segment>> voiceGroupSegments;
                         synchronized(loadedVoiceGroups) {
-                            voiceGroupSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateMultiLine(item, loadedVoiceGroups);
+                            voiceGroupSegments = com.example.exceljson.util.VoiceGroupValidator.parseAndValidateAlwaysMultiLine(item, loadedVoiceGroups);
                         }
                         
                         TextFlow flow = new TextFlow();
@@ -3566,7 +3568,7 @@ public class AppController {
                         setText(null);
                         setGraphic(flow);
                     } else {
-                        // No voice groups loaded or no VGroup keywords, display as plain text
+                        // No voice groups loaded, display as plain text
                         setText(item);
                         setGraphic(null);
                     }
@@ -6866,20 +6868,39 @@ public class AppController {
                 String text = input.getText();
                 int caretPos = input.getCaretPosition();
                 
-                // Find the position of the partial text before the caret
-                // Look backward from caret position to find the partial match
+                // IMPORTANT: The partial passed in was captured when the popup was built.
+                // The user may have typed more characters since then, so we need to
+                // recalculate the actual search term based on current text and caret position.
+                // Find the last delimiter before the caret to determine the start of the current word.
                 String beforeCaret = text.substring(0, caretPos);
-                int searchIndex = beforeCaret.lastIndexOf(partial);
                 
-                if (searchIndex >= 0) {
-                    // Calculate end position after the partial text (not the caret position)
-                    int endIndex = searchIndex + partial.length();
-                    
-                    // Replace only the partial text with the match, preserving everything else
-                    String newText = text.substring(0, searchIndex) + match + text.substring(endIndex);
-                    input.setText(newText);
-                    input.positionCaret(searchIndex + match.length());
+                // Find the start of the current word/phrase by looking for delimiters
+                // Delimiters are: colon (after VGroup:), comma, semicolon, newline, or start of text
+                int searchIndex = -1;
+                // Look for the last delimiter before caret
+                for (int i = beforeCaret.length() - 1; i >= 0; i--) {
+                    char c = beforeCaret.charAt(i);
+                    if (c == ':' || c == ',' || c == ';' || c == '\n') {
+                        searchIndex = i + 1;
+                        // Skip any whitespace after the delimiter
+                        while (searchIndex < beforeCaret.length() && beforeCaret.charAt(searchIndex) == ' ') {
+                            searchIndex++;
+                        }
+                        break;
+                    }
                 }
+                if (searchIndex < 0) {
+                    // No delimiter found, start from beginning
+                    searchIndex = 0;
+                }
+                
+                // The end index is the caret position (replace everything from searchIndex to caret)
+                int endIndex = caretPos;
+                
+                // Replace the text from searchIndex to caret with the selected match
+                String newText = text.substring(0, searchIndex) + match + text.substring(endIndex);
+                input.setText(newText);
+                input.positionCaret(searchIndex + match.length());
             });
             suggestionPopup.getItems().add(item);
         }
