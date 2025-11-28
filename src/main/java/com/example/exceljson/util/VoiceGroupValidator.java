@@ -229,38 +229,104 @@ public class VoiceGroupValidator {
             if (lastEnd < text.length()) {
                 segments.add(new Segment(text.substring(lastEnd), ValidationStatus.PLAIN));
             }
+        } else if (text.indexOf(',') >= 0 || text.indexOf(';') >= 0) {
+            // No VGROUP keyword but has delimiters - validate comma/semicolon-separated values
+            // Inline the logic to always validate each segment
+            validateDelimitedText(text, loadedVoiceGroups, segments);
         } else {
-            // No VGROUP keyword - validate the text as a single group name or as comma/semicolon-separated values
-            if (text.indexOf(',') >= 0 || text.indexOf(';') >= 0) {
-                // Has delimiters - validate each separated value (same as existing parseAndValidate logic)
-                return parseAndValidate(text, loadedVoiceGroups);
-            } else {
-                // Single value without delimiters - validate the entire text as a group name
-                String trimmed = text.trim();
-                if (trimmed.isEmpty()) {
-                    segments.add(new Segment(text, ValidationStatus.PLAIN));
-                    return segments;
-                }
-                
-                // Preserve leading/trailing whitespace as PLAIN segments
-                int leadingSpaces = text.indexOf(trimmed);
-                if (leadingSpaces > 0) {
-                    segments.add(new Segment(text.substring(0, leadingSpaces), ValidationStatus.PLAIN));
-                }
-                
-                // Validate the trimmed group name
-                boolean isValid = isGroupValid(trimmed, loadedVoiceGroups);
-                segments.add(new Segment(trimmed, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
-                
-                // Trailing whitespace
-                int trailingStart = leadingSpaces + trimmed.length();
-                if (trailingStart < text.length()) {
-                    segments.add(new Segment(text.substring(trailingStart), ValidationStatus.PLAIN));
-                }
-            }
+            // Single value without delimiters or pattern - validate the entire text as a group name
+            validateSingleValue(text, loadedVoiceGroups, segments);
         }
         
         return segments;
+    }
+    
+    /**
+     * Validates a single group name value, preserving any leading/trailing whitespace.
+     */
+    private static void validateSingleValue(String text, Set<String> loadedVoiceGroups, List<Segment> segments) {
+        String trimmed = text.trim();
+        if (trimmed.isEmpty()) {
+            segments.add(new Segment(text, ValidationStatus.PLAIN));
+            return;
+        }
+        
+        // Preserve leading/trailing whitespace as PLAIN segments
+        int leadingSpaces = text.indexOf(trimmed);
+        if (leadingSpaces > 0) {
+            segments.add(new Segment(text.substring(0, leadingSpaces), ValidationStatus.PLAIN));
+        }
+        
+        // Validate the trimmed group name
+        boolean isValid = isGroupValid(trimmed, loadedVoiceGroups);
+        segments.add(new Segment(trimmed, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
+        
+        // Trailing whitespace
+        int trailingStart = leadingSpaces + trimmed.length();
+        if (trailingStart < text.length()) {
+            segments.add(new Segment(text.substring(trailingStart), ValidationStatus.PLAIN));
+        }
+    }
+    
+    /**
+     * Validates comma/semicolon-delimited text, validating each value individually.
+     */
+    private static void validateDelimitedText(String text, Set<String> loadedVoiceGroups, List<Segment> segments) {
+        int lastIndex = 0;
+        Pattern delimiterPattern = Pattern.compile("[,;]");
+        Matcher delimiterMatcher = delimiterPattern.matcher(text);
+        
+        while (delimiterMatcher.find()) {
+            // Get the text before the delimiter
+            String beforeDelimiter = text.substring(lastIndex, delimiterMatcher.start());
+            String trimmed = beforeDelimiter.trim();
+            
+            // Add leading spaces if any
+            int leadingSpaces = beforeDelimiter.indexOf(trimmed);
+            if (leadingSpaces > 0) {
+                segments.add(new Segment(beforeDelimiter.substring(0, leadingSpaces), ValidationStatus.PLAIN));
+            }
+            
+            // Validate the trimmed text
+            if (!trimmed.isEmpty()) {
+                boolean isValid = isGroupValid(trimmed, loadedVoiceGroups);
+                segments.add(new Segment(trimmed, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
+            }
+            
+            // Add trailing spaces if any
+            int trailingSpaces = beforeDelimiter.length() - leadingSpaces - trimmed.length();
+            if (trailingSpaces > 0) {
+                segments.add(new Segment(beforeDelimiter.substring(leadingSpaces + trimmed.length()), ValidationStatus.PLAIN));
+            }
+            
+            // Add the delimiter
+            segments.add(new Segment(delimiterMatcher.group(), ValidationStatus.PLAIN));
+            lastIndex = delimiterMatcher.end();
+        }
+        
+        // Handle the last segment (after the last delimiter)
+        if (lastIndex < text.length()) {
+            String remaining = text.substring(lastIndex);
+            String trimmed = remaining.trim();
+            
+            // Add leading spaces if any
+            int leadingSpaces = remaining.indexOf(trimmed);
+            if (leadingSpaces > 0) {
+                segments.add(new Segment(remaining.substring(0, leadingSpaces), ValidationStatus.PLAIN));
+            }
+            
+            // Validate the trimmed text
+            if (!trimmed.isEmpty()) {
+                boolean isValid = isGroupValid(trimmed, loadedVoiceGroups);
+                segments.add(new Segment(trimmed, isValid ? ValidationStatus.VALID : ValidationStatus.INVALID));
+            }
+            
+            // Add trailing spaces if any
+            int trailingSpaces = remaining.length() - leadingSpaces - trimmed.length();
+            if (trailingSpaces > 0) {
+                segments.add(new Segment(remaining.substring(leadingSpaces + trimmed.length()), ValidationStatus.PLAIN));
+            }
+        }
     }
     
     /**
