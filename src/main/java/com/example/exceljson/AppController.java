@@ -561,25 +561,25 @@ public class AppController {
                     
                     Button unitsBtn = (Button) sidebarContainer.lookup("#btnUnits");
                     if (unitsBtn != null) {
-                        unitsBtn.setOnAction(e -> { if (navUnits!=null) navUnits.fire(); markSidebarActive(unitsBtn); });
+                        unitsBtn.setOnAction(e -> { if (navUnits!=null) navUnits.fire(); Platform.runLater(() -> markSidebarActive(unitsBtn)); });
                         if (unitsBtn.getGraphic() != null) unitsBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button nurseBtn = (Button) sidebarContainer.lookup("#btnNurseCalls");
                     if (nurseBtn != null) {
-                        nurseBtn.setOnAction(e -> { if (navNurseCalls!=null) navNurseCalls.fire(); markSidebarActive(nurseBtn); });
+                        nurseBtn.setOnAction(e -> { if (navNurseCalls!=null) navNurseCalls.fire(); Platform.runLater(() -> markSidebarActive(nurseBtn)); });
                         if (nurseBtn.getGraphic() != null) nurseBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button clinicalsBtn = (Button) sidebarContainer.lookup("#btnClinicals");
                     if (clinicalsBtn != null) {
-                        clinicalsBtn.setOnAction(e -> { if (navClinicals!=null) navClinicals.fire(); markSidebarActive(clinicalsBtn); });
+                        clinicalsBtn.setOnAction(e -> { if (navClinicals!=null) navClinicals.fire(); Platform.runLater(() -> markSidebarActive(clinicalsBtn)); });
                         if (clinicalsBtn.getGraphic() != null) clinicalsBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button ordersBtn = (Button) sidebarContainer.lookup("#btnOrders");
                     if (ordersBtn != null) {
-                        ordersBtn.setOnAction(e -> { if (navOrders!=null) navOrders.fire(); markSidebarActive(ordersBtn); });
+                        ordersBtn.setOnAction(e -> { if (navOrders!=null) navOrders.fire(); Platform.runLater(() -> markSidebarActive(ordersBtn)); });
                         if (ordersBtn.getGraphic() != null) ordersBtn.getGraphic().setMouseTransparent(true);
                     }
                     
@@ -900,27 +900,65 @@ public class AppController {
      */
     private void markSidebarActive(Button btn) {
         if (btn == null) return;
-        // Attempt to get the loaded sidebar root from sidebarContainer
-        Parent sidebarRoot = null;
-        if (sidebarContainer != null && sidebarContainer.getCenter() instanceof Parent) {
-            sidebarRoot = (Parent) sidebarContainer.getCenter();
-        }
-        // Fallback: walk up from button to find VBox root
-        if (sidebarRoot == null) {
-            Parent current = btn.getParent();
-            while (current != null) {
-                if (current instanceof VBox) { sidebarRoot = current; break; }
-                current = current.getParent();
+        System.out.println("DEBUG: markSidebarActive called for button: " + btn.getText());
+        
+        // Check if this is a View button (Units, Nurse Calls, Clinicals, Orders)
+        String btnId = btn.getId();
+        boolean isViewButton = btnId != null && 
+            (btnId.equals("btnUnits") || btnId.equals("btnNurseCalls") || 
+             btnId.equals("btnClinicals") || btnId.equals("btnOrders"));
+        
+        if (isViewButton) {
+            // Clear teal highlight from ALL View buttons first
+            Parent sidebarRoot = null;
+            if (sidebarContainer != null && sidebarContainer.getCenter() instanceof Parent) {
+                sidebarRoot = (Parent) sidebarContainer.getCenter();
+            }
+            if (sidebarRoot != null) {
+                // Only clear from View buttons
+                Button unitsBtn = (Button) sidebarRoot.lookup("#btnUnits");
+                Button nurseBtn = (Button) sidebarRoot.lookup("#btnNurseCalls");
+                Button clinicalsBtn = (Button) sidebarRoot.lookup("#btnClinicals");
+                Button ordersBtn = (Button) sidebarRoot.lookup("#btnOrders");
+                
+                if (unitsBtn != null) { unitsBtn.setStyle(""); unitsBtn.getStyleClass().remove("active"); }
+                if (nurseBtn != null) { nurseBtn.setStyle(""); nurseBtn.getStyleClass().remove("active"); }
+                if (clinicalsBtn != null) { clinicalsBtn.setStyle(""); clinicalsBtn.getStyleClass().remove("active"); }
+                if (ordersBtn != null) { ordersBtn.setStyle(""); ordersBtn.getStyleClass().remove("active"); }
+            }
+            
+            // Apply teal gradient to clicked View button
+            btn.getStyleClass().add("active");
+            btn.setStyle(
+                "-fx-background-color: linear-gradient(to right, #15D9CF, #0DB4AB);" +
+                "-fx-text-fill: #FFFFFF;" +
+                "-fx-border-color: #0EB7AF;" +
+                "-fx-border-width: 0 0 0 4;" +
+                "-fx-effect: dropshadow(gaussian, rgba(21, 217, 207, 0.40), 10, 0, 0, 2);"
+            );
+        } else {
+            // For non-View buttons, just add active class without teal inline style
+            Parent sidebarRoot = null;
+            if (sidebarContainer != null && sidebarContainer.getCenter() instanceof Parent) {
+                sidebarRoot = (Parent) sidebarContainer.getCenter();
+            }
+            if (sidebarRoot == null) {
+                Parent current = btn.getParent();
+                while (current != null) {
+                    if (current instanceof VBox) { sidebarRoot = current; break; }
+                    current = current.getParent();
+                }
+            }
+            if (sidebarRoot != null) {
+                sidebarRoot.lookupAll(".sidebar-item").forEach(n -> n.getStyleClass().remove("active"));
+                sidebarRoot.lookupAll(".sidebar-button").forEach(n -> n.getStyleClass().remove("active"));
+            }
+            if (!btn.getStyleClass().contains("active")) {
+                btn.getStyleClass().add("active");
             }
         }
-        if (sidebarRoot != null) {
-            // Remove active from all sidebar items/buttons
-            sidebarRoot.lookupAll(".sidebar-item").forEach(n -> n.getStyleClass().remove("active"));
-            sidebarRoot.lookupAll(".sidebar-button").forEach(n -> n.getStyleClass().remove("active"));
-        }
-        if (!btn.getStyleClass().contains("active")) {
-            btn.getStyleClass().add("active");
-        }
+        
+        System.out.println("DEBUG: Button ID: " + btnId + ", isViewButton: " + isViewButton);
     }
     
     // ---------- Tool Panel Setup (Design C: Split Panel) ----------

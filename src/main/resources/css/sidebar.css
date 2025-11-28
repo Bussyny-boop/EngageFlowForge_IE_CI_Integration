@@ -205,14 +205,14 @@
 .sidebar-item .icon { -fx-text-fill: #D0D0D0; -fx-font-size: 18px; }
 .sidebar-item:hover { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }
 .sidebar-item:hover .icon { -fx-text-fill: #FFFFFF; }
-.sidebar-item.active { -fx-background-color: #2B7A78; -fx-text-fill: #FFFFFF; }
+.sidebar-item.active { -fx-background-color: linear-gradient(to right, #15D9CF, #0DB4AB); -fx-text-fill: #FFFFFF; -fx-border-color: #0EB7AF; -fx-border-width: 0 0 0 4; -fx-effect: dropshadow(gaussian, rgba(21, 217, 207, 0.40), 10, 0, 0, 2); }
 .sidebar-item.active .icon { -fx-text-fill: #FFFFFF; }
 
 /* Map legacy sidebar-button to new look */
 .sidebar-button { -fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 12 18 12 18; -fx-alignment: CENTER_LEFT; -fx-cursor: hand; -fx-border-width: 0; }
 .sidebar-button:hover { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }
 .sidebar-button:pressed, .sidebar-button:focused { -fx-background-color: #2F3839; -fx-text-fill: #FFFFFF; }
-.sidebar-button.active { -fx-background-color: #2B7A78; -fx-text-fill: #FFFFFF; }
+.sidebar-button.active { -fx-background-color: linear-gradient(to right, #15D9CF, #0DB4AB); -fx-text-fill: #FFFFFF; -fx-border-color: #0EB7AF; -fx-border-width: 0 0 0 4; -fx-effect: dropshadow(gaussian, rgba(21, 217, 207, 0.40), 10, 0, 0, 2); }
 
 /* Teal highlight for last loaded button - must override all states */
 .sidebar-button.last-loaded-highlight,
