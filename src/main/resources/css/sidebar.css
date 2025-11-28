@@ -112,6 +112,7 @@
     -fx-alignment: CENTER_LEFT;
     -fx-border-width: 0;
     -fx-border-color: transparent;
+    -fx-max-width: infinity; /* ensure full-width buttons in VBox */
 }
 
 .sidebar-button:hover {

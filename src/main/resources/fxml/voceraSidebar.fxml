@@ -11,7 +11,7 @@
     prefWidth="220.0" minWidth="50.0">
 
     <!-- Header with toggle button -->
-    <HBox alignment="CENTER_LEFT" spacing="8">
+    <HBox fx:id="sidebarHeader" alignment="CENTER_LEFT" spacing="8">
         <Button fx:id="toggleSidebarBtn" text="◀" styleClass="toggle-sidebar-btn" />
         <ImageView fitWidth="24" fitHeight="24" preserveRatio="true">
             <image><Image url="@/icon_32.png" /></image>
@@ -66,11 +66,20 @@
                 </StackPane>
             </graphic>
         </Button>
+        <Button fx:id="btnIconSettings" styleClass="collapsed-icon-btn">
+            <graphic>
+                <StackPane styleClass="icon-box icon-soft-blue">
+                    <ImageView fitWidth="16" fitHeight="16" preserveRatio="true">
+                        <image><Image url="@/icons/settings.png" /></image>
+                    </ImageView>
+                </StackPane>
+            </graphic>
+        </Button>
     </VBox>
 
     <VBox fx:id="voceraSections" styleClass="sidebar-accordion" spacing="6">
         <TitledPane fx:id="paneLoad" text="📂 LOAD DATA" expanded="false" styleClass="sidebar-section">
-            <VBox spacing="6" styleClass="sidebar-section-content">
+            <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
                 <Button text="NDW File"    fx:id="btnNdw"       styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-teal">
@@ -102,7 +111,7 @@
         </TitledPane>
 
         <TitledPane fx:id="paneViews" text="👁️ TABLE VIEWS" expanded="false" styleClass="sidebar-section">
-            <VBox spacing="6" styleClass="sidebar-section-content">
+            <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
                 <Button text="Units"       fx:id="btnUnits"      styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-green">
@@ -143,7 +152,7 @@
         </TitledPane>
 
         <TitledPane fx:id="paneActions" text="⚡ ACTIONS" expanded="false" styleClass="sidebar-section">
-            <VBox spacing="6" styleClass="sidebar-section-content">
+            <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
                 <Button text="View JSON" fx:id="btnViewJson"    styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-purple">
@@ -166,7 +175,7 @@
         </TitledPane>
 
         <TitledPane fx:id="paneExport" text="📤 EXPORT" expanded="false" styleClass="sidebar-section">
-            <VBox spacing="6" styleClass="sidebar-section-content">
+            <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
                 <Button text="Nursecall" fx:id="btnExportNursecall" styleClass="sidebar-button sidebar-item">
                     <graphic>
                         <StackPane styleClass="icon-box icon-soft-teal">
@@ -198,7 +207,7 @@
         </TitledPane>
 
         <TitledPane fx:id="paneTools" text="🛠️ TOOLS" expanded="false" styleClass="sidebar-section">
-            <VBox spacing="6" styleClass="sidebar-section-content">
+            <VBox spacing="6" styleClass="sidebar-section-content" fillWidth="true">
                 <Button text="⚙ Settings"  fx:id="btnSettings"  styleClass="sidebar-button sidebar-item" />
                 <Button text="Visual Flow" fx:id="btnVisualFlow" styleClass="sidebar-button sidebar-item">
                     <graphic>

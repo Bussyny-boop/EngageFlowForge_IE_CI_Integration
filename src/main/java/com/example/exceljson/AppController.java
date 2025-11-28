@@ -19,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import com.example.exceljson.util.TextAreaTableCell;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
@@ -72,6 +73,7 @@ public class AppController {
     // Sidebar node references for collapse/expand logic
     private VBox sidebarSections;
     private VBox collapsedIconsBar;
+    private HBox sidebarHeader;
     private Label sidebarTitleLabel;
     private Button toggleSidebarBtn;
     private java.util.LinkedList<TitledPane> expandedPanes = new java.util.LinkedList<>();
@@ -456,43 +458,12 @@ public class AppController {
                     // Setup sidebar toggle functionality
                     toggleSidebarBtn = (Button) ((Parent) sidebar).lookup("#toggleSidebarBtn");
                     sidebarTitleLabel = (Label) ((Parent) sidebar).lookup("#sidebarTitleLabel");
+                    sidebarHeader = (HBox) ((Parent) sidebar).lookup("#sidebarHeader");
                     if (toggleSidebarBtn != null) {
-                        toggleSidebarBtn.setOnAction(e -> {
-                            boolean isCollapsed = sidebarContainer.getPrefWidth() <= 60;
-                            Preferences prefsLocal = Preferences.userNodeForPackage(AppController.class);
-                            if (isCollapsed) {
-                                // Expand - change arrow to point left
-                                sidebarContainer.setMinWidth(50);
-                                sidebarContainer.setPrefWidth(220);
-                                toggleSidebarBtn.setText("◀"); // ◀ left arrow
-                                if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(true);
-                                if (sidebarSections != null) {
-                                    sidebarSections.setVisible(true);
-                                    sidebarSections.setManaged(true);
-                                }
-                                if (collapsedIconsBar != null) {
-                                    collapsedIconsBar.setVisible(false);
-                                    collapsedIconsBar.setManaged(false);
-                                }
-                                isSidebarCollapsed = false;
-                            } else {
-                                // Collapse - change arrow to point right, show only toggle button
-                                sidebarContainer.setMinWidth(50);
-                                sidebarContainer.setPrefWidth(60);
-                                toggleSidebarBtn.setText("▶"); // ▶ right arrow
-                                if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(false);
-                                if (sidebarSections != null) {
-                                    sidebarSections.setVisible(false);
-                                    sidebarSections.setManaged(false);
-                                }
-                                if (collapsedIconsBar != null) {
-                                    collapsedIconsBar.setVisible(true);
-                                    collapsedIconsBar.setManaged(true);
-                                }
-                                isSidebarCollapsed = true;
-                            }
-                            prefsLocal.putBoolean(PREF_KEY_SIDEBAR_COLLAPSED, isSidebarCollapsed);
-                        });
+                        toggleSidebarBtn.setOnAction(e -> toggleSidebarAnimated());
+                    }
+                    if (sidebarHeader != null) {
+                        sidebarHeader.setOnMouseClicked(e -> toggleSidebarAnimated());
                     }
 
                     // Wire collapsed icon hover menus
@@ -530,6 +501,12 @@ public class AppController {
                         // Removed leading bullet characters
                         new String[]{"Visual Flow", "Reset Data"},
                         new Runnable[]{this::generateVisualFlow, this::clearAllData});
+
+                    // Collapsed Settings icon
+                    Button iconSettings = (Button) ((Parent) sidebar).lookup("#btnIconSettings");
+                    if (iconSettings != null) {
+                        iconSettings.setOnAction(e -> toggleSettingsDrawer());
+                    }
                 }
                 
                 sidebarContainer.setCenter(sidebar);
@@ -541,10 +518,7 @@ public class AppController {
                     btnNdw = (Button) sidebarContainer.lookup("#btnNdw");
                     if (btnNdw != null) {
                         if (!originalButtonGraphics.containsKey(btnNdw)) { originalButtonGraphics.put(btnNdw, btnNdw.getGraphic()); }
-                        btnNdw.setOnAction(e -> { 
-                            loadNdw(); 
-                            markSidebarActive(btnNdw); 
-                        });
+                        btnNdw.setOnAction(e -> { closeSettingsDrawerIfOpen(); loadNdw(); markSidebarActive(btnNdw); });
                         if (btnNdw.getGraphic() != null) {
                             btnNdw.getGraphic().setMouseTransparent(true);
                         }
@@ -553,51 +527,51 @@ public class AppController {
                     btnXml = (Button) sidebarContainer.lookup("#btnXml");
                     if (btnXml != null) {
                         if (!originalButtonGraphics.containsKey(btnXml)) { originalButtonGraphics.put(btnXml, btnXml.getGraphic()); }
-                        btnXml.setOnAction(e -> { loadXml(); markSidebarActive(btnXml); });
+                        btnXml.setOnAction(e -> { closeSettingsDrawerIfOpen(); loadXml(); markSidebarActive(btnXml); });
                         if (btnXml.getGraphic() != null) btnXml.getGraphic().setMouseTransparent(true);
                     }
                     
                     btnJson = (Button) sidebarContainer.lookup("#btnJson");
                     if (btnJson != null) {
                         if (!originalButtonGraphics.containsKey(btnJson)) { originalButtonGraphics.put(btnJson, btnJson.getGraphic()); }
-                        btnJson.setOnAction(e -> { loadJson(); markSidebarActive(btnJson); });
+                        btnJson.setOnAction(e -> { closeSettingsDrawerIfOpen(); loadJson(); markSidebarActive(btnJson); });
                         if (btnJson.getGraphic() != null) btnJson.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button unitsBtn = (Button) sidebarContainer.lookup("#btnUnits");
                     if (unitsBtn != null) {
-                        unitsBtn.setOnAction(e -> { if (navUnits!=null) navUnits.fire(); Platform.runLater(() -> markSidebarActive(unitsBtn)); });
+                        unitsBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); if (navUnits!=null) navUnits.fire(); Platform.runLater(() -> markSidebarActive(unitsBtn)); });
                         if (unitsBtn.getGraphic() != null) unitsBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button nurseBtn = (Button) sidebarContainer.lookup("#btnNurseCalls");
                     if (nurseBtn != null) {
-                        nurseBtn.setOnAction(e -> { if (navNurseCalls!=null) navNurseCalls.fire(); Platform.runLater(() -> markSidebarActive(nurseBtn)); });
+                        nurseBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); if (navNurseCalls!=null) navNurseCalls.fire(); Platform.runLater(() -> markSidebarActive(nurseBtn)); });
                         if (nurseBtn.getGraphic() != null) nurseBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button clinicalsBtn = (Button) sidebarContainer.lookup("#btnClinicals");
                     if (clinicalsBtn != null) {
-                        clinicalsBtn.setOnAction(e -> { if (navClinicals!=null) navClinicals.fire(); Platform.runLater(() -> markSidebarActive(clinicalsBtn)); });
+                        clinicalsBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); if (navClinicals!=null) navClinicals.fire(); Platform.runLater(() -> markSidebarActive(clinicalsBtn)); });
                         if (clinicalsBtn.getGraphic() != null) clinicalsBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button ordersBtn = (Button) sidebarContainer.lookup("#btnOrders");
                     if (ordersBtn != null) {
-                        ordersBtn.setOnAction(e -> { if (navOrders!=null) navOrders.fire(); Platform.runLater(() -> markSidebarActive(ordersBtn)); });
+                        ordersBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); if (navOrders!=null) navOrders.fire(); Platform.runLater(() -> markSidebarActive(ordersBtn)); });
                         if (ordersBtn.getGraphic() != null) ordersBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button viewJsonBtn = (Button) sidebarContainer.lookup("#btnViewJson");
                     if (viewJsonBtn != null) {
-                        viewJsonBtn.setOnAction(e -> { generateCombinedJson(); markSidebarActive(viewJsonBtn); });
+                        viewJsonBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); generateCombinedJson(); markSidebarActive(viewJsonBtn); });
                         if (viewJsonBtn.getGraphic() != null) viewJsonBtn.getGraphic().setMouseTransparent(true);
                     }
 
                     // New Save to NDW sidebar action (CI mode only)
                     Button saveNdwBtn = (Button) sidebarContainer.lookup("#btnSaveNdw");
                     if (saveNdwBtn != null) {
-                        saveNdwBtn.setOnAction(e -> { saveOnNdw(); markSidebarActive(saveNdwBtn); });
+                        saveNdwBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); saveOnNdw(); markSidebarActive(saveNdwBtn); });
                         if (saveNdwBtn.getGraphic() != null) saveNdwBtn.getGraphic().setMouseTransparent(true);
                         // Only show in CI mode
                         saveNdwBtn.setVisible(userProfile == UserProfile.CI);
@@ -606,31 +580,31 @@ public class AppController {
                     
                     Button exportNurseBtn = (Button) sidebarContainer.lookup("#btnExportNursecall");
                     if (exportNurseBtn != null) {
-                        exportNurseBtn.setOnAction(e -> { exportJson("NurseCalls"); markSidebarActive(exportNurseBtn); });
+                        exportNurseBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); exportJson("NurseCalls"); markSidebarActive(exportNurseBtn); });
                         if (exportNurseBtn.getGraphic() != null) exportNurseBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button exportClinicalsBtn = (Button) sidebarContainer.lookup("#btnExportClinicals");
                     if (exportClinicalsBtn != null) {
-                        exportClinicalsBtn.setOnAction(e -> { exportJson("Clinicals"); markSidebarActive(exportClinicalsBtn); });
+                        exportClinicalsBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); exportJson("Clinicals"); markSidebarActive(exportClinicalsBtn); });
                         if (exportClinicalsBtn.getGraphic() != null) exportClinicalsBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button exportOrdersBtn = (Button) sidebarContainer.lookup("#btnExportOrders");
                     if (exportOrdersBtn != null) {
-                        exportOrdersBtn.setOnAction(e -> { exportJson("Orders"); markSidebarActive(exportOrdersBtn); });
+                        exportOrdersBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); exportJson("Orders"); markSidebarActive(exportOrdersBtn); });
                         if (exportOrdersBtn.getGraphic() != null) exportOrdersBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button visualFlowBtn = (Button) sidebarContainer.lookup("#btnVisualFlow");
                     if (visualFlowBtn != null) {
-                        visualFlowBtn.setOnAction(e -> { generateVisualFlow(); markSidebarActive(visualFlowBtn); });
+                        visualFlowBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); generateVisualFlow(); markSidebarActive(visualFlowBtn); });
                         if (visualFlowBtn.getGraphic() != null) visualFlowBtn.getGraphic().setMouseTransparent(true);
                     }
                     
                     Button resetDataBtn = (Button) sidebarContainer.lookup("#btnResetData");
                     if (resetDataBtn != null) {
-                        resetDataBtn.setOnAction(e -> { clearAllData(); markSidebarActive(resetDataBtn); });
+                        resetDataBtn.setOnAction(e -> { closeSettingsDrawerIfOpen(); clearAllData(); markSidebarActive(resetDataBtn); });
                         if (resetDataBtn.getGraphic() != null) resetDataBtn.getGraphic().setMouseTransparent(true);
                     }
 
@@ -1485,6 +1459,25 @@ public class AppController {
         }
     }
     
+    // Close settings drawer if visible without toggling it open accidentally
+    private void closeSettingsDrawerIfOpen() {
+        if (settingsDrawer != null && settingsDrawer.isVisible()) {
+            // Hide with animation (same as in toggleSettingsDrawer hide branch)
+            TranslateTransition slide = new TranslateTransition(Duration.millis(250), settingsDrawer);
+            slide.setFromY(0);
+            slide.setToY(-50);
+            FadeTransition fade = new FadeTransition(Duration.millis(250), settingsDrawer);
+            fade.setFromValue(1.0);
+            fade.setToValue(0.0);
+            ParallelTransition transition = new ParallelTransition(slide, fade);
+            transition.setOnFinished(e -> {
+                settingsDrawer.setVisible(false);
+                settingsDrawer.setManaged(false);
+            });
+            transition.play();
+        }
+    }
+
     /**
      * Sets up auto-close functionality for the settings drawer.
      * When user clicks anywhere outside the settings drawer, it automatically closes.
@@ -5056,6 +5049,41 @@ public class AppController {
                 sidebarToggleButton.setText("◀");
             }
         }
+    }
+
+    // Smooth animated collapse/expand for the left sidebar (voceraSidebar area)
+    private void toggleSidebarAnimated() {
+        if (sidebarContainer == null) return;
+        boolean collapsing = sidebarContainer.getPrefWidth() > 60;
+        double from = sidebarContainer.getPrefWidth() <= 0 ? (collapsing ? 220 : 60) : sidebarContainer.getPrefWidth();
+        double to = collapsing ? 60 : 220;
+
+        // Prepare visibility when expanding (show sections during animation)
+        if (!collapsing) {
+            if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(true);
+            if (sidebarSections != null) { sidebarSections.setVisible(true); sidebarSections.setManaged(true); }
+            if (collapsedIconsBar != null) { collapsedIconsBar.setVisible(false); collapsedIconsBar.setManaged(false); }
+            if (toggleSidebarBtn != null) toggleSidebarBtn.setText("◀");
+        }
+
+        javafx.animation.Timeline tl = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(Duration.ZERO,
+                new javafx.animation.KeyValue(sidebarContainer.prefWidthProperty(), from)),
+            new javafx.animation.KeyFrame(Duration.millis(220),
+                new javafx.animation.KeyValue(sidebarContainer.prefWidthProperty(), to))
+        );
+        tl.setOnFinished(ev -> {
+            boolean nowCollapsed = to <= 60;
+            if (nowCollapsed) {
+                if (sidebarTitleLabel != null) sidebarTitleLabel.setVisible(false);
+                if (sidebarSections != null) { sidebarSections.setVisible(false); sidebarSections.setManaged(false); }
+                if (collapsedIconsBar != null) { collapsedIconsBar.setVisible(true); collapsedIconsBar.setManaged(true); }
+                if (toggleSidebarBtn != null) toggleSidebarBtn.setText("▶");
+            }
+            isSidebarCollapsed = nowCollapsed;
+            Preferences.userNodeForPackage(AppController.class).putBoolean(PREF_KEY_SIDEBAR_COLLAPSED, isSidebarCollapsed);
+        });
+        tl.play();
     }
     
     /**
